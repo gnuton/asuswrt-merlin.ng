@@ -21,10 +21,6 @@ LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
 LDFLAGS += $(EXTRA_LDFLAGS)
 LDFLAGS += -lgcc_s
 
-ifeq ($(RTCONFIG_AMAS),y)
-LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
-endif
-
 
 vpath %.c $(SRCBASE)/shared $(WLAN_ComponentSrcDirs)
 

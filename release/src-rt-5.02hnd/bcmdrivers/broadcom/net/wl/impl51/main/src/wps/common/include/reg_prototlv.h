@@ -78,6 +78,9 @@ typedef TlvObj_ptr
 	CTlvDeviceName, /* <= 32B */
 	CTlvIdentity, /* <= 80B */
 	CTlvIdentityProof,
+#ifdef AMAS
+	CTlvGroupID,
+#endif
 	CTlvManufacturer, /* <= 64B */
 	CTlvModelName, /* <= 32B */
 	CTlvModelNumber, /* <= 32B */
