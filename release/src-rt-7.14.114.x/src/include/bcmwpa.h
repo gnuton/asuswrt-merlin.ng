@@ -48,6 +48,14 @@
 #define WPA_KEY_DATA_LEN_256	256	/* allocation size of 256 for temp data pointer. */
 #define WPA_KEY_DATA_LEN_128	128	/* allocation size of 128 for temp data pointer. */
 
+/* Minimum length of WPA2 GTK encapsulation in EAPOL */
+#define EAPOL_WPA2_GTK_ENCAP_MIN_LEN  (EAPOL_WPA2_ENCAP_DATA_HDR_LEN - \
+	TLV_HDR_LEN + EAPOL_WPA2_KEY_GTK_ENCAP_HDR_LEN)
+
+/* Minimum length of WPA2 IGTK encapsulation in EAPOL */
+#define EAPOL_WPA2_IGTK_ENCAP_MIN_LEN  (EAPOL_WPA2_ENCAP_DATA_HDR_LEN - \
+	TLV_HDR_LEN + EAPOL_WPA2_KEY_IGTK_ENCAP_HDR_LEN)
+
 #define WLC_SW_KEYS(wlc, bsscfg) ((((wlc)->wsec_swkeys) || \
 	((bsscfg)->wsec & WSEC_SWFLAG)))
 

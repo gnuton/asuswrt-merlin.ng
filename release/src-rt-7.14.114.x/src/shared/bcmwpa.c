@@ -672,7 +672,15 @@ BCMROMFN(wpa_is_gtk_encap)(uint8 *ie, uint8 **tlvs, uint *tlvs_len)
 eapol_wpa2_encap_data_t *
 BCMROMFN(wpa_find_gtk_encap)(uint8 *parse, uint len)
 {
-	return wpa_find_kde(parse, len, WPA2_KEY_DATA_SUBTYPE_GTK);
+	eapol_wpa2_encap_data_t *data;
+
+	/* minimum length includes kde upto gtk field in eapol_wpa2_key_gtk_encap_t */
+	data = wpa_find_kde(parse, len, WPA2_KEY_DATA_SUBTYPE_GTK);
+	if (data && (data->length < EAPOL_WPA2_GTK_ENCAP_MIN_LEN)) {
+		data = NULL;
+	}
+
+	return data;
 }
 
 eapol_wpa2_encap_data_t *
