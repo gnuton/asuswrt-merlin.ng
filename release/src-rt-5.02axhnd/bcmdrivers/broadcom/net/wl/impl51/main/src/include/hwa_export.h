@@ -38,14 +38,14 @@
 #define HWA_REVISION_GE_128     (HWA_REVISION_ID >= 128)
 #define HWA_REVISION_EQ_129     (HWA_REVISION_ID == 129)
 #define HWA_REVISION_GE_129     (HWA_REVISION_ID >= 129)
+#define HWA_REVISION_EQ_131     (HWA_REVISION_ID == 131)
+#define HWA_REVISION_GE_131     (HWA_REVISION_ID >= 131)
 
-#if HWA_REVISION_EQ_128
-#define HWA_FAMILY              "2.0"
-#endif  /* HWA_REVISION_EQ_128 */
-
-#if HWA_REVISION_EQ_129
+#if HWA_REVISION_GE_129
 #define HWA_FAMILY              "2.1"
-#endif  /* HWA_REVISION_EQ_129 */
+#else
+#define HWA_FAMILY              "2.0"
+#endif  /* HWA_REVISION_GE_129 */
 
 #include <hwa_defs.h>
 
@@ -100,8 +100,6 @@ void    hwa_rxfill_rxfree_audit(struct hwa_dev *dev, uint32 core,
 int     hwa_rxpath_dma_reset(struct hwa_dev *dev, uint32 core);
 // Reclaim MAC Rx DMA posted buffer
 void    hwa_rxpath_dma_reclaim(struct hwa_dev *dev);
-// Free lfrag's RPH before real cb.
-void    hwa_rxpath_cancel_rx_pktfetch_fast(struct hwa_dev *dev, void *lfrag);
 
 #endif /* HWA_RXPATH_BUILD */
 
@@ -110,6 +108,7 @@ void    hwa_rxpath_cancel_rx_pktfetch_fast(struct hwa_dev *dev, void *lfrag);
 // Query the type of filter match in a rxstatus, if any
 uint32  hwa_rxdata_fhr_is_pktfetch(uint32 fhr_filter_match);
 uint32  hwa_rxdata_fhr_is_l2filter(uint32 fhr_filter_match);
+uint32  hwa_rxdata_fhr_is_llc_snap_da(uint32 fhr_filter_match);
 
 #endif /* HWA_RXDATA_BUILD */
 
@@ -187,8 +186,8 @@ void    hwa_txfifo_dump_fifoctx(struct hwa_dev *dev, struct bcmstrbuf *b, uint32
 
 #if defined(HWA_TXSTAT_BUILD)
 
-// Consume all txstatus in H2S txstatus interface
-int     hwa_txstat_process(struct hwa_dev *dev, uint32 core, bool bound);
+// Process active txstatus in H2S TxStatus status_ring before fifo sync.
+void    hwa_txstat_service_txstatus(struct hwa_dev *dev);
 // HWA4a TxStatus block reclaim
 void    hwa_txstat_reclaim(struct hwa_dev *dev);
 
@@ -245,7 +244,7 @@ typedef enum hwa_mac_config
 
 // Invoked by MAC to configure the HWA Common block registers
 void    hwa_mac_config(hwa_mac_config_t config, uint32 core,
-            volatile void *ptr, uintptr val);
+            volatile void *ptr, uint32 val);
 
 /*
  * -----------------------------------------------------------------------------
