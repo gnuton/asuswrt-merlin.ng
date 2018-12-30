@@ -189,9 +189,6 @@ typedef struct {
 typedef struct {
 	CTlvVersion version;
 	CTlvMsgType msgType;
-#ifdef AMAS
-	CTlvGroupID groupid;
-#endif
 	CTlvEnrolleeNonce enrolleeNonce;
 	CTlvEncrSettings encrSettings;
 
