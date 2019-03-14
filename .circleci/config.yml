@@ -1,0 +1,84 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: gnuton/asuswrt-merlin-toolchains-docker
+        environment:
+          MAKEFLAGS: "-j 1"
+          ORIG_FIRMWARE_DIR: "/opt/src/dsl-ac68u"
+          ORIG_FIRMWARE_URL: "https://dlcdnets.asus.com/pub/ASUS/wireless/DSL-AC68U/GPL_DSL_AC68U_v300438421128.zip"
+          ORIG_FIRMWARE_FILE: "GPL_DSL-AC68U_3.0.0.4.384.21128-g3e869a5.tgz"
+          PROJECT_DIR: "/root/project"
+    steps:
+      - checkout
+      - run:
+          name: Setup toolchain
+          command: |
+            rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
+            ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
+      - run:
+          name: Update code
+          command: |
+            cp ${PROJECT_DIR}/release/src/router/shared/prebuild/RT-AC68U/ ${PROJECT_DIR}/release/src/router/shared/prebuild/DSL-AC68U/ -r
+            cp ${PROJECT_DIR}/release/src/router/rc/prebuild/RT-AC68U/ ${PROJECT_DIR}/release/src/router/rc/prebuild/DSL-AC68U/ -r 
+            cp ${PROJECT_DIR}/release/src/router/httpd/prebuild/RT-AC68U/ ${PROJECT_DIR}/release/src/router/httpd/prebuild/DSL-AC68U/ -r
+            mkdir -p ${ORIG_FIRMWARE_DIR}
+            cd ${ORIG_FIRMWARE_DIR}
+            curl ${ORIG_FIRMWARE_URL} -o source.zip
+            unzip source.zip
+            apt install -y bsdtar
+            bsdtar xzf ${ORIG_FIRMWARE_FILE} || echo "Some errors occured, but please continue"
+            cp ${ORIG_FIRMWARE_DIR}/asuswrt/release/src/router/rc/prebuild/* ${PROJECT_DIR}/release/src/router/rc/prebuild/DSL-AC68U/ -r
+            cp ${ORIG_FIRMWARE_DIR}/asuswrt/release/src-rt-6.x.4708/tc_fw/ ${PROJECT_DIR}/release/src-rt-6.x.4708/ -r
+      - run:
+          name: Build firmware
+          shell: /bin/bash
+          no_output_timeout: 120m
+          command: | 
+            cd ${PROJECT_DIR}/release/src-rt-6.x.4708/
+            ls
+            pwd
+            make clean || echo "maybe already clean, so if it fails please continue"
+            make dsl-ac68u | tee "/tmp/build.log" | grep -i "error\|-e"
+            ls ${PROJECT_DIR}/release/src-rt-6.x.4708/image/
+      - run:
+          name: Prepare workspace
+          command: |
+            mkdir -p workspace/release
+            cp ${PROJECT_DIR}/release/src-rt-6.x.4708/image/*.trx workspace/release
+            cp ${PROJECT_DIR}/release/src-rt-6.x.4708/image/*.md5 workspace/release
+            cp /tmp/build.log workspace/release
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - release
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - attach_workspace:
+          at: workspace
+      - run: ls workspace/release
+      - run:
+          name: "Publish Release on Github"
+          command: |
+            echo "Uploading release:${CIRCLE_TAG}"
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} workspace/release/
+workflows:
+  version: 2
+  build_and_manually_release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: master
+      - publish-github-release:
+          filters:
+            tags:
+              only: /^\d+\.\d+\$/
+            branches:
+              ignore: /.*/
+          requires:
+            - build
