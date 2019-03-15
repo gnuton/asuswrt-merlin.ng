@@ -20,7 +20,7 @@ then
 	ARCH="_arm"
 	HND=""
 
-	cp release/src/router/ctf_arm/bcm_7114_gmac3/* $REPO/release/src/router/ctf_arm/bcm_7114_gmac3/
+	cp release/src/router/ctf_arm/bcm_7114_gmac3/* $REPO/eelease/src/router/ctf_arm/bcm_7114_gmac3/
 	cp release/src/router/wl_arm_7114/prebuilt/* $REPO/release/src/router/wl_arm_7114/prebuilt/$MODEL/
 	cp release/src/router/envram_bin/envram$ARCH$SDK/* $REPO/release/src/router/envram_bin/envram$ARCH$SDK/
 	cp release/src-rt-7.14.114.x/src/wl/exe/prebuilt/* $REPO/release/src-rt-7.14.114.x/src/wl/exe/prebuilt/
@@ -39,7 +39,7 @@ then
 	cp -a release/src/router/Beceem_BCMS250/prebuild/* $REPO/release/src/router/Beceem_BCMS250$ARCH/prebuild/
 	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
 
-elif [ "$MODEL" == "RT-AC56U" ] || [ "$MODEL" == "RT-AC68U" ] || [ "$MODEL" == "RT-AC87U" ]
+elif [ "$MODEL" == "RT-AC56U" ] || [ "$MODEL" == "RT-AC68U" ] || [ "$MODEL" == "RT-AC87U" ] || [ "$MODEL" == "DSL-AC68U" ]
 then
 	SDK=""
 	ARCH="_arm"
@@ -50,6 +50,19 @@ then
 	cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
 	cp -a release/src/router/Beceem_BCMS250/prebuild/* $REPO/release/src/router/Beceem_BCMS250$ARCH/prebuild/
 	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
+
+elif [ "$MODEL" == "DSL-AC68U" ]
+then
+        SDK=""
+        ARCH="_arm"
+        HND=""
+
+        cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
+        cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$MODEL/
+        cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
+        cp -a release/src/router/Beceem_BCMS250/prebuild/* $REPO/release/src/router/Beceem_BCMS250$ARCH/prebuild/
+        cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
+        cp -a release/src/router/dsl_drv_tool/ $REPO/release/src/router/dsl_drv_tool/
 
 elif [ "$MODEL" == "RT-AC86U" ]
 then
@@ -175,4 +188,12 @@ fi
 if [ "$MODEL" == "RT-AC3200" ] || [ "$MODEL" == "RT-AC88U" ] || [ "$MODEL" == "RT-AC3100" ] || [ "$MODEL" == "RT-AC5300" ] || [ "$MODEL" == "RT-AC86U" ]
 then
 	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt$ARCH$SDK/
+fi
+
+if [ "$MODEL" == "DSL-AC68U" ]
+then
+        cp -a release/src/router/tuxera/broadcom_arm_dsl_ac68u/* $REPO/release/src/router/tuxera/broadcom_arm_dsl_ac68u/
+        cp -a release/src/router/dsl_drv_tool/ $REPO/release/src/router/dsl_drv_tool/
+        cp -a release/src-rt-6.x.4708/wl/sysdeps/DSL-AC68U $REPO/release/src-rt-6.x.4708/wl/sysdeps/DSL-AC68U
+        cp -a release/src/router/www/sysdep/DSL-AC68U $REPO/release/src/router/www/sysdep/DSL-AC68U
 fi
