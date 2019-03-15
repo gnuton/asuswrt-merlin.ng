@@ -6,9 +6,13 @@
 # Usage: enter the new GPL directory then run this script.
 #        Then run by specifying the model number as argument.
 #        REPO will contain the location of your local repository
+#        eg:
+#          export REPO_TO_UPDATE=/path/to/my/git/asus/merlin/working/copy
+#          cd /path/to/gpl/asuswrt/src/
+#          /path/to/my/git/asus/merlin/working/copy/tools/copy-prebuilt RT-AC68U
 
 MODEL=$1
-REPO=/home/merlin/amng
+REPO="${REPO_TO_UPDATE:-/home/merlin/amng}"
 
 if [ "$MODEL" == "RT-AC88U" ] || [ "$MODEL" == "RT-AC3100" ] || [ "$MODEL" == "RT-AC5300" ]
 then
