@@ -17,18 +17,6 @@ jobs:
             rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
             ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
       - run:
-          name: Update code
-          command: |
-            mkdir -p ${ORIG_FIRMWARE_DIR}
-            cd ${ORIG_FIRMWARE_DIR}
-            curl ${ORIG_FIRMWARE_URL} -o source.zip
-            unzip source.zip
-            apt install -y bsdtar
-            bsdtar xzf ${ORIG_FIRMWARE_FILE} || echo "Some errors occured, but please continue"
-            cd ${ORIG_FIRMWARE_DIR}
-            export REPO_TO_UPDATE=${PROJECT_DIR}
-            ${PROJECT_DIR}/tools/copy-prebuilt DSL-AC68U
-      - run:
           name: Build firmware
           shell: /bin/bash
           no_output_timeout: 120m
