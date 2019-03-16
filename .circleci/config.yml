@@ -19,17 +19,15 @@ jobs:
       - run:
           name: Update code
           command: |
-            cp ${PROJECT_DIR}/release/src/router/shared/prebuild/RT-AC68U/ ${PROJECT_DIR}/release/src/router/shared/prebuild/DSL-AC68U/ -r
-            cp ${PROJECT_DIR}/release/src/router/rc/prebuild/RT-AC68U/ ${PROJECT_DIR}/release/src/router/rc/prebuild/DSL-AC68U/ -r 
-            cp ${PROJECT_DIR}/release/src/router/httpd/prebuild/RT-AC68U/ ${PROJECT_DIR}/release/src/router/httpd/prebuild/DSL-AC68U/ -r
             mkdir -p ${ORIG_FIRMWARE_DIR}
             cd ${ORIG_FIRMWARE_DIR}
             curl ${ORIG_FIRMWARE_URL} -o source.zip
             unzip source.zip
             apt install -y bsdtar
             bsdtar xzf ${ORIG_FIRMWARE_FILE} || echo "Some errors occured, but please continue"
-            cp ${ORIG_FIRMWARE_DIR}/asuswrt/release/src/router/rc/prebuild/* ${PROJECT_DIR}/release/src/router/rc/prebuild/DSL-AC68U/ -r
-            cp ${ORIG_FIRMWARE_DIR}/asuswrt/release/src-rt-6.x.4708/tc_fw/ ${PROJECT_DIR}/release/src-rt-6.x.4708/ -r
+            cd ${ORIG_FIRMWARE_DIR}
+            export REPO_TO_UPDATE=${PROJECT_DIR}
+            ${PROJECT_DIR}/tools/copy-prebuilt DSL-AC68U
       - run:
           name: Build firmware
           shell: /bin/bash
