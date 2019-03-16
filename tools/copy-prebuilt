@@ -57,11 +57,11 @@ then
         ARCH="_arm"
         HND=""
 
-        mkdir -p release/src/router/amas-utils/prebuild/DSL-AC68U/
-	mkdir -p release/src/router/bwdpi_source/asus/prebuild_arm/DSL-AC68U/
-	mkdir -p release/src/router/cfg_mnt/prebuild/DSL-AC68U/
-	mkdir -p release/src/router/sw-hw-auth/prebuild/DSL-AC68U/
-	mkdir -p release/src/router/wl_arm/prebuilt/DSL-AC68U/
+        mkdir -p $REPO/release/src/router/amas-utils/prebuild/DSL-AC68U/
+	mkdir -p $REPO/release/src/router/bwdpi_source/asus/prebuild_arm/DSL-AC68U/
+	mkdir -p $REPO/release/src/router/cfg_mnt/prebuild/DSL-AC68U/
+	mkdir -p $REPO/release/src/router/sw-hw-auth/prebuild/DSL-AC68U/
+	mkdir -p $REPO/release/src/router/wl_arm/prebuilt/DSL-AC68U/
 
         cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
         cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$MODEL/
