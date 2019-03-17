@@ -1759,7 +1759,6 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 #ifdef RTCONFIG_DUALWAN
 			if (wan_type == WANS_DUALWAN_IF_DSL)
 #endif
-			(
 				if (nvram_match("dsl0_proto", "ipoa"))
 					start_ipoa();
 #endif
