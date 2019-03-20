@@ -325,7 +325,7 @@ function check_ginp_try(obj){
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_6#> - <#menu_dsl_setting#></div>
-      <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+      <div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
       <div class="formfontdesc"><#dslsetting_disc0#></div>
 
 		<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
@@ -339,7 +339,7 @@ function check_ginp_try(obj){
 					<#dslsetting_disc1#>
 				</th>
 				<td>
-					<select id="" class="input_option" name="dslx_modulation">
+					<select class="input_option" name="dslx_modulation">
 						<option value="0" <% nvram_match("dslx_modulation", "0", "selected"); %>>T1.413</option>
 						<option value="1" <% nvram_match("dslx_modulation", "1", "selected"); %>>G.lite</option>
 						<option value="2" <% nvram_match("dslx_modulation", "2", "selected"); %>>G.Dmt</option>
@@ -355,7 +355,7 @@ function check_ginp_try(obj){
 					<#dslsetting_disc2#>
 				</th>
 				<td>
-					<select id="" class="input_option" name="dslx_annex">
+					<select class="input_option" name="dslx_annex">
 						<option value="0" <% nvram_match("dslx_annex", "0", "selected"); %>>ANNEX A</option>
 						<option value="1" <% nvram_match("dslx_annex", "1", "selected"); %>>ANNEX I</option>
 						<option value="2" <% nvram_match("dslx_annex", "2", "selected"); %>>ANNEX A/L</option>
@@ -380,7 +380,7 @@ function check_ginp_try(obj){
 					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,10);">Dynamic Line Adjustment (DLA)</a>
 				</th>
 				<td>
-					<select id="" class="input_option" name="dslx_dla_enable" onchange='change_dla(this.value);'>
+					<select class="input_option" name="dslx_dla_enable" onchange='change_dla(this.value);'>
 						<option value="1" <% nvram_match("dslx_dla_enable", "1", "selected"); %>><#btn_Enabled#></option>
 						<option value="0" <% nvram_match("dslx_dla_enable", "0", "selected"); %>><#btn_Disabled#></option>
 					</select>
@@ -393,7 +393,7 @@ function check_ginp_try(obj){
 					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,2);"><#dslsetting_SRA#></a>
 				</th>
 				<td>
-					<select id="" class="input_option" name="dslx_sra">
+					<select class="input_option" name="dslx_sra">
 						<option value="1" <% nvram_match("dslx_sra", "1", "selected"); %>><#btn_Enabled#></option>
 						<option value="0" <% nvram_match("dslx_sra", "0", "selected"); %>><#btn_Disabled#></option>
 					</select>
@@ -405,7 +405,7 @@ function check_ginp_try(obj){
 					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,12);">G.INP (G.998.4)</a>
 				</th>
 				<td>
-					<select id="" class="input_option" name="dslx_ginp">
+					<select class="input_option" name="dslx_ginp">
 						<option value="1" <% nvram_match("dslx_ginp", "1", "selected"); %>><#btn_Enabled#></option>
 						<option value="0" <% nvram_match("dslx_ginp", "0", "selected"); %>><#btn_Disabled#></option>
 					</select>
@@ -487,7 +487,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,3);">Bitswap</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_bitswap">
+				<select class="input_option" name="dslx_bitswap">
 					<option value="1" <% nvram_match("dslx_bitswap", "1", "selected"); %>><#btn_Enabled#></option>
 					<option value="0" <% nvram_match("dslx_bitswap", "0", "selected"); %>><#btn_Disabled#></option>
 				</select>
@@ -507,7 +507,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,8);">VDSL Profile</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_profile">
+				<select class="input_option" name="dslx_vdsl_profile">
 					<option value="0" <% nvram_match("dslx_vdsl_profile", "0", "selected"); %>>30a multi mode</option>
 					<option value="1" <% nvram_match("dslx_vdsl_profile", "1", "selected"); %>>17a multi mode</option>
 					<option value="2" <% nvram_match("dslx_vdsl_profile", "2", "selected"); %>>12a multi mode</option>
@@ -520,7 +520,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,4);"><#dslsetting_Stability_Adj#></a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_target_snrm">
+				<select class="input_option" name="dslx_vdsl_target_snrm">
 					<option value="32767" <% nvram_match("dslx_vdsl_target_snrm", "32767", "selected"); %>><#btn_Disabled#></option>
 					<option value="1024" <% nvram_match("dslx_vdsl_target_snrm", "1024", "selected"); %>>2 dB</option>
 					<option value="1536" <% nvram_match("dslx_vdsl_target_snrm", "1536", "selected"); %>>3 dB</option>
@@ -562,7 +562,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,5);">Tx Power Control</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_tx_gain_off">
+				<select class="input_option" name="dslx_vdsl_tx_gain_off">
 					<option value="32767" <% nvram_match("dslx_vdsl_tx_gain_off", "32767", "selected"); %>><#btn_Disabled#></option>
 					<option value="30" <% nvram_match("dslx_vdsl_tx_gain_off", "30", "selected"); %>>3 dB</option>
 					<option value="20" <% nvram_match("dslx_vdsl_tx_gain_off", "20", "selected"); %>>2 dB</option>
@@ -600,7 +600,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,7);">UPBO - Upstream Power Back Off</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_upbo">
+				<select class="input_option" name="dslx_vdsl_upbo">
 					<option value="auto" <% nvram_match("dslx_vdsl_upbo", "auto", "selected"); %>><#Auto#></option>
 					<option value="on" <% nvram_match("dslx_vdsl_upbo", "on", "selected"); %>><#btn_Enabled#></option>
 					<option value="off" <% nvram_match("dslx_vdsl_upbo", "off", "selected"); %>><#btn_Disabled#></option>
@@ -624,7 +624,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,3);">Bitswap</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_bitswap">
+				<select class="input_option" name="dslx_vdsl_bitswap">
 					<option value="1" <% nvram_match("dslx_vdsl_bitswap", "1", "selected"); %>><#btn_Enabled#></option>
 					<option value="0" <% nvram_match("dslx_vdsl_bitswap", "0", "selected"); %>><#btn_Disabled#></option>
 				</select>
@@ -635,7 +635,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,14);">G.vector (G.993.5)</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_vectoring" onchange="hide_nonstd_vectoring(this.value);">
+				<select class="input_option" name="dslx_vdsl_vectoring" onchange="hide_nonstd_vectoring(this.value);">
 					<option value="1" <% nvram_match("dslx_vdsl_vectoring", "1", "selected"); %>><#btn_Enabled#></option>
 					<option value="0" <% nvram_match("dslx_vdsl_vectoring", "0", "selected"); %>><#btn_Disabled#></option>
 				</select>
@@ -646,7 +646,7 @@ function check_ginp_try(obj){
 				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,15);">Non-standard G.vector (G.993.5)</a>
 			</th>
 			<td>
-				<select id="" class="input_option" name="dslx_vdsl_nonstd_vectoring">
+				<select class="input_option" name="dslx_vdsl_nonstd_vectoring">
 					<option value="1" <% nvram_match("dslx_vdsl_nonstd_vectoring", "1", "selected"); %>><#btn_Enabled#></option>
 					<option value="0" <% nvram_match("dslx_vdsl_nonstd_vectoring", "0", "selected"); %>><#btn_Disabled#></option>
 				</select>

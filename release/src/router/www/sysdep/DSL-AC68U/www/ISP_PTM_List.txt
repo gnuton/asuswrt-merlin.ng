@@ -192,7 +192,7 @@
 ,["191","Spain","Spain","","Telefónica Movistar - VDSL","","0","0","0","0","","","",""]
 ,["192","Sweden","Sweden","","Telia Sonera","","0","0","2","0","835","","",""]
 ,["193","Switzerland","Switzerland","","Sunrise","","0","0","2","0","0","","",""]
-,["194","Switzerland","Switzerland","","Swisscom","","0","0","2","0","0","","",""]
+,["194","Switzerland","Switzerland","","Swisscom","","0","0","2","0","10","","",""]
 ,["195","Taiwan","Taiwan","","HiNet (PPPoE)","VDSL","0","0","0","0","","","",""]
 ,["196","Taiwan","Taiwan","","HiNet (PPPoE)","VDSL+MOD","0","0","0","0","","","1","12"]
 ,["197","Thailand","Thailand","","3BB VDSL","","0","0","0","0","33","","",""]
