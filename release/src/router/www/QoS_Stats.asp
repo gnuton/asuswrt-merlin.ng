@@ -186,9 +186,17 @@ function draw_conntrack_table(){
 	var code;
 	var clientObj, clientName, clientName2;
 
-	genClientList();
-
 	tracklen = bwdpi_conntrack.length;
+
+	if (tracklen == 0 ) {
+		showhide("tracked_filters", 0);
+		document.getElementById('tracked_connections').innerHTML = "";
+		return;
+	}
+
+	showhide("tracked_filters", 1);
+
+	genClientList();
 
 	code = '<table cellpadding="4" class="FormTable_table"><thead><tr><td colspan="6">Tracked connections (total: ' + tracklen + ')</td></tr></thead>' +
 		'<tr><th width="5%" id="track_header_0" style="cursor: pointer;" onclick="setsort(0); draw_conntrack_table()">Proto</th>' +
@@ -210,6 +218,17 @@ function draw_conntrack_table(){
 	// Generate table
 	for (i = 0; (i < tracklen && shownlen < maxshown); i++){
 
+		// Compress IPv6
+		if (bwdpi_conntrack[i][1].indexOf(":") >= 0)
+			bwdpi_conntrack[i][1] = compIPV6(bwdpi_conntrack[i][1]);
+		else
+			bwdpi_conntrack[i][1] = bwdpi_conntrack[i][1];
+
+		if (bwdpi_conntrack[i][3].indexOf(":") >= 0)
+			bwdpi_conntrack[i][3] = compIPV6(bwdpi_conntrack[i][3]);
+		else
+			bwdpi_conntrack[i][3] = bwdpi_conntrack[i][3];
+
 		// Filter in place?
 		var filtered = 0;
 		for (j = 0; j < 6; j++) {
@@ -221,17 +240,6 @@ function draw_conntrack_table(){
 		if (filtered) continue;
 
 		shownlen++;
-
-		// Compress IPv6
-		if (bwdpi_conntrack[i][1].indexOf(":") >= 0)
-			bwdpi_conntrack[i][1] = compIPV6(bwdpi_conntrack[i][1]);
-		else
-			bwdpi_conntrack[i][1] = bwdpi_conntrack[i][1];
-
-		if (bwdpi_conntrack[i][3].indexOf(":") >= 0)
-			bwdpi_conntrack[i][3] = compIPV6(bwdpi_conntrack[i][3]);
-		else
-			bwdpi_conntrack[i][3] = bwdpi_conntrack[i][3];
 
 		// Get QoS Class for popup
 		qosclass = get_qos_class(bwdpi_conntrack[i][7], bwdpi_conntrack[i][6]);
@@ -257,7 +265,7 @@ function draw_conntrack_table(){
 		code += "<td title=\"" + clientName2 + "\"" + (bwdpi_conntrack[i][3].length > 36 ? "style=\"font-size: 80%;\"" : "") + ">" +
 		          bwdpi_conntrack[i][3] + "</td>";
 		code += "<td>" + bwdpi_conntrack[i][4] + "</td>";
-		code += "<td><span title=\"" + category_title[qosclass] + "\" class=\"catrow cat" +
+		code += "<td><span title=\"" + (qos_mode == 2 ? category_title[qosclass] : "") + "\" class=\"catrow cat" +
 	                  qosclass + "\"" + (bwdpi_conntrack[i][5].length > 27 ? "style=\"font-size: 75%;\"" : "") + ">" +
 	                  bwdpi_conntrack[i][5] + "</span></td></tr>";
 	}
@@ -537,7 +545,7 @@ function draw_chart(data_array, ctx, pie) {
                                 </tr>
 			</table>
 			<br>
-			<table cellpadding="4" class="FormTable_table"><thead><tr><td colspan="6">Filter connections</td></tr></thead>
+			<table cellpadding="4" class="FormTable_table" id="tracked_filters" style="display:none;"><thead><tr><td colspan="6">Filter connections</td></tr></thead>
 				<tr>
 					<th width="5%">Proto</th>
 					<th width="28%">Local IP</th>
