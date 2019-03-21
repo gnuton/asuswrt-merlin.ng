@@ -70,6 +70,9 @@ then
         mkdir -p $REPO/release/src/router/cfg_mnt/prebuild/$MODEL
         mkdir -p $REPO/release/src/router/bwdpi_source/asus/prebuild$ARCH/$MODEL
         mkdir -p $REPO/release/src/router/tuxera/broadcom_arm_dsl_ac68u
+        
+        # hack
+        cp -a $REPO/release/src/router/shared/prebuild/RT-AC68U/* $REPO/release/src/router/shared/prebuild/$MODEL
 
         cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
         cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$MODEL/
