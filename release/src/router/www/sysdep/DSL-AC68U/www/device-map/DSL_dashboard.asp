@@ -348,14 +348,14 @@ function update_log(){
 								<tr>
 									<td>
 										<div id="area_Opmode">
-										<div style="margin-top:10px;" class="line_horizontal"></div>
+										<img style="margin-bottom:10px;" src="/images/New_ui/networkmap/linetwo2.png">										
 										<p class="formfonttitle_nwm" ><#dslsetting_disc1#></p>
 										<div id="div_Opmode" style="width:100%;">
 												<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;">
 												<% nvram_get("dsllog_opmode"); %>
 												</p>
 										</div>										
-										<div style="margin-top:37px;" class="line_horizontal"></div>
+										<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 										</div>
 									</td>		
 								</tr>
@@ -368,7 +368,7 @@ function update_log(){
 												<% nvram_get("dsllog_adsltype"); %>
 												</p>
 										</div>
-										<div style="margin-top:37px;" class="line_horizontal"></div>
+										<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 										</div>
 									</td>		
 								</tr>	
@@ -381,7 +381,7 @@ function update_log(){
 												<span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#>
 												</p>
 										</div>
-										<div style="margin-top:5px;" class="line_horizontal"></div>
+										<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
 										</div>
 									</td>		
 								</tr>

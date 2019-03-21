@@ -1074,7 +1074,7 @@ function ppp_echo_control(flag){
 								<td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#menu5_3#> - <#menu5_3_1#></div>
-									<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
+									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 									<div id="desc_default" class="formfontdesc"><#dsl_wan_page_desc#></div>
 									<div id="desc_edit" class="formfontdesc"><#Layer3Forwarding_x_ConnectionType_sectiondesc#></div>
 
@@ -1264,7 +1264,7 @@ function ppp_echo_control(flag){
 										</tr>
 										</thead>
 										<th>
-											<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#Username#></a>
+											<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#PPPConnection_UserName_itemname#></a>
 										</th>
 										<td>
 											<input type="text" maxlength="64" class="input_32_table" name="dslx_pppoe_username" value="<% nvram_get("dslx_pppoe_username"); %>" onkeypress="return validator.isString(this, event)" onblur="" autocomplete="off" autocorrect="off" autocapitalize="off">
@@ -1282,7 +1282,7 @@ function ppp_echo_control(flag){
 										<tr>
 											<th><#WAN_PPP_AuthText#></th>
 											<td align="left">
-												<select class="input_option" name="dslx_pppoe_auth">
+												<select id="" class="input_option" name="dslx_pppoe_auth">
 													<option value="" <% nvram_match("dslx_pppoe_auth", "", "selected"); %>>AUTO</option>
 													<option value="pap" <% nvram_match("dslx_pppoe_auth", "pap", "selected"); %>>PAP</option>
 													<option value="chap" <% nvram_match("dslx_pppoe_auth", "chap", "selected"); %>>CHAP</option>
@@ -1379,7 +1379,7 @@ function ppp_echo_control(flag){
 											</th>
 											<td>
 												<input type="text" name="dslx_hwaddr" class="input_20_table" maxlength="17" value="<% nvram_get("dslx_hwaddr"); %>" onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off">
-												<input type="button" class="button_gen" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+												<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 											</td>
 										</tr>
 										<tr>

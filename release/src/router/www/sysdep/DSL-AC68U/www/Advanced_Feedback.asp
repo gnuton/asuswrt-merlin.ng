@@ -76,8 +76,7 @@ function initial(){
 		document.getElementById("attach_modem_span").style.display = "none";
 	}
 
-	//Renjie: do not check WAN connection
-	//setTimeout("check_wan_state();", 300);
+	setTimeout("check_wan_state();", 300);
 
 	if(dblog_support)
 		init_diag_feature();
@@ -214,7 +213,7 @@ function Reload_pdesc(obj, url){
 		desclist.push(["<#EzQoS_type_traditional#>","Traditional QoS"]);
 		url_group.push(["AiProtection"]);
 
-		desclist.push(["<#Menu_TrafficManager#>","<#Traffic_Analyzer#>"]);
+		desclist.push(["<#Menu_TrafficManager#>","<#Traffic_Analyzer#>"]);	/* untranslated */
 		url_group.push(["TrafficMonitor"]);
 
 		desclist.push(["<#Parental_Control#>","Parental Ctrl"]);
@@ -241,7 +240,7 @@ function Reload_pdesc(obj, url){
 		desclist.push(["<#menu5_4_4#>","USB dongle"]);	//15
 		url_group.push(["Modem"]);
 
-		desclist.push(["<#DM_title#>","DM"]);
+		desclist.push(["Download Master","DM"]);
 		url_group.push(["DownloadMaster"]);//false value
 
 		desclist.push(["<#menu5_3_6#>","DDNS"]);
@@ -348,6 +347,13 @@ function applyRule(){
 		return false;
 	}
 
+	//WAN connected check
+	if(sw_mode != 3 && document.getElementById("connect_status").className == "connectstatusoff"){
+                alert("<#USB_Application_No_Internet#>");
+                return false;
+        }
+	else{
+
 		/*if(document.form.feedbackresponse.value == "3"){
 				alert("Feedback report daily maximum(10) send limit reached.");
 				return false;
@@ -403,7 +409,7 @@ function applyRule(){
 				}).get();
 				var dblog_service = 0;
 				if(service_list_checked.length == 0) {
-					alert("<#feedback_debug_log_noSelected#>");
+					alert("Please select at least one option.");/*untranslated*/
 					return false;
 				}
 				for(var idx in service_list_checked){
@@ -435,9 +441,6 @@ function applyRule(){
 			}
 		}
 
-		if(document.form.PM_attach_wlanlog.value == "1")
-			httpApi.update_wlanlog();
-
 		document.form.fb_browserInfo.value = navigator.userAgent;
 		if(dsl_support){
 			if(document.form.dslx_diag_enable[0].checked == true){
@@ -449,6 +452,7 @@ function applyRule(){
 		else
 			showLoading(60);
 		document.form.submit();
+	}
 }
 
 function isEmail(strE) {
@@ -473,7 +477,7 @@ function change_dsl_diag_enable(value) {
 			return;
 		}
 		else{
-			alert("<#feedback_capturing_note1#> <#feedback_capturing_note_DSL#>");
+			alert("While debug log capture in progress, please do not unplug the USB disk as the debug log would be stored in the disk. UI top right globe icon flashing in yellow indicating that debug log capture in progress. Click on the yellow globe icon could cancel the debug log capture. Please note that xDSL line would resync in one minute after Feedback form submitted.");/*untranslated*/
 		}
 		showhide("dslx_diag_duration",1);
 	}
@@ -524,7 +528,7 @@ function init_diag_feature() {
 		}, 1000);
 
 		var dblog_service = parseInt('<% nvram_get("dblog_service"); %>');
-		var dblog_service_mapping = ["", "Wi-Fi", "<#DM_title#>", "<#UPnPMediaServer#>", "AiMesh"];
+		var dblog_service_mapping = ["", "Wi-Fi", "Download Master", "<#UPnPMediaServer#>", "AiMesh"];/* untranslated */
 		var dblog_service_text = "";
 		for(var i = 1; dblog_service != 0 && i <= 4; i++) {
 			if(dblog_service & 1) {
@@ -572,16 +576,16 @@ function diag_change_dblog_status() {
 		$(".dblog_item_tr").css("display", "");
 		if(usb_support) {
 			if(allUsbStatus.search("storage") == "-1")
-				alert("<#feedback_capturing_note#>");
+				alert("Debug log capture in progress, UI top right System icon flashing in yellow indicating that debug log capture in progress. Click on the yellow System icon could cancel the debug log capture.");/*untranslated*/
 			else {
 				if($("input[name=dblog_tousb_cb]").prop("checked"))
-					alert("<#feedback_capturing_note1#>");
+					alert("While debug log capture in progress, please do not unplug the USB disk as the debug log would be stored in the disk. UI top right System icon flashing in yellow indicating that debug log capture in progress. Click on the yellow System icon could cancel the debug log capture.");/*untranslated*/
 				else
-					alert("<#feedback_capturing_note#>");
+					alert("Debug log capture in progress, UI top right System icon flashing in yellow indicating that debug log capture in progress. Click on the yellow System icon could cancel the debug log capture.");/*untranslated*/
 			}
 		}
 		else
-			alert("<#feedback_capturing_note#>");
+			alert("Debug log capture in progress, UI top right System icon flashing in yellow indicating that debug log capture in progress. Click on the yellow System icon could cancel the debug log capture.");/*untranslated*/
 	}
 	else {
 		$(".dblog_item_tr").css("display", "none");
@@ -689,12 +693,12 @@ function diag_tune_service_option() {
 			if(media_support)
 				$(".dblog_service_item.all").after(gen_service_option(4, "<#UPnPMediaServer#>", "noUSB"));
 			if(!nodm_support)
-				$(".dblog_service_item.all").after(gen_service_option(2, "<#DM_title#>", "noUSB"));
+				$(".dblog_service_item.all").after(gen_service_option(2, "Download Master", "noUSB"));/*untranslated*/
 		}
 	}
 
 	if($(".dblog_service_item.wifi").length == 0)
-		$(".dblog_service_item.all").after(gen_service_option(1, "Wi-Fi", "wifi"));
+		$(".dblog_service_item.all").after(gen_service_option(1, "Wi-Fi", "wifi"));/*untranslated*/
 }
 function dblog_stop() {
 	showLoading(3);
@@ -765,10 +769,10 @@ function dblog_stop() {
 <td bgcolor="#4D595D" valign="top" >
 <div>&nbsp;</div>
 <div class="formfonttitle"><#menu5_6#> - <#menu_feedback#></div>
-<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
+<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 <div id="fb_desc0" class="formfontdesc" style="display:none;"><#Feedback_desc0#></div>
 <div id="fb_desc1" class="formfontdesc" style="display:none;"><#Feedback_desc1#></div>
-<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;"><#Feedback_desc_disconnect#> <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a></div>
+<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;">Now this function can't work, because your ASUS Router isn't connected to the Internet. Please send your Feedback to this email address : <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a></div><!-- untranslated -->
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <tr>
 <th width="30%"><#feedback_country#> *</th>
@@ -801,26 +805,26 @@ function dblog_stop() {
 	<input type="checkbox" class="input" name="attach_syslog" id="attach_syslog_id"><label for="attach_syslog_id"><#System_Log#></label>&nbsp;&nbsp;&nbsp;
 	<input type="checkbox" class="input" name="attach_cfgfile" id="attach_cfgfile_id"><label for="attach_cfgfile_id"><#feedback_setting_file#></label>&nbsp;&nbsp;&nbsp;
 	<span id="attach_iptables_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_iptables" id="attach_iptables_id"><label for="attach_iptables_id"><#feedback_iptable_setting#></label></span>
-	<span id="attach_modem_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_modemlog" id="attach_modemlog_id"><label for="attach_modemlog_id"><#feedback_3G_log#></label></span>
-	<input type="checkbox" class="input" name="attach_wlanlog" id="attach_wlanlog_id"><label for="attach_wlanlog_id"><#feedback_WiFi_log#></label>
+	<span id="attach_modem_span" style="color:#FFFFFF;"><input type="checkbox" class="input" name="attach_modemlog" id="attach_modemlog_id"><label for="attach_modemlog_id">3G/4G log</label></span>
+	<input type="checkbox" class="input" name="attach_wlanlog" id="attach_wlanlog_id"><label for="attach_wlanlog_id">Wi-Fi log<!--untranslated--></label>
 </td>
 </tr>
 
 <tr>
-	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,11);"><#feedback_debug_log_DSL#> *</a></th>
+	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,11);">Enable DSL Line Diagnostic *</a></th>
 	<td>
 		<input type="radio" name="dslx_diag_enable" class="input" value="1" onclick="change_dsl_diag_enable(1);"><#checkbox_Yes#>
 		<input type="radio" name="dslx_diag_enable" class="input" value="0" onclick="change_dsl_diag_enable(0);" checked><#checkbox_No#>
 		<br>	
-		<span id="storage_ready" style="display:none;color:#FC0">* <#USB_ready#></span>
-		<span id="be_lack_storage" style="display:none;color:#FC0">* <#no_usb_found#></span>
+		<span id="storage_ready" style="display:none;color:#FC0">* USB disk is ready.</span>
+		<span id="be_lack_storage" style="display:none;color:#FC0">* No USB disk plug-in.</span>
 	</td>
 </tr>
 
 <tr id="dslx_diag_duration">
-	<th><#feedback_capturing_duration#> *</th>
+	<th>Diagnostic debug log capture duration *</th>
 	<td>
-		<select class="input_option" name="dslx_diag_duration">
+		<select id="" class="input_option" name="dslx_diag_duration">
 			<option value="0" selected><#Auto#></option>
 			<option value="3600">1 <#Hour#></option>
 			<option value="18000">5 <#Hour#></option>
@@ -831,23 +835,23 @@ function dblog_stop() {
 </tr>
 
 <tr class="dblog_support_class">
-	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(34, 1);"><#feedback_debug_log#></a></th>
+	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(34, 1);">Enable System Diagnostic *<!--untranslated--></a></th>
 	<td>
 		<div class="dblog_disabled_status">
 			<input type='radio' name='dblog_enable' id='dblog_status_en' value="1" onclick="diag_change_dblog_status();"><label for='dblog_status_en'><#checkbox_Yes#></label>
 			<input type='radio' name='dblog_enable' id='dblog_status_dis' value="0" onclick="diag_change_dblog_status();" checked><label for='dblog_status_dis'><#checkbox_No#></label>
-			<label class="storeUSBHint"><input type="checkbox" name="dblog_tousb_cb" value="1" onclick="diag_change_storeUSB();" checked><#feedback_debug_log_inDisk#></label>
-			<span class="noUSBHint">* <#no_usb_found#></span>
+			<label class="storeUSBHint"><input type="checkbox" name="dblog_tousb_cb" value="1" onclick="diag_change_storeUSB();" checked>Store in USB disk<!--untranslated--></label>
+			<span class="noUSBHint">* No USB disk plug-in.<!--untranslated--></span>
 		</div>
 		<div class="dblog_enabled_status">
-			<span>* <#feedback_current_capturing#></span>
+			<span>* Diagnostic debug log capture in progress<!--untranslated--></span>
 			<br>
-			<span class="dblog_stop_text" onclick="dblog_stop();"><#feedback_cancel_capturing#></span>
+			<span class="dblog_stop_text" onclick="dblog_stop();">Cancel debug capture<!--untranslated--></span>
 		</div>
 	</td>
 </tr>
 <tr class="dblog_item_tr dblog_support_class">
-	<th><#feedback_current_log#></th>
+	<th>Currently Capturing Logs<!--untranslated--></th>
 	<td class="dblog_item_td">
 		<div class="dblog_disabled_status">
 			<label class="dblog_service_item all"><input type="checkbox" name="dblog_service_list_all" onclick="diag_change_service_list_all();"><#All#></label>
@@ -858,7 +862,7 @@ function dblog_stop() {
 	</td>
 </tr>
 <tr class="dblog_item_tr dblog_support_class">
-	<th><#feedback_capturing_duration#></th>
+	<th>Diagnostic debug log capture duration<!--untranslated--></th>
 	<td>
 		<div class="dblog_disabled_status">
 			<select class="input_option" name="dblog_duration"></select>
