@@ -118,8 +118,14 @@ function display_clients(clientsarray, obj) {
 	code = '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
 	code += '<thead><tr>';
 	code += '<td width="25%">Device</td>';
-	code += '<td width="37%">IP Address</td>';
-	code += '<td width="16%">Rx/Tx & RSSI</td><td width="12%">Connected</td>';
+	code += '<td width="29%">IP Address</td>';
+	code += '<td width="16%">Rx/Tx & RSSI</td><td width="10%">Connected</td>';
+	if (clientsarray.length > 1) {
+		if (clientsarray[0][8] != "")
+			code += '<td width="10%">Streams</td>';
+		else if (clientsarray[0][9] != "")
+			code += '<td width="10%">PHY</td>';
+	}
 	code += '<td width="10%">Flags</td>';
 	code += '</tr></thead>';
 
@@ -158,13 +164,30 @@ function display_clients(clientsarray, obj) {
 					ipaddr = clientList[mac].ip;
 			}
 			code += '<td style="vertical-align: top;">' + htmlEnDeCode.htmlEncode(ipaddr);	// IPv4
-			code += '<br><span style="margin-top:-15px; color: cyan;">'+ client[3] +'</span></td>';	// IPv6
-
+			if(client[3].length >34){
+				overlib_str = client[3];
+				client[3] = "..."+client[3].substring(client[3].length-32);
+				code += '<br><span style="margin-top:-15px; color: cyan;" title="'+overlib_str+'">'+ client[3] +'</span></td>';
+			}else
+				code += '<br><span style="margin-top:-15px; color: cyan;">'+ client[3] +'</span></td>';	// IPv6
 
 			code += '<td style="text-align: right;">' + client[5] + ' / ' + client[6] +' Mbps';	// Rate
 			code += '<br><span style="margin-top:-15px; color: cyan;">' + client[4] + ' dBm</td>';	// RSSI
-			code += '<td style="text-align: right;">' + client[7] + '</td>';	// Time
-			code += '<td>' + client[8] + '</td>';	// Flags
+			code += '<td style="text-align: right;vertical-align:top;">' + client[7] + '</td>';	// Time
+
+			if (client[8] != "") {
+				code += '<td style="vertical-align:top;">' + client[8] + ' ('+ client[9] +')';	// NSS + PHY
+			} else if (client[9] != "") {
+				code += '<td style="vertical-align:top;">' + client[9];	// PHY
+			} else {
+				code += '<td>';
+			}
+			if (client[10] != "") {
+				code += '<br><span style="margin-top:-15px; color: cyan;">' + client[10] + '</td>';  // BW
+			} else {
+				code += '</td>';
+			}
+			code += '<td style="vertical-align:top;">' + client[11] + '</td>';	// Flags
 			code += '</tr>';
 		}
 	} else {
@@ -341,7 +364,7 @@ function hide_details_window(){
 
 <div id="details_window"  class="contentM_details" style="box-shadow: 1px 5px 10px #000;">
 	<div style="margin: 15px;">
-		<textarea id="wl_log" cols="63" rows="30" class="textarea_ssh_table" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;" readonly="readonly" wrap="off"></textarea>
+		<textarea id="wl_log" cols="63" rows="30" class="textarea_ssh_table" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;" readonly="readonly" wrap="off"><% nvram_dump("wlan11b_2g.log",""); %></textarea>
 	</div>
 	<div style="margin-top:5px;margin-bottom:5px;width:100%;text-align:center;">
 		<input class="button_gen" type="button" onclick="hide_details_window();" value="Close">

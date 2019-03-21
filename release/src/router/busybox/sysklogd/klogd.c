@@ -294,7 +294,6 @@ int klogd_main(int argc UNUSED_PARAM, char **argv)
 			/* Log (only non-empty lines) */
 			if (*start)
 				syslog(priority, "%s", start);
-
 			if (!newline)
 				break;
 			start = newline;
