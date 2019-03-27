@@ -1,0 +1,10 @@
+*.orig
+*.diff
+*~
+*.o
+*.depend
+httpd
+test_apps
+bcmwifi_rates.h
+wlioctl.h
+wlioctl_defs.h

@@ -1,0 +1,11 @@
+*.o
+*.a
+stamp-h1
+Makefile
+config.h
+config.log
+config.status
+configure.lineno
+email.1
+email.help
+src/email
