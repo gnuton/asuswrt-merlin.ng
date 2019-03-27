@@ -1,4 +1,0 @@
-*.o
-*.dep
-udpxy
-util/mkdep

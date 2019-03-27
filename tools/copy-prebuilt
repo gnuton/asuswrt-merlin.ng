@@ -85,6 +85,9 @@ then
         cp -a release/src/router/www/sysdep/$MODEL $REPO/release/src/router/www/sysdep
         cp -a release/src-rt-6.x.4708/tc_fw/ $REPO/release/src-rt-6.x.4708/
         
+        # Not prebuilds
+        cp -a release/src/router/shared/sysdeps/* $REPO/release/src/router/shared/sysdeps/
+        
 elif [ "$MODEL" == "RT-AC86U" ]
 then
 	SDK="_94908hnd"

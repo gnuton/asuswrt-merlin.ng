@@ -1,8 +1,0 @@
-*.o
-*.so
-test_disk1
-test_disk2
-test_of_var_files
-test_share
-write_smb_conf
-write_webdav_conf

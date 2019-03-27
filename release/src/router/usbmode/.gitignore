@@ -1,5 +1,0 @@
-usbmode
-*.cmake
-Makefile
-CMakeFiles
-CMakeCache.txt

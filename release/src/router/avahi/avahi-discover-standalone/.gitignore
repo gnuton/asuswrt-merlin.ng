@@ -1,8 +1,0 @@
-avahi-discover-standalone
-*.o
-*.lo
-*.la
-Makefile
-#Makefile.in
-.deps
-.libs

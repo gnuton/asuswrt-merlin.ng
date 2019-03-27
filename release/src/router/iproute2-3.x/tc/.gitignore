@@ -1,5 +1,0 @@
-*.yacc.c
-*.lex.c
-*.output
-*.yacc.h
-tc

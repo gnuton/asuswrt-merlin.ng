@@ -1,9 +1,0 @@
-null-test
-txt-test
-*.o
-*.lo
-*.la
-Makefile
-#Makefile.in
-.deps
-.libs
