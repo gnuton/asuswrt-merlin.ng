@@ -1,0 +1,10 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: January 24, 2022
+Release: 386.04_0-gnuton1
+
+  - NOTE: AiMesh setup needs ethernet backhaul cable
+  - FIXED DSL-AX82U updated ADSL driver
+  - FIXED DSL-AX82U Allow manual upload for all variants 
+
+

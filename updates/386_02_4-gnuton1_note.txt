@@ -1,0 +1,13 @@
+Changes from the latest stable gnuton build (386.02_2-gnuton1):
+* webui: display both odmpid and productid on Sysinfo page if they differ
+* webui: fix new FW notification on AiMesh routers
+* Enable jitterentropy-rngd for non-HND models
+* openvpn: don't set incoming client TLS errors as a local server failure in nvram's errorno
+* Updated documentation
+* openvpn: Updated to 2.5.2
+* jitterentropy-rngd: fix crosscompiling on older GCC (For non-HND)
+* jitterentropy-rngd: update to 1.2.2 (library 3.0.3)
+* jitterentropy-rngd: build with -O0
+* Set version to 386.2_4 for a point release
+* Updated documentation
+* Merge tag '386.2_4' into dsl-master

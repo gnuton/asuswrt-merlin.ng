@@ -1,0 +1,2 @@
+Changes from the latest stable gnuton build (384.11_2-gnuton1):
+* fwupdate: FIX new firmwares with alphabetically bigger extendedno are not correcly detected

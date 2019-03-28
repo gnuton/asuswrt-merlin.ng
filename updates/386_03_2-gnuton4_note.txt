@@ -1,0 +1,8 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: September 29, 2021
+Release: 386.03_2-gnuton4
+
+  - ADDED: DNS over TLS support to VDSL WAN page
+
+

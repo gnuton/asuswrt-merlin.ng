@@ -1,0 +1,42 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: August 26, 2021
+Release: 386.03_2-gnuton1
+
+  - NOTE: closed down the Issue tracker on Github, as 90%
+          of it was people asking for technical support,
+          or failing to use the supplied submission form.
+  - NOTE: From now on DSL-AC68U trx images without DSL modem 
+          firmware will be provided at each release.
+	  Reason: Some ISPs may require older DSL modem fw.
+  - CHANGED: Re-disabled jitterentropy-rngd on non-HND
+             models.  It kept using CPU time every two
+             seconds and had a very marginal impact on
+             the entropy pool (which it never could push
+             above the target threshold of 1024).
+  - CHANGED: Moved the "Redirect Internet traffic" setting on
+             the OpenVPN Client page to the Network Settings
+             section to increase its visibility, as too many
+             users are forgetting to configure it.
+  - CHANGED: Display "Internet traffic not redirected" instead
+             of "Public IP Unknown" on the OpenVPN Client
+             status display when Redirect Internet traffic
+             is set to "No".
+  - FIXED: Only the first OpenVPN client would be used if
+           you had multiple clients connected and the first
+           one had a Redirect Internet set to "No".  Now,
+           setting this to "No" means that client's routing
+           table will no longer get a default gateway
+           configured, allowing traffic to be processed
+           by other RPDB tables if there wasn't a matching
+           route within that client's table.
+  - FIXED: IPV6-compatible DNSFilter servers weren't
+           properly configured in dnsmasq.
+  - FIXED: DNSFilter client rules may get corrupted after a
+           reboot.
+  - FIXED: Cake QoS for DSL-AX82U now works
+  - FIXED: QoS upload classification page now shows upload plot
+  - FIXED: WiFi Insight page under wireless tab has been enabled
+  - FIXED: DNSFilter has been enabled for DSL-AX82U
+
+

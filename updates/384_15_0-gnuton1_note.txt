@@ -1,0 +1,78 @@
+Changes from the latest stable gnuton build (384.14_2-gnuton1):
+* faketc: fix building for RT-AC87U
+* odhcp6c/rc: update to 1.1-97-ge199804
+* odhcp6c: use reconfigure accept option only if allowed by server
+* odhcp6c: fix loop where clients issue a RENEW and REBIND every ~1s
+* libconfuse: update to 3.2.2
+* rc: fix upnp on disconnected dual-wan interface
+* wsdd2: fix listening on dynamic interfaces
+* rc: implement wan-event; launch wan-start at the end of wan_start() now instead of on Connected events
+* wsdd2: implement -N and -G parameters from upstream
+* wsdd2: only retrieve missing parameters from smb.conf, in case one was already provided at runtime
+* Updated documentation
+* rc: fix wan-event script arguments
+* rc: replace wan-event event type with a string since numeric types may change in the future
+* Updated documentation
+* httpd: clarify that width are in Hertz, not in bits
+* odhcp6c: fix empty ORO and unblock DHCPV6_OPT_SOL_MAX_RT for request/renew/rebind
+* odhcp6c: partially revert 1bdbc8e4ef2a6cbae228ac479767c7b3c3c53edd
+* build: strip lldpd executables
+* Fix version string displayed by motd
+* curl: update to 7.67.0
+* curl: Fix build fails with CURL_DISABLE_DOH
+* rc: remove wan-start from its new location, and put it back where it used to be, for legacy compatibility
+* Updated documentation
+* rc: fix bad GPL merge
+* rc: remove no longer required kludge for STP on HND models
+* build: re-add cifs.ko module (lost with GPL 81044 merge)
+* other: implement get_webui_page() function in helper.sh
+* webui: add five mountpoints for user-provided webui pages
+* Merged with GPL 385-10002 (RT-AC68U)
+* Updated documentation
+* getdns: provide explicit path to OpenSSL 1.1.1 (fixes regression fom GPL 81044 merge)
+* rc: fail wanduck (and possibly other services) failing to start due to ate_mode check
+* rstats: revert some of the 384_81044 changes in an attempt to resolve the traffic spikes
+* webui: hide _0 extendno from firmware versions returned by cfg_sync
+* rom: update stun servers used by getrealip.sh
+* rc: fully disable wanduck DNS probing if disabled on the webui
+* rc: log if router is in manufacturing mode at wanduck launch
+* rc: only intercept udp requests to port 123, ntpd does not listen to tcp
+* httpd: implement support for storing third party settings into jffs storage
+* httpd: rc: locate addons content to a dedicated /jffs/addons/ folder
+* Updated documentation
+* webui: increase user mount points from 5 to 10
+* Updated documentation
+* Fix typos in 9b62157bf6 and bb8eac1432
+* build: fix /www/ext location on RT-AC86U (non-AX HND) to match other platforms
+* openssl-1.0: update to 1.0.2u
+* build: backport 384_81981 libfoo fixes
+* openvpn: backport fix from 384_81981
+* rc: Backport fixes from 384_81981.
+* shared: backport fixes from 384_81981
+* rom: nsswitch fixes backported from 384_81981
+* Updated documentation
+* rc: add am_addons RC flag to denote support for third party addons
+* Updated documentation
+* dnsmasq: update to 2.80-114-ge40d8be
+* shared: re-add QTN include lost in GPL merge
+* other: added amtm script
+* other: replace Entware setup script with link to amtm
+* other: add functions to helper.sh to get/set addon settings (developed by Adamm)
+* Updated documentation
+* amtm: implement curl timeout
+* rc: remove duplicate dnspriv from RC flags
+* Updated documentation
+* other: make get_webui_page() handle existing mounts, and use a global for returning its result; rename function to match namespace
+* httpd: remove RT-AC86U and RT-AC68U from kludge used for FW older than 384_81116
+* amtm: further streamlined the main script, some functions moved to external component
+* webui: fix incorrect variable name on OpenVPN server page (from 679c8b597610ca0ab0e4265dbefbd3a2d0526fd2)
+* Revert "openvpn: backport fix from 384_81981"
+* rc: fix dnsfilter IPv6 additions to dnsmasq.conf (#416)
+* rc: made dnsfilter server list a global; defined enums for list entries, and used these defines instead of hardcoded values
+* Updated documentation
+* httpd: improve connection acceptance and handling
+* httpd: fix malformed 200 OK status
+* Add files via upload
+* Merge pull request #419 from decoderman/master
+* Updated documentation
+* Merge tag '384.15-mainline' into dsl-ac68u-384.15
