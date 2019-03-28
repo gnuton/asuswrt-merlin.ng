@@ -26,6 +26,7 @@ jobs:
             pwd
             make clean || echo "maybe already clean, so if it fails please continue"
             make dsl-ac68u | tee "/tmp/build.log" # | grep -i "error\|-e"
+            make rt-ac68u | tee "/tmp/build.log" # | grep -i "error\|-e"
             ls ${PROJECT_DIR}/release/src-rt-6.x.4708/image/
       - run:
           name: Prepare workspace
