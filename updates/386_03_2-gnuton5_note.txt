@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: November 17, 2021
+Release: 386.03_2-gnuton5
+
+  - FIXED: regression in PPPoA for DSL-AX82U
+  - FIXED: DSL-AX82U added ip set kernel modules to make skynet working
+
+

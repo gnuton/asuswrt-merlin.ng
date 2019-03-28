@@ -1,0 +1,14 @@
+Changes from the latest stable gnuton build (386.02_1-gnuton1):
+* kernel41: remove debugging output from blog_request() stats output (fixes #734)
+* webui: validator.rangeFloat() should not reject values that are equal to the minimal allowed value
+* rc: fix incorrect ICMPv6 rate control rule
+* webui: fix client list search field showing wrong placeholder content
+* rc: harmonize jitterentropy-rngd code with upstream; fix stop_jitterentropy()
+* webui: various tweaks and fixes to the Firmware Upgrade page.
+* rc: rework ICMPv6 firewall handling
+* webui: don't remove QoS bandwidth settings from models without Cake support
+* rc: only rate-limit ICMPv6 type 128 if DoS protection is enabled
+* Updated documentation
+* Updated documentation
+* Merge tag '386.2_2' into dsl-master
+* dsl: fix: Moved ewan nvram vars outside RTCONFIG_FRS_FEEDBACK scope in shared/defaults.c so that can are part of the default ones and the UI can store them

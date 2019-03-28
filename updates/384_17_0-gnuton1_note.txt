@@ -1,0 +1,34 @@
+Changes from the latest stable gnuton build (384.16_0-gnuton2):
+* dnsmasq: update to 2.81rc5-31-gdb028b0-openssl
+* dropbear: sync accepted ed25519 support from upstream
+* build: bump header version to 385_20000 for models failing to update from newer stock releases
+* Make use of all icons in client-list.svg.
+* Fix typo during TM signature update
+* webui: completely remove Feedback page to ensure nobody is misusing it.
+* dropbear: Add Chacha20-Poly1305 authenticated encryption
+* dropbear: Fix CBC_MODE can't be fully disabled
+* dnsmasq: update to 2.81 (2.81-32-g93cb543-openssl)
+* dnsmasq: backport asus patches
+* dropbear: Fix short packet validation in AEAD mode
+* build: added RT-AX56U to the build script
+* build: Backport POSIX compliance from amcfwm
+* build: Remove extra newline
+* openvpn: updated to 2.4.9
+* curl: updated to 7.69.1
+* Merge pull request #478 from hitched97/icon-patches
+* Merge pull request #480 from Adamm00/master
+* Updated documentation
+* webui: fix DHCP reservation list switching sort direction with each addition
+*  webui: fix JS error when trying to sort DHCP reservations with MACs not present in the networkmap list
+* webui: clarified signature version field on firmware update page
+* webui: rework traffic meters layout on router status page
+* Updated documentation
+* openssl: update to 1.1.1g
+* nano: updated to 4.9.2
+* Updated documentation
+* Revert "Make use of all icons in client-list.svg."
+* Updated documentation
+* build: remove obsolete enforced version for AC88/AC3100/AC5300 which was overriding the one recently added to fix the rollover issue on FW update validation
+* curl: fix failure to use smtp authentication
+* Updated documentation
+* Merge tag '384.17-mainline' into dsl-ac68u-384.17

@@ -1,0 +1,10 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: October 07, 2022
+Release: 386.08_0-gnuton1
+
+  - NOTE: This release is only available for the DSL-AX82U and RT-AX92U.
+  - NEW: Added support for the RT-AX92U.
+  - FIX: FlexQOS for TUF devices.
+  
+

@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: June 01, 2023
+Release: 388.2_2_0-gnuton1
+
+  - UPDATED: Merged GPL 388_22582 for the ZenWifi devices
+  - UPDATED: Merged GPL 388_22525 for all routers but not Zen
+
+

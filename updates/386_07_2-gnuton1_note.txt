@@ -1,0 +1,11 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: August 07, 2022
+Release: 386.07_2-gnuton1
+
+  - NEW: Added support for TUF-AX3000
+  - UPDATED: Merged with 386_48966 GPL for all models
+  - FIXED: CPU freq in tool page for TUF-AX5400 and RT-AX95Q
+  - FIXED: WiFi insight page for TUF models
+  
+

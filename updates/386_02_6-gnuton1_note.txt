@@ -1,0 +1,2701 @@
+Changes from the latest stable gnuton build (386.02_4-gnuton1):
+* Initial commit of GPL 3.0.0.3.382_15098 for the RT-AC86U (minus the toolchain and IPK packages)
+* Remove extendno file from git
+* build: add gitignore files (first pass)
+* build: added gitignore files
+* build: use Asuswrt-Merlin's versioning scheme (closes #2)
+* build: rewrite target.mak to use our structure and with supported targets; disabled forced FW update
+* build: setup binary blob collections for httpd, rc and shared
+* libbcmcrypto: Add prebuilt blobs for HND
+* kernel41: Enable SYN cookies, CODEL and FQ_CODEL
+* merge: httpd, rc and shared from Asuswrt-Merlin 380.68 (minus shared/defaults.c)
+* shared: adjust changed default settings to AM380's values
+* shared: Add Asuswrt-Merlin-specific nvram settings
+* httpd: fix crashes post-merge in sysinfo("cpu.model") and when applying settings
+* httpd: implemented CPU and clock detection for BCM4906
+* merge: Merge webui from Asuswrt-merlin 380.68; removed unsupported models from webui for now
+* Add missing gitignore files; force some empty directories to git, needed by the build process
+* build: enable ANSI sequences for bash's echo, used by components separators shown during compile
+* rc: remove model-specific folders that we don't support
+* nano: add nano 2.8.7; fix ncurses build
+* rom: Merged router/rom from AM380
+* openvpn,lzo: Merge OpenVPN 2.4.3 and lzo 2.08 from AM380
+* curl: Merge curl 7.54.1 from AM380
+* dnsmasq: Merge dnsmasq changes and nettle (for DNSSEC) from AM380
+* curl: update library filename to 4.4.0, as used by curl 7.5.4, fixing install recipe
+* build: port AMs-specific options from AM380 to root Makefile and config files
+* others: merged changes from AM380
+* rc: tc is in a different location on HND, adjust qos.c path for the codel patch
+* build: add merlin options to RT-AC86U device profile
+* ssh: merge dropbear 2016.74 from AM380
+* ez-ipupdate: Merge changes from AM380
+* infosvr: Merge changes from AM380
+* samba36: Merge Samba 3.6.25 from AM380, as well as related libdisk changes
+* LPRng: Merge changes from AM380
+* mDNSResponder: merge changes from AM380
+* minidlna: merge minidlna from AM380
+* snmp: Merge snmp changes from AM380
+* tor: Merged tor 0.2.9.10 from AM380
+* openssl: on HND platform, re-enable engine support (required by Tor), and remove -Os switch that clashes with the -O3 switch used in the build recipe
+* mssl: merge changes from AM380
+* vsftpd: merge changes from AM380
+* iproute2-4.3: add realtc binary used by the fq_codel patch for Adaptive QoS
+* iproute2: merge fq_codel AdaptiveQoS patch changes from AM380 to Makefile
+* openvpn: implement default description names for all five OpenVPN clients
+* webui: remove header from Ethernet table on Network Map page
+* httpd: return empty string if failing to retrieve CPU temperature on HND platform
+* miniupnpd: Merge miniupnpd from AM380
+* lanauth: Merge Telenet's lanauth client from AM380
+* build: enable Samba 3.6.x on the RT-AC86U build profile
+* cstats: merged cstats from AM380
+* ebtables: Merge AM380 changes
+* libdisk: remove accidentally included .rej file
+* iproute2-3.x: remove iproute2-3.15 (used by Lantiq), added AM380's iproute2-3.19 (used by SDK6/SDK7 devices)
+* ipset: Merge ipset from AM380 (with lib dependencies)
+* kernel41: Enable ipset
+* iptables14: backport TRIGGER fix from AM380
+* samba36: adjust makefile for HND/glibc compatibility
+* cstats: fix compiling on HND platform
+* ipset_arm: don't build modules while building userspace components on HND, they're compiled at kernel build time (as aarch64)
+* syslog: set default log level to 7, same as AM380 (otherwise dnsmasq doesn't log anything)
+* openvpn: initial commit of open-source replacement for libvpn.so; removed Asus's prebuilt version.
+* openvpn: updated httpd and rc to use new libvpn functions
+* libvpn: fix get_parsed_crt() that wasn't properly locating PEM starting tag
+* shared: added default nvram for instanced OpenVPN settings
+* httpd: directly save openvpn key/certs to disk, resolves PEM truncating; enlarge passwd_dec buffers in httpd
+* openvpn: fix CA_EXTRA support in libvpn:get_ovpn_filename(), and on OpenVPN client webui page (for instances 3-5).
+* openvpn: remove get_parsed_crt() from shared and reset_ovpn_settings() from rc, and switch to libvpn functions.
+* build: add libvpn to httpd build recipe
+* httpd: remove dead code (previously moved to libvpn)
+* openvpn: set password-based authentication as default for server
+* httpd: properly set txrate as ?? on Wireless Log page if client isn't fully authenticated yet
+* ssh: store keys in /jffs/ to work around 1000 bytes limitation, and save on nvram
+* shared: remove duplicate console_loglevel default nvram
+* shared: removed some files created at build times
+* iptraffic: disable IPTraffic/cstats on HND platform
+* shared: adjust allowed length for various nvram parameter that were set to CKN_STR_DEFAULT (meaning 0, preventing from changing these through the webui)
+* shared: redefine CKN_STR_DEFAULT to 32 bytes instead of 0 bytes
+* webui: implement port status report for HND on Sysinfo page; add warning for models with RTK switch
+* samba: move smbd process to second core on RT-AC86U (exclude only the GTAC5300 rather than whole HND platform)
+* samba: enable SMB2 by default on HND platform, as it does not slow performance down
+* sd-idle: replace our former sd-idle implementation with Asus' own
+* sd-idle: fixed kernel 4.1 support, and enabled on RT-AC86U
+* webui: fix missing tabs on Parental Control page
+* openvpn: Don't skip adding the FORWARD accept rule on HND, or it will prevent LAN access
+* libvpn: move additional functions to it; fix second OpenVPN server instance
+* openvpn: define default NCP ciphers, with stronger ciphers for HND.
+* rstats: replace date check with nvram ntp check instead
+* shell: setup TZ env, so SSH users get the correct timezone
+* httpd: tighten file permissions around httpd's key.pem file
+* Implement support for fullcone NAT, with webui selector between symmetric and fullcone (RT-AC86U)
+* webui: remove leftover code from usb_idle on OtherSettings page
+* stealth mode: implemented RT-AC86U support
+* webui: show correct default value for tcp_timeout on HND
+* rc: re-align jffs format code with Asus
+* rc: make initial jffs2 SSL folder permissions more secure
+* httpd: set key/cert location to /jffs/ssl/; provide migration from Asus' /jffs/.cert/ location
+* Initial commit for documentation files
+* nfs: Merge NFS support from AM380; Implement NFS for HND platform; cleanup NFS webui a bit
+* Fix truncated URL in README.md
+* kernel41: add CIFS module
+* build: merge generic build environment changes from AM380
+* build: moved HND prebuilt binaries to separate folders, in preparation for non-hnd model addition
+* nt_center: fix build error, as there are no *.h files to copy from the prebuild dir
+* kernel41: fix inconsistencies in config_base
+* webui: integrate IPSEC server page in
+* ipsec: enable IPSEC/Strongswan on RT-AC86U (experimental)
+* iptables: fix building 1.4.x (was missing the BCM-specific features)
+* webui: Added Broadcom's visualization application on RT-AC86U
+* webui: fix https support on BCM's Visualization pages (mixed content errors)
+* Updated documentation
+* visualization: Enable for RT-AC86U
+* webui: Add IPSEC Client support
+* webui: move cert upload frame within the current display location
+* build: add missing /opt/var folder, which will be needed by Entware
+* webui: report status of packet runner and flow cache on Sysinfo page
+* webui: hide cache drop setting on OtherSettings page for HND
+* strongswan: don't build static libraries (they were included in FW image), strip files
+* kernel41: mm: remove gup_flags FOLL_WRITE games from __get_user_pages()
+* build,rc: don't generate a (bogus) ld.so.cache at build time, instead have the router generate it at boot time
+* ipsec: disable IPSEC on RT-AC86U as it doesn't work properly
+* busybox124: re-enable applets that were added in AM380
+* Merged with GPL 382_16466 (RT-AC86U)
+* qos: fixed fq_codel patching with Adaptive QoS
+* httpd: use Asus's new (now working) code for storing ovpn key/certs instead of ours
+* webui: fix retrieval of ca_extra cert for ovpn clients 3 through 5
+* entware: updated setup script for HND; provide a temporary local version of entware_install.sh with HND support
+* Added SUPPORT file for Github
+* Renabled SUPPORT file
+* Try to move it at the root then?  Github's documentation is conflicting on this...
+* entware: Implement installer for Entware-NG-3x, add required symlinks to buildFS (HND)
+* webui: display OpenVPN tab by default on the VPN Client page; rename Others tab to PPTP/L2TP
+* entware: revert HND platform to Entware-NG
+* webui: add option to disable Asusnat tunnel/AAE/Mastiff service
+* webui: rename Performance Tuning page to Temperature
+* webbui: moved UPNP Secure Mode setting from Other Settings->Tweaks to the WAN page
+* webui: remove obsolete hmac digests from OpenVPN server options (now matches Asus' own)
+* webui: implemented Asus's access type setting for OpenVPN servers
+* openvpn, webui: remove custom TLS mode, add keysize selector for self-generated key/certs; enhanced password-based auth interface
+* openvpn: set different default port/IP for OpenVPN server2
+* rc: use nvram_pf_*() calls in OpenVPN code, making it cleaner and simpler
+* rc: replace &buffer[0] references in openvpn with straight buffer, for better readability and reduced risk of errors
+* rc: replace get_parsed_crt() with new libvpn calls in the openvpn code
+* rc: additionnal cleanups, fixes and optimizations to openvpn code
+* busybox: update from 1.25.0 to AM380 1.25.1
+* busybox: revert spacing to original
+* busybox: fix gcc compatibiliy after befb2c926a2fa2dffebef83dea3a4a3001286d6b
+* busybox: fix dhcp max size for broken double tagging
+* busybox: mdev: create devices from /sys/dev
+* busybox: mdev: recover pre-2.6.26 kernel support
+* busybox: depmod.pl: prefer explicitly exported symbols
+* openvpn: do not enable server1 by default
+* build: remove unused patch folder
+* openvpn: mark traffic for FC bypass on HND
+* openvpn: fix DH support
+* libvpn: return correct filename for server_ca_key in get_ovpn_filename()
+* webui: minor tweaks to the ovpn key/certs page headings
+* httpd: fix a few compile warnings; fix an incorrect merge in the mime_handler array
+* openvpn: remove warning logged when configuring to accept user/pass auth without certificate (matches upstream code)
+* Updated documentation
+* webui: add popup helps added by Asus in 382 for OpenVPN parameters
+* webui: fix adding of a client without a networkmap entry to the TOR rerouted client list
+* rc: replace a few nvram_contains_word() sections with nvram_pf*() and strcmp() calls instead
+* dnsmasq: add new trust anchor for DNSSEC
+* rc: fix a few incorrect nvram_safe_get(buffer) calls in the openvpn code following the switch to nvram_pf_safe_get()
+* webui: moved OpenVPN key/cert edit link to its own row, and made it into a button, for improved visibility
+* lighttpd: don't pass random seed to gencert.sh (fix ported from AM380)
+* lighttpd: add Makefile.in that contains the AiCloud modules (missing from Makefile.am) (ported from AM380)
+* lighttpd: add new mod_aicloud_sharelink_parser module to Makefile.in
+* lighttpd: reuse build files from AM380
+* sw-hw-auth: create binary blob collections
+* Updated documentation
+* openvpn: define default NCP ciphers for OpenVPN clients
+* iproute2-4.x: fix location of config files
+* rc: enable rate report for HTB classifier on HND (for QoS stats report) (Closes #29)
+* webui: store the digest value instead of the digest label (was broken by 5c33d6607af2382c2593df914feeda9300751b1e)
+* openvpn: store custom configs base64-encoded
+* rc: implement boot time migration of VPN custom into base64-encoded custom2
+* webui: limit OpenVPN logging verbosity to 6 - higher levels require compiling OpenVPN with debug enabled
+* webui: allow dots in validator.safeName method
+* webui: improve/fix field validation on OpenVPN client and server pages
+* webui: fixed field validation on Tools->Other Settings page
+* webui: replace atob()/btoa() functions with replacements that can handle UTF8
+* build: removing memaccess, hoping nothing needs it.
+* openvpn: make helper scripts more robust to search path collisions
+* rstats: add missing parameter to _dprintf() call that might otherwise cause it to segfault
+* webui: add leading zero to DHCP lease values, for better layout and also fix sorting by remaining time
+* webui: fix incorrect access to qos_sched value when enabling QoS
+* webui: don't override rtkswitch port status with stale data, so we can use the updated values obtained through ajax
+* dnsmasq: update to 2.78
+* Merge AM380.68_4 SDK7114; merge RT-AC88U and RT-AC3100 binary blobs from GPL 382_15850
+* sdk7114: implement kludges for using SDK7114 binary blobs from 382_15850 with GPL 382_16466
+* rc: only use MASQUERADE --mode on HND platform
+* nfs: NFS fixes:
+* et: add missing et userspace tool on SDK7114
+* rc: fixed a few corner cases were stealth mode wouldn't be respected
+* iptables: added ipt_account userspace lib for non-HND
+* wlceventd: make prebuild sdk-specific rather than arch-specific
+* build: add gitignore so user-created toolchain symlinks won't get staged
+* bwdpi: fix prebuilt folder names for HND
+* dhd: add prebuilt dhd tool for SDK7114
+* openvpn: update to 2.4.4
+* openvpn: re-enable iproute2 support (lost in GPL382 switch), and fix build error caused by it
+* webui: minor improvements to OpenVPN pages
+* build: re-create HND impl symlink after make clean (fixes #16)
+* iptables-1.4.x: updated from 1.4.12.2 to 1.4.14 to match AM380
+* webui: move FTP WAN access just below the main enable switch
+* webui: replace tagescape() method with existing htmlEnDeCode.htmlEncode()
+* webui: move traffic monitoring-related functions from merlin.js to tmhist.js
+* webui: move get/setRadioValue() from merlin.js to state.js
+* webui: remove merlin.js, and add base64.js with the last remaining function in it
+* webui: reformat router operation mode
+* rc: make modprobe() quiet, since Asuswrt likes to modprobe modules that are built in the kernel on some models
+* fwupdate: add missing +x permission to version check script
+* fwupdate: revised firmware update check process
+* openvpn: the iproute2 version used by HND has "ip" located in /bin instead of /usr/sbin/ - fix it for OpenVPN
+* webui: hide SNMP config details if SNMP is disabled
+* webui: make 'sign in' a button instead of <div> (fixes #1488)
+* webui: report local and public/visible IP on the OpenVPN client page
+* Updated documentation
+* build: revised original build-all script for AM382 and HND, and added to this repository
+* build: moved buildtools to tools, otherwise it triggers another (missing) script from router/Makefile
+* protect_srv: push ARM prebuilt files (got filtered by gitignore) (close #34)
+* sdk7114: merge prebuilt components that got filtered out by git
+* sdk7114: update prebuilt binaries from GPL 382_15852 (RT-AC3100); add missing dhd24.o
+* entware: move Broadcom's scripts from /opt/scripts to /rom/scripts, and restore /opt to the same sane structure as pre-HND
+* entware: revert to standard install scripts, as they will work with the now standard /opt setup
+* build: remove test symlink related to Entware's changes that doesn't work anyway
+* build: fix location of zoneinfo folder so it gets added to FW image
+* Revert "shell: setup TZ env, so SSH users get the correct timezone"
+* downloadmaster: include packages in the firmware image, as some are missing from Asus's download servers
+* busybox1-24: logger: add -c option to enable console logging
+* Updated documentation
+* sdk7114: merge working binary blob for RT-AC88U
+* webui: add missing model-specific files for RT-AC88U and RT-AC3100
+* dhd,networkmap: add missing dhd and arpstorm exe recovered from firmware releases
+* nvram: implemented workarounds and safeguards for HND limiting non-Asus nvram additions to 255 chars max
+* openvpn: fix a few cases where we requested the incorrect certificate types at config time.
+* dnsfilter: free duplicated string after building iptables rules
+* httpd: remove unused variable
+* shared: fix nvram_split_get() and enable it
+* dnsfilter: split rules across multiple nvram on HND due to 255 chars limit
+* webui: add missing "Custom" DDNS type
+* Converted changelog-382.txt to Windows format (it's time for Microsoft to add UNIX EOL support to Notepad me thinks - everything else does already)
+* e2fs: add back tune2fs (to match AM380)
+* webui: fixed Ethernet table layout on Sysinfo page
+* webui: update OUI database
+* webui: fix OUI lookups
+* webui: DNSFilter - fix the "Add" button image, better identify the Client field as a MAC
+* rc: Do not prepend 3.0.0.4 to FW version (console boot log, and minidlna config file)
+* Updated documentation
+* kernel41: enable XT_SET kernel module
+* minidlna: remove USE_DAEMON option from config files, as it would sometimes get re-enabled (and it doesn't work)
+* openssl: update to 1.0.2l (1.0.2j from GPL was initially merged in for 382)
+* openssl: re-add make depend from AM380
+* libvorbis: add automake-1.11 support
+* Revert "libvorbis: add automake-1.11 support"
+* webui: remove username/password validation from code used for CUSTOM DDNS
+* wget: update to 1.19.2, fixing connectivity to some servers
+* wget: add files filtered out by gitignore
+* iptables: updated to 1.4.15 (fixes iptables-restore on HND)
+* HND: merge latest SDK files from GPL 382_18219, which should in theory include the KRACK fixes for that platform
+* webui: Convert HND CPU temperature from float to integer values
+* httpd: Retrieve max CPU clock on HND from bcm_cpuidle rather than kernel cpufreq (which was removed with last SDK update)
+* libvorbis: checkout files from AM380, as the AM382 files would often fail to configure/compile on ARM
+* Updated documentation
+* odhcp6c: sync with upstream
+* odhcp6c: fix IFA_F_* include
+* odhcp6c: md5: size-optimize the code, performance doesn't really matter
+* odhcp6c: dhcpv6: allow IA_NA mode downgrade with forced IA_PD
+* openvpn: when WAN comes up, start ovpn clients after iQoS/FW have been started
+* usb: disable USB3 interference reduction by default
+* qos: remove duplicate include (no code change) (closes #47)
+* build: add new deploy script used for Sourceforge and Onedrive
+* build: added confirmation request to deploy script; also upload documentation
+* httpd: write back the new cert instead of the one already in nvram/jffs
+* shared: set max length of vpn_client_addr to 128 chars, as it can be a hostname, not just an IP
+* libvpn: rewrite get_parsed_crt() to only work at the file level, resolving buffer truncate issue as well; made set_ovpn_key() create folder if needed, and changed way it raeds the data
+* libvpn: removed legacy nvram support, as we only support JFFS storage from now on
+* libvpn: make _set_crt_parsed() skip cert text and start at the PEM
+* rc: disable update checks if merlinupdate isn't enabled
+* build: rename deploy script to publish; fix documentation location; start/stop ssh agent
+* Updated documentation
+* openvpn: fix default nvram value for custom settings on server 1
+* Updated documentation
+* build: generate a separate sha256sums-382.txt file for 382 builds
+* kernel41: make xt_recent built-in instead of module
+* kernel: add module alias to modprobe.conf for cifs
+* modprobe: add aliases so xt_set and ipt_set both get automatically modprobed
+* rc: add support for postconf/custom config for mcpd
+* Updated documentation
+* openssl: updated to 1.0.2m
+* rom: install the correct version of TM sig update script when merlinupdate is enabled
+* Updated documentation
+* libvorbis: updated to 1.3.5
+* libogg: updated to 1.3.3
+* build: make sure that BUILDREV/MERLINUPDATE propagates to child build processes
+* httpd: use WAN interface instead of hardcoded eth0 when retrieving QoS stats
+* rc: close file handle only after calling ferror()
+* rstats: reduced amount of console spam from debugging output
+* webui: swapped Traffic Analyzer and Monitor tabs, reverting to 380.xx order
+* webui: replace remaining is_string() calls (which no longer exist) with validator methods.
+* shared: increase wan_clientid and vendorid max len to 128
+* shared: increase default var len from 32 to 1024 characters
+* httpd: log nvram_check failures to syslog
+* webui: remove extra line leftover from copy/paste (close #49)
+* webui: accept ":" as valid character for validator.safeName()
+* webui: re-sync AiProtection page with Asus's GPL
+* samba36: Chain code can return uninitialized memory when talloc buffer is grown. (fixes CVE-2017-15275)
+* samba36: Prevent client short SMB1 write from writing server memory to file. (CVE-2017-12163)
+* samba36: only fallback to anonymous if authentication was not requested (CVE-2017-12150)
+* samba35: Chain code can return uninitialized memory when talloc buffer is grown. (fixes CVE-2017-15275)
+* samba35: Prevent client short SMB1 write from writing server memory to file. (CVE-2017-12163)
+* samba35: only fallback to anonymous if authentication was not requested (CVE-2017-12150)
+* Updated documentation
+* samba35: fix incomplete eef9356af43827f7fee55e5ad1391055bc8d3b84 merge
+* nvram: split dhcp_staticlist into 10 nvrams on HND platform to work around the 1000 chars limitation
+* sdk: merge wifi components from GPL382_18991 (AC88U and AC3100)
+* Updated documentation
+* openssl: add a few missing files (were filtered out by gitignore)
+* SDK7114: merge GPL 382_18991 (with RT-AC88U and RT-AC3100 binary blobs)
+* webui: change extended nvram split code to use a pointer instead of static values
+* httpd: show details of active certificate instead of the stored one (matches with Asus)
+* httpd: adapted our SSL cert support with Asus's new LE support
+* webui: remove survey scan mode selector (that code is now closed source, so that feature can no longer be implemented)
+* rc/httpd: ensure that we remove any previous ssl cert when in le_enable mode 2 (persistent cert), so if there is no persistent cert stored then one will be generated and stored instead of the previous non-persistent self being reused
+* webui: moved our ssl cert settings to the DDNS page when Let's Encrypt is supported so they are all regrouped together
+* webui: re-format operational modes list like before the GPL 18991 merge
+* webui: implement IPSec Server report on VPN Status page
+* Updated documentation
+* rc: update prebuilt binary blobs for AC88 and AC3100 (from 382_18991)
+* httpd: prevent httpd crash in ej_get_wan_lan_status() when ATE returns an error
+* SDK637: Merge BCM4708 SDK + RT-AC68U binary blobs from GPL 382_18881
+* lighttpd: provide separate prebuild modules for HND
+* httpd: rewrite ej_get_wan_lan_status()
+* rc: adjust bwdpi_restart_vpn_services() to our OpenVPN architecture
+* Updated documentation
+* webui: fix HND wan/lan portstatus parsing for Sysinfo page
+* HND: Merge SDK + RT-AC86U binary blobs from 382_18848
+* openssl: update to 1.0.2n
+* tor: updated to 0.2.9.14
+* openvpn: give priority to DNSVPN rules over DNSFILTER in PREROUTING chain
+* tor: regenerate aclocal.m4
+* openvpn: disable rp_filter in the firewall script instead of the vpnrouting script
+* openvpn: Asus no longer uses resolv.conf in dnsmasq - make OpenVPN use resolv.dnsmasq instead
+* webui: fix mistyped variable name
+* strongswan: remove prebuilt openssl objects
+* Updated documentation
+* rc: don't try to init/start ipsec at boot time unless it's enabled
+* webui: fix typo in var name on DNSFilter page
+* ctf: merge updated binary blobs from GPL 18991
+* rom: fix zoneinfo directory location in Makefile (revert Asus change from 382_18991 which is broken)
+* strongswan: compile with -O3 optimization
+* webui: fix field names on DDNS page
+* webui: validator: provide regexp to RegExp() as constructors instead of strings, otherwise the "-" character isn't properly escaped.
+* nano: updated to 2.9.1
+* Updated documentation
+* minidlna: remove scantag once done when doing a rescan rather than a rebuild
+* Updated documentation
+* httpd: enable Let's Encrypt support on the RT-AC68U
+* Revert "nvram: split dhcp_staticlist into 10 nvrams on HND platform to work around the 1000 chars limitation"
+* webui: fix validator regexp for IE11
+* shared: implement nvram_split_set()
+* nvram: split OpenVPN Custom field into three nvrams on HND, increasing its max length from 170 to 510 characters
+* webui: display HTTPS cert settings on the DDNS page at all time, warning user about DDNS being required for LE support
+* Webui: add missing element ID for headings on Traffic Monitor pages
+* webui: add help popup for OpenVPN clients Accept DNS setting
+* rc: fix /etc/shadow entries so accounts passwords won't be marked as expired, and also properly disable account expiration
+* firewall: remove any pre-existing rule before adding the tunnelbroker ping rule
+* shared: define the aae_disable_force nvram for all models, since webui has no rc_support flag to rely upon
+* bb125: enable ls color by default (to match Asus)
+* miniupnpd: updated with git snapshot from 20171212
+* curl: updated to 7.57.0
+* openvpn: better identify instances in syslog entries (somewhat similar to upstream)
+* kernel: include cifs kernel module
+* shared: remove duplicate definitions for dns_probe*, with the second instance missing arguments such as var size
+* firewall: move OpenVPN rules to a separate chain and relocate them within the INPUT/FORWARD chains
+* webui: Fix error in detecting filename of uploaded key/certs
+* webui: Also fix key/cert filename detection in the new 382 location
+* SDK637: add RT-AC56U binary blobs
+* www: add RT-AC56U model specific files
+* build: add RT-AC56U build profile
+* SDK637: update SDK/kernel with GPL 382_18991 changes
+* Updated documentation
+* webui: remove link to non-existing script from temperature monitor page
+* cstats: reduce amount of console spam, and optimize size
+* build: update build profiles to match upstream: add LED_ALL (RT-AC56U), remove MODEMPIN and JFFS2 (no longer used)
+* webui: remove annoying warning from console about unreachable code in help.js
+* rc: make the Quantenna watchdog only reboot on three consecutive ping failures rather than three isolated incidents
+* bwdpi: update libbwdpi to 18991 version (fixes among other things the "tc qdisc dev dev" typo)
+* qos: improve debug logging from codel patch
+* rc: don't remove codel_patch when stopping QoS to prevent timing issues
+* bwdpi: fix incorrect "tc qdisc dev dev eth0" command for HND (hex-edited libbwdpi.so)
+* shared: webui: increase max DHCP static list length to 2999 chars
+* cstats: use get_lan_hhwaddr() to retrieve MAC address
+* build: updated build/publish scripts
+* firewall: don't drop ovpn traffic sent to wan along the rest of foreign outbound traffic
+* webui: reworked OpenVPN server client list display
+* httpd: hardcode WAN interface as eth0 for Adaptive QoS upstream data gathering
+* lighttpd: copy the correct prebuild architecture at build time for HND
+* httpd: Use get_wan_ifname() for QoS WAN interface on HND platform.
+* dnsmasq: add missed 2.78 files
+* dnsmasq: ignore reserved hostnames from broken dhcp clients (Samsung TV)
+* ipv6: rc: fix default /etc/hosts entries
+* bumped version to 382.3 alpha 1
+* Merged with GPL 382_19466; added SDK 7.x support (RT-AC3200)
+* webui: fix incomplete GPL merge on the DHCP static lease page.
+* Merge binary blobs + SDK changes for RT-AC68U from GPL 382_19333 (seems compatible with GPL 382_19466)
+* Updated documentation
+* webui: fix Wireless config pages failing to load if SSID or PSK contained quotes
+* rc: erase new FW availability info from nvram at boot time
+* rc: reuse RT-AC68U bwdpi binary blobs for the RT-AC56U
+* build: moved model-specific prebuilt components outside of the models/ folder
+* Merge with GPL 384_10007 (RT-AC86U).
+* webui: remove AiMesh support from webui
+* rc: vpn: fix dns & broadcast relay for pptp clients
+* Updated documentation; migration from AM382 to AM New gen to reflect that this branch covers 384 and beyond as well
+* build: updated custom build scripts for new repo name
+* build: add script that I use to copy prebuilt blobs from a new GPL release
+* Merge binary blobs from 384_10007 for RT-AC68U
+* Add misc files missing from previous GPL merges (SDK7.main and a few others)
+* SDK637: merge SDK/kernel changes from 384_10007
+* SDK7114: merge binary blobs from 384_10007 (RT-AC88U and RT-AC3100)
+* SDK7114: merge SDK/kernel changes from 384_10007
+* build: fix formatting and a few paths in the copy-prebuilt script
+* Updated documentation
+* curl: drop local-generated stuff, fix .gitignore
+* lldpd: add missing files
+* busybox: modprobe: implement /lib/modules filesystem root option
+* build: disable git tagging that might happen if RCNO is set to a non-empty string
+* webui: rework the Site Survey page for models with AMAS enabled
+* webui: hide AiMesh from QIS
+* Revert "httpd: Use get_wan_ifname() for QoS WAN interface on HND platform."
+* http: add possibility to change default http port & related fixes
+* webui: when being asked to change default password, also apply the change to the systemm so it comes into effect
+* rc: firewall: fix tcpmss over ppp & tunneled ipv6 transports
+* rc: remove legacy 1.xxx Trend Micro signature files if present
+* openvpn: increase allowed clients to 5 on RT-AC3200
+* build: drop /asus_jffs unless required
+* httpd: fix httpd startup on default https port
+* rc: firewall: create FUPNP filter chain for default rules
+* wtf: remove unused files
+* webui: fix a number of missing/incorrect HTML tags
+* httpd: fix buffer overrun in ej_update_variables() (fixes CVE-2018-5721)
+* rc: preserve local, linklocal & mcast routes
+* webui: fix typo in VPNStatus's HTML code
+* other: fix parenthesis escaping in helper script
+* webui: fix quoting and formatting on VPNStatus page
+* SDK637: merge RT-AC56U binary blobs from 382_50010
+* kernel: merge CTF/PPPoE fixes to 6.37; merge bridge multicast fixes to 6.37/7.14/7.x.
+* rc: comment out RT-AC56U-specific logging that doesn't work properly
+* webui: add AiMesh-related notice on FW update page if model isn't AiMesh-capable
+* bwdpi: update SDK637 components to be in-sync with kernel backports from 382_50010
+* networkmap: prebuild are platform-specific (due to wifi info retrieval), so separate and provide prebuilts for all separate platforms
+* kernel: merge CTF/PPPOE fixes for SDK7.x (RT-AC3200)
+* kernel: merge CTF/PPPoE fixes for SDK7.14
+* webui: fix DST end month being set to 1 instead of 10 (backport from 382_50010)
+* Revert "webui: when being asked to change default password, also apply the change to the systemm so it comes into effect"
+* Updated documentation
+* bwdpi: split RT-AC56U and RT-AC68U libbwdpi.so as they're different
+* bwdpi: libbwdpi.so seem different between every models, so split them into model-specific folders, and refresh content from GPL drops
+* build: update copy-prebuilt for model-specific libbwdpi.so collection
+* make: fix libtools error during libogg build
+* ipset_hnd: update kernel components to 6.32
+* ipset_hnd: update kernel 4.1 compatibility header
+* ipset_hnd: fix nested structure references in xt_set
+* ipset: Handle building for both 2.6.36 (ARM) and 4.1 (HND) out of one single ipset code tree
+* networkmap: include arpstorm into image
+* rom: move nvram call at the top so it won't overwrite the wget result
+* nano: updated to 2.9.3 (closes #73)
+* nano: locate nanorc file to /jffs/configs allowing users to provide their own config file
+* rc: remove unused variable from stop_nat_rules()
+* Updated documentation
+* httpd: gencert.sh: also generate the cfgsync certificate
+* webui: fix FAQ linking for people not using the DUT hostname to access the webui
+* webui: fix FAQ links on OpenVPN server page
+* webui: fix scrollbar positioning on Site Survey for native 384 models under Firefox
+* rc: firewall: fix NSFW rules while in blacklist mode
+* shared: disable roaming assistant by default on AMAS models since we don't currently support AMAS
+* rc: merge lan.c from 384_20287, including fixes for Repeater mode
+* Updated documentation
+* cfgsync: hex-edit key.pem to use key.cfg instead
+* cfgsync: move cert generation to a dedicated script, and generate it at service launch
+* webui: don't insert FAQ urls into disabled links on OpenVPN server page
+* Added legal disclaimer regarding proprietary components
+* Webui: immediately apply new password on initial password change
+* webui: use double quotes around VPN client list to reduce chances of broken JS code
+* doc: "licence" is French, English would be "license".
+* Updated changelog
+* Merged with GPL 384_20379 (RT-AC88U)
+* Merge SDK 7114 files and binary blobs for RT-AC3100 and RT-AC5300 (GPL 384_20379)
+* build: add build profile for RT-AC5300
+* Updated documentation
+* Merge GPL 382_50010 components for RT-AC3200 and RT-AC56U
+* Merge binary blobs & SDK for RT-AC68U (GPL 382_20308)
+* Merge HND and RT-AC86U binary blobs (GPL 384_20308)
+* build: fix a few paths in copy-prebuilt script
+* Merge RT-AC87U components, and add build profile
+* Fixed typo in README.proprietary
+* bwdpi: revert SDK637 files to non-QTN builds
+* Updated documentation
+* webui: fix incomplete merge of the GPL 20379 wifi ACL page
+* Merge pull request #82 from RiJo/patch-1
+* bwdpi: update RT-AC3100 libbwdpi from GPL 20379
+* webui: rework DNSFilter page
+* kernel: rc: revert bridge multicast changes from GPL 20379 as they break DLNA streaming
+* rc: libdisk: tighten security around some of the system config files found in /etc
+* strongswan: re-add precompiled openssl static AARCH64 libs for Strongswan
+* strongswan: use static OpenSSL libs when building for the HND platform
+* strongswan: Enable IPSEC on the RT-AC86U
+* Updated documentation
+* rc: ensure that IPSEC configs are always copied to /etc/ at boot time
+* rc: fixed formating (no code change)
+* webui: add RT-AC87U system-specific files
+* webui: add RT-AC5300 system-specific files
+* httpd: fix system log being sent twice to clients when building with IPSEC support enabled
+* libvpn: commit back to flash when resetting OpenVPN client to default
+* rc: preserve guest settings for ssid broadcast and ap isolate
+* bwdpi: update RT-AC5300 libbwdpi with 20379 GPL's
+* webui: clarify the SMB2.0 settings labeling
+* rc: watchdog wasn't checking the correct nvram entries on DDNS checks (close #81)
+* samba: make SMBv2 + SMBv1 the default, and add a SMBv2-only option
+* webui: only check for ntfs parse setting change if supported by model, otherwise can incorrectly trigger a reboot
+* telnet: removed telnet server
+* Updated documentation
+* strongswan: further optimizations to the bundled openssl static libs
+* snmpd: disable support on the RT-AC86U as it's currently incompatible (ref: issue #92)
+* lldpd: hide log entry generated when wifi interface is down
+* webui: fix AiProtection site block label on Italian version, would break the page layout
+* Updated documentation
+* webui: accept single-char hostnames in validator.hostName() (closes #71)
+* letsencrypt: separated libs into platform-specific folders, added HND version from GT-AC5300 GPL
+* letsencrypt: enabled support for RT-AC86U
+* wps: update RT-AC3200 WPS monitor with exe extracted from firmware release (was missing from GPL)
+* Revert "cfgsync: move cert generation to a dedicated script, and generate it at service launch"
+* firewall: remove Merlin NAT loopback
+* rc: fix tab spacing (to sync with GPL)
+* Updated documentation
+* Merge with GPL 384_20379 (last GPL merge was actually 384_20309 - wrong GPL tarball was used)
+* Revert some of the 20379 changes specific to the RT-AC68U (which still uses 20308 binary blobs)
+* Refresh RT-AC88U binary blobs from (real) GPL 20379
+* qos: streamline faketc script
+* rc: revert check_asus_jffs(() calls from GPL 20379 as it does not exist in older binary blobs
+* rc: remove another function that does not exist in pre-379 binary blobs
+* build: copy-prebuilt: fix bwdpi path; make model checks lower-case to be similar to build-all
+* upnp: do not restart miniupnpd on ntp initial sync
+* build: copy-prebuilt: fix casing for some models
+* rc: miniupnpd: re-add miniupnpd restart on first ntp sync, but move it after a 15 secs wait
+* sd-idle: re-add some of the logging Asus removed
+* Updated documentation
+* httpd: restart daemon after the user upload a new SSL certificate
+* webui: fix broken DST offset parser (Asus bug in 20379)
+* webui: update Site Survey page for AiMesh-capable models to use the new wlc_scan_state values from GPL 20379
+* httpd: gencert: no longer generate cfgsync cert (now handled by cfgsync itself)
+* rc: when preparing httpd key/cert from a stored pair, also generate server.pem with them for AiCloud
+* rc: move services-start custom script to the very end of start_services()
+* sd-idle: fix spindown/up logging
+* entware: point setup script to the new Entware installers (following the NG/3X repos merge)
+* entware: add 64-bit support for HND platform
+* httpd: check that opendir() succeeded, otherwise httpd would crash
+* Updated documentation
+* rc: fix potential resource leak in case of an error creating the openvpn passwd/shadow/group files
+* entware: fix output redirection when backing up the JFFS partition
+* webui: add link on the Administration page pointing at the DDNS page for certificate management
+* Updated documentation
+* webui: fixed QoS overhead preset list
+* httpd: fix potential crash on NULL pointer and potential buffer overrun in do_qis_default()
+* openvpn: updated to 2.4.5
+* dropbear: updated to 2018.76 (with default options)
+* dropbear: reapplied our customized options in the new localoptions.h file
+* Updated documentation
+* bb125: provide tty, depmod and blockdev, and enable fdisk support for large disks, to be closer to what bb124 (HND) provides
+* busybox: move HND platform to busybox 1.25.1 (same as other models)
+* httpd: implement wrapper around check_blacklist_xss() to protect against buffer overruns
+* webui: display security warning when enabling WAN access to the router's webui
+* openvpn: revised server settings to simplify them
+* openvpn: migrate rgw and plan settings to the new client_access nvram at boot time
+* openvpn: remove option to enable/disable listening to DNS for clients connecting to our server, and merge that functionality with the existing Push DNS option (pdns)
+* Updated documentation
+* openvpn: remove server cron job code (from the old "poll" setting)
+* libvpn: also remove autostart when resetting ovpn instance to default values
+* openvpn: cleanup unused/broken options from OpenVPN client settings
+* webui: remove unused help strings for NAT loopback and OpenVPN Polling
+* Updated documentation
+* openssl: updated to 1.0.2o
+* Merged with GPL 384_20624 + binary blobs (RT-AC68U)
+* rc: re-enable functions calls that require 384_20379 binary blobs for models which are up-to-date
+* Revert "Revert some of the 20379 changes specific to the RT-AC68U (which still uses 20308 binary blobs)"
+* Merge binary blobs for RT-AC86U (GPL 384_20467)
+* Updated documentation
+* rc: remove ATE_BRCM_FACTORY_MODE() calls as they fail with these older binary blobs, causing envrams to be constantly restarted every second
+* httpd: fix build failure on SDK7114/SDK7 due to missing macro (incorrect ifdef)
+* wl: provide model-specific copies of the wl exe for SDK 7114
+* rc: remove unused variables in openvpn.c
+* rc: fix parsing of new fw version string so it gets properly logged to syslog
+* build: don't enable dblog for RT-AC3200 yet, we'll need newer binary blobs for that
+* HND: merge SDK/kernel changes from 384_20467
+* Updated documentation
+* httpd: fix get_scan_escan() not properly clearing file descriptor on exit
+* rc: re-disable Feedback support (was re-enabled in last GPL merge)
+* webui: add option to enable name resolution for netstat-nat on Netstat tool page
+* webui: reverted Connection Status page to Asus's implementation; removed webui_resolve_conn setting
+* dnsmasq: (upstream) DNSSEC fix for wildcard NSEC records. CVE-2017-15107 applies.
+* dnsmasq: (upstream) Fix infinite retries in strict-order mode
+* dnsmasq: (upstream) Use SIGINT (instead of overloading SIGHUP) to turn on DNSSEC time validation
+* dnsmasq: (upstream) Fix DNSSEC validation errors introduced in 4fe6744
+* dnsmasq: (upstream) Fix search_servers() segfault with DNSSEC
+* rc: use SIGINT to signal dnsmasq that it can now start processing dnssec timestamps
+* rc: Traditional QoS fix
+* rc: firewall: validate that we have a valid DMZ IP before trying to use it in iptables
+* miniupnpd: updated to git snapshot from 20180314 (includes monotonic clock changes)
+* rc: ntp: no longer restart miniupnpd on first time sync
+* Merge pull request #123 from cedric-dufour/master
+* build: bump RT-AC68U header signature
+* minidlna: re-enable support for the status page (was disabled by GPL 18991)
+* samba: Don't start samba if sharing is disabled and master browser/WINS are enabled, to prevent unwanted sharing
+* webui: added warning about loss of configuration parameters when formating the JFFS partition
+* webui: reorganized settings on OpenVPN Client page
+* rc: openvpn: re-implement watchdog service
+* nano: updated to 2.9.5 (closes #115)
+* Updated documentation
+* webui: fix duplicate element ids on OpenVPN server page
+* rc: openvpn: set server state to -1 if failing to start (due to syntax errors for example)
+* webui: moved beta channel setting from FW update page to Tools, and improved layout
+* webui: strip trailing port if present on table.js ip sort method
+* httpd: webui: replace Connections log page content with a table object, with sortable columns
+* rc: no longer send empty DHCP option 252 (WPAD) by default, controlable through nvram
+* Revert "rc: openvpn: re-implement watchdog service"
+* rc: move crond loglevel from 8 to 9 (debug)
+* rc: re-implemented OpenVPN watchdog through a cron job
+* rc: add missing quote in the commands used to generate the temprootfs
+* rc: openvpn: move postconf execution to after generating the firewall script (but before executing it)
+* shared: add optional second argument to run_custom_script_blocking()
+* rc: implement service-event custom script
+* Updated documentation
+* openssl: compile with -DOPENSSL_NO_BUF_FREELISTS
+* Revert "openssl: compile with -DOPENSSL_NO_BUF_FREELISTS"
+* openssl: set OPENSSL_NO_BUF_FREELISTS explicitely for the main openssl version
+* rc: remove compiler warning from openvpn.c
+* shared: implement max wait time of 120 seconds on blocking custom scripts
+* dhd: include userspace dhd tool on RT-AC86U
+* miniupnpd: updated to 20180412
+* Revert "lldpd: hide log entry generated when wifi interface is down"
+* Merged with GPL 384_20648 + binary blobs for RT-AC68U
+* Updated documentation
+* webui: expose HTTPS cert management on the System page if router is not in router mode (where we have no visible DDNS page)
+* rc: remove log entry generated each day as disk_monitor's daily trigger occur
+* openvpn: increase allowed key/cert size to 7999 characters
+* webui: added "refresh" link next to OpenVPN client's public IP
+* Updated documentation
+* webui: add missing preferred_lang id to one of the forms on the OpenVPN Server page
+* Merge RT-AC5300 binary blobs (GPL 384_20648)
+* Updated documentation
+* Revert "webui: fix https support on BCM's Visualization pages (mixed content errors)"
+* Merge RT-AC86U binary blobs and SDK from GPL 384_20648
+* sdk7114: merge minor change missed in previous GPL merge
+* webui: re-add beta_firmware_path_span block on Firmware update page to prevent JS errors
+* shared: Allow up to 7 chars for dhcp_lease value
+* webui: use CSS for block spacing on VPNStatus page instead of <br> tags
+* webui: set textarea_ssh_table font to Courier/monospace
+* webui: explicitely disable spellchecking on textarea fields containing key/certs/config options
+* webui: limit SSHD auth key field to 2999 characters, in-line with the limit set by libshared
+* webui: if refresh_ipsec_data() fails then don't set up a timed call to it, as there's already one being set at the end of that function
+* rom: Increase timeout for gettunnelip's ministun call; set VPN IP to "unknown" if connection fails
+* openvpn: Updated to 2.4.6
+* busybox: remove wget applet since we have the full wget package
+* webui: don't calculate remaining lease time on UPNP - currently broken by switch to monotonic clock
+* shared: fix empty wan/lan/2g hwaddr on gmac3-enabled models
+* miniupnpd: fix SSDP socket binding to wrong interfaces
+* rc: make upnp uuid persistent
+* rc: keep persistent dlna uuid & serial format, follow 1b23b3335af5f152cf126c9d7dac522e47272130
+* Updated documentation
+* webui: firmware_path can be either "0" or "" when set to the stable channel - check both
+* webui: explicitely set textarea_ssh_table font size to 13px
+* libletsencrypt: updated with builds from 384_20648
+* build: copy-prebuilt: added libletsencrypt
+* strongswan: patch for CVE-2017-9022, CVE-2017-9023, CVE-2017-11185
+* miniupnpd: updated to 20180502 (includes monotonic clock fixes)
+* httpd: signal miniupnpd to dump an up-to-date lease list
+* webui: display remaining time left on UPNP leases, now stored as remaining time instead of a timestamp
+* webui: look up for firmware_path nvram rather than the checkbox that's no longer on that page
+* kernel41: Add USB HID support
+* build: include HID modules in firmware images
+* kernel: tweak input class modules, removing mouse/joystick support
+* Updated documentation
+* iptables: add missing ip6tables-save applet (closes #142)
+* miniupnpd: updated to 20180503 snapshot
+* webui: autofill DST start/end time on timezone select; update a few outdated DST times
+* Updated documentation
+* dnsmasq: webui: revert WPAD handling to default to the old default behaviour; expose setting on the Other Settings page
+* rc: increase buffer size to allowed length for ct_tcp_timeout
+* kernel: enable HIDRAW and USB_HIDDEV for UPS support in apcupsd
+* httpd: only allow the administrator user to log in
+* httpd: webui: split IP from port on the Connection Status page, allowing port field to be sortable
+* miniupnpd: Update to release 2.1 (20180508)
+* Updated documentation
+* Updated documentation
+* dnsmasq: ra: fix absence of old prefix annoucements on address lost/flush
+* entware: download installer scripts over https
+* kernel: ipv6: revert 'administrative down' address handling changes.
+* rc: stop playing with ipv6 ll/loopback addrs after 9ed0ebedacb60e78316ae5053b3eb57d670b16fa
+* shared: fix ipv6 ll routes lost after address reset
+* shared: fix ipv6 gateway address detection
+* rc: fix lan_ifname value memleak
+* nano: updated to 2.9.7 (closes #147)
+* busybox: enable netstat -p support
+* curl: updated to 7.60
+* webui: fix WTFast login when accessing webui over https
+* webui: force WTFast to always use https when loging in
+* rstats: re-enable BCM530X0-based traffic monitoring on supported models
+* webui: allow click-selecting text on AiProtection/Parental Control pages
+* Updated documentation
+* openvpn: webui: added AES-*-GCM ciphers to the available legacy ciphers
+* rc: do not check for mastiff process in watchdog if it's forced disabled
+* kernel 2.6.36: netfilter: fix u32 match
+* dnsmasq: update to 2.80test2-17-g51e4eee
+* dnsmasq: reapply custom changes except cache
+* Updated documentation
+* Merge with GPL 384_20942
+* build: fix copy-prebuilt script that was trying to use lower-cased model specific destinations for prebuild blobs
+* Merge RT-AC88U, RT-AC3100 and RT-AC5300 binary blobs (384_20942)
+* httpd: merge httpd.c from 20942
+* httpd: implement kludge for missing updated pwenc.o for some models
+* Merge binary blobs + SDK 6.37 for RT-AC68U from GPL 20942 (minus missing httpd)
+* Merge binary blobs for RT-AC3200 from GPL 382_50470
+* Merge binary blobs + SDK for RT-AC86U from GPL 20942 (minus missing httpd)
+* Properly merge 20942's httpd.c and implement kludges when necessary (due to mismatched binary blobs)
+* wtfast: removed from RT-AC88U/AC3100/AC5300 since it crashes with curl 7.60
+* dnsmasq: implemented DNS rebind protection
+* Updated documentation
+* Remove APP-IPK source files (unused)
+* Merge with GPL 21045
+* Merged AC3100/AC5300 binary blobs from 21045
+* Merge RT-AC88U driver from 21045
+* httpd: kludge to fix language changing on models with incompatible binary blobs
+* dnsmasq: log packet resize reports at debug level instead of warning since they are too frequent
+* dnsmasq: rc: in addition to private IP reverse lookups, also filter out non-FQDN hostname forward queries from being sent to upstream servers, unless told otherwise
+* httpd: updated binary blobs for the RT-AC86U (from fixed GPL drop); updated kludge accordingly
+* rc: usb_modem: fix option module load
+* usb modem: fix uqmi startup with username/password set
+* rc: skip second plain names forward restriction with no domain
+* Merged AC68U binary blobs from 21045 ; updated kludges
+* Merged AC56U binary blobs from 382_50624 ; updated kludges
+* Merged AC3200 binary blobs from 382_50624 ; updated kludges
+* build: Updated RT-AC3200 build profile to match with 382_50624
+* Updated documentation
+* dnsmasq: Fix sometimes missing DNSSEC RRs when DNSSEC validation not enabled.
+* Revert "httpd: implement wrapper around check_blacklist_xss() to protect against buffer overruns"
+* rc: openvpn: fix invalid port being exported following 0e51a5341736065433b20e7a57d2665d21d090b9
+* Merged AC86U binary blobs from 21045
+* webui: disable autocorrect/spellcheck on some OpenVPN setting fields
+* webui: Also report PID/Program on Network Tools' netstat report
+* ssl: update root certificates to June 20th 2018 version
+* libdisk: remove socket buffer settings, relying on the kernel to handle that instead
+* Updated README.md regarding dropping the legacy 380.xx branch
+* nano: updated to 2.9.8 (closes #159)
+* Updated documentation
+* webui: replace obsolete validate_number_range() function with validator.numberRange() method (closes #173)
+* Updated documentation
+* Merged with GPL 384_21140
+* Merged RT-AC88U binary blobs from 384_21140
+* Merged binary blobs and SDK from 384_21140 for RT-AC68U
+* Merge binary blobs from 384_21140 for RT-AC3100 and RT-AC5300
+* httpd: removed kludges that are no longer necessary
+* cstats: update Makefile to compile following 21140 changes to libshared
+* Merge binary blobs and HND SDK from 384_21140 for RT-AC86U
+* dnsmasq: update to v2.80test3
+* dnsmasq: Fix crash parsing a --synth-domain with no prefix. Problem introduced in 2.79/6b2b564ac34cb3c862f168e6b1457f9f0b9ca69c
+* rc: dnsfilter: workaround dnsmasq startup in "Router" mode
+* Merged with GPL 384_21152 + RT-AC68U binary blobs
+* webui: dnsfilter: moved DNSFilter to the LAN page
+* httpd: add DFS info report to wireless log output
+* webui: add DFS info to wireless Log page
+* Updated changelog
+* httpd: fix (again) htodXX() macros for SDK 7.x
+* dnsmasq: Add missing EDNS0 section. EDNS0 section missing in replies to EDNS0-containing queries where answer generated from --local=/<domain>/
+* rc: implement option to disable DNSSEC checks on unsigned replies (defaults to enabled, as per dnsmasq's own default)
+* webui: move DNSFilter tab to after the DHCP tab
+* webui: fix name report on sysinfo page if no networkmap nickname
+* webui: retrieve name and IP from networkmap if not provided by httpd for the wireless log page
+* httpd: close wificlient array if exiting due to error
+* dnsmasq: improve logged information on insecure DS replies
+* webui: remove dnsfilter tab from non-router modes
+* Updated documentation
+* Update copyright dates
+* Merge RT-AC87U binary blobs and QTN-specific changes from 382_50702
+* dnsmasq: dhcpv6: fix unaligned access crash on aarch64
+* dnsmasq: stop false-positive no servers warning
+* libnfnetlink: fix clean target
+* Updated documentation
+* openssl: updated to 1.0.2p
+* dnsmasq: update to 2.80test4
+* dnsmasq: skip auth options unless enabled
+* curl: update to 7.61.0
+* curl: cleanup openssl configure parameters
+* wget: updated to 1.19.5
+* Updated documentation
+* libconfuse: added version 3.2 to the source tree
+* ez-ipupdate: implement general ssl support, no services affected so far
+* ez-ipupdate: cosmetics, fine tune 0926b8f6558963d03d77453b93375a98ef2574fc
+* inadyn: added version 2.3 to the source tree
+* build: enable inadyn and libconfuse build/install
+* inadyn: add missing getifaddrs() implementation
+* ez-ipupdate: fix -l parsing, fine tune 0926b8f6558963d03d77453b93375a98ef2574fc
+* ez-ipupdate: use https for the following services: * no-ip * dyndns * selfhost * easydns * zoneedit * tunnelbroker * namecheap
+* ez-ipupdate: fix build w/o ssl
+* rc: inadyn: replace ez-ipupdate with inadyn for compatible DDNS services
+* inadyn: implement nvram-based status report
+* inadyn: implement Asuscomm DDNS plugin
+* rc: switch to inadyn for Asus DDNS ; remove ez-ipupdate remains
+* inadyn: static link with libconfuse to reduce size
+* ddns: remove Google Domains updater, now handled by inadyn
+* ez-ipupdate: fix indirect linking with openssl
+* rc: fix incorrect check to enable automatic IP retrieval for Asus DDNS; use full path to nvram exe
+* ddns: allow to select method used to determine your IP
+* inadyn: symlink to shared/ifaddrs.c instead of using a copy of it
+* ddns: implement freedns.afraid.org support
+* webui: update register/trial DDNS links to all use HTTPS
+* rc: fix location of nvram userspace on non-HND
+* inadyn: make asuscomm plugin compilable for non-Asuswrt environment
+* Updated documentation
+* wget: add missing files
+* Updated documentation
+* inadyn: updated to 2.4
+* mssl: fix ssl context ciphers & options wasn't applied
+* ez-ipupdate, mssl: implement tls sni support
+* ez-ipupdate: allow to disable https for default services with --ssl=0
+* wget: some more files that were missed with previous commit
+* rc: remove leftover/dead code from start_ddns()
+* rc: don't check if DDNS IP matches nvram content when DDNS set to use external checks
+* rc: properly handle DDNS usernames/passwords with special characters
+* webui: re-enabled all FAQ URLs on OpenVPN page now that they are working
+* rc: inadyn: specify iterations rather than run in "once" mode
+* rc: inadyn: rework inadyn cache handling.
+* rc: inadyn: set prefix to /, fixing pid and default config location
+* rc: watchdog ddns_check() optimizations
+* rc: implement watchdog-triggered checks for IP changes in external ipcheck mode
+* build: fix check for HND platform when compiling lldpd
+* inadyn: implement --exec-nochg - command to run if no update was required
+* rc: inadyn: tell inadyn top run ddns_updated also on checks resulting in no_change
+* rc: multiple fixes to ddns watchdog tasks
+* rc: remove logging from ddns_updated_main() - the DDNS client already logged its results anyway
+* inadyn: fix building for RT-AC87U
+* rc: netool: do not busy loop, wait for signal instead
+* build: disable NETOOL for all devices
+* nano: update to 3.0 (closes #195)
+* curl: update to 7.61.1
+* miniupnpd: updated to 20180907 (includes PCP fix)
+* miniupnpd: update Makefile.merlin for the new upnpstun object
+* rc: validate DH bit strength through openssl library calls instead of the userspace tool
+* rc: inadyn: added hostname parameter to selfhost.de custom config
+* libconfuse: commit Makefile.in files to git
+* rc: replace "fpath" variable with "buffer" in start_ovpn_server() to reduce stack usage
+* nano: bindings: when Ctrl+Shift+Delete has no keycode, don't use KEY_BSP (backport from upstream)
+* rc: validate ovpn server client cert through openssl library calls instead of the userspace tool
+* rc: removed unused variable in ddns_regular_check()
+* Updated documentation
+* rc: inadyn: trying a different update URL for selfhost.de that's closer to Asus's ez-ipupdate implementation
+* nano: updated to 3.1.
+* webui: only display an OpenVPN client/router status table if it actually has content
+* rc: ensure we do issue a forced DDNS update after "x" days
+* rc: reset the forced ddns update timer when ddns_check() forces an update
+* webui: clarify the forced DDNS parameter
+* Updated documentation
+* rc: remove temp file accidentally commited with 808c58a88b825dba2b5d7237deac64b1188efdcc
+* inadyn: change default cache location to /tmp/inadyn.cache for Asuswrt
+* rc: inadyn: don't provide cache-dir location at runtime, it's now implemented in inadyn
+* inadyn: recognize "nochg" responses in generic plugin (fixes selfhost.de)
+* inadyn: don't try to resolve all.dnsomatic.com
+* inadyn: fix previous commit, we were checking the IP instead of the hostname
+* inadyn: Don't try to resolve hostname for default@tunnelbroker.net service
+* rc: dnsfilter: replace Norton DNSFilter services with OpenDNS Family at boot time
+* rc: webui: dnsfilter: Remove discontinued Norton Safe services
+* rc: webui: dnsfilter: Add Quad9 to DNSFilter services; use https for DNSFilter services homepage links
+* webui: fix clientlist layout on DNSFilter page; remove destIP field reference
+* inadyn: updated to 2.5
+* rc: ddns: switch to built-in selfhost.de support added with inadyn 2.5
+* rc: ddns: roll AsusDDNS into main service case; minor cleanups
+* rc: dnsmasq: reject wpad hostname (protect against VU#598349)
+* Updated documentation
+* inadyn: hardcode SSL CA certs location
+* rc: ddns: rely on inadyn's built-in CA certs location
+* webui: revise the non-public IP warning on DDNS page
+* Updated documentation.
+* Merged with GPL 384_32797 + RT-AC86U binary blobs
+* Merged binary blobs from 32738 for RT-AC88U, RT-AC3100 and RT-AC5300
+* Merge binary blobs from 32738 for RT-AC68U
+* dnsmasq: update to 2.80test7
+* dnsmasq: update to 2.80test8 and fix BROKEN_RTC build
+* Updated documentation
+* Updated documentation
+* httpd: fix potential buffer overrun
+* openvpn: disable compression and enable client cert validation by default
+* openvpn: add option for lz4-v2
+* snmp: add extend support
+* rc: openvpn: make instance run code handle more than 2 CPU cores
+* httpd: retrieve CPU count through sysconf() instead of parsing cpuinfo
+* dnsfilter: add CleanBrowsing services
+* dropbear: Wait to fail invalid usernames (backport from upstream)
+* httpd: make openvpn cert backup/restore support multiple instances
+* httpd: add CRL and EXTRA files to Openvpn backup/restore function
+* webui: replace separator image with new CSS code on site survey and Wifi_Insight pages
+* rc: openvpn: remove watchdog from client (fixes #208 and #209)
+* webui: fix CSS on site survey page caused by a recent change in qis.css
+* webui: fix typo on ConnStatus page introduced in the switch from line_export to CSS.
+* rc: ddns: explicitly append hostname to Namecheap update URL (fixes #212)
+* Fix multiple mount usb disks, after restart, entware can not be started
+* samba36: realigned source organization and root Makefile to be closer to Asus's own
+* Updated documentation
+* samba36: Add files lost in 67038fe0993a1d0488ef327e7ecdd5075f15972b commit
+* Merge RT-AC68U binary blobs from 384_32799
+* Merged binary blobs from 32799 for RT-AC88U, RT-AC3100 and RT-AC5300
+* Updated documentation
+* Fix several broken click event handlers
+* Merge pull request #217 from lingfei-zhang/patch-1
+* dnsmasq: update to 2.80
+* dnsmasq: update to 2.80-7-g24b8760
+* openssl: clean up 1.0.2p build
+* openssl: apply openwrt 130-perl-path.patch
+* openssl: apply openwrt 180-fix_link_segfault.patch
+* openssl: apply openwrt 190-remove_timestamp_check.patch
+* openssl: disable tests build and tune .gitignore
+* mssl: fix CVE-2009-3555, various security improvemnets
+* busybox: ignore annoying bwdpi syslog messages
+* ovpn: default OpenVPN client DNS setting to "relaxed" instead of "disabled"
+* rc: ftp: Make vsftpd reuse the same key/cert as httpd
+* webui: restart ftpd if making changes to https certificate
+* httpd: gencert: remove dedicated FTP server support
+* httpd: rc: revert gencert.sh invocation to match Asus (now that we no longer use web/ftp as argument)
+* Updated documentation
+* webui: add button to display raw wireless info data
+* httpd: webui: remove DFS channel details from wireless log page
+* build: add RT-AX88U to build-all tool
+* Updated documentation
+* webui: make pages more robust to the presence of (illegal) apostrophes in dhcp_staticlist
+* httpd: increase buffers that can contain ovpn key/certs to 8000 bytes (max allowed size + NULL)
+* httpd: rewrite ej_vpn_crt_*() functions, saving 4 KB of code size
+* httpd: prevent resource leak in parse_openvpn_status() if one of the fopen() calls fails
+* miniupnpd: do not disable port forwarding when in double NAT / CGNAT
+* Merge pull request #220 from mgziminsky/patch-1
+* webui: specify that we want a username and a password for freedns.afraid.org, not an email or key
+* Updated documentation
+* httpd: webui: reorganized ej_wl_status_array(); ensure JS vars are always initialized; cleaned display a bit
+* webui: dfs elapsed time is now preformated properly by httpd, no longer need to clean it up
+* openvpn: OPENSSL_SSL_* and OPENSSL_CRYPTO_* no longer exist in 2.4.x, replace with OPENSSL_LIBS and OPENSSL_CFLAGS
+* avahi: no longer run as root, drop privs to nobody
+* nettle: updated to 3.4
+* lldpd: added gitignore
+* acme-client: added gitignore
+* HND: refresh some SDK prebuilt components
+* ssl: reuse the same /jffs/.cert folder as stock firmware instead of our own /jffs/ssl
+* rc: move jffs2 content migration/upgrade to after jffs2 gets mounted
+* rc: adjust kludges to exclude 382 models rather than target specific models
+* Updated documentation
+* rc: fix test to prevent starting dnsmasq in non-router modes
+* rc: fix test in lan_up() to create default route in non-router modes
+* iptables: fix save formatting for libipt_webstr
+* iptables: fix save formatting for libipt_account
+* iptables: fix match for ipt_account; add additional compile
+* iptables: fix save formatting for ROUTE target
+* rc: resolve compile warning for adjust_jffs_content()
+* webui: move USB mode setting to the correct section
+* httpd: fix filename generation in _get_vpn_crt_value(); code optimizations around that function
+* HND: merge prebuilt binaries from GPL 32799
+* rc: fix router mode test in watchdog for dnsmasq_check
+* curl: disable threaded resolver, which crashes various applications like mastiff and wtfast
+* wtfast: re-enable on RT-AC88U/3100/5300, now that the curl-related crash is fixed
+* webui: re-sync WTFast page with upstream
+* net-snmp: update to 5.8
+* net-snmp: move directory, and create symlink so we can reuse existing build recipes
+* net-snmp: remove model define from build since we don't use Asus MIBs - solves build time warnings
+* webui: httpd: allow changing HTTP LAN port on webui; no longer check HTTP WAN port for conflicts since it's not used anymore
+* webui: allow changing image for device vendors with a quote (like "Micro-star int'l co., ltd.")
+* Updated documentation
+* openvpn: Mark trafic through a client as such if QoS is enabled
+* openvpn: no need to re-mark traffic per client, do it whenever we detect an incorrect upload mark; only apply this in Adaptive QoS mode
+* ssl: update root certificates to August 17th 2018 version
+* HND: update addvtoken from 32799 (missed in past merge)
+* webui: explicitely report the abscence of swap instead of showing it with a size of 0
+* Updated documentation
+* Updated documentation
+* kernel: add the TEE Netfilter target
+* httpd: fix certificate storage location
+* webui: clarify fields for tunnelbroker DDNS configuration
+* webui: fix FAQ link on Adaptive QoS Bandwidth Monitor page
+* openssl: updated to 1.0.2q
+* Updated documentation
+* dnsmasq: update to 2.80-11-g59e4703
+* rc: wanduck: improve dns checking
+* openvpn: properly handle long clientlists when redirecting DNS traffic on HND models
+* webui: validate key input in OVPN client source/destination IP fields
+* libconfuse/inadyn: don't link against iconv
+* webui: tag cleanup in wireless log headers
+* httpd: report DFS last check in seconds rather than milliseconds
+* openvpn: change vpn_*_custom2* nvram for vpn_*_cust2* to workaround bug caused by closed source code
+* rc: migrate vpn_*_custom2 nvram entries to vpn_*_cust2 at boot time
+* openvpn: implement support for server-pushed search domains
+* httpd: exclude DNSVPN chains from Forwarded Port list
+* Updated documentation
+* webui: fix saving OpenVPN server's custom settings on non-HND models (fixes #231)
+* Updated documentation
+* webui: fix pages broken by some languages having a quote in hostname label
+* httpd: made some sysinfo() calls more robust against malformed requests
+* Updated documentation
+* dnsmasq: revert "Free config file values on parsing errors."
+* webui: fix a few cases where unescaped quotes in French dictionnary entries would break the webui
+* webui: remove option to reveal passwords on OVPN/PPTP server pages for models with encrypted nvram storage
+* Updated documentation
+* httpd: write back cleared https_crt_gen flag to nvram after erasing certs
+* miniupnpd: updated to 20181205 (f6fc66ee4144fd536f86346f30815e39b73a0a0f)
+* openvpn: push LAN domain to clients if we have one set
+* Updated documentation
+* wget: updated to 1.20
+* nano: updated to 3.2 (closes #226)
+* curl: updated to 7.62.0
+* webui: validate MAC address before clientListEventData() in DNSFilter
+* rc: enable SSH brute force protection even in LAN-only
+* Updated documetnation
+* hnd: fix resolve from /etc/hosts
+* wget: force commit updated build files
+* Updated documentation
+* init: stop logger after usb shutdown during reboot
+* services: (fork) save syslogs to jffs on stop_logger
+* usb: use correct /sys/block format for 4.1 kernel
+* kernel41: add the TEE netfilter target
+* rc: firewall: implement support for SSH BFP in Dual WAN LB mode
+* rc: firewall: implement IPv6 support for remote SSH access in DualWAN LB mode
+* rc: firewall: only apply SSHBFP rules while in LAN + WAN mode since LAN connection attempts will never reach these firewall rules
+* Updated documentation
+* wget: drop temp files
+* wget: fix linking against installed libraries
+* hnd: fix make clean
+* httpd: fix crashes on hnd
+* Merge with GPL 384_45149 (from RT-AC68U)
+* Merge RT-AC68U binary blobs from 384_45149
+* ffmpeg: fix script permissions
+* minidlna: switch build recipes to upstream, our recipes no longer work with the ffmpeg changes
+* Merge RT-AC86U SDK + binary blobs from 384_45149
+* wget: drop temp files
+* wget: fix linking against installed libraries
+* hnd: fix make clean
+* httpd: fix crashes on hnd
+* hnd: kernel: reenable tmpfs
+* webui: reorganize entries on DDNS page into groups
+* webui: made HND HW label colour more consistent with the rest of the page
+* busybox: revert klog change from upstream, we already have a more up-to-date implementation of that fix
+* rc: update stop_logger() to use the new configurable logpath
+* webui: update Chart.js to 2.7.3
+* webui: minify Asus's two chart.js files to improve load time
+* webui: document that tables are sortable on ConnStatus and DHCPStatus pages
+* kernel41: add NFSv2 and V3 client support
+* Updated documentation
+* openvpn: increase max length of OVPN client common name to 255 chars (closes #239)
+* webui: use networkmap nickname for wireless clients providing no hostname to dnsmasq (those would show with a hostname of "*")
+* rc: fix bad merge in services.c
+* Updated binary blobs for RT-AC3200 (compatible with 45149)
+* ovpn: add option to reset_ovpn_setting() to skip resetting certain parameters on ovpn config upload
+* Updated documentation
+* openvpn: add option to reset_ovpn_setting() to skip resetting certain parameters on ovpn config upload
+* Updated documentation
+* webui: add missing lines on System page from 45149 merge
+* Merged 45149 SDK + binary blobs for SDK7.14 devices
+* webui: remove DNS probe setting from Tweaks, as 384_45149 now has an official setting that deals with it
+* build: undo some changes that were incorrect in the original GPL merge
+* bwdpi: downgrade RT-AC86U bwdpi to 32799, in an attempt to resolve the dcd crashes of 45149
+* libvpn: fix potential crash in get_ovpn_custom() if memory allocation fails
+* libvpn: Made set_ovpn_key() clear cert on NULL buffer; optimized reset_ovpn_setting() to use the updated set_ovpn_key()
+* ovpn: set route-noexec if client set to Policy (Strict) mode
+* httpd: webui: report number of spatial streams for each clients ; ensure that shown IPv6 is never too long on the Wireless Log page
+* ovpn: define constants for rgw (routing policy setting)
+* dnsfilter: make DNSFilter DNS-over-TLS aware
+* dnsfilter: ensure that filtered clients cannot use a different IPv6 name server
+* Updated documentation
+* httpd: WL_STA_VER does not always match reality, so handle failure reports from wl_sta_info_nss()
+* webui: fix display of first 5 GHz band clients on Sysinfo page for tri-band routers
+* webui: fix removal of Roaming_Blocking tab on 382_xxxx models
+* webui: fix sd-idle not (re)starting after making config changes/enabling/disabling it
+* ovpn: Rewrote functions dealing with DNSMasq settings.
+* ovpn: fix strict-order not always being properly applied/removed to dnsmasq's configuration
+* webui: Implement AQoS tracked connection report on QoS Statistics page
+* Updated documentation
+* rc: implemented strongswan.postconf and ipsec.postconf scripts
+* libvpn: fix compiler warning caused by f_write() using NULL instead of 0
+* libvpn: rc: define constants for dnsmodes
+* webui: hide bitsize selector on OpenVPN server page if server is already running
+* httpd: webui: implement IPv6 support to QoS Stats tracked connections
+* webui: implement IPv6 support for the Table object "ip" sort method
+* Updated documentation
+* Revert "bwdpi: downgrade RT-AC86U bwdpi to 32799, in an attempt to resolve the dcd crashes of 45149"
+* webui: relabeled QoS Stats page to Classification; polished new tracked connection display; fixed Application sorting
+* httpd: optimization and cleanup in ej_bwdpi_conntrack()
+* Updated binary blobs for RT-AC87U (compatible with 45149)
+* httpd: insert empty NSS field in client array for QTN
+* webui: fix display of 5 GHz clients for RT-AC87U on Sysinfo page
+* bwdpi: replace SDK7.x (RT-AC3200) kernel components with those from SDK 7.14 that are newer and compatible with the 384_45149 GPL code/libbwdpi.so
+* Updated documentation
+* hnd: fakeroot: fix random mksquashfs errors
+* httpd: re-implement bwdpi database storage in a dynamic hash table instead of a static array
+* httpd: make ej_bwdpi_conntrack() handle database updates, recreating the table
+* httpd: fix off-by-one max entries in alloctable
+* dnsmasq: update to 2.80-32-g28cfe36
+* webui: Tweak tracked connection display, sort by Application by default
+* webui: fix typo on Administration page
+* Harmonized build targets with Asus (adding missing build options)
+* Webui: reduce overall size of the password change page, to match login page
+* Updated documentation
+* httpd: better determine the proper size of pointers stored in allctable
+* webui: only apply default sort to a table if the user hasn't previously sorted it
+* httpd: fix JFFS backup restoration on HND; reuse existing post_buf
+* httpd: remove uploaded jffs backup file in case of failure
+* Updated documentation
+* ffmpeg: harmonize build recipes with upstream
+* minidlna: fix log timestamps
+* httpd: backport wl_sta_info_phy() from 384_5329
+* webui: display PHY type on Wireless Log page
+* webui: handle lack of PHY report on QTN
+* Updated documentation
+* webui: Override incorrect background colour on Site Survey page inherited from QIS CSS
+* dnsfilter: mark CleanBrowsing as supporting DoT
+* rc: fix update_ovpn_profie_remote() using the wrong max instance limit; remove reference to unused nvram setting (leftover from stock)
+* rc: remove reference to WinXP in exported ovpn client config file
+* Updated documentation
+* build: removed Beceem support from SDK6/SDK7 models, saving 2.3 MB of flash space
+* zebra: strongswan: remove unused static libs
+* Revert "ffmpeg: harmonize build recipes with upstream"
+* ffmpeg: harmonize build recipes with upstream
+* webui: disable automatic refresh of Classification page if more than 300 tracked connections
+* webui: display number of tracked connections on Classification table
+* openvpn: cleanup build recipe
+* build: fix/optimize HND_ROUTER checks in inadyn. ncurses and ipset_arm recipes
+* Correct order of memset parameters
+* Correct memset parameter order
+* correct size of structure
+* Check port range correctly
+* Check -C parameters correctly
+* Merge pull request #267 from dp111/patch-7
+* Merge pull request #268 from dp111/patch-8
+* Make array argv the right size
+* btconfig: removed component that's not used by any of the AM supported models
+* Don't compare the pointer, compare the value
+* Don't risk over running the buffer
+* use sizeof in fgets to reduce risk of buffer over runs
+* openvpn: remove OFB ciphers from client, not supported by current OpenSSL build anyway
+* openvpn: drop CFB ciphers from client as they are never really used
+* curl: updated to 7.64.0
+* usb-modeswitch: remove unused 1.2.3 version from the tree
+* httpd: properly use an "_" if MU-MIMO is not present on a Guest client
+* quagga: size it down and fix path
+* openvpn: update to 2.4.7
+* Updated documentation
+* webui: fixed IPSEC log display, which was all shown on one single line
+* openssl11: add OpenSSL 1.1.1a to the tree
+* openssl11: Add build recipes
+* openssl11: Add OPENSSL_PREFER_CHACHA_OVER_GCM option
+* openssl11: priorize CHACHA over GCM for models with no AES acceleration
+* openssl: openssl11: Performance optimizations
+* inadyn: Fix compilation without deprecated OpenSSL 1.1 APIs
+* httpd: Fix OpenSSL 1.1.x support
+* openssl11: Enable OpenSSL 1.1.1 for httpd, mssl, libvpn, wget, inadyn
+* openssl11: vsftpd: Enable OpenSSL 1.1.x support
+* openssl11: net-snmp: Enable OpenSSL 1.1.x support
+* openssl11: acme-client: Enable OpenSSL 1.1.x support
+* openssl11: email: Enable OpenSSL 1.1.x support
+* strongswan: Add 5.7.2 to the tree (required for OpenSSL 1.1.x)
+* strongswan: fix 32-bit building on 64-bit HND kernel; switch strongswan to 32-bit build, with shared openssl linking
+* strongswan: port threading fixes for HND from Asus's 5.2.1
+* strongswan: kernel-netlink: Fix compilation on old kernels (< 2.6.39) (backport from upstream)
+* rc: strongswan: Update strongswan.conf content for 5.7.2
+* rc: strongswan: Re-enable modp1024 DH, as the built-in Android client doesn't support newer dhgroups with ikev1
+* strongswan: switch to 5.7.2; enable OpenSSL 1.1.x support
+* strongswan: remove version 5.2.1 from the tree
+* tor: Update to 0.3.5.8; enable OpenSSL 1.1.x support
+* Updated documentation
+* openssl11: Enable OpenSSL 1.1.x on all models
+* email: add openssl 1.1.x support, fix forced tls 1.0 connections
+* acme-client: add openssl 1.1.x support
+* libvpn: no longer link against OpenSSL
+* openssl: update OpenSSL 1.0 to 1.0.2r
+* openssl11: Update to OpenSSL 1.1.1b
+* vsftpd: enable pthread
+* nfs: fix enabling NFSv2 protocol (closes #261) ; enable NFSv2 support on HND
+* rc: fix previous commit
+* webui: limit max possible FTP/samba users to 9 instead of 10 (Asus enforces a 1-character limit to st_max_user nvram value)
+* other: character escaping fixes in helper.sh
+* httpd: we do not need the index value, so discard it
+* webui: optimize tableSorter's str and ip sort methods
+* other: partly revert helper.sh changes, the pc_insert() one doesn't work
+* dnsmasq: update to 2.80-g6799320
+* webui: adjust max IPv6 length on Wireless Log
+* webui: migrate IPv6 client list to Table object
+* libdisk: disable storing DOS attributes in extended attributes
+* build: update libfoo.pl for OpenSSL 1.1.x
+* netatalk: patch for OpenSSL 1.1.x support
+* openssl: openssl11: tweak build recipes; removed unused ciphers
+* netatalk: enable OpenSSL 1.1.x support
+* webui: update FAQ URLs (backport from 5640)
+* Updated documentation
+* openssl11: remove temp file accidentally included in commit
+* openssl11: add gitignore to the tree
+* openssl11: recover missed files from 1.1.1b
+* rc: rework dns stub
+* avahi: recover .gitignore files
+* dnsmasq: update to 2.80-44-g608aa9f
+* pppd: add support for custom pap-secrets file location
+* pppd: fix warning w/o IPv6
+* pppd: switch to monotonic time
+* pppd: pppoe-plugin,rp-pppoe: switch to monotonic time
+* pppd: pppoe-plugin,rp-pppoe: fix host-uniq option support
+* rp-pppoe: relay: fix crash
+* libmnl: fix rebuild after clean
+* nfs-utils-1.3.4: fix rebuild after clean
+* pppd: implement lcp-ident option
+* Updated documentation
+* wget: updated gitignore
+* strongswan: added gitignore
+* nano: updated gitignore
+* minidlna: added gitignore
+* strongswan: remove 5.2.1 leftovers
+* webui: let the Ajax call handle the first chart/table rendering; also bump auto-refresh threshold to 500 entries
+* www/rc: make using dnsmasq as system resolver optional
+* shared: moved dns_local setting to the section with other Merlin-specific settings
+* webui: Re-implemented tracked connections table without using a Table object
+* webui: implemented filtering to the Classification page; fixed typo in current_page parameter
+* Updated documentation
+* webui: apply Classification filter after IPv6 have been compressed, so the filter gets applied to the displayed version
+* Updated documentation
+* webui: Classification page fixes: hide filters on empty list, remove undefined class popup in non-aQoS mode
+* httpd: add emailAddress attribute to generated certificate
+* httpd: backport wl_sta_info_bw() from 384_5640
+* httpd: do not link with libletsencrypt when OpenSSL 1.1.x is enabled due to mismatched openssl versions
+* httpd: webui: report client bandwidth on wireless log page
+* shared: remove indexed vpn_crt_* entries from default nvram settings
+* libvpn: resetting to default wasn't clearing client extra CA certificate
+* libvpn: allow erasing a key/cert by providing an empty one
+* Updated documentation
+* Updated documentation
+* Updated documentation
+* dnsmasq: move "failed to send packet" error message to debug priority, until a proper fix can be found
+* quagga: drop obsolete config samples
+* webui: added tooltip to the "Use local caching" Tools setting
+* webui: fix Wireless Client layout for some models without Phy/NSS/BW report capabilities
+* rc: reset new firmware notification flag in case update check fails to run post-upgrade
+* webui: fix missing space in Wireless Log flags legend
+* webui: set Bandwidth Monitor FAQ URL to old one, new one is MIA on Asus servers
+* Updated documentation
+* webui: fix typo in local DNS resolution setting's tooltip
+* rc: openvpn: increase interface queue length from 100 to 1000 bytes
+* rc: openvpn: only re-generate server CA if it's missing, ignore server key/cert
+* httpd: validate correct variable in websRedirect*() (backport from 384_5948)
+* Updated documentation
+* webui: fix faqURL link generation on Bandwidth Monitor page
+* rc: fix case checks where CTF should be disabled
+* rc: openvpn: only generate our own CA/key/cert if none of the three already exists
+* ssl: update root certificates to January 23rd 2019 version
+* Updated documentation
+* Updated documentation
+* webui: removed support for beta firmware notification; moved check enable/disable to FirmwareUpgrade page; resynced that page with upstream
+* webui: report version of new firmware in the notification popup
+* webui: move LED disable option to Administration -> System page
+* webui: replace annoying alert() calls with in-page status report
+* rc: webui: implement NTP daemon on the router
+* webui: expose secondary NTP server parameter; limit ntp server fields to 31 chars, in-line with buffer sizes in rc
+* curl: updated to 7.64.1
+* nano: update to 4.0 (closes #288)
+* dropbear: update to 2019.78.
+* rc: use OpenSSL 1.1.x when available for generating OpenVPN's certs
+* httpd: use openssl11 when available for certificate generation; replace deprecated genrsa command with genpkey
+* webui: move buttons on Firmware Upgrade page to the right
+* Updated documentation
+* rc: ntpd: use the pidfile generated by the daemon itself to stop it
+* rc: provide filesystem type as second argument to pre-mount script (closes #290)
+* rc: finetune ntp server support
+* iptables: fix handling IPCMv6 reject --with-tcp-reset
+* webui: do not restart entire network on a simple DHCP static lease change on networkmap
+* webui: show/hide DDNS status field when enabling/disabling it
+* Updated documentation
+* rc: _eval() will wait until process quits if pid is set to NULL, so provide one when launching ntpd
+* rc: do not try to start ntpd if it's already running
+* rc: start ntpd later in the boot process
+* rc: ntp: replace ntp/ntpclient with ntpd
+* webui: fix duplicate code on System page preventing USB sleep settings from applying
+* rc: webui: allow URLs up to 64 chars long on URL filter
+* httpd: make backup_nvram() enclose strings in double quotes to better handle malformed DHCP leases (among others)
+* rc: let rc do a proper reboot rather than a system-one when reboot scheduler is triggered
+* Updated documentation
+* rc: restore original launch restrictions in start_ntpc()
+* busybox: add ntp alias support for ntpd daemon, disabled
+* make ntpd & ntpclient replacement configurable
+* rc: replace ntpd with ntp alias, and rely on process name instead of pidfile; implement options to enable ntp alias and ntpd build switch
+* webui: remove duplicate ntp_server1 field caused by bad git merge
+* Set secondary default ntp server to none (instead of a US-controlled one)
+* rc: renamed ntp_synced applet to ntpd_synced for consistency; added missing applet's return value
+* openssl11:: prevent over long nonces in ChaCha20-Poly1305
+* rc: properly re-enable original ntpc code when ntpd is disabled at build time
+* build: enable the ntpd daemon for all models
+* Updated documentation
+* rc: also update start_ntpc() to handle non-ntpd mode (missed in 185efa9d0a)
+* rc: continue ntpd intergration
+* stubby: import getdns 1.5.2 & libyaml 0.2.1
+* stubby: add build rules for getdns/stubby/libyaml
+* stubby: add syslog support, fix warn
+* rc/www: add dns-over-tls support
+* getdns: fix build error
+* getdns: revert "getdns: fix build error"
+* getdns: fix typedef redefine errors
+* Updated documentation
+* webui: reword DNSFilter introduction
+* webui: provide help content for the QoS packet overhead parameters
+* getdns: use upstream accepted typedef fix
+* rc: add dns-over-tls with dnssec support
+* rc: fix comment placement, cosmetics
+* httpd: webui: implement dropdown presets for DoT
+* webui: document max number of DoT servers allowed
+* webui: apply ellipsis to long field values on dnspriv serverlist to prevent layout issues
+* webui: implement help popups for DNS Privacy settings
+* webui: move DNSSEC and DNS rebind settings to the WAN page
+* Updated documentation
+* build:Enable DNSPrivacy support
+* dnsmasq: update to 2.80-53-g343b7b4
+* httpd/webui: dot presets cosmetics
+* webui: fix optgroup rendering in Firefox
+* webui: do not attempt to apply values if selecting the "Please select" entry in the DoT presets dropdown
+* rc: fix dot+dnssec startup & proxying
+* rc: fix ipv6 dot servers validation
+* webui: enhancements to DNSPrivacy content
+* webui: fix layout issue caused by long SANs on DDNS page
+* webui: do not restart router's time service when issuing a WoL request
+* libvpn: remove unused code in reset_ovpn_setting()
+* webui: restart dnsmasq if user changes any related settings on the WAN page
+* httpd: fix potential buffer overrun in alloc_string() (backport from 384_45708)
+* rc: fix dot with dns_local coexistance
+* www: don't allow empty dot server list
+* webui: provide descriptive error message if no DOT server is provided
+* shared: merged run_custom_script() and run_custom_script_blocking(); other minor cleanups to script functions
+* rc: add service-event-end custom script
+* rc: add postconf/custom config support for stubby
+* httpd: replace homemade alloc_string() with strdup() that does the exact same thing
+* libvpn: implement get_ovpn_remote_address() and use it for filling ovpn client config; re-implement update_ovpn_profie(remote() and move it to libvpn
+* Renamed lan_dns_fwd_local nvram to dns_fwd_local to avoid clashing with the lan_ instances; removed duplicate setting from DHCP page
+* rc: fix typo in 9be360e1cf
+* rc: eliminate build warning in start_stubby() when calling for custom script functions
+* Merge with GPL 384_45713
+* rc: fix typo in 9be360e1cf
+* Merge binary blobs from 45713 for RT-AC88U and RT-AC3100
+* Merge SDK + binary blobs from 45713 for RT-AC68U
+* Merge SDK + binary blobs from 45713 for RT-AC86U
+* httpd: fix ej_get_wl_channel_list() building on non-AiMesh models
+* rc: implement new firmware check code that does not require RTCONFIG_FORCE_AUTO_UPGRADE
+* rom: webui: remove getdnsapi test DoT server from presets
+* Updated documentation
+* Remove use of top_srcdir with newer automakes
+* webui: fix SSH password login string in EN dict
+* Fix compilation with glibc 2.25+
+* rc: resync with upstream, and fix some bad code block merges
+* rc: resync with upstream 45713, and fix some bad code block merges
+* rc: remove unused variable in start_dhcp6c()
+* Merge pull request #300 from KiloFoxtrotPapa/fix-compilation-modern-host
+* openssl: openssl11: point OpenSSL's default location to /etc/ssl/ and provide a link to the CA bundle
+* wget: remove wgetrc, no longer needed with OpenSSL properly configured
+* rom: simplify ca-bundle update
+* curl: rely on openssl to locate the CA bundle
+* inadyn: Revert "inadyn: hardcode SSL CA certs location"
+* wget: no longer ignore invalid certificates in the rom/* scripts that use wget
+* httpd: update location of openssl.cnf in gencert.sh script
+* cfg_mnt: update location of openssl.cnf, and make use of OpenSSL 1.1.x userspace tool if available
+* shared: replace upper_strcmp() calls with strcasecmp() in QTN-specific parts
+* net-snmp: fix clean target
+* rc: use dnsmasq for dnssec validation
+* miniupnpd: fix ssdp notify on wrong interfaces
+* webui: add 'inner' flag to check_hwaddr_flag() calls missing it; also add it to the WAN page
+* httpd: also count guest clients on the Sysinfo page
+* Updated documentation
+* httpd: don't try to use robocfg on HND when calling sysinfo("ethernet")
+* webui: reflect the state of DNS Privacy on the Network Map / Internet pane
+* httpd: fix missing parenthesis
+* rc: remove support for replacing stubby.yml
+* rc: stubby: rely on openssl to locate the CA bundle
+* rc: rename stubby.add custom config to stubby.yml.add for consistency
+* kernel: fix squashfs false-positive decode error
+* rc: wanduck: fix possible name buffer overflow
+* rom: Updated DoT presets
+* rc: add ntpd flag to rc_support
+* ntpd: implement option to redirect LAN requests to the router
+* webui: hide ntpd settings if not supported
+* webui: hide option to disable scheduled new FW checks; fix contextual help
+* rc: use REDIRECT target instead of DNAT to intercept ntp traffic, as it's more efficient; fix incorrect nvram check
+* webui: note that IPv6 is not supported by ntp redirection
+* rc: do not restart firewall when restarting time services
+* webui: only restart upnp if firewall isn't getting restarted
+* httpd: fix incorrect mimetype for wcdma_list.js and help_content.js (fixes #305)
+* build: re-enable NETOOL for RT-AC86U
+* webui: remove dead symlink in RT-AC86U sysdeps
+* webui: add Netool-aware pages to the RT-AC86U
+* rc: fix traceroute path
+* webui: implement netstat-nat support to the new netool-based Netstat page
+* webui: fix undefined element JS error on Netstat page
+* webui: format DFS elapsed time string
+* rom: removed seldom-used unfiltered Quad9 DNS, added secondary filtered servers for consistency
+* httpd: fix out-of-bounds read in handle_request()
+* httpd: report BCM490x CPU as Cortex A53 instead of B53 to reduce confusion
+* rc: let router implicitly use dot w/o caching resolver
+* netool: enable Netool support for all models
+* webui: remove other dead symlinks for IPTV page
+* Updated documentation
+* netool: traceroute seems to randomly fail on 2.6.xx.  Revert "netool: enable Netool support for all models"
+* rom: fixed incorrect addresses for Cleanbrowsing servers
+* rc: allow udpxy to start when using movistar IPTV profile
+* webui: hide ntpd settings when not in router mode
+* rc: run service-event-end earlier so it gets run on multiple rc events
+* webui: alwasy restart the firewall if making changes to the System page
+* sqlite3: add sqlite3 CLI command to firmware
+* openvpn: properly extract instance number in updown script
+* Updated documentation
+* build: disable Netool on SDK 7.14 devices (wasn't properly merged into mainline branch)
+* nano: updated to 4.2 (closes #303)
+* openvpn: move openvpn-event script calling for server into an updown script
+* openvpn: rework the updown.sh handling for OpenVPN clients
+* rc: Re-disable udpxy on Movistar profile, as for some reasons it prevents Movistar from working for some users.
+* Updated documentation
+* webui: implement source/target ip filtering on Netstat page
+* webui: encode Netool's Netstat page in UNIX UTF-8 format
+* webui: fix mistyped color in .QISMain CSS class
+* webui: display hostnames on Classification page
+* webui: re-enable option to extend TTL value
+* others: fix installation of the two new updown scripts for OpenVPN
+* webui: use client_functions's function for client dropdown list
+* busybox: ntpd: daemonize before DNS resolution (backport)
+* busybox: ntpd: respond only to client and symmetric active (backport)
+* busybox: ntpd: improve postponed hostname resolution (backport)
+* busybox: ntpd: print result of hostname resolution (backport)
+* ntpd: perform DNS resolution out of send/receive loop (backport)
+* busybox: ntpd: improve treatment of DNS resolution failures (backport)
+* busybox: ntpd: skip over setting next DNS resolution attempt if it is not needed (backport)
+* busybox: ntpd: do run the script at leat once in 11 minutes (reword)
+* busybox: ntpd: suppress in-kernel frequency correction in first 8 adjtimex calls (backport)
+* busybox: ntpd: choose initial FREQHOLD_cnt dynamically (backport)
+* busybox: ntpd: deprecate IPTOS_LOWDELAY in favor of IPTOS_DSCP_AF21 (backport)
+* busybox: ntpd: increase minimum G.FREQHOLD_cnt from 8 to 10 (backport)
+* busybox: ntpd: increase MIN_FREQHOLD by 3 (backport)
+* busybox: ntpd: show real, unclamped delays on low-latency networks (backport)
+* busybox: ntpd: more verbose message for "root distance too high" case (backport)
+* busybox: ntpd: increase SLEW_THRESHOLD from 0.125 to 0.5 (backport)
+* Updated documentation
+* build: disable memaccess component for HND (got re-enabled in a recent GPL merge)
+* webui: fix typo in DNS Privacy popup help
+* rc: log "unsync" ntpd event (disabled for now, will require testing first)
+* Updated documentation
+* wsdd: initial commit
+* wsdd: add build recipes
+* wsdd: implement Asus-specific code, enable build recipe
+* rc: implement wsdd stop/start alongside Samba
+* wsdd: generate ID from the kernel's boot-id instead of hashing the MAC (patch from OpenWRT)
+* wsdd: implement -i parameter to provide a specific interface
+* webui: fix a few minor errors in Network Tools -> Analysis and Netstat pages
+* webui: replace proto filter field on the Classification page by a dropdown menu
+* Updated documentation
+* Updated documentation
+* webui: only show RSA strength selector if server is not started
+* ovpn: configurable allow/drop firewall policy for clients
+* rc: fix parameter order when launching wsdd2
+* rc: change default behaviour of resolv.conf to use ISP instead of local cache
+* rc/shared: disable obsolete exec code
+* rc: fix 92998d74f00ba01051c808500169c6d20677d207
+* Merge with GPL 384_45717
+* Merged 45717 binary blobs for SDK7.14 devices
+* Merged 45717 binary blobs for RT-AC68U
+* Merged 45717 binary blobs for RT-AC86U
+* webui: tweaked popup help for OpenVPN client's Inbound Firewall setting
+* Merged 382_51636 binary blobs for RT-AC3200
+* rc: kludge for RT-AC3200 building with 382 blobs
+* httpd: revert RT-AC3200 web_hook blob to custom 384_xxxx version, as the 382 blob is no longer compatible with 384 GPL
+* Updated documentation
+* rc: allow experimental AiMesh toggle to survive factory default resets
+* rc: revert broadcom.o blob for RT-AC86U to 45713 version - the 45717 version fails to link
+* Merged 382_51634 binary blobs for RT-AC87U (minus incompatible httpd/web_hook.o), and updated rc kludges for that model
+* Cleanup accidentally committed .orig files
+* httpd: randomize serial number of router-generated SSL certificates
+* bridge-utils: fix hnd clean
+* webui: remove duplicate references to ipv6_dhcp6c_release
+* curl: updated to 7.65.0
+* webui: allow usb idle values up to 9999 (nvram has an enforced limit of four chars for that setting)
+* rc: shared: add missing function, and re-merge RT-AC86U's rc/broadcom.o binary blob from 45717
+* wsdd2: fix listening on specified interface
+* wsdd2: skip bonding slaves and bridged interfaces
+* curl: revert 7.65.0 merge, as it doesn't work properly.
+* openssl: update OpenSSL 1.0 to 1.0.2s
+* openssl11: Update to OpenSSL 1.1.1c.
+* Updated documentation
+* rc: give ntpd some time to sync clock on wanup
+* curl: merge 7.65.0 back
+* curl: tool_setopt: for builds with disabled-proxy, skip all proxy setopts()
+* Updated documentation
+* networkmap: provide separate binaries for the RT-AC87U
+* shared: implement kludge on model enum for 382 models
+* bwdpi: provide separate binaries for the RT-AC87U
+* rc: give at least 30 secs instead of only 20 secs before enforcing a system reset during reboot
+* netool: enable Netool daemon but with the BB traceroute applet for non-ND models
+* miniupnpd: updated to 20190604 (git 765156b)
+* rc: remove unnecessary log message from erp_monitor when not in European region
+* rc: fix memory leak in erp_monitor
+* rc: always set log facility to ntpd for consistency with other log entries
+* Updated documentation
+* webui: remove warning about SMBv1, since unlike stock firmware we support SMBv2
+* netool: enable netool for the RT-AC87U - missing in 651444a845 (closes #316)
+* rc: openvpn: remove waits for ntp sync in openvpn code since wanup already does it before starting OpenVPN instances.
+* rc: reduce max wait for ntp sync on wanup from 51 to 26 secs
+* rc: re-add variable to start_ovpn_*() funtions that is required
+* webui: fix Network Analysis symlinks location for RT-AC5300
+* rc: firewall: define VUPNP and PUPNP chains in default nat_rules
+* openssl11: The SHA256 is not a mandatory digest for DSA.
+* openssl11: issue-8998: Ensure that the alert is generated and reaches the remote
+* openssl11: Revert the DEVRANDOM_WAIT feature
+* rc: only start ddns and Openvpn in wan_up() if ntpd is set, with a small max wait period, and start both of these on the first ntpd sync event
+* rc: remove unnecessary linking with libbcmcrypto
+* Merge remote-tracking branch 'origin/master' into mainline
+* curl: update to 7.65.1
+* Merge remote-tracking branch 'origin/master' into mainline
+* rc: further tweaks to ntpd handling on wanup()
+* Updated documentation
+* Migrate to the new dedicated domain name; update to the new fwupdate file structure
+* webui: remove references to SMBv1 FAQ
+* kernel 2.6.36: improve sack handling and resource usage
+* kernel 4.1: improve sack handling and resource usage
+* kernel 2.6.36: fix commit 29586df4973acd1211fefaea4408970960cb0f15
+* Merge RT-AC3200 binary blobs from GPL 382_51640
+* rc: backport start_lan_port() fix for RT-AC87U from GPL 382-51640
+* Updated documentation
+* Updated documentation
+* dnsmasq: add openssl backend for dnssec, default is nettle
+* dnsmasq: skip gost validation with nettle, it's not supported anyway
+* rc: disable LLMNR support in wsdd2
+* webui: fix description for Continous Ping function
+* webui: make get_helplink() return link to Asuswrt-Merlin website instead of Asus support
+* webui: fix Firmware Update page when firmware scheduled checks are disabled
+* webui: hide ping count field when using continuous ping on Network Analysis
+* webui: use a standard cssRules (instead of rules) property of CSSStyleSheet (#328)
+* httpd: fix detection of whether QTN wifi is enabled or not in get_wifi_clients()
+* Updated documentation
+* config: fix too old config DNSSEC rules
+* config: reflect rule change, let it be disabled by default
+* rc: firewall: only enable FTP WAN access if explicitely enabled while using LB DualWAN or IPTV
+* dnsmasq: fix dnssec with nettle 3.5 and openssl
+* Updated RT-AC87U wireless driver to 382_51640 release
+* Updated documentation
+* rc: start jffs2 before running config_format_compatibility_handler(), as it might need access to /jffs/nvram
+* rc: Split static lease hostnames into their own nvram; implement conversion code
+* snooper: fix crash with more than 32 hosts
+* strongswan: import 5.7.2 from git with proper .gitignores and missed files
+* strongswan: drop asus hacks for 64-bit build
+* strongswan: follow general style for 64-bit align
+* strongswan: add support for ChaCha20-Poly1305
+* rc: move dhcp ntp options into proper place
+* Updated documentation
+* dnsmasq: dhcpv6: add ntp server option support
+* rc: webui: rom: Rework firmware version check implementation, for cfg_mnt compatibility
+* webui: fix version string for local router on the upgrade page
+* dnsmasq: enable OpenSSL support for dnssec
+* Updated documentation
+* rc: cwebs_state_info_am check was done in the wrong version of auto_firmware_check()
+* dnsmasq: fix segfault at run time when using OpenSSL on uclibc platform
+* rc: fix truncated entries when converting dnsfilter or dhcp static leases to new format
+* lldpd: log custom TLV add/remove at the debug level instead of info
+* rc: webui: Remove amas_force flag
+* webui: disable AiMesh Node support
+* Revert "dnsmasq: enable OpenSSL support for dnssec"
+* dnssec: remove target.mak option, and enable it (with OpenSSL support) in config_base
+* webui: enhance "Firmware Update" button location in AiMesh Router mode
+* rc: fix missing default route when in non-router mode
+* webui: Make check_AiMesh_fw_version() use regexp instead of iterating an array
+* webui: handle displaying new release notes from Merlin AiMesh nodes
+* Revert "webui: disable AiMesh Node support"
+* httpd: rewrite code that parse arp/lease lists for wireless clients
+* webui: display properly formatted new firmware version string during QiS
+* Updated documentation
+* Update vpnrouting.sh
+* webui: relabeled Internet Traffic Redirection option to more accurately describe what it does
+* dnsmasq: fix wrong return code from explore_rrset() with some errors.
+* Change default DynDNS IP server to the .com TLD, since .org cannot be resolved in China (closes #338)
+* webui: use networkmap name field instead of the no-longer existing hostname field
+* webui: filter on the correct field when filtering by destination IP on Classification page
+* webui: rename Local and Remote fields for Source and Destination on the Classification page, which is more accurate
+* dnsmasq: Fix wrong return code from explore_rrset() with some errors
+* curl: update to 7.65.3
+* Updated documentation
+* webui: display menus earlier on IPTraffic page to ensure initial form values are properly set as per cookies
+* kernel: tcp: refine memory limit test in tcp_fragment()
+* curl: revert previous gitignore file, as the new one was incomplete
+* openvpn: quoting parameters before passing them to a script (like openvpn-event) will break argument parsing by that script
+* webui: fix display of user permissions on FTP page
+* Updated documentation
+* rc: revert start_lan_port() backport from upstream which broke AP mode on the RT-AC87U.
+* Updated documentation
+* build: update copy-prebuilt script
+* build: update build-all script, adding branch support
+* webui: update OUI database to 2018-08-17 version
+* webui: re-implement notification if free nvram < 3000 bytes
+* rc: log unrecognized events to syslog
+* build: change default toolchain symlink to be relative
+* webui: fix typo
+* miniupnpd: updated to 20190824
+* Updated documentation
+* httpd: limit SSL certificate to 2 years if clock is accurate
+* httpd: add "TLS Web Server Authentication" to certificate's extended attributes
+* dnsmasq: update to 2.80-67-g5a91334
+* webui: ensure that YandexDNS is always disabled at the webui level (closes #347)
+* webui: do not report new firmware availability during QIS since we lack liveupdate capabilities
+* Updated documentation
+* webui: fix ouiDB broken by 48b51506566c3ebc3ace8b80d85765befa3a44ee
+* iproute2: fix exe location on HND to match that of other platforms; remove related dead code in rc/qos.c.
+* Merge with GPL 384_81044 (from GT-AC2900)
+* Merge with GPL 384_81049 (from RT-AC68U)
+* Merge SDK + binary blobs from 81049 for RT-AC68U
+* webui: re-based DHCP web page on upstream code (with the new DNS field)
+* libvpn: updated write_ovpn_dns() to match 81049; implemented get_ovpn_status() and get_ovpn_errno() which are new in 81049
+* openvpn: implement support for verify-x509-name with "subject" or "name-prefix" types ("name" was already supported)
+* webui: add bg class to non-Asus pages, to natch with 81049
+* samba36: harmonized root Makefile with Asus's
+* rc: shared: fix build warn error due to duplicate modprobe define
+* rom: harmonized certs location in source tree with upstream
+* openssl: harmonized recipes with upstream
+* webui: updated Temperature page
+* rc: shared: re-implemented LED control.
+* rc: update state/error report for OpenVPN clients and servers
+* libdisk: disable Asus's unfinished handling of SMB protocol version
+* rc: remove call to set LED_WAN_NORMAL for non-HND models in setup_leds()
+* rc: wrong variable used to report bitsize of rejected OVPN server DH
+* Revert "rc: wrong variable used to report bitsize of rejected OVPN server DH" - should be done on master branch
+* rc: wrong variable used to report bitsize of rejected OVPN server DH
+* faketc: reimplement the faketc script as a C program
+* iproute2: fix ip location on HND for OpenVPN; fix cleanup recipe
+* rc: openvpn: re-implement establishing running state the way it used to be before 81049
+* curl: updated to 7.66.0; updated install recipe for library version 4.6.0
+* curl: re-enable smtp protocol (was disabled when we merged the 81049 build recipes)
+* openssl-1.0: update to 1.0.2t
+* openssl-1.1: move folder to openssl-1.1 to match with upstream 8104x
+* openssl: fix folder layout ahead of master merge
+* openssl: temporarily revert folder layout to pre-8104x, for easier merges
+* openssl-1.1: update to 1.1.1d
+* dnsmasq: update to 2.80-74-gdefd6b1
+* openssl: move 1.0 folder back to its correct location, to be in-sync with other branches
+* Implement option to prevent Firefox's automatic usage of DoH
+* Updated documentation
+* Removed some unused components: busybox-1.24.1, ez-ipupdate. mt-daapd-svn-1696, openssl-1.0.0q, ffmpeg-0.5, pppd_245 and Beceem_BCMS250_arm
+* nano: update to 4.4 (closes #323)
+* webui: fix dnsfilter table layout
+* Merge with GPL 384_81116 + binary blobs (RT-AC88U)
+* webui: fix Asus's mixing of sshd_port and sshd_port_x introduced in 81116
+* httpd: kludge to allow RT-AC68U to build with 81116 GPL
+* Merge binary blobs from 81116 for RT-AC3100
+* Merge SDK + binary blobs from 81049 for RT-AC86U
+* httpd: implement RT-AC86U kludge for set_fw_path.cgi
+* build: fix truncated HND build profile from commit679c8b597610ca0ab0e4265dbefbd3a2d0526fd2
+* rc: implement RT-AC86U kludge for hnd_set_hwstp() (requires 81116 blobs)
+* build: fix wlcsm location for miniupnpd recipe
+* nano: commit missing files excluded by gitignore
+* Updated documentation
+* webui: add missing semicolon
+* webui: re-add DHCP settings lost when the page was re-implemented
+* webui: remove leftover field from Asus's 811xx sshd_port mixup
+* ssl: update root certificates to October 9th 2019 version
+* webui: adjust allowed port ranges and displayed warnings on the System page.
+* webui: sort the DHCP static list even if no cookie is found, otherwise no list is displayed
+* build: revert OpenSSL-1.0 build recipes to pre-810xx
+* busybox: enable split applet, for uniformity with HND platform
+* webui: store OpenVPN Server custom clientlist info even if server is disabled
+* webui: identify DHCP's first DNS server as such
+* rc: firewall: better detection of EUI64 addresses; add missing support in Dual WAN LB / Multicast IPTV modes
+* webui: allow empty local IP for IPv6 firewall rule
+* Updated documentation
+* openvpn: updated to 2.4.8
+* webui: add IPv6 support to Netool webui
+* Updated documentation
+* libdisk: code cleanup
+* dnsmasq: update to 2.80-93-g6ebdc95
+* kernel41: disable debug logging left in the bcmmcast module by Asus
+* Updated documentation
+* Revert "dnsmasq: update to 2.80-93-g6ebdc95"
+* rc: tell inadyn to accept any SSL cert when using Asus DDNS
+* inadyn: minor logging changes to Asus DDNS pplugin
+* rc: inadyn: always force AsusDDNS updates on LE-enabled build
+* Merge with GPL 384_81351 + binary blobs (RT-AC86U)
+* Merged RT-AC68U binary blobs + SDK from 384_81351
+* rc: remove obsolete conn_diag.o blob
+* rc: migrate AP hostname from computer_name to lan_hostname
+* Updated documentation
+* rc: silence a few modprobe failures (these either do not exist or are built-in)
+* rc: ipv6 ns drop checking wrong nvram for dualwan/multiiptv builds
+* socat: that is one fat cat, put him on a diet by removing unused features
+* Updated documentation
+* Merge RT-AC5300 binary blobs from 384_81219
+* webui: replace broken isPortConflict() with new function; added missing pwrsave code on System page
+* webui: rc: harmonize max ntp server length with upstream, and ensure (legacy) ntp code has a matching buffer size
+* Restore generic ARM prebuilts from 384_81351, which were accidentally downgraded by the RT-AC5300 81219 component merge in commit b4996b4e52923e97e00ce4c39876c13ae3ce2890
+* inadyn: switch Asus DDNS server to ns1.asuscomm.com since their server certificate is missing the nwsrv-ns1.asus.com SAN; re-enable certificate validation when updating an Asus DDNS account
+* Updated documentation
+* dnsmasq: update to 2.80-95-g1aef66b
+* rp-l2tp: fix server route can't be added w/o ifname
+* kernel: backport 81351 kernel fixes to L2TP to the sdk7114 kernel
+* kernel: backport 81351 kernel fixes to L2TP to the sdk7.x kernel
+* openvpn: do not run openvpn-event if custom scripts are disabled
+* webui: update popup help for local DNS queries to match the current default behaviour
+* webui: fix malformed Certificate label on DDNS page
+* Updated documentation
+* inadyn: re-disable cert validation for AsusDDNS - their server is once again using an expired certificate
+* Updated documentation
+* webui: there's no popup help for this item, so remove the anchor
+* webui: right-align values on the QoS stats tables
+* Updated documentation
+* faketc: fix building for RT-AC87U
+* odhcp6c/rc: update to 1.1-97-ge199804
+* odhcp6c: use reconfigure accept option only if allowed by server
+* odhcp6c: fix loop where clients issue a RENEW and REBIND every ~1s
+* libconfuse: update to 3.2.2
+* rc: fix upnp on disconnected dual-wan interface
+* wsdd2: fix listening on dynamic interfaces
+* rc: implement wan-event; launch wan-start at the end of wan_start() now instead of on Connected events
+* wsdd2: implement -N and -G parameters from upstream
+* wsdd2: only retrieve missing parameters from smb.conf, in case one was already provided at runtime
+* Updated documentation
+* rc: fix wan-event script arguments
+* rc: replace wan-event event type with a string since numeric types may change in the future
+* Updated documentation
+* httpd: clarify that width are in Hertz, not in bits
+* odhcp6c: fix empty ORO and unblock DHCPV6_OPT_SOL_MAX_RT for request/renew/rebind
+* odhcp6c: partially revert 6b25373ae80c82f6c323fc89d2aa463f11086958
+* build: strip lldpd executables
+* Fix version string displayed by motd
+* curl: update to 7.67.0
+* curl: Fix build fails with CURL_DISABLE_DOH
+* rc: remove wan-start from its new location, and put it back where it used to be, for legacy compatibility
+* Updated documentation
+* rc: fix bad GPL merge
+* rc: remove no longer required kludge for STP on HND models
+* build: re-add cifs.ko module (lost with GPL 81044 merge)
+* other: implement get_webui_page() function in helper.sh
+* webui: add five mountpoints for user-provided webui pages
+* Merged with GPL 385-10002 (RT-AC68U)
+* Updated documentation
+* getdns: provide explicit path to OpenSSL 1.1.1 (fixes regression fom GPL 81044 merge)
+* rc: fail wanduck (and possibly other services) failing to start due to ate_mode check
+* rstats: revert some of the 384_81044 changes in an attempt to resolve the traffic spikes
+* webui: hide _0 extendno from firmware versions returned by cfg_sync
+* rom: update stun servers used by getrealip.sh
+* rc: fully disable wanduck DNS probing if disabled on the webui
+* rc: log if router is in manufacturing mode at wanduck launch
+* rc: only intercept udp requests to port 123, ntpd does not listen to tcp
+* httpd: implement support for storing third party settings into jffs storage
+* httpd: rc: locate addons content to a dedicated /jffs/addons/ folder
+* Updated documentation
+* webui: increase user mount points from 5 to 10
+* Updated documentation
+* Fix typos in 4aad1f70a0 and f7c0996bd5
+* build: fix /www/ext location on RT-AC86U (non-AX HND) to match other platforms
+* openssl-1.0: update to 1.0.2u
+* build: backport 384_81981 libfoo fixes
+* openvpn: backport fix from 384_81981
+* rc: Backport fixes from 384_81981.
+* shared: backport fixes from 384_81981
+* rom: nsswitch fixes backported from 384_81981
+* Updated documentation
+* rc: add am_addons RC flag to denote support for third party addons
+* Updated documentation
+* dnsmasq: update to 2.80-114-ge40d8be
+* shared: re-add QTN include lost in GPL merge
+* other: added amtm script
+* other: replace Entware setup script with link to amtm
+* other: add functions to helper.sh to get/set addon settings (developed by Adamm)
+* Updated documentation
+* amtm: implement curl timeout
+* rc: remove duplicate dnspriv from RC flags
+* Updated documentation
+* other: make get_webui_page() handle existing mounts, and use a global for returning its result; rename function to match namespace
+* httpd: remove RT-AC86U and RT-AC68U from kludge used for FW older than 384_81116
+* amtm: further streamlined the main script, some functions moved to external component
+* webui: fix incorrect variable name on OpenVPN server page (from 105002aaf96e149b9a4aeea68229ee4e1f5189c8)
+* Revert "openvpn: backport fix from 384_81981"
+* rc: fix dnsfilter IPv6 additions to dnsmasq.conf (#416)
+* rc: made dnsfilter server list a global; defined enums for list entries, and used these defines instead of hardcoded values
+* Updated documentation
+* httpd: improve connection acceptance and handling
+* httpd: fix malformed 200 OK status
+* Add files via upload
+* Merge pull request #419 from decoderman/master
+* Updated documentation
+* nano: updated to 4.8 (closes #364)
+* tor: updated to 0.3.5.9
+* curl: updated to 7,68.0
+* Updated documentation
+* rc: openvpn: rework pushed DNS handling for OpenVPN servers set to Internet-Only mode
+* httpd: replace Guest flag with unit number in client list, and remove placeholder for primary AP clients
+* webui: regroup guest clients together on wireless log page
+* Updated documentation
+* dnsmasq: update to 2.80-148-g3ce803d-openssl
+* webui: improve warning content when router IP is within your DHCP pool
+* rc/shared: move is_valid_hostname/domainname to shared
+* httpd: fix host header parsing
+* Updated documentation
+* httpd: fix host header parsing one more time
+* Updated documentation
+* getdns/stubby: update to 1.6.0-beta.1/0.3.0-beta.1
+* getdns: fix build with older gcc
+* getdns: fix ATTR_UNUSED detection
+* stubby: add syslog support
+* Updated Wiki links in the documentation
+* getdns/stubby: fix size optimization with aarch64 default cflags
+* inadyn: clean up build rules
+* inadyn: clean up build tree and .gitignore
+* inadyn: add RC_DDNS_RSP_AUTH_FAIL and rework asuscomm plugin
+* inadyn: fix unreliable dnsomatic ip checking
+* inadyn: allow not yet valid certificates with "broken-rtc"
+* inadyn: update to 2.6
+* inadyn: add maintainer mode to avoid autoreconf
+* inadyn: follow upstream, use default ipify for dnsomatic
+* rc: follow inadyn update
+* rc: follow inadyn update, drop tzo.com
+* inadyn/rc: drop exec-nochg, force same script call for the first time
+* rc: inadyn: force update for asus ddns with inadyn 2.6
+* getdns: drop unconditional libpthread
+* Updated documentation
+* inadyn: fix non-working --force option
+* Release amtm 3.1.4
+* stubby: disable TCP_FASTOPEN_CONNECT in runtime
+* busybox: add false applet (to match with upstream)
+* build: fix typo when enabling  CONFIG_NETFILTER_XTABLES
+* getdns/stubby: update to 1.6.0/0.3.0
+* dnsmasq: dhcpv6: revert ntp server, use sntp server option instead
+* dnsmasq: update to 2.81rc1-29-g5b6f222
+* Updated documentation
+* dropbear: Add support for Ed25519 as a public key type
+* rc: ssh: add ed25519 key generation
+* dropbear: comment typo fix, cosmetics
+* webui: update OUI database to 2019-11-26 version
+* webui: show SSID in guest network client headers, on the wireless client log
+* Updated documentation
+* httpd: fix old LE cert path
+* inadyn: fix use of non-initialized buffer in freedns hash generation
+* build: update utility scripts to handle RT-AX58U and current git branches
+* rc: only log unrecognized events when rc_debug is set, since script authors are now legitimately using their own events
+* tor: upgrade to tor 0.4.2.6
+* pppd: Fix bounds check in EAP code
+* rstats: backport fixes from 386_36400
+* httpd: webui: report second 5 GHz radio temperature
+* webui: add up/down meters to networkmap page; remove useless RAM graphic to save space
+* Updated documentation
+* regenerate aclocal.m4
+* dnsmasq: update to 2.81rc3-29-g495e518-openssl
+* rc: offer local sntp & ntp servers since bcc68c6e3054a7c18e75516b909efbe2dd4d66a8
+* webui: add noreferrer attribute to home link
+* webui: reworked site survey layout; fixed HTML entity escaping
+* webui: fix entity decoding on legacy site survey page
+* webui: remove stray label from traffic monitor graphs
+* webui: updated Chart.js to 2.9.3
+* httpd: handle icmp entries in netstat-nat's conntrack output
+* webui: use QoS settings as starting max values for networkmap meter
+* webui: fix typo in DDNS page field class
+* Merge pull request #445 from dave14305/patch-1
+* miniupnpd: revert previous upstream changes that prevented the use of a private IP on the WAN interface (ref. issue #444)
+* webui: no longer offer to reset DHCP scope when changing LAN hostname (fixes #428)
+* webui: only forbid setting protocol to http-ony if in router mode (fixes #417)
+* Updated documentation
+* shared: fix duplicate dnspriv entries in defaults.c
+* rstats: Still broken - Revert "rstats: backport fixes from 386_36400"
+* webui: fix incorrect guest SSID variables accessed for 5GHz-2
+* memaccess: re-add it to the build, the RT-AX56U uses it to properly configure its LEDs
+* memaccess: rename unused 'sh' applet for 'sh.bcm' to avoid conflict with the shell
+* rc: dnsmasq remove expired KSK-2010
+* openssl-1.1: updated to 1.1.1e
+* webui: remove Guest flag from all guests clients, not just the first client
+* webui: reuse colours matching other meters for the download/upload meters
+* webui: fix layout and colours on the Please Wait progress report
+* webui: report subunit clients as being Local Clients rather than Guests when in repeater mode
+* Merge pull request #453 from dave14305/patch-1
+* Merge pull request #447 from dave14305/patch-2
+* inadyn: updated to 2.7
+* dnsmasq: update to 2.81rc4-33-g7558f2b-openssl
+* Updated documentation
+* Merge RT-AC86U SDK + binary blobs from 384_81352
+* inadyn: drop autogenerated stuff for easier updates
+* inadyn: missed part of 5c92d87a31a41bfa8e74c22d5aff4983b5988aed
+* dropbear: disable 3des & cbc, tune fastopen options
+* dropbear: fix security notify (backport from mainline)
+* dropbear: strip version from ident
+* httpd: fix support for USB disks with a single quote in their model name
+* webui: fix field layout for tlsremote setting on ovpn client page
+* usb: let the scheduler handle CPU affinity for smbd on HND
+* busybox: disable modutils alias support
+* Updated documentation
+* httpd: add recv & send timeouts
+* openssl: update to 1.1.1f
+* Release amtm 3.1.6
+* Merge pull request #470 from decoderman/master
+* dnsmasq: update to 2.81rc5-31-gdb028b0-openssl
+* dropbear: sync accepted ed25519 support from upstream
+* Updated documentation
+* build: bump header version to 385_20000 for models failing to update from newer stock releases
+* Make use of all icons in client-list.svg.
+* Fix typo during TM signature update
+* webui: completely remove Feedback page to ensure nobody is misusing it.
+* dropbear: Add Chacha20-Poly1305 authenticated encryption
+* dropbear: Fix CBC_MODE can't be fully disabled
+* dnsmasq: update to 2.81 (2.81-32-g93cb543-openssl)
+* dnsmasq: backport asus patches
+* dropbear: Fix short packet validation in AEAD mode
+* build: added RT-AX56U to the build script
+* build: Backport POSIX compliance from amcfwm
+* build: Remove extra newline
+* openvpn: updated to 2.4.9
+* curl: updated to 7.69.1
+* Merge pull request #478 from hitched97/icon-patches
+* Merge pull request #480 from Adamm00/master
+* Updated documentation
+* webui: fix DHCP reservation list switching sort direction with each addition
+*  webui: fix JS error when trying to sort DHCP reservations with MACs not present in the networkmap list
+* webui: clarified signature version field on firmware update page
+* webui: rework traffic meters layout on router status page
+* Updated documentation
+* openssl: update to 1.1.1g
+* nano: updated to 4.9.2
+* Updated documentation
+* Revert "Make use of all icons in client-list.svg."
+* Updated documentation
+* build: remove obsolete enforced version for AC88/AC3100/AC5300 which was overriding the one recently added to fix the rollover issue on FW update validation
+* curl: fix failure to use smtp authentication
+* Updated documentation
+* curl: fix build recipe when generating configure
+* getdns: fix building under Ubuntu 20.04 LTS
+* libgpg-error: fix building with gawk 5.0 (backport from upstream)
+* Merge pull request #1 from RMerl/master
+* Release amtm 3.1.7
+* Merge pull request #509 from decoderman/master
+* Updated documentation
+* dropbear: Fix ssh client connection with Chacha20-Poly1305
+* Updated documentation
+* Merge GPL + SDK 384_81846 (RT-AC86U)
+* Merge RT-AC86U binary blobs from 384_81846
+* webui: updates to the QoS Stats page.
+* Merge RT-AC68U SDK + binary blobs from 385_20490 (identical code to 384_81846)
+* Merge RT-AC5300 binary blobs from 384_81844
+* Merge RT-AC3100 SDK + binary blobs from 385_20490
+* ahs: add binary collections to ahs/asd/libasc
+* rc: update pw_dec() call in openvpn code to the new definition
+* webui: optimize draw_conntrack_table() by removing code related to unsupported tQoS mode; fix tQoS default category labeling"
+* webui: fix JS syntax error from upstream's Wireless Log page
+* Updated documentation
+* webui: harmonize dhcp_staticlist length with upstream
+* Fix Privacy disclosure Wiki link in README
+* httpd: rework gencert.sh script responsible for generating web certificate
+* cfg_mnt: update gencfgcert to match updated openssl.cnf config file
+* rc: copy stored cert.crt when starting httpds
+* httpd: re-implement persistent certificate storage (lost in commit de77d8ee1fbb0df3c92ff59931f350d7e30a2bd5)
+* Disable AHS and ASD on all supported models
+* webui: remove validator.hostname() to match upstream (and replace one existing use with validator.host_name())
+* Merge pull request #525 from borzaka/patch-1
+* dropbear: Fix ChaCha20 on 32-bit platforms
+* busybox: updated a few options to match upstream settings
+* openvpn: revert 81846 change which broke setting ovpn server state to RUNNING
+* Update updown-client.sh
+* Merge RT-AC88U binary blobs from 385_20457 (and two missing RT-AC3100 blobs from 20490)
+* Merge pull request #530 from Xentrk/master
+* ssl: update root certificates to June 3rd 2020
+* Updated documentation
+* Revert "Merge RT-AC88U binary blobs from 385_20457 (and two missing RT-AC3100 blobs from 20490)"
+* flac: properly provide libogg path (fixes building on some environment)
+* openvpn: remove obsolete configure options that no longer exist
+* build: parallelize rc and wget building
+* www: updated OUI database
+* Updated documentation
+* webui: fix sorting by DNS field on DHCP reservation table
+* Merged GPL + SDK 384_81918 (minus lighttpd changes) for RT-AC86U
+* httpd: don't rely on nvram and nvram-stored cert for saving, we already do so at generation time
+* rc: add kludge to watchdog for pre-384_81918 SDK 6.37 binary blobs
+* Updated documentation
+* Updated documentation
+* shared: added missing shared blobs for RT-AC3100
+* dropbear: update to 2020.79
+* Merged RT-AC5300 binary blobs from 384_81902
+* lighttpd: merge updated components + code from 384_819xx
+* Removed obsolete LE lighttpd instance
+* openvpn: store empty field instead of 0.0.0.0 in policy rules
+* Updated documentation
+* nano: updated to 4.9.3
+* Updated documentation
+* Updated documentation
+* Merged RT-AC88U binary blobs from 384_81919
+* rc: revert RT-AC88U kludge in watchdog
+* rc: eliminate log spam occuring every four seconds while testing RTK switch status
+* rom: hardcode wget timeout value in firmware update check scripts
+* dropbear: update to 2020.80
+* dropbear: use common random source for ltm
+* vpnc: add static routing and def. gateway control
+* Revert "vpnc: add static routing and def. gateway control"
+* Updated documentation
+* Updated documentation
+* Revert "Revert "vpnc: add static routing and def. gateway control""
+* Updated documentation
+* httpd: www: implement notification on low jffs space
+* Updated documentation
+* build: fix processor count for parallel building
+* build: enable parallel building for curl
+* build: enable parallel kernel building for SDK6/SDK7 models
+* other: fix am_get_webui_page() returning new mount point before matching existing file
+* other: optimize am_get_webui_page loop
+* Merge pull request #558 from dave14305/patch-1
+* webui: fixed typo on low JFFS notification
+* openssl11: also prioritize chacha20 for bcm675x models which lack AES acceleration
+* Merged GPL + binary blobs 384_81981 for RT-AC5300
+* bwdpi: merged bwdpi components from 385_20630 firmware image for RT-AC68U
+* rc: httpd: harmonize httpd/vsftpd cert storage handling with upstream
+* Merged GPL + SDK 384_81992 from RT-AC86U
+* httpd: only save certificate if self-generated
+* webui: update cert info display to be in-line with httpd/rc changes from ac29ddbf82
+* Updated documentation
+* openssl11: also prioritize chacha20 for bcm675x models which lack AES acceleration
+* rom: fix duplicate CA bundle, and keep the updated one
+* httpd: don't set tlscrypt nvram when parsing tls-crypt from an imported ovpn, this is only used by Asus.
+* libvpn: implement copy_ovpn_key()
+* rc: improve handling of clock-sensitive services on first WAN up.
+* Updated documentation
+* openvpn: Major implementation rewrite/refactor
+* webui: OpenVPN client fixes
+* openvpn: Major implementation rewrite/refactor
+* webui: OpenVPN client fixes
+* libvpn: fixed log message on OpenVPN start
+* libvpn: remove some no longer used defines
+* webui: warn user when enabling user/pass auth for an OpenVPN client without providing both
+* openvpn: skip DNS redirection for clients using an empty source instead of 0.0.0.0 (the old way of denoting "any")
+* shared: fixed bad ipt_account() merge
+* webui: report openvpn client error code 7 as a config error, not key/cert
+* openvpn: set nvram errno if there is a config error preventing start
+* fix typo
+* openvpn: second stage of rewrite/refactor; harmonize master with mainline code
+* webui: fix incorrect input field validated when applying an OpenVPN client configuration
+* libovpn: don't allow duplicate-cn while in non-exclusive config-dir mode
+* libovpn: also reapply DNS and QOS firewall rules when re-applying firewall rules
+* rc: ensure that if openvpn client failed to start, that the instance gets set into an error state
+* rc: let openvpn down event handler update dnsmasq/resolv config
+* libovpn: remove unused (and inaccurate) constants
+* shared: remove vpn_debug nvram (no longer used)
+* Updated documentation
+* Merge pull request #568 from maghuro/patch-2
+* openvpn: remove duplicate line
+* webui: fix check for userauth being enabled on OpenVPN client page; separate check/focus for both fields
+* dropbear: libtommath: enable fixed cutoffs as size-optimization
+* dnsmasq: update to 2.82 (2.82-34-gb309cca-openssl)
+* openvpn: third stage - replacement of up/down handlers with libovpn functions, and fixes.
+* Updated documentation
+* rc: fix bad merge in ovpn.c
+* rc: use the correct WAN interface when setting up OPEN_NAT rules (fixes #573)
+* webui: hide SSHD WAN access option while not in router mode
+* nvram: re-sync with 81992
+* Updated documentation
+* webui: display appropriate warning message if jffs partition fails to mount instead of a low space warning
+* shared: rstats: removed a few unused nvram to regain some space
+* Increased curl timeouts amtm FW
+* Update vpnrouting.sh
+* Update vpnrouting.sh
+* Update vpnrouting.sh
+* libovpn: fix policy client validation for CIDR-validated sources
+* Merge pull request #576 from decoderman/master
+* Merge pull request #577 from Xentrk/master
+* getdns: listeners reply returned wireformat
+* Updated documentation
+* openvpn: remove broken (and redundant) log entry from vpnrouting's start.
+* webui: fix minor typo on Sysinfo page
+* webui: hide "show password" box for all models but RT-AC68U, all others now use encrypted storage
+* Updated documentation
+* bump revision to 384.19 final
+* rc: make DH check compatible with OpenSSL 1.1
+* httpd: no longer look for openssl11 usertool when building certs
+* Prepare platform for 386 merge; merge 386_39179 + binary blobs (RT-AC86U)
+* build: fixed a few missing prebuilt locations
+* Merge RT-AC68U binary blobs + SDK from 386_39179
+* build: update copy-prebuilt for new collection layout
+* build: add script used to setup prebuild/* structures
+* build: update build-all and publish scripts
+* rc: migrate ddns_ipcheck to ddns_realip_x to match upstream
+* rc: rom: move firmware update server URL into the script; don't build firmware check code unless enabled
+* Updated documentation
+* rc: libovpn: move OpenVPN SSL-related code from rc to libovpn
+* openssl11: remove last references to openssl11 userspace tool
+* build: disable conn_diag for all models
+* bwdpi: fix Makefile
+* nfs: include stdint.h in nfs-utils to fix build issue on HND-AX
+* Merge 5.02axhnd SDK
+* libml: libnfnetlink: drop our versions, and reuse those from Asus
+* webui: add Wifi Radar page to RT-AX88U
+* webui: use show_ethherstate_hnd() for all HND models (including RT-AX88U)
+* httpd: merge AX changes to our wl_*_array() functions
+* libmnl: fix random build failures
+* webui: add missing images for the WiFi Radar page
+* HNDAX: add Entware support
+* kernel41-ax: Make xt_match_recent built-in instead of a module (to match with other platforms)
+* kernel41-ax: update ipset kernel components to 6.32
+* kernel41-ax: update ipset kernel compatibility header
+* kernel41-ax: fix nested structure references in xt_set
+* webui: expose NAT type setting for RT-AX88U
+* kernel41-ax: sync config options with 4.1.27 (HND AC)
+* kernel41-ax: add the TEE netfilter target
+* webui: fix broken Wifi Radar image for the RT-AX88U
+* kernel41-ax: silence log spam about ct_time_p->intv
+* kernel41-ax: add NFSv2 and V3 client support
+* axhnd: kernel41-ax: reenable tmpfs
+* kernel41-ax: patch xfrm to allow 32-bit strongswan under 64-bit kernel
+* kernel41-ax: iptables: fix handling IPCMv6 reject --with-tcp-reset
+* Add build profiles for AX models
+* build-ax: Fix compilation with glibc 2.25+
+* webui: add Netool-aware pages to the RT-AX88U
+* kernel41-ax: improve sack handling and resource usage
+* kernel41-ax: tcp: refine memory limit test in tcp_fragment()
+* faketc: fix wlcsm and nvram lib location on axhnd
+* build: strip executables added with the new SDK (hostapd/wpa_supplicant/iw)
+* Merge HND5.02-675x SDK from 384_8137; cleaned up, removed unneeded files
+* SDK-6750: add missing dhd firmware and nvram data for RT-AX58U's 5GHz radio
+* build: re-create HND impl symlink after make clean for 6750 SDK
+* kernel-6750: adjusted AM-specific options
+* kernel41-6750: update ipset kernel components to 6.32
+* kernel41-6750: update ipset kernel compatibility header
+* kernel41-6750: fix nested structure references in xt_set
+* build: set PREBUILT_* in common.mak for 6570, as somehow the router/Makefile instance does not propagate when building bcmdrivers modules
+* other: add armv7 ldconfig for RT-AX58U
+* kernel41-6750: add kernel options that are requested on a rebuild
+* SDK-6750: cleaned up visualization app, added working bins
+* SDK-6750: add Entware support
+* SDK-4908: SDK cleanups
+* SDK-4908: fix epi_ttcp Makefile to use the prebuilt binary
+* kernel41-6750: move blog logging to debug level, and rate limit it
+* SDK-6750: Merge RT-AX56U binary objects; added RT-AX56U build profile
+* kernel41-6750: added AM-specific options to 47622 kernel profile
+* SDK-6750: move RT-AX58U router-sysdep to model-specific folder, and copy appropriate model content to router-sysdep at build time
+* SDK-6750: create binary collection for hostTools/addvtoken (which is model-specific)
+* SDK-4908: create binary collection for hostTools/addvtoken
+* SDK-6750: replace a few binary blobs with specific RT-AX56U builds
+* kernel41-6750: add kernel options that are requested on a rebuild for 47622 kernel
+* httpd: revised CPU info retrieval for Tools page
+* httpd: added clock report for RT-AX456U
+* libnl: also remove static libraries from cli
+* SDK-6750: re-add spudd/pdc (bcmspu) and cryptodev (unused) to the source tree
+* SDK-6750: do not use prebuilt bcm_usb, use the GPL source code to build it ourselves
+* httpd: fix retrieval of WAN QoS stats on RT-AX58U
+* shared: don't prioritize AES-256-CBC over AES-128-CBC on bcm675x devices without AES acceleration
+* build: enable parallel kernel building on AX models
+* build: remove redundant targets from AX build recipes
+* build: parallelize libnl, hostapd and wpa_supplicant-2.7
+* SDK-4908: harmonize with ax.384 branch
+* SDK-6750: harmonize with ax.384 branch
+* Merge RT-AX88U binary blobs + SDK from 386_39179
+* build: update RT-AX88U build profile
+* webui: harmonize sysdep content with ax.384 branch
+* rc: implement led control for RT-AX56U/RT-AX58U/RT-AX88U
+* openssl11: use armv8 when compiling for RT-AX88U
+* bwdpi: reorganize prebuilt collections; add 6750 prebuild objects
+* build: fix a few components in copy-prebuilt
+* Merge RT-AC5300 binary blobs + SDK7.14 from 386_39179
+* Add missing AX prebuilts
+* Updated documentation
+* webui: format merlin version string on new AiMesh dashboard
+* busybox: harmonize settings with upsteram, adding a few applets
+* shared: suppress logging of failed modprobes
+* webui: fix displaying available update version string
+* rom: retrieve release notes from Asus server if AiMesh node is on Asus stock FW
+* openvpn: update to 2.5.0-beta3
+* openvpn: replace setenv_unsigned() calls with setenv_long_long() in Asuswrt's patches
+* libovpn: update config file generation for OpenVPN 2.5 (both local and exported client config)
+* openvpn: re-enable iproute2 support for kernel 2.6.36; remove defines for route and ifconfig, they're no longer used
+* webui: libovpn: httpd: remove option to enable/disable NCP
+* webui: remove 2.4 required warnings from OpenVPN Server page
+* webui: limit max data-ciphers length to 127 chars, as per the OpenVPN documentation
+* libovpn: webui: only use the old --cipher setting in p2p mode; remove non-CBC ciphers (p2p requires CBC)
+* httpd: libovpn: www: Add stub/stub-v2 compression support to OpeNVPN client
+* httpd: libovpn: webui: implement tls-crypt-v2 client support
+* webui: replaced dropdown menus with radio buttons for OpenVPN settings with only two options
+* webui: report OpenVPN server config errors as such, not as cert errors
+* webui: move some OpenVPN client setting notes to the field column, to match the server page
+* Updated documentation
+* Make VPN policy routing mode work without webui client rules
+* Merge pull request #602 from mgziminsky/patch-1
+* www: remove temp file accidentally committed
+* webui: use QoS settings as limiters for traffic meters (was lost in GPL merge)
+* webui: fix mistyped var name on OpenVPN server page
+* openvpn: try to use CHACHA20-POLY1305 (if supported by the remote end) on routers without AES acceleration
+* rstats: fix ifname check
+* webui: label hostname as optional on DHCP static leases; reduce max static leases to 64 to better handle the hardcoded max length of 2500 bytes
+* wlceventd: fix prebuilt location
+* libovpn: masquerade all client outbound traffic regardless of source subnet
+* openssl: update to 1.1.1h
+* openssl: sync 1.1.1h leftovers, cosmetics
+* build: remove RT-AC56U, RT-AC87U and RT-AC3200 build profiles
+* Remove binary blobs and other model-specific components for RT-AC56U, RT-AC87U and RT-AC3200/SDK 7.x
+* Remove Quantenna components
+* ipset: move ipset_arm to ipset-6, remove leftovers from old MIPS ipset
+* webui: integrated DOT presets into the address input field
+* rom: updated DoT server list
+* openvpn: On global stop/start events, only apply killswitch for clients set to automatically connect
+* Updated documentation
+* nano: updated to 5.2 (closes #610)
+* curl: update to 7.72.0
+* zlib: updated to 1.2.11
+* zlib: fix building newer libz.a
+* lz4: Updated to 1.9.2
+* Remove unused ra_SingleSKU from the repo
+* Remove unused jffsfilegen from the repo
+* Remove unused linux-ntfs-2.0.0 from the repo
+* Remove unused GeoIP-1.6.2 from the repo
+* e2fsprogs: updated to 1.45.6
+* lz4: fix version library used on install
+* lz4: fix building/installing on HND platform
+* rc: fix debug output for PPP event
+* rom: include trailing 0 to the IPv6 addresses of Cleanbrowsing Family (closes #580)
+* rc: fix crash if missing unit argument to wan_if service notification (closes #611)
+* lz4: remove staging from build process
+* httpd: re-harmonize with 386_39179 GPL
+* shared: re-harmonize with 386_39179 GPL
+* rc: remove blobs accidentally commited with 908b671963afb2d94076efc2bcec621c879a0689
+* rc: re-harmonize with 386_39179 GPL
+* hostapd: clean up openssl path
+* faketc: disable faketc
+* webui: hide scheduler and overhead parameters when QoS set to Adaptive
+* webui: re-implement QoS overhead as an inline dropdown menu
+* webui: fix location of DoT preset button
+* Updated documentation
+* nano: add missing files
+* e2fsprogs: add missing files
+* lz4: add missing files
+* shared: rc: move killall_tk_period_wait() to libshared
+* libovpn: moved stop/start functions from rc to libovpn
+* openvpn: update to 2.5.0-rc3
+* openvpn: replace iproute2 with netlink for pre-HND models (should now be fixed with OpenVPN 2.5.0 RC 3)
+* rc: fix DHCP renewal failure related to bwdpi firewall rules
+* Updated documentation
+* httpd: import the obsolete "cipher" parameter in the Custom OpenVPN section instead of in nvram
+* Fix convert_subnet_mask_to_cidr for masks with
+* Merge pull request #625 from mgziminsky/patch-1
+* webui: increased number of addons mount points to 20
+* openvpn: update to 2.5.0 final
+* Merge GPL 386_40577 + 5.02axhnd SDK (RT-AX88U)
+* Copy RT-AX88U prebuild from 386_40577
+* Merge SDK 6.37 + RT-AC68U binary blobs (from 386_40577)
+* shared: fix compiling bit_count() on older toolchains
+* rc: harmonize ssh key location and management code with upstream
+* Merge HND5.02 + RT-AC86U binary blobs (from 386_40577)
+* Updated documentation
+* Merge SDK 7.14 + RT-AC88U, RT-AC3100 and RT-AC5300 binary blobs (from 386_40577)
+* Merge SDK 5.02axhnd-670x and RT-AX56U/RT-AX58U binary blobs (from 386_40577)
+* asd: Fix building, and enable ASD daemon for test purposes
+* miniupnpd: merged AuraSync and GeforceNow code from upstream
+* webui: stop processing more filters once connection is excluded
+* Merge SDK 5.02p1 (RT-AX86U)
+* Add RT-AX86U binary blobs (from 386_40577)
+* SDK 5.02p1: ensure that TOP_PLATFORM ends up using router-sysdep rather than router
+* Add RT-AX86U build profile
+* kernel41-62118: adjusted AM-specific options
+* kernel41-62118: add kernel options that are requested on a rebuild
+* kernel41-62118: move blog logging to debug level, and rate limit it
+* www: build: add missing RT-AX86U pages; Fix using prebuilt binary blobs
+* SDK 5.02p1: remove duplicate build recipes
+* build: add preliminary RT-AX86U support to copy-prebuilt
+* visualization: Add visualization app for RT-AX86U; fix missing menu entry for RT-AX56U and RT-AX58U
+* webui: add multigig Ethernet support to Sysinfo page
+* asd: Disable for now, current prebuilt components aren't working yet
+* dhd: add missing dhd usertool for RT-AX56U/RT-AX58U
+* build: add RT-AX86U to build-all script
+* dropbear: updated to 2020.81
+* e2fsprogs: revert ext4 metadata_csum and 64bit features to previous behaviour for backward compatibility
+* swmdk: install init.d/* scripts on AX models
+* SDK 5.02-670x: Cleanup apps
+* Disabled FRS_LIVE_UPDATE, CLOUDCHECK and CONNDIAG in build profiles
+* Updated documentation
+* webui: add page class to WAN page (to match upstream)
+* shared: remove duplicate wan_mtu variable
+* SDK 5.01p1: Implement Entware support
+* webui: fix model label rendering on USB app page
+* webui: move captcha enable switch to the login password section
+* rc: implement LED control on RT-AX86U
+* miniupnpd: fix enabling Aurasync
+* miniupnpd: remove debug function not available yet in 386_40577
+* Enable GeForce Now support on RT-AX86U
+* libovpn: allow multiple routes per client to be defined in client-specific rules (closes #636)
+* webui: only validate wan_mtu value if it's not empty
+* ipset: switch to ipset 7.6 included upstream (used by TCPLUGIN)
+* Merge pull request #634 from dave14305/patch-1
+* kernel41: icmp: randomize the global rate limiter
+* rc: remove temporary file accidentally committed
+* Updated documentation
+* Merge GPL 386_40996 (from RT-AC68U)
+* Merge 386_40996 binary blobs for RT-AC68U
+* Merge 386_40996 binary blobs for RT-AC88U/3100/5300
+* rc: implement codel support in GeForce QOS
+* rc: retrieve MTU from instanced nvram for QOS quantum, and also handle null values
+* shared: define default instanced wan MTU nvram
+* rc: add codel support to rog_qos
+* Merge 386_40996 SDK + binary blobs for RT-AC86U
+* rc: fix typo in qos.c code
+* build: enable ASD for models with updated executables
+* Merge binary blobs + components for GT-AC2900 (from GPL 386_41035)
+* httpd: webui: implement GeForce Now QoS support on Classification page; display qsched options on QoS settings page
+* rc: implement LED control on GT-AC2900
+* SDK5.02: store model-specific hnd_extra prebuilts for RT-AC86U and GT-AC2900
+* Merge with GPL 386_41035 (from GT-AC2900)
+* build: add GT-AC2900 to copy-prebuilt
+* Remove an old 27MB large mipsel crud file
+* rc: fix typo in qos.c code
+* build: add GT-AC2900 to build-all; start HND models first as they take longer to build; add configurable git branch per model
+* rc: rework new firmware check task based on Asus' newer code
+* Updated documentation
+* Merge GPL 386_40996 (from RT-AC68U)
+* Merge 386_40996 binary blobs for RT-AC68U
+* Merge 386_40996 binary blobs for RT-AC88U/3100/5300
+* rc: add codel support to rog_qos
+* Merge 386_40996 SDK + binary blobs for RT-AC86U
+* build: enable ASD for models with updated executables
+* Merge binary blobs + components for GT-AC2900 (from GPL 386_41035)
+* httpd: webui: implement GeForce Now QoS support on Classification page; display qsched options on QoS settings page
+* rc: implement LED control on GT-AC2900
+* SDK5.02: store model-specific hnd_extra prebuilts for RT-AC86U and GT-AC2900
+* Merge with GPL 386_41035 (from GT-AC2900)
+* build: add GT-AC2900 to copy-prebuilt
+* build: add GT-AC2900 to build-all; start HND models first as they take longer to build; add configurable git branch per model
+* httpd: support interface argument when launching Ookla speedtest
+* webui: allow selecting interface to use on speedtest if any OVPN client is connected
+* Merge RT-AX56U prebuilts for 386_41035
+* Merge RT-AX58U prebuilts for 386_41035
+* Merge RT-AX88U prebuilts for 386_41035
+* Merge RT-AX86U prebuilts for 386_41035
+* webui: fix hiding interface selector on speedtest if only WAN is available
+* Fix handling of router-sysdep for RT-AX88U
+* build: improve RT-AX86U handling in copy-prebuilt
+* build: set all branches to master in build-all script
+* Updated documentation
+* kernel41-62118: update ipset to 6.32; fix nested structure references in xt_set
+* kernel41-62218: build ipset as modules instead of built-in (6.32 fails to properly build when built-in)
+* aimesh: update header file missed from GPL 41035
+* libovpn: properly clear remote IP address when stopping client
+* asd: update RT-AC68U binary, disable asd for other models
+* miniupnpd: update to 2.2 (20201129 git snapshot)
+* build: don't build ipset as built-in when enabling tcplugin, build them as modules; add IP_SET_HASH_IPMAC
+* Updated documentation
+* miniupnpd: re-apply lost patch to allow WAN IP to be private (lost in 2.2 merge)
+* build: fix incorrect location for RT-AX58U dhd firmware image (issue in 386_41035)
+* miniupnpd: update chain names (lost in previous merge)
+* shared: set default ssh port as 22 (regression from 908b671963a)
+* rc: explicitely re-enable JFFS partition following factory default reset
+* SDK-6750: add missing fc symlink for RT-AX58U
+* SDK7114: use model-specific wl/et executables
+* openvpn: switch back to iproute2 for 2.6.xx models
+* rc: remove AC3200/AC87U kludge from jffs2.c
+* networkmap: use separate prebuild for RT-AC5300 (it has a different ND5 hash from other 7.14 models)
+* rc: always copy LE certs to /etc on httpd start
+* httpd: webui: revise HW acceleration reporting on Sysinfo page for HND models
+* rc: fix bandwidth limiter script caused by incorrect merge
+* openssl: update to 1.1.1i
+* rc: log allowed outbound connections from LAN when these are enabled
+* build: bump FW image header to 386_40000 for models relying on it
+* Updated documentation
+* Fix support for newer RSA signatures (as well as backward compatibility), and enable version 2 support
+* Merge with GPL 386_41350 (from RT-AX88U)
+* Merge 386_41350 binary blobs for RT-AC68U
+* inadyn: resync with Asus's code
+* webui: switched to Asus's own clientid/vendorid WAN fields; fixed JS error due to missing element IDs
+* Merge 386_41350 SDK + binary blobs for RT-AX88U
+* Merge 386_41350 binary blobs for RT-AC88U
+* Merge 386_41350 binary blobs for RT-AC5300
+* Merge 386_41350 binary blobs for RT-AC3100
+* Merge 386_41350 binary blobs for RT-AC86U
+* Merge 386_41350 SDK + binary blobs for RT-AX56U and RT-AX58U
+* build: updated copy-prebuilt: handle both GPL and prebuilt archives, removed cloudcheck
+* Updated documentation
+* build: disable RSAv2 key usage
+* others: remove legacy entware-setup.sh symlink
+* openvpn: use iproute2 instead of netlink for all platforms
+* webui: add Wifi Radar images to RT-AX56U sysdeps
+* httpd: implement runner status report for RT-AC86U/GT-AC2900; fix unknown status report
+* build: remove exception that disabled Ookla speedtest on RT-AX56U/RT-AX58U
+* Merge HND5.02 SDK from 386_41350
+* Merge 386_41350 binary blobs for GT-AC2900
+* build: added addvtoken to copy-prebuilt
+* httpd: delete backed up cert when generating a new cert was requested by the user
+* Refresh 386_41350 binary blobs for RT-AC68U/RT-AC86U/RT-AC88U/RT-AC5300 from GPL tarballs
+* Add missing binary blobs for RT-AX56U and RT-AX58U
+* SDK 5.02p1: add wl_server_socket retrieved from 386_41156 RT-AX86U FW image
+* bwdpi: update RT-AX86U components from 384_41157 FW image
+* SDK 5.02: Update addvtoken tool for RT-AC86U
+* amas-utils: update RT-AX86U components from 386_41157
+* Updated documentation
+* rc: if MTU setting is empty or invalid, use 1500 instead of 576 or 9000
+* rc: shared: webui: Hardcode fq_codel usage for tQoS/Bandwidth Limiter, remove option to select sfq as a qsched
+* rc: limit fq_codel queues to 1000 packets instead of the default 10240.
+* webui: re-enable Speedtest webui on RT-AX56U and RT-Ax58U
+* rc: re-enable cpuwait support on RT-AC86U/GT-AC2900
+* httpd: remove duplicate code in httpd.c:main()
+* httpd: re-harmonized with upstream
+* httpd: fix compiler warning in ej_show_sysinfo()
+* httpd: cache require.min.js and jquery-ui.js browser-side (ref. #657)
+* github: create bug template
+* github: create template configuration
+* Merge pull request #671 from JackMerlin/master
+* github: enforce the use of an issue template
+* libovpn: enable multihome for UDP servers
+* rc: remove outdated source file
+* rc: do not skip new firmware checks on AX56/AX58 within region CX
+* webui: do not rely on bridge stats to calculate traffic scale
+* Merge with GPL 386_41535
+* Merge 386_41535 binary blobs for RT-AC68U
+* Merge 386_41535 binary blobs for RT-AC88U/RT-AC3100/RT-AC5300
+* Merge 386_41535 binary blobs for RT-AC86U
+* Merge 386_41535 binary blobs for RT-AX88U
+* Merge 386_41535 SDK + binary blobs for RT-AX56U/RT-AX58U
+* Merge 386_41535 binary blobs for GT-AC2900
+* build: copy addvtoken to model folder for RT-AX88U
+* Updated documentation
+* Merge 386_41535 SDK for RT-AX86U
+* Merge 386_41535 binary blobs for RT-AX86U
+* build: move RT-AX86U addvtoken to its own directory
+* Remove Codel scheduler from all kernels
+* asd: disable asd on all models
+* SDK 4908: revert bdmf.o to 386_40577 version
+* rc: don't use prebuilt init-broadcom
+* libovpn: correct error message when trying to start already running server
+* rc: replace missing include with publicly obtained defines
+* axhnd: cleanup SDK from build leftovers
+* SDK 5.02p1: fix pwrmngtd module building
+* SDK 5.02p1: cleanup SDK
+* Merge GPL + binary blobs from 386_41700 (RT-AC68U)
+* build: add cleanup section to copy-prebuilt
+* Merge 386_41700 binary blobs for RT-AC88U/RT-AC3100/RT-AC5300
+* Merge 386_41700 binary blobs + SDK for RT-AC86U
+* asd: re-enable on all models
+* Merge 386_41700 binary blobs + SDK for RT-AX88U
+* Merge 386_41700 binary blobs + SDK for GT-AC2900
+* Merge 386_41700 binary blobs and SDK for RT-AX86U
+* Merge 386_41700 binary blobs and SDK for RT-AX56U
+* Merge 386_41700 binary blobs + SDK for RT-AX58U
+* wsdd2: identify as ASUSWRT WSD rather than NETGEAR WSD
+* wsdd2: Also bind to specific interface when listening to SSDP address
+* dnsmasq: update to 2.84test3 (openssl/2.84test3-36-g5790ea0)
+* dnsmasq: update to 2.84test3 (openssl/2.84test3-40-gee342e7)
+* dsl-ac68u: Added new device
+* Merge other files from 386_41535 SDK (DSL-AC68U)
+* dsl-ax82u: Merged prebuilds from Merge GPL 386_40577 + 5.02axhnd SDK
+* dsl-ax82u: Merged 5.02axhnd SDK
+* dsl-ax82u: allows router-sysdeps to be copied
+* fix: dev_nvram_get_all is not available for HND
+* dsl-ax82u: buildfix - dhd in the GPL is not in the right path. Using dhd from broadcom SDK
+* dsl-ax82u: buildfix - missing symlink to broadcom_arm_ax_63178 required
+* tools: Added genkeys.sh
+* dsl-ac68u: Merged GPL 386_41700
+* dsl-ac68u: tools: added dsl_drv_tool to helper scripts
+* dnsmasq: update to 2.84 final
+* Updated documentation
+* dnsmasq: 2.84 final is 2.84-42-g433dc70-openssl
+* dnsmasq: revert rfc4361 non-conformant changes
+* wsdd2: fix typo in server response header
+* Revert "wsdd2: Also bind to specific interface when listening to SSDP address"
+* rc: restart nasapps/wsdd2 on WAN up
+* Updated documentation
+* inadyn: updated to 2.8.1
+* dnsmasq: update to 2.84 final
+* Updated documentation
+* dnsmasq: 2.84 final is 2.84-42-g433dc70-openssl
+* dnsmasq: revert rfc4361 non-conformant changes
+* wsdd2: fix typo in server response header
+* Revert "wsdd2: Also bind to specific interface when listening to SSDP address"
+* rc: restart nasapps/wsdd2 on WAN up
+* Updated documentation
+* dsl-ac68u: Enabling back ASD
+* dsl-ax82u: Merged GPL 386_41700
+* Harmonized target profiles with upstream
+* Updated documentation
+* Fix typo in RT-AC5300 target build from 563539d0f0
+* openvpn: remove duplicate define
+* rc: cleanup formatting to pc.c to match with upstream (no code change)
+* www: accept IPv6 ending with :: as being valid
+* nano: update to 5.5
+* www: update and fixes to get_oui_full_vendor() to use local DB
+* rc: rework ssh key handling/generation so SSH can work even with non-functional JFFS
+* Add missing 160 MHz support to GT-AC2900 target profile (fixes #691)
+* webui: add missing Netools and Wifi Insight pages to GT-AC2900 and RT-AX86U (fixes #690)
+* nano: add files filtered by gitignore, update gitignore
+* miniupnpd: re-merge nvgfn support lost with commit 0fcc748f85
+* rc: re-harmonize firewall.c code with upstream
+* rc: add badblock skipping to mtd_erase()
+* Updated documentation
+* snmp: Enable SNMP support on the RT-AX86U
+* Disable FRS_FEEDBACK for all models
+* rc: replace jffs2_enable with jffs2_on as used upstream
+* rc: re-harmonized with upstream (largely formatting changes)
+* Updated documentation
+* dsl-ax82u: fix: merged dsl_autodet and dsl_diag
+* dsl-ax82u: Imported tr069 client from GPL
+* dsl-ac68u: Imported spectrum app from GPL
+* httpd: updated filename of json DB for caching
+* Set version in preparation of 386.1_2 point release
+* dsl-ax82u: Added NTPD=y DNSPRIVACY=y
+* dsl-ac68u: restored line which was compiled out because of broken prebuild
+* Merge www files from  386_41700 GPL
+* Merge www files from  386_41700 GPL - Fixed identation
+* Moved RT-AX88U router-sysdep to model-specific directory
+* Add GT-AX11000 build profile
+* Merge GT-AX11000 binary blobs from 386_41700
+* Add GT-AX11000 SDK components
+* libbcmcrypto: re-sync with 386_41700
+* webui: added GT-AX11000 content
+* SDK 4908: removed unused dongle firmware copies
+* httpd: add GT-AX11000 support to sysinfo temperatures
+* rc: add LED control support for GT-AX11000
+* Merge upstream tag '386.1_2' into dsl-master
+* dsl-ac68u: re-enabled FRS_FEEDBACK to fix the build. PROBLEM: dsl_diag.o requires start_sendDSLdiag symbol which is available in dsl_fb.o, but this object is not there when the flag is off.
+* Disable cloudcheck on GT-AX11000 profile
+* rc: move start of sshd near the end of the boot process
+* Updated documentation
+* openssl: update to 1.1.1j
+* www: fix QoS ATM checkbox state not being saved
+* Add jitterentropy-rngd daemon to HND models
+* Updated documentation
+* Use interval for clock & boot time
+* rc: remove SSH brute force protection option, as it is redundant
+* Merge pull request #706 from jackyaz/patch-1
+* rc: time_zone_x_mapping bug fix (#701)
+* openvpn: updated to 2.5.1
+* Add cake scheduler to all HND kernels
+* iproute2-4.3: backported tc cake support from 14d2df887481dd2130c6ae5d023325262429ce3c
+* kernel: backport matchall classifier filter to all 4.1 kernels
+* iproute2-4.3: backported tc matchall filter from upstream
+* rc: fix bad merge in qos.c from GPL_41700
+* Merge pull request #709 from dave14305/patch-1
+* fix: Makes guest network 1 work again if intranet is disabled for DSL-AC68U
+* rc: implement Cake QoS mode for HND routers
+* www: implement Cake UI
+* Updated documentation
+* www: cleaned up QoS overhead presets, added conservative default profile
+* Fix NetEase UU Game Accelerator model type
+* iproute2-4.3: fix display of negative deficit and drop_next values (#710)
+* Implement entware support for GT-AX11000
+* dsl-ac68u: build: disable FRS_FEEDBACK
+* iproute2: add v5.11.0 to the tree
+* iproute2: reapply cake negative value output fixes to 5.11.0
+* iproute2: re-apply BCM/Asus patches from iproute2-4.3.0 on top of 5.11.0; disable building unused components
+* iproute2: build 5.11.0 instead of 4.3.0
+* SDK 4908: remove shared blobs that are leftovers from a previous compile
+* kernel41: Added skbedit and connmark support to tc
+* rc: split Cake parameters and script into two separate files
+* iproute2: re-re-apply negative values patch, overwritten by 338b5be20d
+* rc: fix cake qos script generation
+* dsl-ax82u: build: disable FRS_FEEDBACK
+* Merge with GPL 386_42095
+* Merge 5.02p1 SDK and RT-AX86U router-sysdep from 386_42095
+* Merge RT-AX86U binary blobs from 386_42095
+* Add RT-AX68U binary blobs from 386_41947, and web pages
+* Add RT-AX68U build profile
+* rc: Add LED control support to RT-AX68U
+* Add GT-AX11000 and RT-AX68U to copy-prebuilt and build-all scripts
+* Add router-sysdep from 386_41947 for RT-AX68U
+* Updated documentation
+* dsl: notifications: Switched off notifications for DSL feedback
+* Merge RT-AC68U binary blobs from 42095
+* Merge RT-AC88U/RT-AC3100/RT-AC5300 binary blobs from 42095
+* Merge RT-AC86U/GT-AC2900 binary blobs + SDK from 42095
+* Merge RT-AX88U/GT-AX11000 binary blobs + SDK from 42095
+* Merge RT-AX68U binary blobs from 42095
+* Merge RT-AX56U/RT-AX58U binary blobs + SDK from 42095
+* build: fix platform.mak for building HND models following 42095 merge
+* webui: hide Cake on non-HND models; add popup help; fix storing of atm/ptm value
+* build: remove FTP_SSL setting from build targets since it's alreaedy globally enabled in config_base
+* Merge upstream code  into dsl-master
+* webui: fix hiding WPA/WEP key by default (regression from 42095 merge)
+* iproute2: fix confdir location in iproute2-5.11.0
+* iproute2: fix building with xtables+ipset support
+* kernel41: enable tc ematch and related matches
+* iproute2: enable parallel building of iproute2-4.3/5.11
+* webui: fix enabling cake while bandwidth set to Auto
+* webui: remove Yandex status from router status page as we don't support it
+* SDK 5.02p1: SDK5.02.675x: fix kernel modules dependencies
+* Merge pull request #712 from VersusClyne/master
+* webui: Reformat Cake description to match the other QoS description styles
+* Revert "Fix NetEase UU Game Accelerator model type"
+* Merge pull request #715 from paldier/revert-712-master
+* qos: move all variables parameters into cake-qos.conf; add cake-qos.conf.add support; tweak file permissions
+* bb: Be more aggressive on retries if ntp servers name resolution fail
+* ntpd: fix the case where two replies received at once and first one
+* rc: rename FLOWPRIO variables in cake config
+* rc: always mount jffs2 partition regardless of jffs2_on setting
+* webui: add qis files for GT-AC2900 and GT-AX11000
+* rom: updated CA bundle to 20210309
+* rc: webui: add cake rc_support attribute
+* Updated documentation
+* add .dummy file for wlcsm to make sure GT-AX11000 passing fw build
+* Merge pull request #718 from sadoneli/master
+* rc: fix pointer corruption in filter_setting()
+* rc: rewritten dnsfilter server table management
+* webui: QoS Classification page: add warning in Cake mode; harmonise qos type handling with nvram value
+* rc: revert static DNS routes added with GPL 42095
+* rc: make qos-start run in blocking mode
+* httpd: fix openvpn/pptpd account list getting truncated after one entry
+* webui: store local copies of online json files; add code to refresh them
+* webui: remove OpenVPN server Windows FAQ as it's missing from the Asus website
+* Merge remote-tracking branch 'upstream/master' into dsl-master
+* shared: match with rx/tx var types for backup_rx/backup_tx in netdev_calc()
+* tools: exclude web files that cause the optimizing tool to crash and leave temp files in the /www directory
+* httpd: fix ouiDB.json location for browser caching
+* Updated documentation
+* rc: Rearrange Cake variable positions
+* rc: do not use dnsfilter_custom when querying the server table for an IPv6
+* Merge pull request #725 from dave14305/patch-1
+* Merge remote-tracking branch 'upstream/master' into DSL_upstream_merge
+* webui: fix display of connected IPSEC clients on VPNStatus page; added display of IKEv2 clients
+* Fix tools/copy-prebuilt
+* dsl-ac68u: Merged prebuilds from GPL 42095
+* dsl-ax82u: Merged prebuilds from GPL 42095
+* rc: make entries in passwd and shadow be in the same order
+* openssl: update to 1.1.1k
+* kernel: proper fix for wlan accumulating stats issue
+* build: no longer explicitely disable NFCM
+* webui: allow changing https LAN port while in AP mode
+* webui: move main content down on index page when the disabled wifi warning banner is shown
+* webui: Fix timezone detection (#729)
+* webui: fix duplicate variable introduced with 440d5a2427
+* Updated documentation
+* Updated documentation
+* Merge tag '386.2' into dsl-master
+* Implement entware support for DSL-AX82U
+* dsl-ax82u: Added missing bwdpi certificate from GPL 42095
+* dsl: Use different spectrum binary for different builds
+* dsl: Merged www from GPL 42095
+* kernel41: remove debugging output from blog_request() stats output (fixes #734)
+* webui: validator.rangeFloat() should not reject values that are equal to the minimal allowed value
+* rc: fix incorrect ICMPv6 rate control rule
+* webui: fix client list search field showing wrong placeholder content
+* rc: harmonize jitterentropy-rngd code with upstream; fix stop_jitterentropy()
+* webui: various tweaks and fixes to the Firmware Upgrade page.
+* rc: rework ICMPv6 firewall handling
+* webui: don't remove QoS bandwidth settings from models without Cake support
+* rc: only rate-limit ICMPv6 type 128 if DoS protection is enabled
+* Updated documentation
+* Updated documentation
+* webui: display both odmpid and productid on Sysinfo page if they differ
+* webui: fix new FW notification on AiMesh routers
+* Merge tag '386.2_2' into dsl-master
+* Enable jitterentropy-rngd for non-HND models
+* openvpn: don't set incoming client TLS errors as a local server failure in nvram's errorno
+* Updated documentation
+* openvpn: Updated to 2.5.2
+* jitterentropy-rngd: fix crosscompiling on older GCC (For non-HND)
+* dsl: fix: Moved ewan nvram vars outside RTCONFIG_FRS_FEEDBACK scope in shared/defaults.c so that can are part of the default ones and the UI can store them
+* jitterentropy-rngd: update to 1.2.2 (library 3.0.3)
+* jitterentropy-rngd: build with -O0
+* Set version to 386.2_4 for a point release
+* Updated documentation
+* Merge tag '386.2_4' into dsl-master
+* Cleanup SDKs
+* Re-bumped revision to 386.3 alpha 1
+* Cleanup SDKs
+* Re-bumped revision to 386.3 alpha 1
+* webui: Update Chart.js to 2.9.4
+* webui: add QR codes to Networkmap wifi settings and Guest Network page
+* Revert "webui: remove OpenVPN server Windows FAQ as it's missing from the Asus website"
+* httpd: allow caching of qrcode.min.js
+* Updated documentation
+* webui: move QR code CSS to external stylesheet
+* SDKs cleanup
+* tor: updated to 0.4.5.8
+* nano: updated to 5.7
+* Updated documentation
+* curl: updated to 7.76.1
+* webui: allow OpenVPN CommonName up to 64 chars long for server clientlist
+* dnsmasq: update to 2.85 (2.85-openssl-5-g989ee98)
+* dsl-ax82u: fix cpu frequency in tools page
+* Updated documentation
+* SDK714: Fragattack patches to wireless drivers
+* SDK637: Fragattack patches to wireless drivers
+* HND502: Fragattack patches to wireless drivers (RT-AC86U, GT-AC2900)
+* HND502AX: Fragattack patches to wireless drivers (RT-AX88U, GT-AX11000)
+* HND502AX-675x: Fragattack patches to wireless drivers (RT-AX56U, RT-AX58U)
+* HND502p1: Fragattack patches to wireless drivers (RT-AX68U, RT-AX86U)
+* HND502ax-675x: Update acsd
+* build: update Makefile for dhd/acsd/ceventd installation
+* Merge upstream code
+* Updated documentation
+* webui: Update Chart.js to 2.9.4
+* Revert "webui: remove OpenVPN server Windows FAQ as it's missing from the Asus website"
+* tor: updated to 0.4.5.8
+* SDK714: Fragattack patches to wireless drivers
+* SDK637: Fragattack patches to wireless drivers
+* HND502: Fragattack patches to wireless drivers (RT-AC86U, GT-AC2900)
+* HND502AX: Fragattack patches to wireless drivers (RT-AX88U, GT-AX11000)
+* HND502AX-675x: Fragattack patches to wireless drivers (RT-AX56U, RT-AX58U)
+* HND502p1: Fragattack patches to wireless drivers (RT-AX68U, RT-AX86U)
+* HND502ax-675x: Update acsd
+* build: update Makefile for dhd/acsd/ceventd installation
+* Updated documentation
+* Merge remote-tracking branch 'upstream/master' into dsl-master
+* dsl-ac68u: SDK637: Fragattack patches to wireless drivers
+* dsl-ax82u: HND502AX-675x: Fragattack patches to wireless drivers
+* rom: updated CA bundle to 20210605
+* rom: updated CA bundle to 20210605
+* Updated documentation
+* dsl-ac82: updated outer-sysdep.dsl-ax82u from SDK 42438
+* Merge remote-tracking branch 'upstream/master' into dsl-master
+* Merged upstream into dsl-master
+* Updated Changelog-NG.txt
+* dsl-ac68u: SDK637: Fragattack patches to wireless drivers from GPL 43252
+* dsl-ax82u: Enable cake for target 63178
+* dsl-ax82u: Enable IFTT
+* Updated changelog
