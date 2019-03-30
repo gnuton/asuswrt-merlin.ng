@@ -15,7 +15,7 @@ I dunno. If  Asus keeps on giving us up-to-date GPL source code, if these builds
 You can find them on the release page of github
 
 ## Where can I find the code for the DSL-AC68U?
-Please have a look at the dsl branch
+Please have a look at the dsl-ac68u branch
 
 ## What's the status of this project?
 It's an experimental project, since it has not been extensively tested yet. If you find any issue please report it in github. 
