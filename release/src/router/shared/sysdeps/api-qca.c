@@ -390,7 +390,10 @@ void set_radio(int on, int unit, int subunit)
 		sub++;
 	} while (subunit < 0 && sub <= 3);
 
-	led_control(led, onoff);
+#if defined(RTCONFIG_WPS_ALLLED_BTN)
+	if (nvram_match("AllLED", "1"))
+#endif
+		led_control(led, onoff);
 }
 
 char *wif_to_vif(char *wif)
@@ -1377,8 +1380,22 @@ char *get_wlifname(int unit, int subunit, int subunit_x, char *buf)
 #endif
 		 && subunit == 1) {
 		strcpy(buf, get_staifname(unit));
+		return buf;
 	} else
 #endif /* RTCONFIG_WIRELESSREPEATER */
+#if defined(RTCONFIG_AMAS)
+	if (sw_mode() == SW_MODE_AP && nvram_match("re_mode", "1")) {
+		/*
+		 * wlX.0_bss_enabled: the interface to Upper.
+		 * wlX.1_bss_enabled: the interface to Lowwer (main)
+		 * wlX.2_bss_enabled: the interface for guest networks 1
+		 */
+		if (subunit <= 1) {
+			strcpy(buf, "");
+			return buf;
+		}
+	}
+#endif	/* RTCONFIG_AMAS */
 	{
 		__get_wlifname(unit, 0, wifbuf);
 		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
@@ -1496,6 +1513,12 @@ int get_wlsubnet(int band, const char *ifname)
 
 	for (subnet = 0, sidx = 0; subnet < MAX_NO_MSSID; subnet++)
 	{
+#ifdef RTCONFIG_AMAS
+		if (sw_mode() == SW_MODE_AP && nvram_match("re_mode", "1")) {
+			if(subnet == 1)
+				subnet++;
+		}
+#endif	/* RTCONFIG_AMAS */
 		if(!nvram_match(wl_nvname("bss_enabled", band, subnet), "1")) {
 			if (!subnet)
 				sidx++;
