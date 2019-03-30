@@ -390,7 +390,10 @@ void set_radio(int on, int unit, int subunit)
 		sub++;
 	} while (subunit < 0 && sub <= 3);
 
-	led_control(led, onoff);
+#if defined(RTCONFIG_WPS_ALLLED_BTN)
+	if (nvram_match("AllLED", "1"))
+#endif
+		led_control(led, onoff);
 }
 
 char *wif_to_vif(char *wif)
