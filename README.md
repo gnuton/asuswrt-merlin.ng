@@ -1,5 +1,7 @@
 # ASUS Merlin firmware for DSL-AC68U
 
+[![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u)
+
 ## What is this repo for?
 This repo holds code and builds of Asus Merlin for the ASUS DSL-AC68U
 
