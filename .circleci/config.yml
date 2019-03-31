@@ -12,6 +12,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Set release name
+          command: |
+            echo "Release name:${CIRCLE_TAG}"
+            env
+      - run:
           name: Setup toolchain
           command: |
             rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
