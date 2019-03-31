@@ -16,9 +16,9 @@ jobs:
           shell: /bin/bash
           command: |
             if [ -z "${CIRCLE_TAG}" ]; then
-              sed -i "s/EXTENDNO=.*/EXTENDNO=${CIRCLE_TAG}/g" release/src-rt/version.conf
+              echo "Nothing to do. Not a release" 
             else
-              echo "Nothing to do. Not a release tag" 
+              sed -i "s/EXTENDNO=.*/EXTENDNO=${CIRCLE_TAG}/g" release/src-rt/version.conf
             fi
       - run:
           name: Setup toolchain
