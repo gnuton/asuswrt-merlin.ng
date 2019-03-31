@@ -72,7 +72,7 @@ workflows:
       - publish-github-release:
           filters:
             tags:
-              only: /^\d+\.\d+\$/
+              only: /.*/
             branches:
               ignore: /.*/
           requires:
