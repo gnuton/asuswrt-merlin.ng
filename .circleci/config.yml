@@ -17,7 +17,7 @@ jobs:
           command: |
             if [ -z "${CIRCLE_TAG}" ]; then
               sed -i "s/EXTENDNO=.*/EXTENDNO=${CIRCLE_TAG}/g" release/src-rt/version.conf
-            elif
+            else
               echo "Nothing to do. Not a release tag" 
             fi
       - run:
