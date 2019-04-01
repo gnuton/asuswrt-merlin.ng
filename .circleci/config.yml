@@ -19,7 +19,7 @@ jobs:
               echo "Nothing to do. Not a release"
             else
               # When you tag as 340.10-extension it extract extension
-              CIRCLE_TAG_EXT="$(echo ${CIRCLE_TAG} | sed -e "s/[0-9]\\+\\.[0-9]\\+\\-//g)"
+              CIRCLE_TAG_EXT="$(echo ${CIRCLE_TAG} | sed -e "s/[0-9]\\+\\.[0-9]\\+\\-//g")"
               sed -i "s/EXTENDNO=.*/EXTENDNO=${CIRCLE_TAG_EXT}/g" release/src-rt/version.conf
             fi
       - run:
