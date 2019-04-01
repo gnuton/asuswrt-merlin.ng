@@ -12,6 +12,15 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Set EXTENDNO
+          shell: /bin/bash
+          command: |
+            if [ -z "${CIRCLE_TAG}" ]; then
+              echo "Nothing to do. Not a release"
+            else
+              sed -i "s/EXTENDNO=.*/EXTENDNO=${CIRCLE_TAG}/g" release/src-rt/version.conf
+            fi
+      - run:
           name: Setup toolchain
           command: |
             rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
