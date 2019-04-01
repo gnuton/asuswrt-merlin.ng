@@ -71,9 +71,6 @@ then
         mkdir -p $REPO/release/src/router/bwdpi_source/asus/prebuild$ARCH/$MODEL
         mkdir -p $REPO/release/src/router/tuxera/broadcom_arm_dsl_ac68u
         
-        # hack
-        cp -a $REPO/release/src/router/shared/prebuild/RT-AC68U/* $REPO/release/src/router/shared/prebuild/$MODEL
-
         cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
         cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$MODEL/
         cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
@@ -82,6 +79,8 @@ then
         cp -a release/src/router/tuxera/broadcom_arm_dsl_ac68u/* $REPO/release/src/router/tuxera/broadcom_arm_dsl_ac68u/
         cp -a release/src-rt-6.x.4708/wl/sysdeps/$MODEL $REPO/release/src-rt-6.x.4708/wl/sysdeps
         cp -a release/src/router/www/sysdep/$MODEL $REPO/release/src/router/www/sysdep
+        # DSL-AC68U has symlinks to DSL-N55U www files
+        cp -a release/src/router/www/sysdep/DSL-N55U $REPO/release/src/router/www/sysdep
         cp -a release/src-rt-6.x.4708/tc_fw/ $REPO/release/src-rt-6.x.4708/
         
 elif [ "$MODEL" == "RT-AC86U" ]
