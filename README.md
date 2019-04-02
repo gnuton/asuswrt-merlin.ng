@@ -42,11 +42,11 @@ Because it make the build faster since it doesn't need to install toolchains eve
 ## How can I build Asus Merlin for DSL-AC68U or other routers by myself?
 TODO
 
-## Hey man the code is not up-to-date, how can I do it by myself?
+## Hey man the code is not up-to-date, how can I update it by myself?
 In case I have not done it yet, ping me or just please feel free to do it and send me a PR.
 
-BTW Here are the steps to perform this action:
-1. Merge the Merlin.ng mainline in the dsl-ac68u branch
+BTW Here are the steps to update the merlin upstream code and the GPL pre-builds and files:
+1. Merge the Merlin.ng mainline in the dsl-ac68u branch using git
 2. Download the latest DSL-AC68U firmware from https://www.asus.com/Networking/DSLAC68U/HelpDesk_Download/
 3. uncompress it
 4. cd dir_where_asuswrt_gpl_code_is
@@ -54,6 +54,9 @@ BTW Here are the steps to perform this action:
 6. run $MERLIN_SRC/tools/tools/copy-prebuilt
 7. git commit just the modified files belonging to DSL-AC68U
 8. build and test it
+
+## Where can I get support for this build
+Mail me or follow https://www.snbforums.com/threads/finally-got-merlin-fw-to-work-on-dsl-ac68u.48702/
 
 ## Big thanks
 - to Asus for the GPL releases
