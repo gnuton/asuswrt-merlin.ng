@@ -47,6 +47,32 @@ In case I have not done it yet, ping me or just please feel free to do it and se
 
 BTW Here are the steps to update the merlin upstream code and the GPL pre-builds and files:
 1. Merge the Merlin.ng mainline in the dsl-ac68u branch using git
+```
+   ========================
+   // Clone gnuton repo and setup upstream
+   git clone git@github.com:gnuton/asuswrt-merlin.ng.git
+   cd asuswrt-merlin.ng/
+   git remote add upstream git@github.com:RMerl/asuswrt-merlin.ng.git
+   git fetch upstream
+
+   // Update mainline branch
+   git checkout -b mainline origin/mainline
+   git rebase upstream/mainline
+   git push origin
+
+
+   // Update DSL
+   git checkout -b dsl-ac68u origin/dsl-ac68u
+   git branch dsl-ac68u-test
+   git checkout dsl-ac68u-test
+   git merge mainline
+   // Fix conflicts if any
+   git commit -m "a message" -a
+   // Push to the cloud and let the CI build it for you
+   git push origin dsl-ac68u-test
+   // if everything fine merge the changes to dsl-ac68u branch and delete dsl-ac68u-test
+   ========================
+```
 2. Download the latest DSL-AC68U firmware from https://www.asus.com/Networking/DSLAC68U/HelpDesk_Download/
 3. uncompress it
 4. cd dir_where_asuswrt_gpl_code_is
