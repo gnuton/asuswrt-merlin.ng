@@ -70,7 +70,9 @@ BTW Here are the steps to update the merlin upstream code and the GPL pre-builds
    git commit -m "a message" -a
    // Push to the cloud and let the CI build it for you
    git push origin dsl-ac68u-test
-   // if everything fine merge the changes to dsl-ac68u branch and delete dsl-ac68u-test
+   // if everything fine merge the changes to dsl-ac68u branch
+   git checkout dsl-ac68u
+   git rebase dsl-ac68u-test
    ========================
 ```
 2. Download the latest DSL-AC68U firmware from https://www.asus.com/Networking/DSLAC68U/HelpDesk_Download/
