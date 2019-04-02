@@ -2,10 +2,9 @@
 
 [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u)
 
-
 (
 All releases: ![GitHub All Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/total.svg)
-Latest release:![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg)
+Latest release:![GitHub tag (latest by date)](https://img.shields.io/github/tag-date/gnuton/asuswrt-merlin.ng.svg) ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg)
 )
 
 ## What is this repo for?
