@@ -62,7 +62,7 @@ jobs:
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} workspace/release/
 workflows:
   version: 2
-  build_and_manually_release:
+  build_and_release:
     jobs:
       - build:
           filters:
@@ -75,6 +75,6 @@ workflows:
             tags:
               only: /.*/
             branches:
-              ignore: /.*/
+              ignore: /master/
           requires:
             - build
