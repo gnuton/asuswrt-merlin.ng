@@ -44,11 +44,41 @@ Because we are in 201x and Circle CI is an excellent CI solution which builds an
 ## Why do you build This firmware in a docker image?
 Because it make the build faster since it doesn't need to install toolchains every time and because it makes the build reproducible everywhere even not in the cloud.
 
-## How can I build Asus Merlin for DSL-AC68U or other routers by myself?
+##Hey man I forked your repo and...
+### How can I build Asus Merlin for DSL-AC68U or other routers by myself?
 TODO
 
-## Hey man the code is not up-to-date, how can I update it by myself?
+### Hey man the code is not up-to-date, how can I update it by myself?
 In case I have not done it yet, ping me or just please feel free to do it and send me a PR.
+
+### I setup circleci for my repo how can I push create releases
+CircleCI has bee configured so that it create release for stable releases and pre-releases for unstable ones.
+
+#### Unstable builds or pre-releases
+CircleCI builds snapshots from commit tagged with gnuton-snapshot-.*. So if you add a new feature that you wanna test, you can build the pre-release with
+
+```bash
+# Create and push tag -> this trigger the pre-release creation
+git tag gnuton-snapshot-my-feature
+git push --tag
+
+# If you make some changes and you wanna update the pre-release
+... make your changes and commit them ...
+git push
+git tag gnuton-snapshot-my-feature -f
+git push --tag -f
+
+# when you do not need the release/tag animore you can remove it from github and from the repo
+git tag -d gnuton-snapshot-my-feature
+git push --delete origin gnuton-snapshot-my-feature
+```
+#### Stable builds or releases
+Stable builds are triggered by tags matching this pattern. [0-9]+.*gnuton. (eg: 380.0-gnuton1)
+```
+// To create and push the tag in order to build the release
+git tag 390.0-gnuton1
+git push --tag
+```
 
 BTW Here are the steps to update the merlin upstream code and the GPL pre-builds and files:
 1. Merge the Merlin.ng mainline in the dsl-ac68u branch using git
