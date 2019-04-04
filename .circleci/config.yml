@@ -5,10 +5,8 @@ jobs:
       - image: gnuton/asuswrt-merlin-toolchains-docker
         environment:
           MAKEFLAGS: "-j 1"
-          ORIG_FIRMWARE_DIR: "/opt/src/dsl-ac68u"
-          ORIG_FIRMWARE_URL: "https://dlcdnets.asus.com/pub/ASUS/wireless/DSL-AC68U/GPL_DSL_AC68U_v300438421128.zip"
-          ORIG_FIRMWARE_FILE: "GPL_DSL-AC68U_3.0.0.4.384.21128-g3e869a5.tgz"
           PROJECT_DIR: "/root/project"
+          MODEL: "dsl-ac68u"
     steps:
       - checkout
       - run:
@@ -16,11 +14,24 @@ jobs:
           shell: /bin/bash
           command: |
             if [ -z "${CIRCLE_TAG}" ]; then
-              echo "Nothing to do. Not a release"
+              echo "Nothing to do. Not a release."
             else
               EXT_TAG="$(echo -n $CIRCLE_TAG | sed -e "s/[0-9.]\\+\\-//g")"
               sed -i "s/EXTENDNO=.*/EXTENDNO=${EXT_TAG}/g" release/src-rt/version.conf
             fi
+      - run:
+          name: Generate changelog (for snapshots only now)
+          command: |
+            REGXP_TO_MATCH=.*gnuton.*
+            if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
+              CURRENT_TAG=$(git tag --sort=-version:refname | grep ${REGXP_TO_MATCH} | head -n 1)
+              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v snapshot | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
+              echo "Changes from the latest stable gnuton build:" > /tmp/CHANGELOG
+              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -v 'Merge branch' >> /tmp/CHANGELOG
+              echo $CHANGELOG
+            else
+              echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
+            fi;
       - run:
           name: Setup toolchain
           command: |
@@ -35,8 +46,9 @@ jobs:
             ls
             pwd
             make clean || echo "maybe already clean, so if it fails please continue"
-            make dsl-ac68u | tee "/tmp/build.log" # | grep -i "error\|-e"
+            make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
             ls ${PROJECT_DIR}/release/src-rt-6.x.4708/image/
+
       - run:
           name: Prepare workspace
           command: |
@@ -44,6 +56,11 @@ jobs:
             cp ${PROJECT_DIR}/release/src-rt-6.x.4708/image/*.trx workspace/release
             cp ${PROJECT_DIR}/release/src-rt-6.x.4708/image/*.md5 workspace/release
             cp /tmp/build.log workspace/release
+             if [ -z "${CIRCLE_TAG}" ]; then
+              echo "No CHANGELOG to copy. Not a release build."
+            else
+              cp -f /tmp/CHANGELOG workspace/release
+            fi
       - persist_to_workspace:
           root: workspace
           paths:
@@ -58,8 +75,23 @@ jobs:
       - run:
           name: "Publish Release on Github"
           command: |
-            echo "Uploading release:${CIRCLE_TAG}"
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} workspace/release/
+            echo "Uploading release..."
+            RELEASE_TITLE="Release: ${CIRCLE_TAG}"
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" ${CIRCLE_TAG} workspace/release/
+  publish-github-ci-pre-release:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - attach_workspace:
+          at: workspace
+      - run: ls workspace/release
+      - run:
+          name: "Publish CI pre-release on Github"
+          command: |
+            echo "Uploading CI pre-release..."
+            RELEASE_TITLE="Snapshot: ${CIRCLE_TAG}"
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
+ 
 workflows:
   version: 2
   build_and_release:
@@ -69,12 +101,22 @@ workflows:
             tags:
               only: /.*/
             branches:
-              ignore: master
+              ignore:
+               - master
+               - mainline
       - publish-github-release:
           filters:
             tags:
-              only: /.*/
+              only: /[0-9]+.*gnuton.*/
             branches:
-              ignore: /master/
+              ignore: /.*/
+          requires:
+            - build
+      - publish-github-ci-pre-release:
+          filters:
+            tags:
+              only: /gnuton-snapshot-.*/
+            branches:
+              ignore: /.*/
           requires:
             - build
