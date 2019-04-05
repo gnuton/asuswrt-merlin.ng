@@ -2,9 +2,13 @@
 
 [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u)
 
-Latest release: ![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg) ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg)
+Latest release:
+![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg) 
+![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg)
+![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg)
 
-All releases: ![GitHub All Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/total.svg)
+All releases:
+![GitHub All Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/total.svg)
 
 
 Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/tag/RMerl/asuswrt-merlin.ng.svg)
