@@ -70,7 +70,7 @@ endif
 	rm -rf `find $(INSTALLDIR) -name "*.bak"`
 
 ifeq ($(RTCONFIG_AMAS),y)
-ifneq ($(RTCONFIG_DSL),y)
+#ifneq ($(RTCONFIG_DSL),y)
 	cp $(TOP)/www/sysdep/BLUECAVE/www/Advanced_Wireless_Survey.asp $(INSTALLDIR)/www/Advanced_Wireless_Survey.asp
 	cp $(TOP)/www/sysdep/BLUECAVE/www/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
 	cp $(TOP)/www/sysdep/BLUECAVE/www/mobile $(INSTALLDIR)/www/mobile -rf
@@ -81,7 +81,7 @@ endif
 	rm -rf $(INSTALLDIR)/www/qis
 	rm -rf $(INSTALLDIR)/www/qis_m
 	rm -rf $(INSTALLDIR)/www/QIS_wizard_m.htm
-endif
+#endif
 endif
 
 	chmod -x `find $(INSTALLDIR)/www/ -name "*.asp"`
