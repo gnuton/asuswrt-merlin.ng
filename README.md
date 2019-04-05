@@ -48,7 +48,7 @@ Support asus merlin, send me patch if it's just for DSL-AC68U, tell me you are i
 Because we are in 201x and Circle CI is an excellent CI solution which builds and create releases almost automatically and in a trasparent way.
 
 ## Why do you build This firmware in a docker image?
-Because it make the build faster since it doesn't need to install toolchains every time and because it makes the build reproducible everywhere even not in the cloud.
+Because it makes the build faster since it doesn't need to install toolchains every time and because it makes the build reproducible everywhere even not in the cloud.
 
 ## Hey man I forked your repo and...
 ### How can I build Asus Merlin for DSL-AC68U or other routers by myself?
