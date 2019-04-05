@@ -215,19 +215,19 @@ ifneq ($(RTCONFIG_NETOOL),y)
 	rm -rf $(INSTALLDIR)/www/require/modules/mapApi.js
 	rm -rf $(INSTALLDIR)/www/js/table.js
 endif
-ifeq ($(RTCONFIG_DSL),y)
-	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
-	rm -rf $(INSTALLDIR)/www/qis/QIS_manual.htm
-	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
-	rm -rf $(INSTALLDIR)/www/Advanced_OperationMode_Content.asp
-else
-	rm -rf $(INSTALLDIR)/www/Main_Spectrum_Content.asp
-	rm -rf $(INSTALLDIR)/www/SNR.svg
-	rm -rf $(INSTALLDIR)/www/BPC.svg
-	rm -rf $(INSTALLDIR)/www/ajax_signals.asp
-endif
+#ifeq ($(RTCONFIG_DSL),y)
+#	rm -rf $(INSTALLDIR)/www/qis/QIS_welcome.htm
+#	rm -rf $(INSTALLDIR)/www/qis/QIS_manual.htm
+#	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
+#	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
+#	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
+#	rm -rf $(INSTALLDIR)/www/Advanced_OperationMode_Content.asp
+#else
+#	rm -rf $(INSTALLDIR)/www/Main_Spectrum_Content.asp
+#	rm -rf $(INSTALLDIR)/www/SNR.svg
+#	rm -rf $(INSTALLDIR)/www/BPC.svg
+#	rm -rf $(INSTALLDIR)/www/ajax_signals.asp
+#endif
 
 ifeq ($(BUILD_NAME),DSL-N55U)
 ifeq ($(BUILD_NAME),DSL-N55U-B)
