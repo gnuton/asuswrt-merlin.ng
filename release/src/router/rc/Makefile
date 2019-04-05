@@ -265,7 +265,7 @@ OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
 ifeq ($(RTCONFIG_AMAS),y)
 OBJS += obd-broadcom.o
 endif
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U))
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U DSL-AC68U))
 OBJS += cfe.o
 endif
 ifeq ($(RTCONFIG_ADTBW),y)
@@ -1135,7 +1135,7 @@ ifneq ($(wildcard ./prebuild/ate.o),)
 ate.o:
 	@-cp -f ./prebuild/ate.o .
 endif
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U))
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U DSL-AC68U))
 ifneq ($(wildcard ./prebuild/cfe.o),)
 cfe.o:
 	@-cp -f ./prebuild/cfe.o .
