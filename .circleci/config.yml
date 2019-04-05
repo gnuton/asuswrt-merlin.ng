@@ -20,15 +20,16 @@ jobs:
               sed -i "s/EXTENDNO=.*/EXTENDNO=${EXT_TAG}/g" release/src-rt/version.conf
             fi
       - run:
-          name: Generate changelog (for snapshots only now)
+          name: Generate changelog (only for tags)
           command: |
             REGXP_TO_MATCH=.*gnuton.*
             if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
               CURRENT_TAG=$(git tag --sort=-version:refname | grep ${REGXP_TO_MATCH} | head -n 1)
               PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v snapshot | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
-              echo "Changes from the latest stable gnuton build:" > /tmp/CHANGELOG
+              echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
+              echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > /tmp/CHANGELOG
               git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -v 'Merge branch' >> /tmp/CHANGELOG
-              echo $CHANGELOG
+              echo /tmp/CHANGELOG
             else
               echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
             fi;
@@ -59,7 +60,7 @@ jobs:
              if [ -z "${CIRCLE_TAG}" ]; then
               echo "No CHANGELOG to copy. Not a release build."
             else
-              cp -f /tmp/CHANGELOG workspace/release
+              cp /tmp/CHANGELOG workspace/release
             fi
       - persist_to_workspace:
           root: workspace
