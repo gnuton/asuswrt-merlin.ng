@@ -7,7 +7,7 @@ jobs:
           MAKEFLAGS: "-j 1"
           PROJECT_DIR: "/root/project"
           MODEL: "dsl-ac68u"
-          CHAGELOG_FILE: "/tmp/CHANGELOG"
+          CHANGELOG_FILE: "/tmp/CHANGELOG"
     steps:
       - checkout
       - run:
@@ -28,9 +28,9 @@ jobs:
               CURRENT_TAG=${CIRCLE_TAG}
               PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v snapshot | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
               echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
-              echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > ${CHANGELOG_FILE}
-              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -v 'Merge branch' >> ${CHANGELOG_FILE}
-              cat ${CHANGELOG_FILE}
+              echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
+              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -v 'Merge branch' >> "${CHANGELOG_FILE}"
+              cat "${CHANGELOG_FILE}"
             else
               echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
             fi;
@@ -61,7 +61,7 @@ jobs:
              if [ -z "${CIRCLE_TAG}" ]; then
               echo "No CHANGELOG to copy. Not a release build."
             else
-              cp ${CHANGELOG_FILE} workspace/release
+              cp "${CHANGELOG_FILE}" workspace/release
             fi
       - persist_to_workspace:
           root: workspace
