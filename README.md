@@ -134,7 +134,7 @@ git tag 390.0-gnuton1
 git push --tag
 ```
 ## Where can I get support for this build
-Mail me or follow https://www.snbforums.com/threads/asuswrt-merlin-builds-for-dsl-routers.55985/
+You can send me a chat on gitter or follow https://www.snbforums.com/threads/asuswrt-merlin-builds-for-dsl-routers.55985/
 
 ## Big thanks
 - to Asus for the GPL releases
