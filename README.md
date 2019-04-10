@@ -13,6 +13,10 @@ All releases:
 Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/tag/RMerl/asuswrt-merlin.ng.svg)
 
 
+Support: [![Gitter chat](https://badges.gitter.im/asuswrt/merlin-dsl.png)](https://gitter.im/asuswrt/merlin-dsl "Gitter chat")
+
+
+
 ## What is this repo for?
 This repo hosts the code and builds of Asus Merlin for the ASUS DSL-AC68U
 
