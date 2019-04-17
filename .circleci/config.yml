@@ -8,6 +8,7 @@ jobs:
           PROJECT_DIR: "/root/project"
           MODEL: "dsl-ac68u"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
+          SDK_PLATFORM: "hnd-ax"
     steps:
       - checkout
       - run:
@@ -37,8 +38,27 @@ jobs:
       - run:
           name: Setup toolchain
           command: |
-            rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
-            ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
+            # For brcm-arm-sdk/ Broadcom SDK6/SDK7 ARM platform (RT-AC56 upto RT-AC5300)
+            if [ "$SDK_PLATFORM" == "sdk" ]; then
+              rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
+              ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
+            fi
+            # For brcm-arm-hnd/ Broadcom HND ARM platform (RT-AC86U)
+            if [ "$SDK_PLATFORM" == "hnd" ]; then
+              ln -s ~/am-toolchains/brcm-arm-hnd /opt/toolchains
+              echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
+              echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/lib" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin" >> ~/.profile
+            fi
+            # For  brcm-arm-hnd/ Broadcom HND ARM platform 802.11ax models (eg HND AX ARM (RT-AX88U))
+            if [ "$SDK_PLATFORM" == "hnd-ax" ]; then
+              ln -s ~/am-toolchains/brcm-arm-hnd /opt/toolchains
+              echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
+              echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/lib" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin" >> ~/.profile
+            fi
       - run:
           name: Build firmware
           shell: /bin/bash
