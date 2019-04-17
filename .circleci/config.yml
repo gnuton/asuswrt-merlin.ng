@@ -8,7 +8,7 @@ jobs:
           PROJECT_DIR: "/root/project"
           MODEL: "dsl-ac68u"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
-          SDK_PLATFORM: "hnd-ax"
+          SDK_PLATFORM: "sdk"
     steps:
       - checkout
       - run:
@@ -40,11 +40,13 @@ jobs:
           command: |
             # For brcm-arm-sdk/ Broadcom SDK6/SDK7 ARM platform (RT-AC56 upto RT-AC5300)
             if [ "$SDK_PLATFORM" == "sdk" ]; then
+              echo "Setting up brcm-arm-sdk toolchains"
               rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
               ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
             fi
             # For brcm-arm-hnd/ Broadcom HND ARM platform (RT-AC86U)
             if [ "$SDK_PLATFORM" == "hnd" ]; then
+              echo "Setting up brcm-arm-hnd toolchains"
               ln -s ~/am-toolchains/brcm-arm-hnd /opt/toolchains
               echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
               echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/lib" >> ~/.profile
@@ -53,6 +55,7 @@ jobs:
             fi
             # For  brcm-arm-hnd/ Broadcom HND ARM platform 802.11ax models (eg HND AX ARM (RT-AX88U))
             if [ "$SDK_PLATFORM" == "hnd-ax" ]; then
+              echo "Setting up brcm-arm-hnd-ax toolchains"
               ln -s ~/am-toolchains/brcm-arm-hnd /opt/toolchains
               echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
               echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/lib" >> ~/.profile
