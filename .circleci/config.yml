@@ -80,7 +80,7 @@ jobs:
           command: |
             mkdir -p workspace/release
             cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release
-            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release
+            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release || :
             cp /tmp/build.log workspace/release
              if [ -z "${CIRCLE_TAG}" ]; then
               echo "No CHANGELOG to copy. Not a release build."
