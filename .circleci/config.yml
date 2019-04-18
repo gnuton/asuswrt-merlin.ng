@@ -6,7 +6,7 @@ jobs:
         environment:
           MAKEFLAGS: "-j 1"
           PROJECT_DIR: "/root/project"
-          MODEL: "dsl-ac68u"
+          MODEL: "rt-ac88u"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
           SDK_PLATFORM: "sdk"
     steps:
@@ -67,12 +67,12 @@ jobs:
           shell: /bin/bash
           no_output_timeout: 120m
           command: | 
-            cd ${PROJECT_DIR}/release/src-rt-6.x.4708/
+            cd ${PROJECT_DIR}/release/src-rt-7.14.114.x
             ls
             pwd
             make clean || echo "maybe already clean, so if it fails please continue"
             make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
-            ls ${PROJECT_DIR}/release/src-rt-6.x.4708/image/
+            ls ${PROJECT_DIR}/release/src-rt-7.14.114.x/image/
 
       - run:
           name: Prepare workspace
