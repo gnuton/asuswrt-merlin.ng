@@ -9,7 +9,7 @@ jobs:
           CHANGELOG_FILE: "/tmp/CHANGELOG"
           MODEL: "rt-ac88u"
           SDK_PLATFORM: "sdk"
-          RELEASE_DIR: "src-rt-7.14.114.x"
+          RELEASE_DIR: "src-rt-7.14.114.x/src"
     steps:
       - checkout
       - run:
