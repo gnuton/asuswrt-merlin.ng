@@ -6,9 +6,10 @@ jobs:
         environment:
           MAKEFLAGS: "-j 1"
           PROJECT_DIR: "/root/project"
-          MODEL: "rt-ac88u"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
+          MODEL: "rt-ac88u"
           SDK_PLATFORM: "sdk"
+          RELEASE_DIR: "src-rt-7.14.114.x"
     steps:
       - checkout
       - run:
@@ -41,8 +42,8 @@ jobs:
             # For brcm-arm-sdk/ Broadcom SDK6/SDK7 ARM platform (RT-AC56 upto RT-AC5300)
             if [ "$SDK_PLATFORM" == "sdk" ]; then
               echo "Setting up brcm-arm-sdk toolchains"
-              rm ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
-              ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/src-rt-6.x.4708/toolchains
+              rm ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
+              ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
             fi
             # For brcm-arm-hnd/ Broadcom HND ARM platform (RT-AC86U)
             if [ "$SDK_PLATFORM" == "hnd" ]; then
@@ -67,19 +68,19 @@ jobs:
           shell: /bin/bash
           no_output_timeout: 120m
           command: | 
-            cd ${PROJECT_DIR}/release/src-rt-7.14.114.x
+            cd ${PROJECT_DIR}/release/${RELEASE_DIR}
             ls
             pwd
             make clean || echo "maybe already clean, so if it fails please continue"
             make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
-            ls ${PROJECT_DIR}/release/src-rt-7.14.114.x/image/
+            ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
 
       - run:
           name: Prepare workspace
           command: |
             mkdir -p workspace/release
-            cp ${PROJECT_DIR}/release/src-rt-6.x.4708/image/*.trx workspace/release
-            cp ${PROJECT_DIR}/release/src-rt-6.x.4708/image/*.md5 workspace/release
+            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release
+            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release
             cp /tmp/build.log workspace/release
              if [ -z "${CIRCLE_TAG}" ]; then
               echo "No CHANGELOG to copy. Not a release build."
