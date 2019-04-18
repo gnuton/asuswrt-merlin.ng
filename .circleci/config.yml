@@ -7,9 +7,9 @@ jobs:
           MAKEFLAGS: "-j 1"
           PROJECT_DIR: "/root/project"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
-          MODEL: "rt-ac88u"
+          MODEL: "dsl-ac68u"
           SDK_PLATFORM: "sdk"
-          RELEASE_DIR: "src-rt-7.14.114.x/src"
+          RELEASE_DIR: "src-rt-6.x.4708"
     steps:
       - checkout
       - run:
