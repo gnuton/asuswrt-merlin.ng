@@ -895,7 +895,7 @@ handle_request(void)
 				alang = &cur[16];
 				strncpy(lang_buf, alang, sizeof(lang_buf)-1);
 				p = lang_buf;
-				while (p != NULL)
+				while (p != NULL && (p - lang_buf) < sizeof(lang_buf))
 				{
 					p = strtok (p, "\r\n ,;");
 					if (p == NULL)  break;
@@ -1982,6 +1982,7 @@ int main(int argc, char **argv)
 	/* Ignore broken pipes */
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGCHLD, chld_reap);
+	signal(SIGUSR1, update_wlan_log);
 
 #ifdef RTCONFIG_HTTPS
 	//if (do_ssl)

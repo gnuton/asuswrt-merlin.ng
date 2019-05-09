@@ -15,6 +15,8 @@
  * MA 02111-1307 USA
  */
 
+#define _GNU_SOURCE
+
 #include <rc.h>
 #include <wanduck.h>
 
@@ -725,6 +727,11 @@ int do_tcp_dns_detect(int wan_unit){
 
 	snprintf(prefix_wan, sizeof(prefix_wan), "wan%d_", wan_unit);
 
+#ifdef RTCONFIG_DNSPRIVACY
+	if (nvram_get_int("dnspriv_enable"))
+		strcpy(wan_dns, "127.0.1.1");
+	else
+#endif
 	snprintf(wan_dns, sizeof(wan_dns), "%s", nvram_safe_get(strcat_r(prefix_wan, "dns", nvram_name)));
 
 	if(organize_tcpcheck_cmd(wan_dns, cmd, PATH_MAX) == NULL){
@@ -826,46 +833,18 @@ int do_dns_detect(int wan_unit)
 			ret = read(pipefd[0], &status, sizeof(status));
 		} while (ret < 0 && errno == EINTR);
 
-		if (nvram_match("wifison_ready", "1"))
-		{
-#ifdef RTCONFIG_WIFI_SON
-                	if(sw_mode() != SW_MODE_REPEATER && ret == 0)
-                		ret = 0;
-			else
-				ret = (ret == sizeof(status)) ? status : -1;
-#else
-			_dprintf("no wifison feature\n");
-#endif
-		}
-		else {
-			/* ret > 0: status has been read, return real status
-			 * ret = 0: child timeout or dead w/o status, return 0
-			 * ret < 0: child read error, return -1 */
-			if (ret >= sizeof(status))
-				ret = status;
-			else if (ret != 0)
-				ret = -1;
-		}
+		/* ret > 0: status has been read, return real status
+		 * ret = 0: child timeout or dead w/o status, return 0
+		 * ret < 0: child read error, return -1 */
+		if (ret >= sizeof(status))
+			ret = status;
+		else if (ret != 0)
+			ret = -1;
 	error:
 		close(pipefd[0]);
 
 		if (debug)
 			_dprintf("%s: %s ret %d\n", __FUNCTION__, host, ret);
-
-		if (nvram_match("wifison_ready", "1"))
-		{
-#ifdef RTCONFIG_WIFI_SON
-                	if(ret == 0)
-				logmessage("WAN Connection", "DNS probe failed");
-#else
-			_dprintf("no wifison feature\n");
-#endif
-		}
-		else
-		{
-			if (ret == 0 && debug)
-				logmessage("WAN Connection", "DNS probe failed");
-		}
 
 		return ret;
 	}
@@ -2386,6 +2365,7 @@ void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr
 	};
 #endif
 	unsigned char reply_content[MAXLINE], *ptr, *end;
+	char *nptr, *nend;
 	dns_header *d_req, *d_reply;
 	dns_queries queries;
 	dns_answer answer;
@@ -2403,6 +2383,8 @@ void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr
 
 	/* query, only first so far */
 	memset(&queries, 0, sizeof(queries));
+	nptr = queries.name;
+	nend = queries.name + sizeof(queries.name) - 1;
 	while (ptr < end) {
 		size_t len = *ptr++;
 		if (len > 63 || end - ptr < (len ? : 4))
@@ -2413,9 +2395,10 @@ void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr
 			ptr += 4;
 			break;
 		}
-		if (*queries.name)
-			strcat(queries.name, ".");
-		strncat(queries.name, (char *)ptr, len);
+		if (nptr < nend && *queries.name)
+			*nptr++ = '.';
+		if (nptr < nend)
+			nptr = stpncpy(nptr, (char *)ptr, min(len, nend - nptr));
 		ptr += len;
 	}
 	if (queries.type == 0 || queries.ip_class == 0 || strlen(queries.name) > 1025)

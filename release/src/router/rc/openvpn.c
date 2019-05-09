@@ -809,19 +809,9 @@ void start_ovpn_server(int serverNum)
 	nvi = nvram_pf_get_int(prefix, "port");
 	fprintf(fp, "port %d\n", nvi);
 
-	if (nvram_get_int("ddns_enable_x") && nvram_get_int("ddns_status") && nvram_invmatch("ddns_hostname_x", ""))
-	{
-		if (nvram_match("ddns_server_x","WWW.NAMECHEAP.COM"))
-			fprintf(fp_client, "remote %s.%s %d\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_username_x"), nvi);
-		else
-			fprintf(fp_client, "remote %s %d\n", nvram_safe_get("ddns_hostname_x"), nvi);
-	}
-	else {
-		const char *address = get_wanip();
-		if (inet_addr_(address) == INADDR_ANY)
-			address = "0.0.0.0"; /* error */
-		fprintf(fp_client, "remote %s %d\n", address, nvi);
-	}
+	//Remote address
+	fprintf(fp_client, "remote %s %d\n", get_ovpn_remote_address(buffer, sizeof(buffer)), nvi);
+
 	fprintf(fp_client, "float\n");
 	fprintf(fp, "dev %s\n", iface);
 	fprintf(fp, "txqueuelen 1000\n");
@@ -1079,7 +1069,11 @@ void start_ovpn_server(int serverNum)
 			if(fp) {
 				fprintf(fp, "#!/bin/sh\n");
 				//fprintf(fp, ". /rom/easy-rsa/vars\n");
+#ifdef RTCONFIG_OPENSSL11
+				fprintf(fp, "export OPENSSL=\"openssl11\"\n");
+#else
 				fprintf(fp, "export OPENSSL=\"openssl\"\n");
+#endif
 				fprintf(fp, "export GREP=\"grep\"\n");
 				fprintf(fp, "export KEY_CONFIG=\"/rom/easy-rsa/openssl-1.0.0.cnf\"\n");
 				fprintf(fp, "export KEY_DIR=\"/etc/openvpn/server%d\"\n", serverNum);
@@ -1753,35 +1747,4 @@ error:
 
 	chmod("/etc/shadow.openvpn", 0600);
 	chmod("/etc/passwd.openvpn", 0644);
-}
-
-
-void update_ovpn_profie_remote()
-{
-	char file_path[128];
-	char address[64];
-	char buffer[256], *cur;
-	int nums[OVPN_SERVER_MAX], i;
-
-	strlcpy(buffer, nvram_safe_get("vpn_serverx_eas"), sizeof(buffer));
-
-	i = 0;
-	for( cur = strtok(buffer,","); cur != NULL && i < OVPN_SERVER_MAX; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
-	if(i < OVPN_SERVER_MAX) nums[i] = 0;
-	for( i = 0; nums[i] > 0 && i < OVPN_SERVER_MAX; i++ )
-	{
-		snprintf(file_path, sizeof(file_path), "/etc/openvpn/server%d/client.ovpn", nums[i]);
-		if(f_exists(file_path) && f_size(file_path) > 0)
-		{
-			if( nvram_match("ddns_enable_x", "1") &&
-			    nvram_match("ddns_status", "1"))
-			{
-				strlcpy(address, nvram_safe_get("ddns_hostname_x"), sizeof(address));
-			} else {
-				strlcpy(address, nvram_safe_get("wan0_ipaddr"), sizeof(address));
-			}
-			snprintf(buffer, sizeof(buffer), "sed -i 's/remote [A-Za-z0-9.-]*/remote %s/ ' %s", address, file_path);
-			system(buffer);
-		}
-	}
 }

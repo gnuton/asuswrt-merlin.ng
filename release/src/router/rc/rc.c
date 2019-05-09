@@ -819,7 +819,11 @@ static const applets_t applets[] = {
 #endif
 	{ "halt",			reboothalt_main			},
 	{ "reboot",			reboothalt_main			},
+#ifndef RTCONFIG_NTPD
 	{ "ntp", 			ntp_main			},
+#else
+	{ "ntpd_synced",		ntpd_synced_main		},
+#endif
 #ifdef RTCONFIG_NETOOL
 	{ "netool", 			netool_main			},
 #endif
@@ -858,7 +862,7 @@ static const applets_t applets[] = {
 #endif
 	{ "disk_remove",		diskremove_main			},
 #endif
-	{ "firmware_check",		firmware_check_main             },
+	{ "firmware_check",		firmware_check_main		},
 #ifdef RTAC68U
 	{ "firmware_enc_crc",		firmware_enc_crc_main		},
 	{ "fw_check",			fw_check_main			},
@@ -1559,12 +1563,15 @@ int main(int argc, char **argv)
 	}
 #endif
 	else if (!strcmp(base, "ATE")) {
+		int ret;
 		if ( argc == 2 || argc == 3 || argc == 4) {
-			asus_ate_command(argv[1], argv[2], argv[3]);
+			ret = asus_ate_command(argv[1], argv[2], argv[3]);
 		}
-		else
+		else {
+			ret = -1;
 			printf("ATE_ERROR\n");
-		return 0;
+		}
+		return ret;
 	}
 #if defined(RTCONFIG_DSL)
 	else if (!strcmp(base, "asustest")) {

@@ -102,7 +102,7 @@ endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
 CFLAGS += -I$(TOP)/openssl/include
-LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl $(if $(RTCONFIG_OPENSSL11),-lpthread,)
 endif
 
 ifeq ($(RTCONFIG_BWDPI),y)
@@ -236,7 +236,7 @@ endif
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o
 OBJS += firewall.o ppp.o services.o common.o
-OBJS += watchdog.o ntp.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
+OBJS += watchdog.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
 OBJS += format.o
 ifeq ($(RTCONFIG_CONNTRACK),y)
 OBJS += pctime.o
@@ -291,7 +291,7 @@ ifeq ($(RTCONFIG_DSL),y)
 OBJS += init-ralink-dsl.o
 endif
 else ifeq ($(RTCONFIG_QCA),y)
-OBJS += init-qca.o wps-qca.o qca.o ate-qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.obj,prebuild/ctl.obj)
+OBJS += init-qca.o wps-qca.o qca.o ate-qca.o ctl.obj
 ifeq ($(RTCONFIG_AMAS),y)
 OBJS += obd-qca.o
 endif
@@ -619,6 +619,12 @@ ifeq ($(RTCONFIG_DNSFILTER),y)
 OBJS += dnsfilter.o
 endif
 
+ifeq ($(RTCONFIG_NTPD),y)
+OBJS += ntpd.o
+else
+OBJS += ntp.o
+endif
+
 ifeq ($(RTCONFIG_BCMARM),y)
 ifeq ($(RTCONFIG_QTN),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(TOP)/libqcsapi_client/qcsapi_rpc_common/client $(TOP)/sysdeps/qtn $(SRCBASE)/shared
@@ -668,8 +674,14 @@ endif
 
 CFLAGS += -I$(TOP)/wlceventd
 
+ifeq ($(RTCONFIG_QCA_LBD),y)
+OBJS += lbd-qca.o
+endif
 
-all: rc init.prep
+all: PB rc init.prep
+
+PB:
+	[ ! -d prebuild ] || cp prebuild/*.o ./
 
 rc: $(OBJS)
 	@echo " [rc] CC $@"
@@ -770,7 +782,11 @@ ifeq ($(RTCONFIG_QTN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc start_qtn_stateless
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_qtn
 endif
+ifneq ($(RTCONFIG_NTPD),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ntp
+else
+	@cd $(INSTALLDIR)/sbin && ln -sf rc ntpd_synced
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc autodet
 ifeq ($(RTCONFIG_DETWAN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc detwan

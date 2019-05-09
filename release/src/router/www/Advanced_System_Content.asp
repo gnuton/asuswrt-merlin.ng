@@ -95,6 +95,8 @@ wifison = '<% nvram_get("wifison_ready"); %>';
 var orig_shell_timeout_x = Math.floor(parseInt("<% nvram_get("shell_timeout"); %>")/60);
 var orig_enable_acc_restriction = '<% nvram_get("enable_acc_restriction"); %>';
 var orig_restrict_rulelist_array = [];
+if((ntpd_support) && (isSwMode('rt')))
+	var orig_ntpd_server_redir = '<% nvram_get("ntpd_server_redir"); %>';
 var restrict_rulelist_array = [];
 var accounts = [<% get_all_accounts(); %>][0];
 for(var i=0; i<accounts.length; i++){
@@ -321,6 +323,13 @@ function initial(){
 		if (document.form.usb_idle_exclude.value.indexOf("i") != -1)
 			document.form.usb_idle_exclude_i.checked = true;
 	}
+
+	if ( (ntpd_support) && (isSwMode('rt')) )
+		showhide("ntpd_redir_tr", '<% nvram_get("ntpd_enable"); %>');
+	else {
+		showhide("ntpd_server_tr", 0);
+		showhide("ntpd_redir_tr", 0);
+	}
 }
 
 var time_zone_tmp="";
@@ -389,7 +398,8 @@ function applyRule(){
 			return false;
 		}
 
-		if((document.form.enable_acc_restriction.value != orig_enable_acc_restriction) || (restrict_rulelist_array.toString() != orig_restrict_rulelist_array.toString()))
+//		if((document.form.enable_acc_restriction.value != orig_enable_acc_restriction) || (restrict_rulelist_array.toString() != orig_restrict_rulelist_array.toString())
+//			|| (document.form.ntpd_server_redir.value != orig_ntpd_server_redir) )
 			restart_firewall_flag = true;
 
 		if(document.form.http_passwd2.value.length > 0){
@@ -499,9 +509,19 @@ function applyRule(){
 			updateDateTime();
 		}
 
+		if(document.form.wandog_enable_chk.checked)
+			document.form.wandog_enable.value = "1";
+		else
+			document.form.wandog_enable.value = "0";
+
+		if(document.form.dns_probe_chk.checked)
+			document.form.dns_probe.value = "1";
+		else
+			document.form.dns_probe.value = "0";
+
 		showLoading();
 
-		var action_script_tmp = "restart_time;restart_upnp;";
+		var action_script_tmp = "restart_time;restart_leds;";
 
 		if(hdspindown_support) {
 			var excluded = "";
@@ -529,20 +549,6 @@ function applyRule(){
 			action_script_tmp += "restart_usb_idle;";
 		}
 
-		if(document.form.wandog_enable_chk.checked)
-			document.form.wandog_enable.value = "1";
-		else
-			document.form.wandog_enable.value = "0";
-
-		if(document.form.dns_probe_chk.checked)
-			document.form.dns_probe.value = "1";
-		else
-			document.form.dns_probe.value = "0";
-
-		showLoading();
-
-		var action_script_tmp = "restart_time;restart_upnp;";
-
 		if(restart_httpd_flag) {
 			action_script_tmp += "restart_httpd;";
 
@@ -557,6 +563,8 @@ function applyRule(){
 
 		if(restart_firewall_flag)
 			action_script_tmp += "restart_firewall;";
+		else
+			action_script_tmp += "restart_upnp;";	// Normally done by restart_firewall
 
 
 		if(ncb_enable_option_flag)
@@ -571,6 +579,9 @@ function applyRule(){
 			action_script_tmp = "reboot";
 			document.form.action_wait.value = httpApi.hookGet("get_default_reboot_time");
 		}
+
+		if (getRadioItemCheck(document.form.ntpd_enable) != '<% nvram_get("ntpd_enable"); %>')
+			action_script_tmp += "restart_dnsmasq;";
 
 		document.form.action_script.value = action_script_tmp;
 		document.form.submit();
@@ -1877,6 +1888,19 @@ function pullPingTargetList(obj){
 					  <td colspan="2"><#t2BC#></td>
 					</tr>
 				</thead>
+				<tr id="ntpd_server_tr">
+					<th>Enable local NTP server</th>
+					<td>
+						<input type="radio" name="ntpd_enable" value="1" onclick="showhide('ntpd_redir_tr', 1);" <% nvram_match_x("","ntpd_enable","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="ntpd_enable" value="0" onclick="showhide('ntpd_redir_tr', 0);" <% nvram_match_x("","ntpd_enable","0", "checked"); %> ><#checkbox_No#>
+					</td>
+				</tr>
+				<tr id="ntpd_redir_tr">
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,29)">Intercept NTP client requests</a></th>
+					<td>
+						<input type="radio" name="ntpd_server_redir" value="1" <% nvram_match_x("","ntpd_server_redir","1", "checked"); %> ><#checkbox_Yes#>
+						<input type="radio" name="ntpd_server_redir" value="0" <% nvram_match_x("","ntpd_server_redir","0", "checked"); %> ><#checkbox_No#>
+					</td>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
 					<td>
@@ -1943,12 +1967,18 @@ function pullPingTargetList(obj){
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,3)"><#LANHostConfig_x_NTPServer_itemname#></a></th>
 					<td>
-						<input type="text" maxlength="256" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off">
+						<input type="text" maxlength="31" class="input_32_table" name="ntp_server0" value="<% nvram_get("ntp_server0"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off">
 						<a href="javascript:openLink('x_NTPServer1')"  name="x_NTPServer1_link" style=" margin-left:5px; text-decoration: underline;"><#LANHostConfig_x_NTPServer1_linkname#></a>
 						<div id="svc_hint_div" style="display:none;">
 							<span style="color:#FFCC00;"><#General_x_SystemTime_syncNTP#></span>
 							<a id="ntp_faq" href="" target="_blank" style="margin-left:5px; color: #FFCC00; text-decoration: underline;">FAQ</a>
 						</div>
+					</td>
+				</tr>
+				<tr>
+					<th>Secondary NTP Server</th>
+					<td>
+						<input type="text" maxlength="31" class="input_32_table" name="ntp_server1" value="<% nvram_get("ntp_server1"); %>" onKeyPress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off">
 					</td>
 				</tr>
 				<tr id="network_monitor_tr">
@@ -2008,6 +2038,13 @@ function pullPingTargetList(obj){
 						<input type="radio" name="btn_ez_radiotoggle" id="turn_LED" class="input" style="display:none;" value="0" <% nvram_match_x("", "btn_ez_mode", "1", "checked"); %>><label for="turn_LED" id="turn_LED_str">Turn LED On/Off</label>
 					</td>
 				</tr>
+				<tr>
+					<th>Disable LEDs</th>
+					<td>
+						<input type="radio" name="led_disable" class="input" value="1" <% nvram_match_x("", "led_disable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="led_disable" class="input" value="0" <% nvram_match_x("", "led_disable", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
 				<tr id="pwrsave_tr">
 					<th align="right"><#usb_Power_Save_Mode#></th>
 					<td>
@@ -2048,9 +2085,9 @@ function pullPingTargetList(obj){
 					<th><#Enable_ncb_notice#></th>
 					<td>
 						<select name="ncb_enable_option" class="input_option">
-							<option value="0" <% nvram_match("ncb_enable", "0", "selected"); %>>All Non-Block</option>
-							<option value="1" <% nvram_match("ncb_enable", "1", "selected"); %>>Limited Block</option>
-							<option value="2" <% nvram_match("ncb_enable", "2", "selected"); %>>All Block</option>
+							<option value="0" <% nvram_match("ncb_enable", "0", "selected"); %>><#Enable_ncb_Non_Block#></option>
+							<option value="1" <% nvram_match("ncb_enable", "1", "selected"); %>><#Enable_ncb_Limited_Block#></option>
+							<option value="2" <% nvram_match("ncb_enable", "2", "selected"); %>><#Enable_ncb_All_Block#></option>
 						</select>
 					</td>
 				</tr>
@@ -2117,7 +2154,7 @@ function pullPingTargetList(obj){
 				<tr id="auth_keys_tr">
 					<th><#Authorized_Keys#></th>
 					<td>
-						<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" style="width:95%;" spellcheck="false" maxlength="2999"><% nvram_clean_get("sshd_authkeys"); %></textarea>
+						<textarea rows="8" class="textarea_ssh_table" style="width:98%; overflow:auto; word-break:break-all;" name="sshd_authkeys" style="width:95%;" spellcheck="false" maxlength="2999"><% nvram_clean_get("sshd_authkeys"); %></textarea>
 						<span id="ssh_alert_msg"></span>
 					</td>
 				</tr>

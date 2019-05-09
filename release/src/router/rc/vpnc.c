@@ -62,11 +62,14 @@ start_vpnc(void)
 	char options[80];
 	char *pppd_argv[] = { "/usr/sbin/pppd", "file", options, NULL};
 	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_";
+	char wan_proto[16];
 	char buf[256];	/* although maximum length of pppoe_username/pppoe_passwd is 64. pppd accepts up to 256 characters. */
 	mode_t mask;
 	int ret = 0;
 
 	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_primary_ifunit());
+	snprintf(wan_proto, sizeof(wan_proto), "%s", nvram_safe_get(strcat_r(wan_prefix, "proto", tmp)));
+
 #if 0
 	if (nvram_match(strcat_r(wan_prefix, "proto", tmp), "pptp") || nvram_match(strcat_r(wan_prefix, "proto", tmp), "l2tp"))
 		return 0;
@@ -77,6 +80,17 @@ start_vpnc(void)
 		sprintf(options, "/tmp/ppp/vpnc_options.l2tp");
 	else
 		return 0;
+
+#ifdef HND_ROUTER
+	/* workaround for ppp packets are dropped by fc GRE learning when pptp server / client enabled */
+	if (nvram_match("fc_disable", "0") &&
+		(!strcmp(wan_proto, "pppoe") ||
+		 !strcmp(wan_proto, "pptp") ||
+		 !strcmp(wan_proto, "l2tp"))) {
+		dbg("[%s, %d] Flow Cache Learning of GRE flows Tunnel: DISABLED, PassThru: ENABLED\n", __FUNCTION__, __LINE__);
+		eval("fc", "config", "--gre", "0");
+	}
+#endif
 
 	/* shut down previous instance if any */
 	stop_vpnc();
@@ -296,6 +310,11 @@ stop_vpnc(void)
 		usleep(3000*1000);
 		kill_pidfile_tk(pidfile);
 	}
+
+#ifdef HND_ROUTER
+	/* workaround for ppp packets are dropped by fc GRE learning when pptp server / client enabled */
+	if (nvram_match("fc_disable", "0")) eval("fc", "config", "--gre", "1");
+#endif
 }
 
 int
@@ -343,6 +362,9 @@ int vpnc_update_resolvconf(void)
 #ifdef RTCONFIG_YANDEXDNS
 	int yadns_mode = nvram_get_int("yadns_enable_x") ? nvram_get_int("yadns_mode") : YADNS_DISABLED;
 #endif
+#ifdef RTCONFIG_DNSPRIVACY
+	int dnspriv_enable = nvram_get_int("dnspriv_enable");
+#endif
 
 	lock = file_lock("resolv");
 
@@ -357,6 +379,12 @@ int vpnc_update_resolvconf(void)
 		fp_servers = NULL;
 	} else
 #endif
+#ifdef RTCONFIG_DNSPRIVACY
+	if (dnspriv_enable) {
+		/* keep dns privacy servers */
+		fp_servers = NULL;
+	} else
+#endif
 	if (!(fp_servers = fopen("/tmp/resolv.dnsmasq", "w+"))) {
 		perror("/tmp/resolv.dnsmasq");
 		fclose(fp);
@@ -368,11 +396,8 @@ int vpnc_update_resolvconf(void)
 	foreach(tmp, wan_dns, next) {
 		fprintf(fp, "nameserver %s\n", tmp);
 #ifdef NORESOLV /* dnsmasq uses no resolv.conf */
-#ifdef RTCONFIG_YANDEXDNS
-		if (yadns_mode != YADNS_DISABLED)
-			continue;
-#endif
-		fprintf(fp_servers, "server=%s\n", tmp);
+		if (fp_servers)
+			fprintf(fp_servers, "server=%s\n", tmp);
 #endif
 	}
 

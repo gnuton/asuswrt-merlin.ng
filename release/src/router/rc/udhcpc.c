@@ -638,7 +638,7 @@ udhcpc_wan(int argc, char **argv)
 {
 	_dprintf("%s:: %s\n", __FUNCTION__, argv[1] ? : "");
 
-	run_custom_script("dhcpc-event", argv[1]);
+	run_custom_script("dhcpc-event", 0, argv[1], NULL);
 
 	if (!argv[1])
 		return EINVAL;
@@ -912,7 +912,7 @@ zcip_wan(int argc, char **argv)
 {
 	_dprintf("%s:: %s\n", __FUNCTION__, argv[1] ? : "");
 
-        run_custom_script("zcip-event", argv[1]);
+        run_custom_script("zcip-event", 0, argv[1], NULL);
 
 	if (!argv[1])
 		return EINVAL;
@@ -1031,6 +1031,10 @@ bound_lan(void)
 	if ((value = getenv("ip"))) {
 		/* restart httpd after lan_ipaddr udpating through lan dhcp client */
 		if (!nvram_match("lan_ipaddr", trim_r(value))) {
+#if defined(HND_ROUTER) && defined(MCPD_PROXY)
+			stop_mcpd_proxy();
+			start_mcpd_proxy();
+#endif
 			stop_httpd();
 			start_httpd();
 			lanchange = 1;
@@ -1150,7 +1154,7 @@ udhcpc_lan(int argc, char **argv)
 {
 	_dprintf("%s:: %s\n", __FUNCTION__, argv[1] ? : "");
 
-        run_custom_script("dhcpc-event", argv[1]);
+        run_custom_script("dhcpc-event", 0, argv[1], NULL);
 
 	if (!argv[1])
 		return EINVAL;
@@ -1348,7 +1352,7 @@ ra_updated6(char *wan_ifname)
 int dhcp6c_wan(int argc, char **argv)
 {
 
-	if (argv[2]) run_custom_script("dhcpc-event", argv[2]);
+	if (argv[2]) run_custom_script("dhcpc-event", 0, argv[2], NULL);
 
 	if (!argv[1] || !argv[2])
 		return EINVAL;
@@ -1390,7 +1394,7 @@ start_dhcp6c(void)
 	struct duid duid;
 	char duid_arg[sizeof(duid)*2+1];
 	char prefix_arg[sizeof("128:xxxxxxxx")];
-	int service, i;
+	int service;
 
 #ifndef RT4GAC68U
 	if (getpid() != 1) {
@@ -1430,12 +1434,7 @@ start_dhcp6c(void)
 			((unsigned long)(duid.ea[3] & 0x0f) << 16) |
 			((unsigned long)(duid.ea[4]) << 8) |
 			((unsigned long)(duid.ea[5])) : 1;
-#if 0
-		i = (nvram_get_int(ipv6_nvname("ipv6_prefix_length")) ? : 64);
-		if ((i < 0) || (i > 128))
-#endif
-			i = 0;
-		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", i, iaid);
+		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", 0, iaid);
 		dhcp6c_argv[index++] = "-FP";
 		dhcp6c_argv[index++] = prefix_arg;
 	}

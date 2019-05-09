@@ -412,13 +412,6 @@ start_igmpproxy(char *wan_ifname)
 #endif
 #endif
 
-#ifdef RTCONFIG_MULTICAST_IPTV
-	if (nvram_get_int("switch_stb_x") > 6 &&
-	    nvram_match("switch_wantag", "movistar") &&
-	    !nvram_match("iptv_ifname", wan_ifname))
-		return;
-#endif
-
 	stop_igmpproxy();
 
 	if (nvram_get_int("udpxy_enable_x")) {
@@ -430,6 +423,13 @@ start_igmpproxy(char *wan_ifname)
 			"-c", nvram_safe_get("udpxy_clients"),
 			"-a", nvram_get("lan_ifname") ? : "br0");
 	}
+
+#ifdef RTCONFIG_MULTICAST_IPTV
+	if (nvram_get_int("switch_stb_x") > 6 &&
+	    nvram_match("switch_wantag", "movistar") &&
+	    !nvram_match("iptv_ifname", wan_ifname))
+		return;
+#endif
 
 #if !defined(HND_ROUTER)
 	if (!nvram_get_int("mr_enable_x"))
@@ -626,7 +626,7 @@ void update_wan_state(char *prefix, int state, int reason)
 	}
         else if (state == WAN_STATE_CONNECTED) {
 		sprintf(tmp,"%c",prefix[3]);
-                run_custom_script("wan-start", tmp);
+		run_custom_script("wan-start", 0, tmp, NULL);
         }
 
 #if defined(RTCONFIG_WANRED_LED)
@@ -1847,7 +1847,9 @@ stop_wan_if(int unit)
 	// Handel for each interface
 	if(unit == wan_primary_ifunit()){
 		killall_tk("stats");
+#ifndef RTCONFIG_NTPD
 		killall_tk("ntpclient");
+#endif
 
 		/* Shutdown and kill all possible tasks */
 #if 0
@@ -2027,6 +2029,9 @@ int update_resolvconf(void)
 #ifdef RTCONFIG_YANDEXDNS
 	int yadns_mode = nvram_get_int("yadns_enable_x") ? nvram_get_int("yadns_mode") : YADNS_DISABLED;
 #endif
+#ifdef RTCONFIG_DNSPRIVACY
+	int dnspriv_enable = nvram_get_int("dnspriv_enable");
+#endif
 #ifdef RTCONFIG_OPENVPN
         int dnsmode;
 #endif
@@ -2070,13 +2075,17 @@ int update_resolvconf(void)
 			if (!*wan_dns && !*wan_xdns)
 				continue;
 
-#ifdef NORESOLV /* dnsmasq uses no resolv.conf */
 			foreach(tmp, (*wan_dns ? wan_dns : wan_xdns), next)
 				fprintf(fp, "nameserver %s\n", tmp);
 
+#ifdef NORESOLV /* dnsmasq uses no resolv.conf */
 			do {
 #ifdef RTCONFIG_YANDEXDNS
 				if (yadns_mode != YADNS_DISABLED)
+					break;
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+				if (dnspriv_enable)
 					break;
 #endif
 #ifdef RTCONFIG_DUALWAN
@@ -2127,8 +2136,16 @@ int update_resolvconf(void)
 			fprintf(fp_servers, "server=%s\n", server[unit]);
 			fprintf(fp_servers, "server=%s#%u\n", server[unit], YADNS_DNSPORT);
 		}
-	}
+	} else
 #endif
+#ifdef RTCONFIG_DNSPRIVACY
+	if (dnspriv_enable) {
+		if (!nvram_get_int("dns_local"))
+			fprintf(fp, "nameserver %s\n", "127.0.1.1");
+		fprintf(fp_servers, "server=%s\n", "127.0.1.1");
+	} else
+#endif
+	;
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled() && is_routing_enabled()) {
@@ -2168,6 +2185,10 @@ int update_resolvconf(void)
 				fprintf(fp_servers, "server=/%s/%s\n", "local", tmp);
 				continue;
 			}
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+			if (dnspriv_enable)
+				continue;
 #endif
 			fprintf(fp_servers, "server=%s\n", tmp);
 		}
@@ -2210,18 +2231,22 @@ void wan6_up(const char *wan_ifname)
 	struct in_addr addr4;
 	struct in6_addr addr;
 	char gateway[INET6_ADDRSTRLEN];
-	int mtu, service = get_ipv6_service();
+	int mtu, service, accept_defrtr;
 
-	if (!wan_ifname || (strlen(wan_ifname) <= 0) ||
-		(service == IPV6_DISABLED))
+	if (!wan_ifname || *wan_ifname == '\0')
 		return;
 
+	service = get_ipv6_service();
 	switch (service) {
 	case IPV6_NATIVE_DHCP:
 #ifdef RTCONFIG_6RELAYD
 	case IPV6_PASSTHROUGH:
 #endif
+		accept_defrtr = service == IPV6_NATIVE_DHCP && /* limit to native by now */
+				nvram_match(ipv6_nvname("ipv6_ifdev"), "ppp") ?
+				nvram_get_int(ipv6_nvname("ipv6_accept_defrtr")) : 1;
 		ipv6_sysconf(wan_ifname, "accept_ra", 1);
+		ipv6_sysconf(wan_ifname, "accept_ra_defrtr", accept_defrtr);
 		ipv6_sysconf(wan_ifname, "forwarding", 0);
 		break;
 	case IPV6_MANUAL:
@@ -2231,6 +2256,8 @@ void wan6_up(const char *wan_ifname)
 	case IPV6_6RD:
 		update_6rd_info();
 		break;
+	case IPV6_DISABLED:
+		return;
 	}
 
 	set_intf_ipv6_dad(wan_ifname, 0, 1);

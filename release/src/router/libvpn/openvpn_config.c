@@ -99,34 +99,6 @@ void reset_ovpn_setting(ovpn_type_t type, int unit, int full){
 		}
 	}
 
-#if 0	// Rename
-	logmessage("openvpn", "Preserving backup of key/certs as .old files");
-	if (type == OVPN_TYPE_SERVER)	// server-only files
-	{
-		sprintf(tmp, "mv %s/vpn_crt_%s%d_ca_key %s/vpn_crt_%s%d_ca_key.old", OVPN_FS_PATH, service, unit, service, unit);
-		system(tmp);
-		sprintf(tmp, "mv %s/vpn_crt_%s%d_client_crt %s/vpn_crt_%s%d_client_crt.old", OVPN_FS_PATH, service, unit, service, unit);
-		system(tmp);
-		sprintf(tmp, "mv %s/vpn_crt_%s%d_client_key %s/vpn_crt_%s%d_client_key.old", OVPN_FS_PATH, service, unit, service, unit);
-		system(tmp);
-		sprintf(tmp, "mv %s/vpn_crt_%s%d_dh %s/vpn_crt_%s%d_dh.old", OVPN_FS_PATH, service, unit, service, unit);
-		system(tmp);
-	}
-
-	sprintf(tmp, "mv %s/vpn_crt_%s%d_ca %s/vpn_crt_%s%d_ca.old", OVPN_FS_PATH, service, unit, service, unit);
-	system(tmp);
-	sprintf(tmp, "mv %s/vpn_crt_%s%d_crt %s/vpn_crt_%s%d_crt.old", OVPN_FS_PATH, service, unit, service, unit);
-	system(tmp);
-	sprintf(tmp, "mv %s/vpn_crt_%s%d_key %s/vpn_crt_%s%d_key.old", OVPN_FS_PATH, service, unit, service, unit);
-	system(tmp);
-	sprintf(tmp, "mv %s/vpn_crt_%s%d_crl %s/vpn_crt_%s%d_crl.old", OVPN_FS_PATH, service, unit, service, unit);
-	system(tmp);
-	sprintf(tmp, "mv %s/vpn_crt_%s%d_static %s/vpn_crt_%s%d_static.old", OVPN_FS_PATH, service, unit, service, unit);
-	system(tmp);
-	sprintf(tmp, "mv %s/vpn_crt_%s%d_extra %s/vpn_crt_%s%d_extra.old", OVPN_FS_PATH, service, unit, service, unit);
-	system(tmp);
-
-#else	// Delete
         if (type == OVPN_TYPE_SERVER)  // server-only files
         {
 		set_ovpn_key(type, unit, OVPN_SERVER_CA_KEY, NULL, NULL);
@@ -147,7 +119,6 @@ void reset_ovpn_setting(ovpn_type_t type, int unit, int full){
 		set_ovpn_key(type, unit, OVPN_CLIENT_CRL, NULL, NULL);
 		set_ovpn_key(type, unit, OVPN_CLIENT_CA_EXTRA, NULL, NULL);
 	}
-#endif
 
 	nvram_commit();
 }
@@ -549,3 +520,45 @@ void write_ovpn_dnsmasq_config(FILE* dnsmasq_conf) {
 		}
 	}
 }
+
+char *get_ovpn_remote_address(char *buf, int len) {
+	const char *address;
+	char hostname[64];
+
+	strlcpy(hostname, nvram_safe_get("ddns_hostname_x"), sizeof (hostname));
+
+	if (nvram_get_int("ddns_enable_x") && nvram_get_int("ddns_status") &&
+	    *hostname &&
+	    strcmp(hostname, "all.dnsomatic.com") &&
+	    nvram_invmatch("ddns_server_x", "WWW.TUNNELBROKER.NET") )
+	{
+		if (nvram_match("ddns_server_x","WWW.NAMECHEAP.COM"))
+			snprintf(buf, len, "%s.%s", hostname, nvram_safe_get("ddns_username_x"));
+		else
+			strlcpy(buf, hostname, len);
+	}
+	else {
+		address = get_wanip();
+		if (inet_addr_(address) == INADDR_ANY)
+			address = "0.0.0.0";
+		strlcpy(buf, address, len);
+	}
+
+	return buf;
+}
+
+
+void update_ovpn_profie_remote()
+{
+	char file_path[128], address[64], buffer[256];
+	int unit;
+
+	for (unit = 1; unit <= OVPN_SERVER_MAX; unit++) {
+		snprintf(file_path, sizeof(file_path), "/etc/openvpn/server%d/client.ovpn", unit);
+		if (f_exists(file_path)) {
+			snprintf(buffer, sizeof(buffer), "sed -i 's/remote [A-Za-z0-9.-]*/remote %s/ ' %s", get_ovpn_remote_address(address, sizeof(address)), file_path);
+			system(buffer);
+		}
+	}
+}
+
