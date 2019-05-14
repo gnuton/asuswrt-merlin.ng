@@ -23661,6 +23661,9 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_sw_mode", ej_get_sw_mode},
 	{ "get_iptvSettings", ej_get_iptvSettings },
+#ifdef RTCONFIG_DNSPRIVACY
+	{ "get_dnsprivacy_presets", ej_get_dnsprivacy_presets },
+#endif
 	{ NULL, NULL }
 };
 
@@ -23865,7 +23868,11 @@ struct useful_redirect_list useful_redirect_lists[] = {
 	{"aidisk.asp", NULL},
 	{"AiProtection_**.asp", NULL},
 	{"APP_Installation.asp", NULL},
-	{"cloud_**.asp", NULL},
+	{"cloud_main.asp", NULL},
+	{"cloud_router_sync.asp", NULL},
+	{"cloud_settings.asp", NULL},
+	{"cloud_syslog.asp", NULL},
+	{"cloud_sync.asp", NULL},
 	{"Feedback_Info.asp", NULL},
 	{"GameBoost.asp", NULL},
 	{"Guest_network**.asp", NULL},
@@ -24035,3 +24042,46 @@ err:
 	fcntl(fileno(stream), F_SETOWN, -ret);
 }
 #endif // (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2)
+
+#ifdef RTCONFIG_DNSPRIVACY
+int
+ej_get_dnsprivacy_presets(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	char buf[256], *type, *datafile, *ptr, *item, *lsep, *fsep;
+	int ret = 0;
+
+	if (ejArgs(argc, argv, "%s", &type) < 1) {
+		websError(wp, 400, "Insufficient args\n");
+		return -1;
+	}
+
+	if (!strcmp(type, "dot"))
+		datafile = "/rom/dot-servers.dat";
+	else {
+		websError(wp, 400, "Invalid argument\n");
+		return -1;
+	}
+
+	if (!(fp = fopen(datafile, "r")))
+		return 0;
+
+	for (lsep = ""; (ptr = fgets(buf, sizeof(buf), fp)) != NULL;) {
+		buf[sizeof(buf) - 1] = '\0';
+		ptr = strsep(&ptr, "#\n");
+		if (*ptr == '\0')
+			continue;
+
+		ret += websWrite(wp, "%s[", lsep);
+		for (fsep = ""; (item = strsep(&ptr, ",")) != NULL;) {
+			ret += websWrite(wp, "%s\"%s\"", fsep, item);
+			fsep = ",";
+		}
+		ret += websWrite(wp, "]");
+		lsep = ",";
+	}
+	fclose(fp);
+
+	return ret;
+}
+#endif
