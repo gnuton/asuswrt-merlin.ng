@@ -143,8 +143,8 @@ workflows:
             tags:
               only: 
                - /gnuton-snapshot-.*/
-               - /gnuton-[0-9]+-beta/
-               - /gnuton-[0-9]+-alpha/
+               - /gnuton-[0-9]+-beta.*/
+               - /gnuton-[0-9]+-alpha.*/
             branches:
               ignore: /.*/
           requires:
