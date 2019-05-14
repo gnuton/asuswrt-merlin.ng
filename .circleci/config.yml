@@ -74,7 +74,12 @@ jobs:
             make clean || echo "maybe already clean, so if it fails please continue"
             make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
             ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
-
+      - run:
+          name: Remove image without firmware
+          command: |
+            cd ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
+            rm $(ls DSL-* | grep -v ".*DSL.*DSL.*")
+            ls
       - run:
           name: Prepare workspace
           command: |
