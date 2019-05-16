@@ -31,7 +31,7 @@ jobs:
               PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha" | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
               echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
               echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
-              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -v 'Merge branch' >> "${CHANGELOG_FILE}"
+              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|ci:|Bump' >> "${CHANGELOG_FILE}"
               cat "${CHANGELOG_FILE}"
             else
               echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
