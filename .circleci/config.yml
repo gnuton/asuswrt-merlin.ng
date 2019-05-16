@@ -28,7 +28,7 @@ jobs:
             REGXP_TO_MATCH=.*gnuton.*
             if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
               CURRENT_TAG=${CIRCLE_TAG}
-              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|gnuton-beta|gnuton-alpha" | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
+              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha" | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
               echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
               echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
               git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -v 'Merge branch' >> "${CHANGELOG_FILE}"
@@ -107,7 +107,7 @@ jobs:
           name: "Publish Release on Github"
           command: |
             echo "Uploading release..."
-            RELEASE_TITLE="Release: ${CIRCLE_TAG}"
+            RELEASE_TITLE="Stable: ${CIRCLE_TAG}"
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" ${CIRCLE_TAG} workspace/release/
   publish-github-ci-pre-release:
     docker:
@@ -120,7 +120,7 @@ jobs:
           name: "Publish CI pre-release on Github"
           command: |
             echo "Uploading CI pre-release..."
-            RELEASE_TITLE="Snapshot: ${CIRCLE_TAG}"
+            RELEASE_TITLE="Unstable: ${CIRCLE_TAG}"
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
  
 workflows:
@@ -148,8 +148,8 @@ workflows:
             tags:
               only: 
                - /gnuton-snapshot-.*/
-               - /[0-9]+.*gnuton.*beta[0-9]+/
-               - /[0-9]+.*gnuton.*alpha[0-9]+/
+               - /[0-9]+.*gnuton[0-9]+_beta[0-9]+/
+               - /[0-9]+.*gnuton[0-9]+_alpha[0-9]+/
             branches:
               ignore: /.*/
           requires:
