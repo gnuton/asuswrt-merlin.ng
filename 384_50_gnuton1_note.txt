@@ -1,0 +1,7 @@
+Changes from the latest stable gnuton build (384.11-gnuton2):
+* XXX
+* test
+* XXX
+* xxx
+* xx
+* xx
