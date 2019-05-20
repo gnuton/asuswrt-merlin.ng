@@ -5,3 +5,4 @@ Changes from the latest stable gnuton build (384.11-gnuton2):
 * ci: set merlinupdate var in the step
 * ci: added publish-manifest-and-notes step
 * ci: do not remove ci commits
+* ci: publish pre-release for testing
