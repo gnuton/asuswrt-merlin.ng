@@ -31,7 +31,7 @@ jobs:
               PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha" | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
               echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
               echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
-              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|ci:|Bump' >> "${CHANGELOG_FILE}"
+              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|Bump' >> "${CHANGELOG_FILE}"
               cat "${CHANGELOG_FILE}"
             else
               echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
@@ -67,7 +67,8 @@ jobs:
           name: Build firmware
           shell: /bin/bash
           no_output_timeout: 120m
-          command: | 
+          command: |
+            export MERLINUPDATE=y
             cd ${PROJECT_DIR}/release/${RELEASE_DIR}
             ls
             pwd
@@ -96,6 +97,35 @@ jobs:
           root: workspace
           paths:
             - release
+  publish-manifest-and-notes:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - attach_workspace:
+          at: workspace
+      - add_ssh_keys:
+          fingerprints:
+            - "92:8c:58:f4:aa:44:98:aa:2f:ac:bc:8b:a5:de:f5:c2"
+      - run:
+          name: "Publish manifest and release note for the current build"
+          command: |
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git config --global user.email "bot@gnuton.org"
+            git config --global user.name "Circle CI BOT"
+            git config --global push.default simple
+            git clone -b master --single-branch git@github.com:gnuton/asuswrt-merlin.ng.git
+            cd asuswrt-merlin.ng
+            echo "Creating manifest file..."
+            UPDATE_DIR=updates
+            MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([^-]*)-.*/\1/')
+            MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/[^-]*-(.*)/\1/')
+            RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
+            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" > ${UPDATE_DIR}/manifest.txt
+            cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
+            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
+            git add ${UPDATE_DIR}
+            git commit -m "Updating Notes and manifest to ${MAJOR_VER} ${MINOR_VER} [ci skip]" -a
+            git push origin
   publish-github-release:
     docker:
       - image: cibuilds/github:latest
@@ -135,6 +165,14 @@ workflows:
               ignore:
                - master
                - mainline
+      - publish-manifest-and-notes:
+          filters:
+            tags:
+              only: /[0-9]+.*gnuton[0-9]+/
+            branches:
+              ignore: /.*/
+          requires:
+            - build
       - publish-github-release:
           filters:
             tags:
@@ -143,6 +181,7 @@ workflows:
               ignore: /.*/
           requires:
             - build
+            - publish-manifest-and-notes
       - publish-github-ci-pre-release:
           filters:
             tags:
