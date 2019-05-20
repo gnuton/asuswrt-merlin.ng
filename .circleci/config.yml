@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  this-will-never-run:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - run: ls . 
+ 
+workflows:
+  version: 2
+  do-not-run-ci-for-master:
+    jobs:
+      - this-will-never-run:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              ignore: /.*/
