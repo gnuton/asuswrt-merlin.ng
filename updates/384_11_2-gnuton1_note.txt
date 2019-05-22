@@ -1,0 +1,29 @@
+Changes from the latest stable gnuton build (384.11-gnuton2):
+* rc: Re-disable udpxy on Movistar profile, as for some reasons it prevents Movistar from working for some users.
+* Updated documentation
+* webui: implement source/target ip filtering on Netstat page
+* webui: encode Netool's Netstat page in UNIX UTF-8 format
+* webui: fix mistyped color in .QISMain CSS class
+* busybox: ntpd: daemonize before DNS resolution (backport)
+* busybox: ntpd: respond only to client and symmetric active (backport)
+* busybox: ntpd: improve postponed hostname resolution (backport)
+* busybox: ntpd: print result of hostname resolution (backport)
+* ntpd: perform DNS resolution out of send/receive loop (backport)
+* busybox: ntpd: improve treatment of DNS resolution failures (backport)
+* busybox: ntpd: skip over setting next DNS resolution attempt if it is not needed (backport)
+* busybox: ntpd: do run the script at leat once in 11 minutes (reword)
+* busybox: ntpd: suppress in-kernel frequency correction in first 8 adjtimex calls (backport)
+* busybox: ntpd: choose initial FREQHOLD_cnt dynamically (backport)
+* busybox: ntpd: deprecate IPTOS_LOWDELAY in favor of IPTOS_DSCP_AF21 (backport)
+* busybox: ntpd: increase minimum G.FREQHOLD_cnt from 8 to 10 (backport)
+* busybox: ntpd: increase MIN_FREQHOLD by 3 (backport)
+* busybox: ntpd: show real, unclamped delays on low-latency networks (backport)
+* busybox: ntpd: more verbose message for "root distance too high" case (backport)
+* busybox: ntpd: increase SLEW_THRESHOLD from 0.125 to 0.5 (backport)
+* Updated documentation
+* webui: fix typo in DNS Privacy popup help
+* rc: log "unsync" ntpd event (disabled for now, will require testing first)
+* Updated documentation
+* webui: fix a few minor errors in Network Tools -> Analysis and Netstat pages
+* Updated documentation
+* webui: enabled firmware update checks for gnuton's builds
