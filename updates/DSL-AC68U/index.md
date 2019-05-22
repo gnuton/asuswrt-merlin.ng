@@ -1,4 +1,4 @@
-# New firmware release available!
+# A new GNUton's ASUS Merlin build is available for your DSL-AC68U!
 <p align="center">
   <img src="logo.jpg">
 </p>  
