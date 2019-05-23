@@ -26,12 +26,6 @@ current_firm=$(nvram get buildno | cut -d. -f1)
 current_buildno=$(nvram get buildno | cut -d. -f2)
 current_extendno=$(nvram get extendno)
 
-# Overload extendno: alpha is 11-19, beta is 51-59, release is 100-109.
-current_extendno=$(echo $current_extendno | sed s/-g.*//;)
-current_extendno=$(echo $current_extendno | sed "s/^[0-9]$/10&/;")
-current_extendno=$(echo $current_extendno | sed s/^alpha/1/;)
-current_extendno=$(echo $current_extendno | sed s/^beta/5/;)
-
 # get firmware information
 forsq=$(nvram get apps_sq)
 model=$(nvram get productid)
@@ -91,7 +85,7 @@ else
 					fi
 				fi
 		elif [ "$current_buildno" -eq "$buildno" ]; then
-			if [ "$current_extendno" -lt "$lextendno" ]; then
+			if [ "${current_extendno}" \< "${extendno}" ]; then
 				echo "---- lextendno: $lextendno ----" >> /tmp/webs_upgrade.log
 				nvram set webs_state_flag=1	# Do upgrade
 				if [ "$IS_SUPPORT_NOTIFICATION_CENTER" != "" ]; then
@@ -105,7 +99,22 @@ else
 	fi
 fi
 
-# download releasee note
+# download release note
+get_beta_release=0
+if [ "$firmver_beta" != "" ] && [ "$buildno_beta" != "" ] && [ "$lextendno_beta" != "" ]; then
+	if [ "$current_firm" -lt "$firmver_beta" ]; then
+		get_beta_release=1
+	elif [ "$current_firm" -eq "$firmver_beta" ]; then
+		if [ "$current_buildno" -lt "$buildno_beta" ]; then
+			get_beta_release=1
+		elif [ "$current_buildno" -eq "$buildno_beta" ]; then
+			if [ "$current_extendno" \< "$extendno_beta" ]; then
+				get_beta_release=1
+			fi
+		fi
+	fi
+fi
+
 webs_state_flag=$(nvram get webs_state_flag)
 get_productid=$(nvram get productid)
 get_productid=$(echo $get_productid | sed s/+/plus/;)	#replace 'plus' to '+' for one time
