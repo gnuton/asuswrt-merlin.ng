@@ -113,6 +113,8 @@ Networking:
    - Modern DDNS client (In-a-Dyn), with HTTPS support
    - DNS-over-TLS support
    - Redirect NTP client queries to the router's own NTP daemon
+   - WS-Discovery support (alternative to SMBv1 network discovery)
+
 
 Web interface:
    - Performance improvements
@@ -207,12 +209,12 @@ https://github.com/RMerl/asuswrt-merlin.ng
 Contact information
 -------------------
 SmallNetBuilder forums (preferred method: http://www.snbforums.com/forums/asuswrt-merlin.42/ as RMerlin)
-Website: https://asuswrt.lostrealm.ca/
+Website: https://www.asuswrt-merlin.net/
 Github: https://github.com/RMerl
-Email: rmerl@lostrealm.ca
+Email: merlin@asuswrt-merlin.net
 Twitter: https://twitter.com/RMerlinDev
 IRC: #asuswrt on Freenode
-Download: https://asuswrt.lostrealm.ca/download
+Download: https://www.asuswrt-merlin.net/download
 
 Development news will be posted on Twitter and the support forums.  
 You can also keep a closer eye on development as it happens, through 

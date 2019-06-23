@@ -1,7 +1,7 @@
 /*
 
 	Copyright (C) 2008-2010 Keith Moyer, tomatovpn@keithmoyer.com
-	Portions Copyright (C) 2012-2018 Eric Sauvageau
+	Portions Copyright (C) 2012-2019 Eric Sauvageau
 
 	No part of this file may be used without permission.
 
@@ -69,11 +69,6 @@ void start_ovpn_client(int clientNum)
 	if (getpid() != 1) {
 		notify_rc(buffer);
 		return;
-	}
-
-	i = 0;
-	while ((!nvram_get_int("ntp_ready")) && (i++ < 10)) {
-		sleep(i*i);
 	}
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI client backend starting...");
@@ -277,14 +272,6 @@ void start_ovpn_client(int clientNum)
 		if ( (nvl = atol(nvram_pf_safe_get(prefix, "reneg"))) >= 0 )
 			fprintf(fp, "reneg-sec %ld\n", nvl);
 
-		if ( nvram_pf_get_int(prefix, "adns") != OVPN_DNSMODE_IGNORE )
-		{
-			sprintf(buffer, "/etc/openvpn/client%d/updown.sh", clientNum);
-			symlink("/usr/sbin/updown.sh", buffer);
-			fprintf(fp, "up updown.sh\n");
-			fprintf(fp, "down updown.sh\n");
-		}
-
 		nvi = nvram_pf_get_int(prefix, "hmac");
 		if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_STATIC) && (nvi >= 0))
 		{
@@ -328,14 +315,10 @@ void start_ovpn_client(int clientNum)
 
 	}
 
-	// All other cryptmodes need a default up/down script set
-	if ( (cryptMode != TLS) && (check_if_file_exist("/jffs/scripts/openvpn-event")) )
-	{
-		sprintf(buffer, "/etc/openvpn/client%d/updown.sh", clientNum);
-		symlink("/jffs/scripts/openvpn-event", buffer);
-		fprintf(fp, "up updown.sh\n");
-		fprintf(fp, "down updown.sh\n");
-	}
+	sprintf(buffer, "/etc/openvpn/client%d/updown.sh", clientNum);
+	symlink("/usr/sbin/updown-client.sh", buffer);
+	fprintf(fp, "up updown.sh\n");
+	fprintf(fp, "down updown.sh\n");
 
 	fprintf(fp, "status-version 2\n");
 	fprintf(fp, "status status 5\n");
@@ -426,7 +409,8 @@ void start_ovpn_client(int clientNum)
 	fp = fopen(buffer, "w");
 	chmod(buffer, S_IRUSR|S_IWUSR|S_IXUSR);
 	fprintf(fp, "#!/bin/sh\n");
-	fprintf(fp, "iptables -I OVPN -i %s -j ACCEPT\n", iface);
+	fprintf(fp, "iptables -I OVPN -i %s -j %s\n",
+	             iface, (nvram_pf_get_int(prefix, "fw") ? "DROP" : "ACCEPT"));
 #ifdef HND_ROUTER
 	if (nvram_match("fc_disable", "0")) {
 #else
@@ -631,11 +615,6 @@ void start_ovpn_server(int serverNum)
 	if (getpid() != 1) {
 		notify_rc(buffer);
 		return;
-	}
-
-	i = 0;
-	while ((!nvram_get_int("ntp_ready")) && (i++ < 10)) {
-		sleep(i*i);
 	}
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI server backend starting...");
@@ -1036,14 +1015,11 @@ void start_ovpn_server(int serverNum)
 			fprintf(fp, "secret static.key\n");
 	}
 
-	if (check_if_file_exist("/jffs/scripts/openvpn-event"))
-	{
-		sprintf(buffer, "/etc/openvpn/server%d/updown.sh", serverNum);
-		symlink("/jffs/scripts/openvpn-event", buffer);
-		fprintf(fp, "script-security 2\n");
-		fprintf(fp, "up updown.sh\n");
-		fprintf(fp, "down updown.sh\n");
-	}
+	sprintf(buffer, "/etc/openvpn/server%d/updown.sh", serverNum);
+	symlink("/usr/sbin/updown-server.sh", buffer);
+	fprintf(fp, "script-security 2\n");
+	fprintf(fp, "up updown.sh\n");
+	fprintf(fp, "down updown.sh\n");
 
 	fprintf(fp, "status-version 2\n");
 	fprintf(fp, "status status 5\n");
@@ -1535,20 +1511,13 @@ void stop_ovpn_server(int serverNum)
 void start_ovpn_eas()
 {
 	char buffer[16], *cur;
-	int nums[OVPN_CLIENT_MAX], i;
+	int nums[OVPN_CLIENT_MAX], i = 0;
 
 	if (strlen(nvram_safe_get("vpn_serverx_start")) == 0 && strlen(nvram_safe_get("vpn_clientx_eas")) == 0) return;
-
-	// wait for time sync for a while
-	i = 0;
-	while ((!nvram_get_int("ntp_ready")) && (i++ < 10)) {
-		sleep(i*i);
-	}
 
 	// Parse and start servers
 	strlcpy(buffer, nvram_safe_get("vpn_serverx_start"), sizeof(buffer));
 	if ( strlen(buffer) != 0 ) vpnlog(VPN_LOG_INFO, "Starting OpenVPN servers (eas): %s", buffer);
-	i = 0;
 	for( cur = strtok(buffer,","); cur != NULL && i < OVPN_CLIENT_MAX; cur = strtok(NULL, ",")) { nums[i++] = atoi(cur); }
 	if(i < OVPN_CLIENT_MAX) nums[i] = 0;
 	for( i = 0; nums[i] > 0 && i < OVPN_CLIENT_MAX; i++ )

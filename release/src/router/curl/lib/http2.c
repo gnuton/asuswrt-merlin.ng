@@ -111,8 +111,6 @@ static int http2_perform_getsock(const struct connectdata *conn,
   int bitmap = GETSOCK_BLANK;
   (void)numsocks;
 
-  /* TODO We should check underlying socket state if it is SSL socket
-     because of renegotiation. */
   sock[0] = conn->sock[FIRSTSOCKET];
 
   /* in a HTTP/2 connection we can basically always get a frame so we should
@@ -620,7 +618,7 @@ static int push_promise(struct Curl_easy *data,
 
 /*
  * multi_connchanged() is called to tell that there is a connection in
- * this multi handle that has changed state (pipelining become possible, the
+ * this multi handle that has changed state (multiplexing become possible, the
  * number of allowed streams changed or similar), and a subsequent use of this
  * multi handle should move CONNECT_PEND handles back to CONNECT to have them
  * retry.
@@ -970,7 +968,7 @@ static int on_header(nghttp2_session *session, const nghttp2_frame *frame,
     char *h;
 
     if(!strcmp(":authority", (const char *)name)) {
-      /* psuedo headers are lower case */
+      /* pseudo headers are lower case */
       int rc = 0;
       char *check = aprintf("%s:%d", conn->host.name, conn->remote_port);
       if(!check)
@@ -1201,9 +1199,6 @@ void Curl_http2_done(struct connectdata *conn, bool premature)
   if(!httpc->h2) /* not HTTP/2 ? */
     return;
 
-  if(data->state.drain)
-    drained_transfer(data, httpc);
-
   if(premature) {
     /* RST_STREAM */
     if(!nghttp2_submit_rst_stream(httpc->h2, NGHTTP2_FLAG_NONE,
@@ -1215,6 +1210,10 @@ void Curl_http2_done(struct connectdata *conn, bool premature)
       httpc->pause_stream_id = 0;
     }
   }
+
+  if(data->state.drain)
+    drained_transfer(data, httpc);
+
   /* -1 means unassigned and 0 means cleared */
   if(http->stream_id > 0) {
     int rv = nghttp2_session_set_stream_user_data(httpc->h2,
@@ -1847,9 +1846,9 @@ static ssize_t http2_send(struct connectdata *conn, int sockindex,
                           const void *mem, size_t len, CURLcode *err)
 {
   /*
-   * BIG TODO: Currently, we send request in this function, but this
-   * function is also used to send request body. It would be nice to
-   * add dedicated function for request.
+   * Currently, we send request in this function, but this function is also
+   * used to send request body. It would be nice to add dedicated function for
+   * request.
    */
   int rv;
   struct http_conn *httpc = &conn->proto.httpc;

@@ -674,6 +674,10 @@ enum {
 	MODEL_RTAC55U,
 	MODEL_RTAC55UHP,
 	MODEL_RT4GAC55U,
+#if defined(RTAC3200) || defined(RTAC87U)	// Kludge
+	MODEL_RTN19,
+	MODEL_RTAC59U,
+#endif
 	MODEL_PLN12,
 	MODEL_PLAC56,
 	MODEL_PLAC66U,
@@ -684,8 +688,12 @@ enum {
 	MODEL_MAPAC2200,
 	MODEL_VZWAC1300,
 	MODEL_MAPAC1750,
+#if defined(RTAC3200) || defined(RTAC87U)	// Kludge
+	MODEL_MAPAC3000,
+#else
 	MODEL_RTAC92U,
 	MODEL_MAPAC2200V,
+#endif
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -1529,6 +1537,7 @@ extern int get_wl_sta_list(void);
 extern int get_maxassoc(char *ifname);
 extern int wl_add_ie(int unit, uint32 pktflag, int ielen, uchar *oui, uchar *data);
 extern void wl_del_ie_with_oui(int unit, uchar *oui);
+extern void wait_connection_finished(int band);
 #endif
 #if defined(RTCONFIG_LANTIQ)
 extern int get_wl_sta_list(void);

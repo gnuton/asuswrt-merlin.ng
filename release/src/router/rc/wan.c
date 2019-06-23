@@ -2140,7 +2140,7 @@ int update_resolvconf(void)
 #endif
 #ifdef RTCONFIG_DNSPRIVACY
 	if (dnspriv_enable) {
-		if (!nvram_get_int("dns_local"))
+		if (!nvram_get_int("dns_local_cache"))
 			fprintf(fp, "nameserver %s\n", "127.0.1.1");
 		fprintf(fp_servers, "server=%s\n", "127.0.1.1");
 	} else
@@ -2487,6 +2487,7 @@ wan_up(const char *pwan_ifname)
 	char ppa_cmd[255] = {0};
 #endif
 	FILE *fp;
+	int i=0;
 
 	/* Value of pwan_ifname can be modfied after do_dns_detect */
 	strlcpy(wan_ifname, pwan_ifname, 16);
@@ -2716,8 +2717,11 @@ wan_up(const char *pwan_ifname)
 	stop_ovpn_all();
 #endif
 
-	/* Sync time */
-	refresh_ntpc();
+	/* Sync time if not already set, or not running a daemon */
+#ifdef RTCONFIG_NTPD
+	if (!nvram_get_int("ntp_ready"))
+#endif
+		refresh_ntpc();
 
 #if !defined(RTCONFIG_MULTIWAN_CFG)
 	if (wan_unit != wan_primary_ifunit()
@@ -2726,11 +2730,13 @@ wan_up(const char *pwan_ifname)
 #endif
 			)
 	{
+		if (nvram_get_int("ntp_ready")) {
 #ifdef RTCONFIG_OPENVPN
-		start_ovpn_eas();
+			start_ovpn_eas();
 #endif
-		stop_ddns();
-		start_ddns();
+			stop_ddns();
+			start_ddns();
+		}
 		return;
 	}
 #endif
@@ -2743,8 +2749,10 @@ wan_up(const char *pwan_ifname)
 	stop_upnp();
 	start_upnp();
 
-	stop_ddns();
-	start_ddns();
+	if (nvram_get_int("ntp_ready")) {
+		stop_ddns();
+		start_ddns();
+	}
 
 #ifdef RTCONFIG_VPNC
 #ifdef RTCONFIG_VPN_FUSION
@@ -2895,7 +2903,9 @@ wan_up(const char *pwan_ifname)
 #endif
 
 #ifdef RTCONFIG_OPENVPN
-	start_ovpn_eas();
+	if (nvram_get_int("ntp_ready")) {
+		start_ovpn_eas();
+	}
 #endif
 
 #ifdef RTCONFIG_AMAS
