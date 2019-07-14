@@ -1,0 +1,89 @@
+Changes from the latest stable gnuton build (384.11_2-gnuton2):
+* nano: updated to 4.2 (closes #303)
+* openvpn: move openvpn-event script calling for server into an updown script
+* openvpn: rework the updown.sh handling for OpenVPN clients
+* webui: display hostnames on Classification page
+* webui: re-enable option to extend TTL value
+* others: fix installation of the two new updown scripts for OpenVPN
+* webui: use client_functions's function for client dropdown list
+* build: disable memaccess component for HND (got re-enabled in a recent GPL merge)
+* wsdd: initial commit
+* wsdd: add build recipes
+* wsdd: implement Asus-specific code, enable build recipe
+* rc: implement wsdd stop/start alongside Samba
+* wsdd: generate ID from the kernel's boot-id instead of hashing the MAC (patch from OpenWRT)
+* wsdd: implement -i parameter to provide a specific interface
+* webui: replace proto filter field on the Classification page by a dropdown menu
+* Updated documentation
+* webui: only show RSA strength selector if server is not started
+* ovpn: configurable allow/drop firewall policy for clients
+* rc: fix parameter order when launching wsdd2
+* rc: change default behaviour of resolv.conf to use ISP instead of local cache
+* rc/shared: disable obsolete exec code
+* rc: fix de8806990462b8c3dbd4182b4991e31cd082f7fe
+* Merge with GPL 384_45717
+* Merged 45717 binary blobs for SDK7.14 devices
+* Merged 45717 binary blobs for RT-AC68U
+* Merged 45717 binary blobs for RT-AC86U
+* webui: tweaked popup help for OpenVPN client's Inbound Firewall setting
+* Merged 382_51636 binary blobs for RT-AC3200
+* rc: kludge for RT-AC3200 building with 382 blobs
+* httpd: revert RT-AC3200 web_hook blob to custom 384_xxxx version, as the 382 blob is no longer compatible with 384 GPL
+* Updated documentation
+* rc: allow experimental AiMesh toggle to survive factory default resets
+* rc: revert broadcom.o blob for RT-AC86U to 45713 version - the 45717 version fails to link
+* Merged 382_51634 binary blobs for RT-AC87U (minus incompatible httpd/web_hook.o), and updated rc kludges for that model
+* Cleanup accidentally committed .orig files
+* httpd: randomize serial number of router-generated SSL certificates
+* bridge-utils: fix hnd clean
+* webui: remove duplicate references to ipv6_dhcp6c_release
+* curl: updated to 7.65.0
+* webui: allow usb idle values up to 9999 (nvram has an enforced limit of four chars for that setting)
+* rc: shared: add missing function, and re-merge RT-AC86U's rc/broadcom.o binary blob from 45717
+* wsdd2: fix listening on specified interface
+* wsdd2: skip bonding slaves and bridged interfaces
+* curl: revert 7.65.0 merge, as it doesn't work properly.
+* openssl: update OpenSSL 1.0 to 1.0.2s
+* openssl11: Update to OpenSSL 1.1.1c.
+* Updated documentation
+* rc: give ntpd some time to sync clock on wanup
+* curl: merge 7.65.0 back
+* curl: tool_setopt: for builds with disabled-proxy, skip all proxy setopts()
+* Updated documentation
+* networkmap: provide separate binaries for the RT-AC87U
+* shared: implement kludge on model enum for 382 models
+* bwdpi: provide separate binaries for the RT-AC87U
+* rc: give at least 30 secs instead of only 20 secs before enforcing a system reset during reboot
+* netool: enable Netool daemon but with the BB traceroute applet for non-ND models
+* miniupnpd: updated to 20190604 (git 765156b)
+* rc: remove unnecessary log message from erp_monitor when not in European region
+* rc: fix memory leak in erp_monitor
+* rc: always set log facility to ntpd for consistency with other log entries
+* Updated documentation
+* webui: remove warning about SMBv1, since unlike stock firmware we support SMBv2
+* netool: enable netool for the RT-AC87U - missing in 588ab6ea97 (closes #316)
+* rc: openvpn: remove waits for ntp sync in openvpn code since wanup already does it before starting OpenVPN instances.
+* rc: reduce max wait for ntp sync on wanup from 51 to 26 secs
+* rc: re-add variable to start_ovpn_*() funtions that is required
+* webui: fix Network Analysis symlinks location for RT-AC5300
+* rc: firewall: define VUPNP and PUPNP chains in default nat_rules
+* openssl11: The SHA256 is not a mandatory digest for DSA.
+* openssl11: issue-8998: Ensure that the alert is generated and reaches the remote
+* openssl11: Revert the DEVRANDOM_WAIT feature
+* rc: only start ddns and Openvpn in wan_up() if ntpd is set, with a small max wait period, and start both of these on the first ntpd sync event
+* rc: remove unnecessary linking with libbcmcrypto
+* Merge remote-tracking branch 'origin/master' into mainline
+* curl: update to 7.65.1
+* Merge remote-tracking branch 'origin/master' into mainline
+* rc: further tweaks to ntpd handling on wanup()
+* Updated documentation
+* Migrate to the new dedicated domain name; update to the new fwupdate file structure
+* webui: remove references to SMBv1 FAQ
+* kernel 2.6.36: improve sack handling and resource usage
+* kernel 4.1: improve sack handling and resource usage
+* kernel 2.6.36: fix commit dbd4abf8f7773a24a14d3c04d63fac7b7a89e543
+* Merge RT-AC3200 binary blobs from GPL 382_51640
+* rc: backport start_lan_port() fix for RT-AC87U from GPL 382-51640
+* Updated documentation
+* Updated documentation
+* Merged asus merlin code
