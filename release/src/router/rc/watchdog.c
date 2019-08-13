@@ -5887,12 +5887,17 @@ static void auto_firmware_check()
 
 		if (nvram_get_int("webs_state_update") &&
 		    !nvram_get_int("webs_state_error") &&
-		    strlen(nvram_safe_get("webs_state_info")))
+		    strlen(nvram_safe_get("webs_state_info_am")))
 		{
 			FAUPGRADE_DBG("retrieve firmware information");
 
-			if (!get_chance_to_control()){
-				FAUPGRADE_DBG("user in use");
+				sscanf(nvram_safe_get("webs_state_info_am"), "%3[^_]_%2[^_]_%15s", version, revision, build);
+				logmessage("watchdog", "New firmware version %s.%s_%s is available.", version, revision, build);
+				run_custom_script("update-notification", 0, NULL, NULL);
+			}
+
+#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
+			if (nvram_get("login_ip") && !nvram_match("login_ip", ""))
 				return;
 			}
 
