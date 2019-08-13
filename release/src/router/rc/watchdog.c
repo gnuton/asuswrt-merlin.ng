@@ -5887,17 +5887,12 @@ static void auto_firmware_check()
 
 		if (nvram_get_int("webs_state_update") &&
 		    !nvram_get_int("webs_state_error") &&
-		    strlen(nvram_safe_get("webs_state_info_am")))
+		    strlen(nvram_safe_get("webs_state_info")))
 		{
 			FAUPGRADE_DBG("retrieve firmware information");
 
-				sscanf(nvram_safe_get("webs_state_info_am"), "%3[^_]_%2[^_]_%15s", version, revision, build);
-				logmessage("watchdog", "New firmware version %s.%s_%s is available.", version, revision, build);
-				run_custom_script("update-notification", 0, NULL, NULL);
-			}
-
-#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
-			if (nvram_get("login_ip") && !nvram_match("login_ip", ""))
+			if (!get_chance_to_control()){
+				FAUPGRADE_DBG("user in use");
 				return;
 			}
 
@@ -5984,7 +5979,7 @@ static void auto_firmware_check_merlin()
 
 		if (nvram_get_int("webs_state_update") &&
 		    !nvram_get_int("webs_state_error") &&
-		    strlen(nvram_safe_get("webs_state_info")))
+		    strlen(nvram_safe_get("webs_state_info_am")))
 		{
 			if ((initial_state == 0) && (nvram_get_int("webs_state_flag") == 1))		// New update
 			{
@@ -5994,7 +5989,7 @@ static void auto_firmware_check_merlin()
 				memset(revision, 0, sizeof(revision));
 				memset(build, 0, sizeof(build));
 
-				sscanf(nvram_safe_get("webs_state_info"), "%3[^_]_%2[^_]_%15s", version, revision, build);
+				sscanf(nvram_safe_get("webs_state_info_am"), "%3[^_]_%2[^_]_%15s", version, revision, build);
 				logmessage("watchdog", "New firmware version %s.%s_%s is available.", version, revision, build);
 				run_custom_script("update-notification", 0, NULL, NULL);
 			}
