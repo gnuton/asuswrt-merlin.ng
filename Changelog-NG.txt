@@ -1,6 +1,46 @@
 Asuswrt-Merlin 384/NG Changelog
 ===============================
 
+384.13 (31-July-2019)
+  - NEW: AiMesh Router and node support.  Note that automatic live
+         update of Merlin-based nodes is not supported, you will have
+         to manually update any Merlin-based nodes when a new firmware
+         is available.  Asus-based nodes (which is recommended) will be
+         able to make use of the automatic live update.
+  - NEW: ChaCha20-Poly1305 support in Strongswan (themiron)
+  - UPDATED: RT-AX88U to GPL 384_6210.
+  - UPDATED: Curl 7.65.3.
+  - CHANGED: dhcp_staticlist no longer contains hostnames, these
+             have been moved to dhcp_hostnames for better
+             compatibility with upstream and closed source
+             components, also allows more static leases to be
+             defined before reaching the size limit.
+  - CHANGED: Replace Nettle with OpenSSL for dnsmasq's DNSSEC
+             validation, which opens the door to supporting
+             more ciphers.  (themiron)
+  - FIXED: Firmware Update check button would redirect to Asus
+           support site if scheduled checks are disabled.
+  - FIXED: Firefox was showing a no-op Uninstall button on the
+           AiCloud page
+  - FIXED: 5 GHz radio showing as disabled on the Sysinfo page for
+           the RT-AC87U
+  - FIXED: FTP would be accessible from the WAN even while disabled
+           if you had DualWAN load balancing enabled, or IPTV
+           configured.
+  - FIXED: IGMP Snooper daemon crashing when more than 32 hosts
+           are present (themiron)
+  - FIXED: External DDNS IP checker would fail for Chinese users,
+           as checkip.dyndns.org is blocked - switched to .com TLD.
+  - FIXED: Devices without a networkmap-defined alias wouldn't fallback
+           to their hostname on some webui pages like the IPTraffic
+           and QoS Classification pages.
+  - FIXED: Remote IP field filtering on Classification page wasn't
+           working.
+  - FIXED: Incorrect user permissions displayed on the FTP page.
+  - FIXED: Performance issues for some users, following the kernel
+           security fixes in 384.12. (gzenux)
+
+
 384.12 (22-June-2019)
   - NOTE: The project now has its own domain name.  Official website
           is now https://www.asuswrt-merlin.net/ and my email address
