@@ -24,26 +24,16 @@ This repo hosts the code and builds of Asus Merlin for the ASUS DSL-AC68U
 Asus DSL-AC68U is not officially supported by Asus Merlin; So this is my attempt to make happy people having this router and willing to run the great Merlin custom firmware on it.
 
 ## Any chance to get official Merlin support?
-I dunno. If  Asus keeps on giving us up-to-date GPL source code, if these builds get tested enough and last but not least the asus merlin dev accept to support this device, maybe we can see an official support.
-In the worst case you can find support here :D
+No
 
 ## Where can I find the firmware to flash on my router?
-You can find all the binaries in the release page of this github repo.
+Here you can find the [latest release](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) 
 
 ## How can I flash this firmware on my DSL-AC68U?
-Download the latest firmware from the relase page then browse your router web page and upload it from there.
+Download the [latest firmware](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) from the relase page then browse your router web page and upload it from there.
 
 ## Where can I find the code for the DSL-AC68U?
-Please have a look at the dsl-ac68u branch. This code is based on the Merlin mainline branch.
-
-## What's the status of this project?
-As for now it's in an experimental state, but it should works fine or at least it does for me.
-
-## Can this firmware damage my router?
-It should not, but I do not take any responsability if that happens or if you f*ck up something. 
-
-## Can I trust the binaries?
-The building process entirely happens on the cloud. Hence what you download from the release page is just what you see in this github.
+Please have a look at the dsl-ac68u branch, which is based on the Merlin's  mainline branch.
 
 ## Can you please add/unlock this X feature?
 The Merlin firmware is popular for its quality and stability and not for thoudands of features. In any case for fun I can release some snapshots with unlocked features. Here below you can find the current ones:
