@@ -57,4 +57,4 @@ You can send me a chat on gitter or follow https://www.snbforums.com/threads/asu
 - Asus Merlin devs
 
 ## Do you wanna to contribute to this project?
-More info here: https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md
+More info [here](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md).
