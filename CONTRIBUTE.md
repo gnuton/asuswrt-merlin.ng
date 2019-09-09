@@ -82,3 +82,5 @@ Stable builds are triggered by tags matching this pattern. [0-9]+.*gnuton. (eg: 
 git tag 390.0-gnuton1
 git push --tag
 ```
+### Where can I find official GPL Asus code?
+You can download it from [here](https://www.asus.com/uk/Networking/DSLAC68U/HelpDesk_Download/)
