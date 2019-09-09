@@ -40,7 +40,7 @@ The Merlin firmware is popular for its quality and stability and not for thoudan
 * REPEATER MODE - status: experimental, it works for me, but still a bit rough around the edges
 
 ### Where can I get support for this build
-You can send me a chat on gitter or follow https://www.snbforums.com/threads/asuswrt-merlin-builds-for-dsl-routers.55985/
+You can use gitter or [SMBForum](https://www.snbforums.com/threads/asuswrt-merlin-builds-for-dsl-routers.55985/).
 
 ### Big thanks
 - to Asus for the GPL releases
