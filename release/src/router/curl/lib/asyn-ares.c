@@ -253,16 +253,14 @@ static void destroy_async_data(struct Curl_async *async)
  */
 
 int Curl_resolver_getsock(struct connectdata *conn,
-                          curl_socket_t *socks,
-                          int numsocks)
-
+                          curl_socket_t *socks)
 {
   struct timeval maxtime;
   struct timeval timebuf;
   struct timeval *timeout;
   long milli;
   int max = ares_getsock((ares_channel)conn->data->state.resolver,
-                         (ares_socket_t *)socks, numsocks);
+                         (ares_socket_t *)socks, MAX_SOCKSPEREASYHANDLE);
 
   maxtime.tv_sec = CURL_TIMEOUT_RESOLVE;
   maxtime.tv_usec = 0;
@@ -734,7 +732,11 @@ CURLcode Curl_set_dns_servers(struct Curl_easy *data,
     return CURLE_OK;
 
 #if (ARES_VERSION >= 0x010704)
+#if (ARES_VERSION >= 0x010b00)
+  ares_result = ares_set_servers_ports_csv(data->state.resolver, servers);
+#else
   ares_result = ares_set_servers_csv(data->state.resolver, servers);
+#endif
   switch(ares_result) {
   case ARES_SUCCESS:
     result = CURLE_OK;

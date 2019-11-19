@@ -119,8 +119,11 @@ static CURLcode setstropt_userpwd(char *option, char **userp, char **passwdp)
 #define C_SSLVERSION_VALUE(x) (x & 0xffff)
 #define C_SSLVERSION_MAX_VALUE(x) (x & 0xffff0000)
 
-static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
-                        va_list param)
+/*
+ * Do not make Curl_vsetopt() static: it is called from
+ * packages/OS400/ccsidcurl.c.
+ */
+CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 {
   char *argptr;
   CURLcode result = CURLE_OK;
@@ -806,6 +809,11 @@ static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
     arg = va_arg(param, long);
     if(arg < CURL_HTTP_VERSION_NONE)
       return CURLE_BAD_FUNCTION_ARGUMENT;
+#ifdef ENABLE_QUIC
+    if(arg == CURL_HTTP_VERSION_3)
+      ;
+    else
+#endif
 #ifndef USE_NGHTTP2
     if(arg >= CURL_HTTP_VERSION_2)
       return CURLE_UNSUPPORTED_PROTOCOL;
@@ -1775,16 +1783,9 @@ static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
     arg = va_arg(param, long);
 
     /* Obviously people are not reading documentation and too many thought
-       this argument took a boolean when it wasn't and misused it. We thus ban
-       1 as a sensible input and we warn about its use. Then we only have the
-       2 action internally stored as TRUE. */
-
-    if(1 == arg) {
-      failf(data, "CURLOPT_SSL_VERIFYHOST no longer supports 1 as value!");
-      return CURLE_BAD_FUNCTION_ARGUMENT;
-    }
-
-    data->set.ssl.primary.verifyhost = (0 != arg) ? TRUE : FALSE;
+       this argument took a boolean when it wasn't and misused it.
+       Treat 1 and 2 the same */
+    data->set.ssl.primary.verifyhost = (bool)((arg & 3) ? TRUE : FALSE);
 
     /* Update the current connection ssl_config. */
     if(data->conn) {
@@ -1799,17 +1800,8 @@ static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
      */
     arg = va_arg(param, long);
 
-    /* Obviously people are not reading documentation and too many thought
-       this argument took a boolean when it wasn't and misused it. We thus ban
-       1 as a sensible input and we warn about its use. Then we only have the
-       2 action internally stored as TRUE. */
-
-    if(1 == arg) {
-      failf(data, "CURLOPT_SSL_VERIFYHOST no longer supports 1 as value!");
-      return CURLE_BAD_FUNCTION_ARGUMENT;
-    }
-
-    data->set.proxy_ssl.primary.verifyhost = (0 != arg)?TRUE:FALSE;
+    /* Treat both 1 and 2 as TRUE */
+    data->set.proxy_ssl.primary.verifyhost = (bool)((arg & 3)?TRUE:FALSE);
 
     /* Update the current connection proxy_ssl_config. */
     if(data->conn) {
@@ -2371,8 +2363,7 @@ static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
   case CURLOPT_REDIR_PROTOCOLS:
     /* set the bitmask for the protocols that libcurl is allowed to follow to,
        as a subset of the CURLOPT_PROTOCOLS ones. That means the protocol needs
-       to be set in both bitmasks to be allowed to get redirected to. Defaults
-       to all protocols except FILE and SCP. */
+       to be set in both bitmasks to be allowed to get redirected to. */
     data->set.redir_protocols = va_arg(param, long);
     break;
 
@@ -2399,6 +2390,12 @@ static CURLcode vsetopt(struct Curl_easy *data, CURLoption option,
     data->set.mail_rcpt = va_arg(param, struct curl_slist *);
     break;
 #endif
+
+  case CURLOPT_SASL_AUTHZID:
+    /* Authorisation identity (identity to act as) */
+    result = Curl_setstropt(&data->set.str[STRING_SASL_AUTHZID],
+                            va_arg(param, char *));
+    break;
 
   case CURLOPT_SASL_IR:
     /* Enable/disable SASL initial response */
@@ -2770,7 +2767,7 @@ CURLcode curl_easy_setopt(struct Curl_easy *data, CURLoption tag, ...)
 
   va_start(arg, tag);
 
-  result = vsetopt(data, tag, arg);
+  result = Curl_vsetopt(data, tag, arg);
 
   va_end(arg);
   return result;

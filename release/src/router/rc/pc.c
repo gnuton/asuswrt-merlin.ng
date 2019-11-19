@@ -529,7 +529,7 @@ int cleantrack_daytime_pc_list(pc_s *pc_list, int target_day, int target_hour, i
 			}
 #ifdef HND_ROUTER
 			eval("fc", "flush");
-#elif RTCONFIG_BCMARM
+#elif defined(RTCONFIG_BCMARM)
 			/* TBD. ctf ipct entries cleanup. */
 #endif
 			if(follow_pc->dtimes-- > 0) 
@@ -742,9 +742,21 @@ void config_pause_block_string(pc_s *pc_list, FILE *fp, char *logaccept, char *l
 	}
 
 	for(follow_pc = enabled_list; follow_pc != NULL; follow_pc = follow_pc->next){
-		const char *chk_mac = iptables_chk_mac;
+		//const char *chk_mac = iptables_chk_mac;
+		const char *chk_type;
+		char follow_addr[18] = {0};
+#ifdef RTCONFIG_AMAS
+		_dprintf("config_pause_block_string\n");
+		if (strlen(follow_pc->mac) && amas_lib_device_ip_query(follow_pc->mac, follow_addr)) {
+			chk_type = iptables_chk_ip;
+		} else
+#endif
+		{
+			chk_type = iptables_chk_mac;
+			snprintf(follow_addr, sizeof(follow_addr), "%s", follow_pc->mac);
+		}
 		if(!follow_pc->mac[0])
-			chk_mac = "";
+			chk_type = "";
 
 //_dprintf("[PC] mac=%s\n", follow_pc->mac);
 #ifdef RTCONFIG_PERMISSION_MANAGEMENT
@@ -753,9 +765,9 @@ void config_pause_block_string(pc_s *pc_list, FILE *fp, char *logaccept, char *l
 		// MAC address in list and not in time period -> DROP.
 		if(!temp){
 #ifdef BLOCKLOCAL
-			fprintf(fp, "-A INPUT -i %s %s %s -j DROP\n", lan_if, chk_mac, follow_pc->mac);
+			fprintf(fp, "-A INPUT -i %s %s %s -j DROP\n", lan_if, chk_type, follow_addr);
 #endif
-			fprintf(fp, "-A FORWARD -i %s %s %s -j DROP\n", lan_if, chk_mac, follow_pc->mac);
+			fprintf(fp, "-A FORWARD -i %s %s %s -j DROP\n", lan_if, chk_type, follow_addr);
 		}
 	}
 
@@ -810,12 +822,7 @@ int pc_main(int argc, char *argv[]){
 		free_pc_list(&daytime_list);
 	}
 	else if(argc == 2 && !strcmp(argv[1], "apply")){
-		char prefix[]="wanXXXXXX_", tmp[100];
 		int wan_unit = wan_primary_ifunit();
-		snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
-
-		char *wan_if = get_wan_ifname(wan_unit);
-		char *wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
 		char *lan_if = nvram_safe_get("lan_ifname");
 		char *lan_ip = nvram_safe_get("lan_ipaddr");
 		char logaccept[32], logdrop[32];
@@ -831,7 +838,7 @@ int pc_main(int argc, char *argv[]){
 
 		match_enabled_pc_list(pc_list, &enabled_list, 1);
 
-		filter_setting(wan_if, wan_ip, lan_if, lan_ip, logaccept, logdrop);
+		filter_setting(wan_unit, lan_if, lan_ip, logaccept, logdrop);
 
 		free_pc_list(&enabled_list);
 	}

@@ -46,7 +46,6 @@
 #include "lladdr.h"
 #include "ping.h"
 #include "mstats.h"
-#include "status.h"
 #include "ssl_verify.h"
 #include "tls_crypt.h"
 #include "forward-inline.h"
@@ -1550,13 +1549,13 @@ initialization_sequence_completed(struct context *c, const unsigned int flags)
         msg(M_INFO, "%s", message);
     }
 
-    update_nvram_status(RUNNING);        //Sam, 2013/10/31
-
     /* Flag that we initialized */
     if ((flags & (ISC_ERRORS|ISC_SERVER)) == 0)
     {
         c->options.no_advance = true;
     }
+
+    update_nvram_status(0);
 
 #ifdef _WIN32
     fork_register_dns_action(c->c1.tuntap);
@@ -3886,7 +3885,7 @@ init_management_callback_p2p(struct context *c)
 #ifdef ENABLE_MANAGEMENT
 
 void
-init_management(struct context *c)
+init_management(void)
 {
     if (!management)
     {

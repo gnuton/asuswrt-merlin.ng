@@ -1538,12 +1538,6 @@
 				RelativePath="..\..\..\..\lib\splay.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\lib\ssh.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\lib\ssh-libssh.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\lib\strcase.c">
 			</File>
 			<File
@@ -1830,6 +1824,9 @@
 				RelativePath="..\..\..\..\lib\psl.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\lib\quic.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\lib\rand.h">
 			</File>
 			<File
@@ -1997,9 +1994,6 @@
 				Name="Source Files"
 				Filter="">
 				<File
-					RelativePath="..\..\..\..\lib\vtls\cyassl.c">
-				</File>
-				<File
 					RelativePath="..\..\..\..\lib\vtls\gskit.c">
 				</File>
 				<File
@@ -2035,13 +2029,13 @@
 				<File
 					RelativePath="..\..\..\..\lib\vtls\vtls.c">
 				</File>
+				<File
+					RelativePath="..\..\..\..\lib\vtls\wolfssl.c">
+				</File>
 			</Filter>
 			<Filter
 				Name="Header Files"
 				Filter="">
-				<File
-					RelativePath="..\..\..\..\lib\vtls\cyassl.h">
-				</File>
 				<File
 					RelativePath="..\..\..\..\lib\vtls\gskit.h">
 				</File>
@@ -2074,6 +2068,9 @@
 				</File>
 				<File
 					RelativePath="..\..\..\..\lib\vtls\vtls.h">
+				</File>
+				<File
+					RelativePath="..\..\..\..\lib\vtls\wolfssl.h">
 				</File>
 			</Filter>
 		</Filter>

@@ -105,8 +105,8 @@ function update_temperatures(){
 			if (band5g_support)
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 
-			if (curr_coreTmp_cpu != "")
-				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_coreTmp_cpu) +"&deg;C</span>";
+			if (curr_cpuTemp != "")
+				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_cpuTemp) +"&deg;C</span>";
 
 			document.getElementById("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
@@ -439,7 +439,7 @@ function update_sysinfo(e){
 </script>
 </head>
 
-<body onload="initial();" onunLoad="return unload_body();">
+<body onload="initial();" onunLoad="return unload_body();" class="bg">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>

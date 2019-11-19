@@ -13,6 +13,10 @@ extern int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int 
 #include <libnt.h>
 #endif
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 void adjust_merlin_config(void)
 {
 #ifdef RTCONFIG_OPENVPN
@@ -20,11 +24,16 @@ void adjust_merlin_config(void)
 	char varname_ori[32], varname_ori2[32], varname_new[32];
 	int rgw, plan;
 #endif
+	char *newstr, *hostnames;
+	char *nv, *nvp, *entry;
+	char *name, *mac, *mode, *ipaddr, *nvname;
+	char tmp[64];
 #ifdef RTCONFIG_DNSFILTER
-        char *nv, *nvp, *rule;
-        char *name, *mac, *mode, *newstr;
-        char tmp[32];
 	int globalmode;
+#endif
+	int count;
+#if 0
+	struct in_addr ipaddr_obj;
 #endif
 
 #ifdef RTCONFIG_OPENVPN
@@ -156,8 +165,8 @@ void adjust_merlin_config(void)
 	if (newstr) {
 		newstr[0] = '\0';
 
-		while (nv && (rule = strsep(&nvp, "<")) != NULL) {
-			if (vstrsep(rule, ">", &name, &mac, &mode) != 3)
+		while (nv && (entry = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(entry, ">", &name, &mac, &mode) != 3)
 				continue;
 			if (!*mac || !*mode )
 				continue;
@@ -184,16 +193,74 @@ void adjust_merlin_config(void)
 		nvram_unset("lan_dns_fwd_local");
 	}
 
-/* Enable experimental AiMesh */
-#ifdef RTCONFIG_AMAS
-	if (f_exists("/jffs/.gomesh"))
-		nvram_set("amas_force", "1");
-#endif
-
 /* Migrate update server */
 	if (nvram_match("firmware_server", "https://fwupdate.lostrealm.ca/asuswrt-merlin"))
 		nvram_set("firmware_server", "https://fwupdate.asuswrt-merlin.net");
 
+/* Migrate dhcp_staticlist hostnames to dhcp_hostnames */
+#ifdef HND_ROUTER
+	nvname = jffs_nvram_get("dhcp_hostnames");
+#else
+	nvname = nvram_safe_get("dhcp_hostnames");
+#endif
+	if ((!nvname) || (!*nvname)) {
+		nv = nvp = strdup(nvram_safe_get("dhcp_staticlist"));
+		newstr = malloc(strlen(nv) + 1);
+		hostnames = malloc(strlen(nv) + 1);
+
+		if (newstr && hostnames && nv && *nv) {
+			newstr[0] = '\0';
+			hostnames[0] = '\0';
+
+			while ((entry = strsep(&nvp, "<")) != NULL) {
+				count = vstrsep(entry, ">", &mac, &ipaddr, &name);
+
+				switch (count) {
+				case 0:
+					continue;
+				case 2:		// No conversion needed
+					strlcpy(tmp, entry, sizeof(tmp));
+					break;
+				case 3:
+#if 0
+					if (!inet_aton(name, &ipaddr_obj)) {	// Unconverted
+						if (*name) {
+							snprintf(tmp, sizeof(tmp), "<%s>%s", mac, name);
+							strcat(hostnames, tmp);
+						}
+						snprintf(tmp, sizeof(tmp), "<%s>%s", mac, ipaddr);
+					} else {
+						strlcpy(tmp, entry, sizeof(tmp));
+					}
+#else
+					if (*name) {
+						snprintf(tmp, sizeof(tmp), "<%s>%s", mac, name);
+						strcat(hostnames, tmp);
+					}
+					snprintf(tmp, sizeof(tmp), "<%s>%s", mac, ipaddr);
+#endif
+					break;
+				default:	// Unknown, just leave it as-is
+					strlcpy(tmp, entry, sizeof(tmp));
+					break;
+				}
+				strcat(newstr, tmp);
+			}
+
+			if (*hostnames) {
+				nvram_set("dhcp_staticlist", newstr);
+#ifdef HND_ROUTER
+				jffs_nvram_set("dhcp_hostnames", hostnames);
+#else
+				nvram_set("dhcp_hostnames", hostnames);
+#endif
+			}
+		}
+
+		if (nv) free(nv);
+		if (newstr) free(newstr);
+		if (hostnames) free(hostnames);
+	}
 }
 
 void adjust_url_urlelist(void)
@@ -302,7 +369,7 @@ void adjust_access_restrict_config(void)
 }
 
 #if defined(RTCONFIG_VPN_FUSION)
-static VPNC_PROFILE vpnc_profile_tmp[MAX_VPNC_PROFILE] = {0};
+static VPNC_PROFILE vpnc_profile_tmp[MAX_VPNC_PROFILE] = {{0}};
 static int vpnc_prof_cnt_tmp;
 
 static int _find_active_vpnc_id()
@@ -369,7 +436,7 @@ void adjust_vpnc_config(void)
 	char *vpnc_dev_policy_list;
 	int active_id, i, default_wan_idx = 0, flag = 0;
 	char buf[1024];
-	char *nv = NULL, *nvp = NULL, *b = NULL, *mac, *static_ip, *desc, *proto, *server, *username, *passwd;
+	char *nv = NULL, *nvp = NULL, *b = NULL, *mac, *static_ip, *desc, *proto, *server, *username, *passwd, *dns;
 
 	_dprintf("[%s, %d]\n", __FUNCTION__, __LINE__);
 	vpnc_clientlist = nvram_safe_get("vpnc_clientlist");
@@ -427,7 +494,7 @@ void adjust_vpnc_config(void)
 		i = 0;
 		
 		while (nv && (b = strsep(&nvp, "<")) != NULL ) {
-			if (vstrsep(b, ">", &mac, &static_ip) < 2)
+			if (vstrsep(b, ">", &mac, &static_ip, &dns) < 2)
 				continue;
 
 #ifdef USE_IPTABLE_ROUTE_TARGE

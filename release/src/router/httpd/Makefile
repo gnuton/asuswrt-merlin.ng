@@ -24,7 +24,6 @@ ifeq ($(RTCONFIG_BCMWL6),y)
 CFLAGS += -I$(SRCBASE)/wl/exe/
 endif
 endif
-CFLAGS += -I$(TOP)/push_log
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
 ifeq ($(RTCONFIG_NETOOL),y)
@@ -72,8 +71,12 @@ ifeq ($(RTN14U),y)
 CFLAGS += -DBAND_2G_ONLY
 endif
 
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTN56UB2)$(RTAC54U)$(RTAC1200)$(RTAC1200GA1)$(RTAC1200GU),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTN56UB2)$(RTAC54U)$(RTAC1200)$(RTAC1200V2)$(RTAC1200GA1)$(RTAC1200GU),y)
 CFLAGS += -DRA_ESW
+endif
+
+ifeq ($(BUILD_NAME), RT-AC1200_V2)
+CFLAGS += -DRTAC1200V2
 endif
 
 ifeq ($(RTCONFIG_DNSMASQ),y)
@@ -160,8 +163,8 @@ LIBS += -lm
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
 ifeq ($(RTCONFIG_OPENSSL11),y)
-CFLAGS += -I$(TOP)/openssl-1.1.x/include
-LIBS += -L$(TOP)/openssl-1.1.x -lssl -lcrypto -ldl
+CFLAGS += -I$(TOP)/openssl-1.1/include
+LIBS += -L$(TOP)/openssl-1.1 -lssl -lcrypto -ldl
 else
 CFLAGS += -I$(TOP)/openssl/include
 LIBS += -L$(TOP)/openssl -lssl -lcrypto -ldl
@@ -195,8 +198,8 @@ ifeq ($(RTCONFIG_HTTPS),y)
 CFLAGS += -I$(TOP)/mssl
 LIBS += -L$(TOP)/mssl -lmssl
 ifeq ($(RTCONFIG_OPENSSL11),y)
-CFLAGS += -I$(TOP)/openssl-1.1.x/include
-LIBS += -L$(TOP)/openssl-1.1.x -lssl -lcrypto -ldl
+CFLAGS += -I$(TOP)/openssl-1.1/include
+LIBS += -L$(TOP)/openssl-1.1 -lssl -lcrypto -ldl
 else
 CFLAGS += -I$(TOP)/openssl/include
 LIBS += -L$(TOP)/openssl -lssl -lcrypto -ldl
@@ -208,7 +211,7 @@ OBJS += openvpn_options.o
 CFLAGS += -I$(TOP)/libvpn
 LIBS += -L$(TOP)/libvpn -lvpn
 ifeq ($(RTCONFIG_OPENSSL11),y)
-LIBS += -L$(TOP)/openssl-1.1.x -lssl -lcrypto -ldl
+LIBS += -L$(TOP)/openssl-1.1 -lssl -lcrypto -ldl
 else
 LIBS += -L$(TOP)/openssl -lssl -lcrypto -ldl
 endif

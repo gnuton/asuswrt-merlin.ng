@@ -620,12 +620,7 @@ curl_easy_getinfo_ccsid(CURL *curl, CURLINFO info, ...)
   va_list arg;
   void *paramp;
   CURLcode ret;
-  unsigned int ccsid;
-  char * * cpp;
   struct Curl_easy * data;
-  struct curl_slist * * slp;
-  struct curl_certinfo * cipf;
-  struct curl_certinfo * cipt;
 
   /* WARNING: unlike curl_easy_getinfo(), the strings returned by this
      procedure have to be free'ed. */
@@ -635,7 +630,13 @@ curl_easy_getinfo_ccsid(CURL *curl, CURLINFO info, ...)
   paramp = va_arg(arg, void *);
   ret = Curl_getinfo(data, info, paramp);
 
-  if(ret == CURLE_OK)
+  if(ret == CURLE_OK) {
+    unsigned int ccsid;
+    char **cpp;
+    struct curl_slist **slp;
+    struct curl_certinfo *cipf;
+    struct curl_certinfo *cipt;
+
     switch((int) info & CURLINFO_TYPEMASK) {
 
     case CURLINFO_STRING:
@@ -706,6 +707,7 @@ curl_easy_getinfo_ccsid(CURL *curl, CURLINFO info, ...)
         break;
       }
     }
+  }
 
   va_end(arg);
   return ret;
@@ -1139,12 +1141,7 @@ curl_easy_setopt_ccsid(CURL *curl, CURLoption tag, ...)
   if(testwarn) {
     testwarn = 0;
 
-    if(
-#ifdef USE_ALTSVC
-       (int) STRING_LASTZEROTERMINATED != (int) STRING_ALTSVC + 1 ||
-#else
-       (int) STRING_LASTZEROTERMINATED != (int) STRING_DOH + 1 ||
-#endif
+    if((int) STRING_LASTZEROTERMINATED != (int) STRING_SASL_AUTHZID + 1 ||
        (int) STRING_LAST != (int) STRING_COPYPOSTFIELDS + 1)
       curl_mfprintf(stderr,
        "*** WARNING: curl_easy_setopt_ccsid() should be reworked ***\n");
@@ -1211,6 +1208,7 @@ curl_easy_setopt_ccsid(CURL *curl, CURLoption tag, ...)
   case CURLOPT_RTSP_SESSION_ID:
   case CURLOPT_RTSP_STREAM_URI:
   case CURLOPT_RTSP_TRANSPORT:
+  case CURLOPT_SASL_AUTHZID:
   case CURLOPT_SERVICE_NAME:
   case CURLOPT_SOCKS5_GSSAPI_SERVICE:
   case CURLOPT_SSH_HOST_PUBLIC_KEY_MD5:
@@ -1312,11 +1310,8 @@ curl_easy_setopt_ccsid(CURL *curl, CURLoption tag, ...)
 
   case CURLOPT_ERRORBUFFER:                     /* This is an output buffer. */
   default:
-  {
-    long val = va_arg(arg, long);
-    result = curl_easy_setopt(curl, tag, val);
+    result = Curl_vsetopt(curl, tag, arg);
     break;
-  }
   }
 
   va_end(arg);
@@ -1355,13 +1350,12 @@ curl_pushheader_byname_ccsid(struct curl_pushheaders *h, const char *header,
 
 {
   char *d = (char *) NULL;
-  char *s;
 
   if(header) {
     header = dynconvert(ASCII_CCSID, header, -1, ccsidin);
 
     if(header) {
-      s = curl_pushheader_byname(h, header);
+      char *s = curl_pushheader_byname(h, header);
       free((char *) header);
 
       if(s)

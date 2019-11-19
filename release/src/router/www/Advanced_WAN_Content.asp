@@ -245,8 +245,15 @@ function genWANSoption(){
 		else if(wans_dualwan_NAME == "USB" && (based_modelid == "4G-AC53U" || based_modelid == "4G-AC55U" || based_modelid == "4G-AC68U"))
 			wans_dualwan_NAME = "<#Mobile_title#>";                       
 		document.form.wan_unit.options[i] = new Option(wans_dualwan_NAME, i);
-	}	
-	
+
+		if(based_modelid == "GT-AXY16000" || based_modelid == "RT-AX89U"){
+			if(wans_dualwan_NAME == "WAN2")
+				document.form.wan_unit.options[i] = new Option("10G base-T", i);
+			else if(wans_dualwan_NAME == "SFP+")
+				document.form.wan_unit.options[i] = new Option("10G SFP+", i);
+		}
+	}
+
 	document.form.wan_unit.selectedIndex = '<% nvram_get("wan_unit"); %>';
 	if(wans_dualwan.search(" ") < 0 || wans_dualwan.split(" ")[1] == 'none' || !dualWAN_support)
 		document.getElementById("WANscap").style.display = "none";
@@ -322,8 +329,14 @@ function applyRule(){
 		      (getRadioValue(document.form.dnssec_enable) != '<% nvram_get("dnssec_enable"); %>') ||
 		      (getRadioValue(document.form.dnssec_check_unsigned_x) != '<% nvram_get("dnssec_check_unsigned_x"); %>')) ||
 
+		    (dnspriv_support &&
+		      (document.form.dns_priv_override.value == 0) &&
+		      (document.form.dnspriv_enable.value != '<% nvram_get("dnspriv_enable"); %>')) ||
+
 		    (getRadioValue(document.form.dns_norebind) != '<% nvram_get("dns_norebind"); %>') ||
+		    (document.form.dns_priv_override.value != '<% nvram_get("dns_priv_override"); %>') ||
 		    (getRadioValue(document.form.dns_fwd_local) != '<% nvram_get("dns_fwd_local"); %>') )
+
 				document.form.action_script.value += ";restart_dnsmasq";
 
 		document.form.submit();	
@@ -1395,6 +1408,16 @@ function change_wizard(o, id){
 				<td>
 					<input type="radio" value="1" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "1", "checked"); %> /><#checkbox_Yes#>
 					<input type="radio" value="0" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "0", "checked"); %> /><#checkbox_No#>
+				</td>
+			</tr>
+			<tr id="dns_priv_override_tr">
+				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,31);">Prevent client auto DoH</a></th>
+				<td>
+					<select id="dns_priv_override" class="input_option" name="dns_priv_override">
+						<option value="0" <% nvram_match("dns_priv_override", "0", "selected"); %>>Auto</option>
+						<option value="1" <% nvram_match("dns_priv_override", "1", "selected"); %>>Yes</option>
+						<option value="2" <% nvram_match("dns_priv_override", "2", "selected"); %>>No</option>
+					</select>
 				</td>
 			</tr>
 			<tr style="display:none">

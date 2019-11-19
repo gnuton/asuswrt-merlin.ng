@@ -1037,7 +1037,7 @@ read_incoming_tun(struct context *c)
 
     c->c2.buf = c->c2.buffers->read_tun_buf;
 #ifdef TUN_PASS_BUFFER
-    read_tun_buffered(c->c1.tuntap, &c->c2.buf, MAX_RW_SIZE_TUN(&c->c2.frame));
+    read_tun_buffered(c->c1.tuntap, &c->c2.buf);
 #else
     ASSERT(buf_init(&c->c2.buf, FRAME_HEADROOM(&c->c2.frame)));
     ASSERT(buf_safe(&c->c2.buf, MAX_RW_SIZE_TUN(&c->c2.frame)));
@@ -1587,6 +1587,9 @@ pre_select(struct context *c)
     check_tls_errors(c);
     if (c->sig->signal_received)
     {
+#ifdef ASUSWRT
+        update_nvram_status(EVENT_TLS_ERROR);
+#endif
         return;
     }
 

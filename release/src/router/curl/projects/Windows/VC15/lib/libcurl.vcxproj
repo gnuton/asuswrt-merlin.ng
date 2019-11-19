@@ -2445,8 +2445,6 @@
     <ClCompile Include="..\..\..\..\lib\socks_sspi.c" />
     <ClCompile Include="..\..\..\..\lib\speedcheck.c" />
     <ClCompile Include="..\..\..\..\lib\splay.c" />
-    <ClCompile Include="..\..\..\..\lib\ssh.c" />
-    <ClCompile Include="..\..\..\..\lib\ssh-libssh.c" />
     <ClCompile Include="..\..\..\..\lib\strcase.c" />
     <ClCompile Include="..\..\..\..\lib\strdup.c" />
     <ClCompile Include="..\..\..\..\lib\strerror.c" />
@@ -2475,7 +2473,6 @@
     <ClCompile Include="..\..\..\..\lib\vauth\spnego_gssapi.c" />
     <ClCompile Include="..\..\..\..\lib\vauth\spnego_sspi.c" />
     <ClCompile Include="..\..\..\..\lib\vauth\vauth.c" />
-    <ClCompile Include="..\..\..\..\lib\vtls\cyassl.c" />
     <ClCompile Include="..\..\..\..\lib\vtls\gskit.c" />
     <ClCompile Include="..\..\..\..\lib\vtls\gtls.c" />
     <ClCompile Include="..\..\..\..\lib\vtls\mbedtls.c" />
@@ -2488,6 +2485,7 @@
     <ClCompile Include="..\..\..\..\lib\vtls\schannel_verify.c" />
     <ClCompile Include="..\..\..\..\lib\vtls\sectransp.c" />
     <ClCompile Include="..\..\..\..\lib\vtls\vtls.c" />
+    <ClCompile Include="..\..\..\..\lib\vtls\wolfssl.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\lib\altsvc.h" />
@@ -2568,6 +2566,7 @@
     <ClInclude Include="..\..\..\..\lib\pop3.h" />
     <ClInclude Include="..\..\..\..\lib\progress.h" />
     <ClInclude Include="..\..\..\..\lib\psl.h" />
+    <ClInclude Include="..\..\..\..\lib\quic.h" />
     <ClInclude Include="..\..\..\..\lib\rand.h" />
     <ClInclude Include="..\..\..\..\lib\rtsp.h" />
     <ClInclude Include="..\..\..\..\lib\select.h" />
@@ -2603,7 +2602,6 @@
     <ClInclude Include="..\..\..\..\lib\vauth\digest.h" />
     <ClInclude Include="..\..\..\..\lib\vauth\ntlm.h" />
     <ClInclude Include="..\..\..\..\lib\vauth\vauth.h" />
-    <ClInclude Include="..\..\..\..\lib\vtls\cyassl.h" />
     <ClInclude Include="..\..\..\..\lib\vtls\gskit.h" />
     <ClInclude Include="..\..\..\..\lib\vtls\gtls.h" />
     <ClInclude Include="..\..\..\..\lib\vtls\mbedtls.h" />
@@ -2615,6 +2613,7 @@
     <ClInclude Include="..\..\..\..\lib\vtls\schannel.h" />
     <ClInclude Include="..\..\..\..\lib\vtls\sectransp.h" />
     <ClInclude Include="..\..\..\..\lib\vtls\vtls.h" />
+    <ClInclude Include="..\..\..\..\lib\vtls\wolfssl.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\..\lib\libcurl.rc" />

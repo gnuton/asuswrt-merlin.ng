@@ -21,11 +21,11 @@
 
 struct state {
   unsigned char *clid;
-  int clid_len, iaid, ia_type, interface, hostname_auth, lease_allocate;
+  int clid_len, ia_type, interface, hostname_auth, lease_allocate;
   char *client_hostname, *hostname, *domain, *send_domain;
   struct dhcp_context *context;
   struct in6_addr *link_address, *fallback, *ll_addr, *ula_addr;
-  unsigned int xid, fqdn_flags;
+  unsigned int xid, fqdn_flags, iaid;
   char *iface_name;
   void *packet_options, *end;
   struct dhcp_netid *tags, *context_tags;
@@ -510,65 +510,64 @@ static int dhcp6_no_relay(struct state *state, int msg_type, void *inbuff, size_
 	 }
     }	 
   
-  if (state->clid)
+  if (state->clid &&
+      (config = find_config(daemon->dhcp_conf, state->context, state->clid, state->clid_len, state->mac, state->mac_len, state->mac_type, NULL)) &&
+      have_config(config, CONFIG_NAME))
     {
-      config = find_config(daemon->dhcp_conf, state->context, state->clid, state->clid_len, state->mac, state->mac_len, state->mac_type, NULL);
-      
-      if (have_config(config, CONFIG_NAME))
+      state->hostname = config->hostname;
+      state->domain = config->domain;
+      state->hostname_auth = 1;
+    }
+  else if (state->client_hostname)
+    {
+      state->domain = strip_hostname(state->client_hostname);
+            
+      if (strlen(state->client_hostname) != 0)
 	{
-	  state->hostname = config->hostname;
-	  state->domain = config->domain;
-	  state->hostname_auth = 1;
-	}
-      else if (state->client_hostname)
-	{
-	  struct dhcp_match_name *m;
-	  size_t nl;
-
-	  state->domain = strip_hostname(state->client_hostname);
-	  nl = strlen(state->client_hostname);
+	  state->hostname = state->client_hostname;
 	  
-	  if (strlen(state->client_hostname) != 0)
+	  if (!config)
 	    {
-	      state->hostname = state->client_hostname;
-	      
-	      if (!config)
-		{
-		  /* Search again now we have a hostname. 
-		     Only accept configs without CLID here, (it won't match)
-		     to avoid impersonation by name. */
-		  struct dhcp_config *new = find_config(daemon->dhcp_conf, state->context, NULL, 0, NULL, 0, 0, state->hostname);
-		  if (new && !have_config(new, CONFIG_CLID) && !new->hwaddr)
-		    config = new;
-		}
-	      
-	      for (m = daemon->dhcp_name_match; m; m = m->next)
-		{
-		  size_t ml = strlen(m->name);
-		  char save = 0;
-		  
-		  if (nl < ml)
-		    continue;
-		  if (nl > ml)
-		    {
-		      save = state->client_hostname[ml];
-		      state->client_hostname[ml] = 0;
-		    }
-		  
-		  if (hostname_isequal(state->client_hostname, m->name) &&
-		      (save == 0 || m->wildcard))
-		    {
-		      m->netid->next = state->tags;
-		      state->tags = m->netid;
-		    }
-		  
-		  if (save != 0)
-		    state->client_hostname[ml] = save;
-		}
+	      /* Search again now we have a hostname. 
+		 Only accept configs without CLID here, (it won't match)
+		 to avoid impersonation by name. */
+	      struct dhcp_config *new = find_config(daemon->dhcp_conf, state->context, NULL, 0, NULL, 0, 0, state->hostname);
+	      if (new && !have_config(new, CONFIG_CLID) && !new->hwaddr)
+		config = new;
 	    }
 	}
     }
-
+      
+  if (state->hostname)
+    {
+      struct dhcp_match_name *m;
+      size_t nl = strlen(state->hostname);
+      
+      for (m = daemon->dhcp_name_match; m; m = m->next)
+	{
+	  size_t ml = strlen(m->name);
+	  char save = 0;
+	  
+	  if (nl < ml)
+	    continue;
+	  if (nl > ml)
+	    {
+	      save = state->hostname[ml];
+	      state->hostname[ml] = 0;
+	    }
+	  
+	  if (hostname_isequal(state->hostname, m->name) &&
+	      (save == 0 || m->wildcard))
+	    {
+	      m->netid->next = state->tags;
+	      state->tags = m->netid;
+	    }
+	  
+	  if (save != 0)
+	    state->hostname[ml] = save;
+	}
+    }
+    
   if (config)
     {
       struct dhcp_netid_list *list;
@@ -1423,26 +1422,47 @@ static struct dhcp_netid *add_options(struct state *state, int do_refresh)
 	    {
 	      
 	      o = new_opt6(opt_cfg->opt);
+	      o1 = 0; /* warning */
 	      	  
 	      for (a = (struct in6_addr *)opt_cfg->val, j = 0; j < opt_cfg->len; j+=IN6ADDRSZ, a++)
 		{
+		  unsigned char *p = NULL;
+
+		  if (opt_cfg->opt == OPTION6_NTP_SERVER)
+		      o1 = new_opt6(NTP_SUBOPTION_SRV_ADDR);
+
 		  if (IN6_IS_ADDR_UNSPECIFIED(a))
 		    {
 		      if (!add_local_addrs(state->context))
-			put_opt6(state->fallback, IN6ADDRSZ);
+			p = put_opt6(state->fallback, IN6ADDRSZ);
 		    }
 		  else if (IN6_IS_ADDR_ULA_ZERO(a))
 		    {
 		      if (!IN6_IS_ADDR_UNSPECIFIED(state->ula_addr))
-			put_opt6(state->ula_addr, IN6ADDRSZ);
+			p = put_opt6(state->ula_addr, IN6ADDRSZ);
 		    }
 		  else if (IN6_IS_ADDR_LINK_LOCAL_ZERO(a))
 		    {
 		      if (!IN6_IS_ADDR_UNSPECIFIED(state->ll_addr))
-			put_opt6(state->ll_addr, IN6ADDRSZ);
+			p = put_opt6(state->ll_addr, IN6ADDRSZ);
 		    }
 		  else
-		    put_opt6(a, IN6ADDRSZ);
+		    p = put_opt6(a, IN6ADDRSZ);
+
+		  if (opt_cfg->opt == OPTION6_NTP_SERVER)
+		    {
+		      if (!p)
+			{
+			  save_counter(o1);
+			  continue;
+			}
+		      else if (IN6_IS_ADDR_MULTICAST(p))
+			{
+			  p -= 4;
+			  PUTSHORT(NTP_SUBOPTION_MC_ADDR, p);
+			}
+		      end_opt6(o1);
+		    }
 		}
 
 	      end_opt6(o);

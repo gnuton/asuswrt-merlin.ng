@@ -1233,9 +1233,9 @@ bcm_rpc_call_with_return(struct rpc_info *rpci, rpc_buf_t *b)
 	}
 
 	if (ret || timedout) {
-		RPC_ERR(("%s: RPC call trans 0x%x return wait err %d timedout %d limit %d(ms)\n",
-		         __FUNCTION__, (rpci->trans - 1), ret, timedout,
-		         RPC_RETURN_WAIT_TIMEOUT_MSEC));
+		RPC_ERR(("%s: RPC call trans 0x%x return wait err %d timedout %d limit %d(ms),"
+			"wait:%d\n", __FUNCTION__, (rpci->trans - 1), ret, timedout,
+			RPC_RETURN_WAIT_TIMEOUT_MSEC, (OSL_SYSUPTIME() - start_wait_time)));
 		rpci->wait_return = FALSE;
 		RPC_OSL_UNLOCK(rpci->rpc_osh);
 #ifdef BCMDBG_RPC

@@ -38,6 +38,24 @@ version 2.81
 	the DHCP server in subnets where the server (or relay) doesn't
 	have an interface on the network in that subnet. Many thanks to
 	kamp.de for sponsoring this feature.
+	
+	Fix broken contrib/lease_tools/dhcp_lease_time.c. A packet
+	validation check got borked in commit 2b38e382 and release 2.80.
+	Thanks to Tomasz Szajner for spotting this.
+
+	Fix compilation against nettle version 3.5 and later.
+
+	Fix spurious DNSSEC validation failures when the auth section
+	of a reply contains unsigned RRs from a signed zone, 
+	with the exception that NSEC and NSEC3 RRs must always be signed.
+        Thanks to Tore Anderson for spotting and diagnosing the bug.
+
+	Add --dhcp-ignore-clid. This disables reading of DHCP client
+	identifier option (option 61), so clients are only identified by
+	MAC addresses.
+
+	Fix a bug which stopped --dhcp-name-match from working when a hostname
+	is supplied in --dhcp-host. Thanks to James Feeney for spotting this.
 
 	
 version 2.80

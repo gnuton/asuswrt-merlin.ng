@@ -80,8 +80,8 @@ void start_ovpn_client(int clientNum)
 		return;
 	}
 
-	nvram_pf_set(prefix, "state", "1");	// Initializing
-	nvram_pf_set(prefix, "errno", "0");
+	nvram_pf_set_int(prefix, "state", OVPN_STS_INIT);
+	nvram_pf_set_int(prefix, "errno", OVPN_ERRNO_NONE);
 	nvram_pf_set(prefix, "rip", "");
 
 	// Determine interface
@@ -295,9 +295,25 @@ void start_ovpn_client(int clientNum)
 			if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_KEY))
 				fprintf(fp, "key client.key\n");
 		}
-		if (nvram_pf_get_int(prefix, "tlsremote"))
+		nvi = nvram_pf_get_int(prefix, "tlsremote");
+		if (nvi)
 		{
-			fprintf(fp, "verify-x509-name \"%s\" name\n", nvram_pf_safe_get(prefix, "cn"));
+			fprintf(fp, "verify-x509-name \"%s\" ",  nvram_pf_safe_get(prefix, "cn"));
+			switch(nvi)
+			{
+				case 1:
+					fprintf(fp, "name\n");
+					break;
+				case 2:
+					fprintf(fp, "name-prefix\n");
+					break;
+				case 3:
+					fprintf(fp, "subject\n");
+					break;
+				default:
+					fprintf(fp, "name\n");
+					break;
+			}
 		}
 		if (userauth)
 			fprintf(fp, "auth-user-pass up\n");
@@ -305,7 +321,7 @@ void start_ovpn_client(int clientNum)
 		if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_CRL))
 			fprintf(fp, "crl-verify crl.pem\n");
 
-		if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_CA_EXTRA))
+		if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_EXTRA))
 			fprintf(fp, "extra-certs extra.pem\n");
 	}
 	else if ( cryptMode == SECRET )
@@ -380,12 +396,12 @@ void start_ovpn_client(int clientNum)
 			fclose(fp);
 		}
 
-		if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_CA_EXTRA))
+		if (ovpn_key_exists(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_EXTRA))
 		{
 			sprintf(buffer, "/etc/openvpn/client%d/extra.pem", clientNum);
 			fp = fopen(buffer, "w");
 			chmod(buffer, S_IRUSR|S_IWUSR);
-			fprintf(fp, "%s", get_ovpn_key(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_CA_EXTRA, buffer2, sizeof(buffer2)));
+			fprintf(fp, "%s", get_ovpn_key(OVPN_TYPE_CLIENT, clientNum, OVPN_CLIENT_EXTRA, buffer2, sizeof(buffer2)));
 			fclose(fp);
 		}
 	}
@@ -580,8 +596,8 @@ void stop_ovpn_client(int clientNum)
 	}
 
 	snprintf(buffer, sizeof (buffer), "vpn_client%d_", clientNum);
-	nvram_pf_set(buffer, "state","0");
-	nvram_pf_set(buffer, "errno", "0");
+	nvram_pf_set_int(buffer, "state", OVPN_STS_STOP);
+	nvram_pf_set_int(buffer, "errno", OVPN_ERRNO_NONE);
 	nvram_pf_set(buffer, "rip", "");
 	update_resolvconf();
 
@@ -626,8 +642,8 @@ void start_ovpn_server(int serverNum)
 		return;
 	}
 
-	nvram_pf_set(prefix, "state", "1");	//initializing
-	nvram_pf_set(prefix, "errno", "0");
+	nvram_pf_set_int(prefix, "state", OVPN_STS_INIT);
+	nvram_pf_set_int(prefix, "errno", OVPN_ERRNO_NONE);
 
 	// Determine interface type
 	strlcpy(buffer, nvram_pf_safe_get(prefix, "if"), sizeof (buffer) );
@@ -1006,7 +1022,7 @@ void start_ovpn_server(int serverNum)
 			fprintf(fp, "key server.key\n");
 		if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_CRL))
 			fprintf(fp, "crl-verify crl.pem\n");
-		if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_CA_EXTRA))
+		if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_EXTRA))
 			fprintf(fp, "extra-certs extra.pem\n");
 	}
 	else if ( cryptMode == SECRET )
@@ -1139,12 +1155,12 @@ void start_ovpn_server(int serverNum)
 				fclose(fp);
 			}
 
-			if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_CA_EXTRA))
+			if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_EXTRA))
 			{
 				sprintf(buffer, "/etc/openvpn/server%d/extra.pem", serverNum);
 				fp = fopen(buffer, "w");
 				chmod(buffer, S_IRUSR|S_IWUSR);
-				fprintf(fp, "%s", get_ovpn_key(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_CA_EXTRA, buffer2, sizeof(buffer2)));
+				fprintf(fp, "%s", get_ovpn_key(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_EXTRA, buffer2, sizeof(buffer2)));
 				fclose(fp);
 			}
 
@@ -1157,9 +1173,9 @@ void start_ovpn_server(int serverNum)
 			fprintf(fp_client, "\n");	// Append newline if missing
 		fprintf(fp_client, "</ca>\n");
 
-		if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_CA_EXTRA)) {
+		if (ovpn_key_exists(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_EXTRA)) {
 			fprintf(fp_client, "<extra-certs>\n");
-			fprintf(fp_client, "%s", get_ovpn_key(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_CA_EXTRA, buffer2, sizeof(buffer2)));
+			fprintf(fp_client, "%s", get_ovpn_key(OVPN_TYPE_SERVER, serverNum, OVPN_SERVER_EXTRA, buffer2, sizeof(buffer2)));
 			len = strlen(buffer2);
 			if ((len) && (buffer2[len-1] != '\n'))
 				fprintf(fp_client, "\n");       // Append newline if missing
@@ -1252,7 +1268,7 @@ void start_ovpn_server(int serverNum)
 					fclose(fp);
 				}
 				if ((valid != 0) && (valid < 1024)) {
-					logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, i);
+					logmessage("openvpn","WARNING: DH for server %d is too weak (%d bit, must be at least 1024 bit). Using a pre-generated 2048-bit PEM.", serverNum, valid);
 				}
 			} else {
 				valid = 1024;
@@ -1391,15 +1407,15 @@ void start_ovpn_server(int serverNum)
 	{
 		vpnlog(VPN_LOG_ERROR,"Starting VPN instance failed...");
 		stop_ovpn_server(serverNum);
-		nvram_pf_set(prefix, "state", "-1");
+		nvram_pf_set_int(prefix, "state", OVPN_STS_ERROR);
 		return;
 	}
 	vpnlog(VPN_LOG_EXTRA,"Done starting openvpn");
 
 	if ( cryptMode == SECRET )
 	{
-		nvram_pf_set(prefix, "state", "2");	//running
-		nvram_pf_set(prefix, "errno", "0");
+		nvram_pf_set_int(prefix, "state", OVPN_STS_RUNNING);
+		nvram_pf_set_int(prefix, "error", OVPN_ERRNO_NONE);
 	}
 
 	// watchdog
@@ -1502,8 +1518,8 @@ void stop_ovpn_server(int serverNum)
 	}
 
 	sprintf(buffer, "vpn_server%d_", serverNum);
-	nvram_pf_set(buffer, "state", "0");
-	nvram_pf_set(buffer, "errno", "0");
+	nvram_pf_set_int(buffer, "state", OVPN_STS_STOP);
+	nvram_pf_set_int(buffer, "errno", OVPN_ERRNO_NONE);
 
 	vpnlog(VPN_LOG_INFO,"VPN GUI server backend stopped.");
 }

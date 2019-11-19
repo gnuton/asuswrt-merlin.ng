@@ -241,6 +241,7 @@ function show_warning_message(){
 	}
 }
 
+<% get_realip(); %>
 function get_real_ip(){
 	$.ajax({
 		url: 'get_real_ip.asp',
@@ -521,7 +522,7 @@ function applyRule(){
 		var get_group_value = function () {
 			var rule_num = document.getElementById("openvpnd_clientlist_table").rows.length;
 			var item_num = document.getElementById("openvpnd_clientlist_table").rows[0].cells.length;
-			var tmp_value = "";	
+			var tmp_value = "";
 
 			for(var i = 1; i < rule_num; i += 1) {
 				tmp_value += "<"		
@@ -545,48 +546,46 @@ function applyRule(){
 			return tmp_value;
 		};
 
-	if (service_state) {
-		document.form.action_script.value = "restart_vpnserver" + openvpn_unit;
-	}
-		if(document.form.VPNServer_enable.value == "1") {
-			document.form.VPNServer_mode.value = 'openvpn';
-			document.form.action_script.value = "restart_chpass;restart_vpnserver" + openvpn_unit;
-			document.form.vpn_serverx_clientlist.value = get_group_value();
-
-			/* Advanced setting start */
-			var getAdvancedValue = function () {
-				var client_num = document.getElementById("openvpn_clientlist_table").rows.length;
-				var item_num = document.getElementById("openvpn_clientlist_table").rows[0].cells.length;
-				var tmp_value = "";		
-				for(var i = 0; i < client_num; i += 1) {
-					// Insert first field (1), which enables the client.
-					tmp_value += "<1>";
-					for(var j = 0; j < item_num - 1; j += 1) {
-						if (j == 3)
-							tmp_value += (document.getElementById("openvpn_clientlist_table").rows[i].cells[j].innerHTML == "Yes" ? 1 : 0);
-						else
-							tmp_value += document.getElementById("openvpn_clientlist_table").rows[i].cells[j].innerHTML;
-
-						if(j != item_num - 2)
-							tmp_value += ">";
-					}
-				}
-				
-				if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<1>")
-					tmp_value = "";
-
-				document.form.vpn_server_ccd_val.value = tmp_value;
-
-				if (document.form.vpn_server_pdns.value != "<% nvram_get("vpn_server_pdns"); %>")
-					document.form.action_script.value += ";restart_dnsmasq";
-
-			}();
-			/* Advanced setting end */	
+		if (service_state) {
+			document.form.action_script.value = "restart_vpnserver" + openvpn_unit;
 		}
-		else {		//disable server
-			document.form.action_script.value = "stop_vpnserver" + openvpn_unit;
-			document.form.vpn_serverx_clientlist.value = get_group_value();
-		}	
+
+		document.form.VPNServer_mode.value = 'openvpn';
+		if(document.form.VPNServer_enable.value == "1") {
+			document.form.action_script.value = "restart_chpass;restart_vpnserver" + openvpn_unit;
+		} else {
+	                document.form.action_script.value = "stop_vpnserver" + openvpn_unit;
+		}
+
+		document.form.vpn_serverx_clientlist.value = get_group_value();
+
+		var getAdvancedValue = function () {
+			var client_num = document.getElementById("openvpn_clientlist_table").rows.length;
+			var item_num = document.getElementById("openvpn_clientlist_table").rows[0].cells.length;
+			var tmp_value = "";
+			for(var i = 0; i < client_num; i += 1) {
+				// Insert first field (1), which enables the client.
+				tmp_value += "<1>";
+				for(var j = 0; j < item_num - 1; j += 1) {
+					if (j == 3)
+						tmp_value += (document.getElementById("openvpn_clientlist_table").rows[i].cells[j].innerHTML == "Yes" ? 1 : 0);
+					else
+						tmp_value += document.getElementById("openvpn_clientlist_table").rows[i].cells[j].innerHTML;
+
+					if(j != item_num - 2)
+						tmp_value += ">";
+				}
+			}
+				
+			if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<1>")
+				tmp_value = "";
+
+			document.form.vpn_server_ccd_val.value = tmp_value;
+
+			if (document.form.vpn_server_pdns.value != "<% nvram_get("vpn_server_pdns"); %>")
+				document.form.action_script.value += ";restart_dnsmasq";
+
+		}();
 		
 		showLoading();
 		document.form.submit();
@@ -793,7 +792,7 @@ function update_vpn_server_state() {
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail1#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
 			}
-			else if(vpnd_state != '2' && vpnd_errno == '4'){
+			else if(vpnd_state != '2' && (vpn_server1_errno == '4' || vpn_server1_errno == '7')){
 				document.getElementById('openvpn_initial').style.display = "none";
 				document.getElementById('openvpn_error_message').innerHTML = "<span><#vpn_openvpn_fail2#></span>";
 				document.getElementById('openvpn_error_message').style.display = "";
@@ -1202,7 +1201,7 @@ function callback_upload_cert(_flag) {
 	if(_flag) {
 		var waiting_time = parseInt(document.form.action_wait.value);
 		showLoading(waiting_time);
-		setTimeout(function(){location.href = location.href;}, waiting_time*1000);
+		setTimeout(function(){location.href= location.href}, waiting_time*1000);
 	}
 	else {
 		alert("<#SET_fail_desc#>");
@@ -1212,7 +1211,7 @@ function callback_upload_cert(_flag) {
 
 </script>
 </head>
-<body onload="initial();">
+<body onload="initial();" class="bg">
 <div id="tlsKey_panel"  class="contentM_qis">
 	<!--===================================Beginning of tls Content===========================================-->
 	<table class="QISform_wireless" border=0 align="center" cellpadding="5" cellspacing="0">
