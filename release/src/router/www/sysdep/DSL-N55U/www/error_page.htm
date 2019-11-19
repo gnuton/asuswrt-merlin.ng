@@ -179,11 +179,10 @@ function manually_start_wan_Link(){
 }
 
 function change_lan_subnet(){
-	showLoadingBar(reboot_time);
-
+	/*showLoadingBar(reboot_time);
 	send_setting();
-
-	setTimeout("check_system_ready();", reboot_time*1000);
+	setTimeout("check_system_ready();", reboot_time*1000);*/
+	top.location.href = "/updateSubnet.htm";
 }
 
 function check_system_ready(){
