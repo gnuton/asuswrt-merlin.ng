@@ -23,7 +23,7 @@
 EXEC = udpxy
 UPXC = upxc
 CC = gcc
-CFLAGS = -W -Wall -Werror --pedantic
+CFLAGS = -W -Wall --pedantic
 
 BUILDFILE = BUILD
 BUILDNO = `cat $(BUILDFILE)`
