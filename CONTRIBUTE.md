@@ -50,7 +50,7 @@ In case I have not done it yet, ping me or just please feel free to do it and se
 3. uncompress it
 4. cd dir_where_asuswrt_gpl_code_is
 5. export MERLIN_SRC=path_to_dsl-ac68u_git_working_copy
-6. run $MERLIN_SRC/tools/tools/copy-prebuilt
+6. run $MERLIN_SRC/tools/copy-prebuilt DSL-AC68U
 7. git commit just the modified files belonging to DSL-AC68U
 8. build and test it
 
