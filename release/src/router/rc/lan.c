@@ -1085,7 +1085,6 @@ void start_lan(void)
 	char *lan_ifname;
 	struct ifreq ifr;
 	char *lan_ifnames, *ifname, *p;
-	char *hostname;
 	int sfd;
 	uint32 ip;
 	char eabuf[32];
@@ -1127,6 +1126,10 @@ void start_lan(void)
 #endif
 
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
+
+	/* set hostname on lan (re)start */
+	set_hostname();
+
 	if (sw_mode() == SW_MODE_REPEATER
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 		|| psr_mode() || mediabridge_mode()
@@ -1998,13 +2001,11 @@ gmac3_no_swbr:
 			&& !(dpsta_mode() && nvram_get_int("re_mode") == 0)
 #endif
 	) {
-		hostname = nvram_safe_get("computer_name");
-
 		char *dhcp_argv[] = { "udhcpc",
 					"-i", "br0",
 					"-p", "/var/run/udhcpc_lan.pid",
 					"-s", "/tmp/udhcpc_lan",
-					(*hostname != 0 ? "-H" : NULL), (*hostname != 0 ? hostname : NULL),
+					"-H", get_lan_hostname(),
 					NULL };
 		pid_t pid;
 
@@ -3556,6 +3557,9 @@ lan_up(char *lan_ifname)
 
 		refresh_ntpc();
 	}
+
+	/* Kick syslog to re-resolve remote server */
+	reload_syslogd();
 
 	/* Scan new subnetwork */
 	stop_networkmap();

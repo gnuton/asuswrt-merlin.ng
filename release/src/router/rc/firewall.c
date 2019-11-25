@@ -5726,7 +5726,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 
 /* Workaround for neighbour solicitation flood from Comcast */
 #ifdef RTCONFIG_IPV6
-	if (nvram_get_int("ipv6_neighsol_drop")) {
+	if (nvram_get_int("ipv6_ns_drop")) {
 		for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
 			eval("ip6tables", "-t", "mangle", "-A", "PREROUTING", "-p", "icmpv6", "--icmpv6-type", "neighbor-solicitation",
 			     "-i", get_wan_ifname(unit), "-d", "ff02::1:ff00:0/104", "-j", "DROP");
@@ -5990,6 +5990,7 @@ add_samba_rules(void)
 }
 #endif
 #endif
+
 //int start_firewall(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip)
 int start_firewall(int wanunit, int lanunit)
 {
@@ -6005,7 +6006,6 @@ int start_firewall(int wanunit, int lanunit)
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32], wan_proto[16];
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
 	int lock;
-	int restart_upnp = 0;
 
 	if (!is_routing_enabled())
 		return -1;
@@ -6017,11 +6017,6 @@ int start_firewall(int wanunit, int lanunit)
 	}
 
 	lock = file_lock("firewall");
-
-	if (pidof("miniupnpd") != -1) {
-		stop_upnp();
-		restart_upnp = 1;
-	}
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", wanunit);
 
@@ -6129,15 +6124,19 @@ int start_firewall(int wanunit, int lanunit)
 	if (get_ipv6_service() != IPV6_DISABLED) {
 		if (!f_exists("/proc/sys/net/netfilter/nf_conntrack_frag6_timeout"))
 			modprobe("nf_conntrack_ipv6");
+#ifndef HND_ROUTER
 		modprobe("ip6t_REJECT");
 		modprobe("ip6t_ROUTE");
 		modprobe("ip6t_LOG");
+#endif
 		modprobe("xt_length");
 	} else {
 		modprobe_r("xt_length");
+#ifndef HND_ROUTER
 		modprobe_r("ip6t_LOG");
 		modprobe_r("ip6t_ROUTE");
 		modprobe_r("ip6t_REJECT");
+#endif
 		modprobe_r("nf_conntrack_ipv6");
 	}
 #endif
@@ -6379,16 +6378,16 @@ int start_firewall(int wanunit, int lanunit)
 	run_le_fw_script();
 #endif
 
-leave:
-	if (restart_upnp) start_upnp();
+	/* Assuming wan interface doesn't change */
+	reload_upnp();
 
+leave:
 	file_unlock(lock);
 
 	run_custom_script("firewall-start", 0, wan_if, NULL);
 
 	return 0;
 }
-
 
 void enable_ip_forward(void)
 {
