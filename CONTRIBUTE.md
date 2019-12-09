@@ -24,18 +24,21 @@ In case I have not done it yet, ping me or just please feel free to do it and se
    cd asuswrt-merlin.ng/
    git remote add upstream git@github.com:RMerl/asuswrt-merlin.ng.git
    git fetch upstream
-
+   git push origin --tag 
+   
    // Update mainline branch
    git checkout -b mainline origin/mainline
    git rebase upstream/mainline
    git push origin
 
-
-   // Update DSL
+   // Update DSL branch (by merging mainline branch or mainline tag)
    git checkout -b dsl-ac68u origin/dsl-ac68u
    git branch dsl-ac68u-test
+   git fetch upstream
+   git push origin --tag
    git checkout dsl-ac68u-test
-   git merge mainline
+   git merge upstream/mainline  // Or git merge  384.14-beta3-mainline
+   
    // Fix conflicts if any
    git commit -m "a message" -a
    // Push to the cloud and let the CI build it for you
