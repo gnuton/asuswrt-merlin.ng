@@ -2747,7 +2747,9 @@ int start_wlceventd(void)
 	if (factory_debug())
 #endif
 #else
+#if 0
 	if (IS_ATE_FACTORY_MODE())
+#endif
 #endif
 	return ret;
 
@@ -2816,7 +2818,9 @@ int start_wlc_nt(void)
 	if (factory_debug())
 #endif
 #else
+#if 0
 	if (IS_ATE_FACTORY_MODE())
+#endif
 #endif
 	return ret;
 
@@ -9235,7 +9239,8 @@ int start_wanduck(void)
 #endif
 
 	if(ate_factory_mode())
-		return 0;
+		logmessage("wanduck", "WARNING - router is in manufacturing mode, and can behave unexpectedly (did you mess with your bootloader?)");
+		//return 0;
 
 	if(!strcmp(nvram_safe_get("wanduck_down"), "1"))
 		return 0;

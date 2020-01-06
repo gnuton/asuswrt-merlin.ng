@@ -1983,7 +1983,7 @@ ifneq ($(RTCONFIG_USB_EXTRAS),y)
 	@rm -rf $(TARGETDIR)/lib/modules/*/kernel/drivers/connector || true
 	@rm -rf $(TARGETDIR)/lib/modules/*/kernel/drivers/block || true
 endif
-	$(if $(or $(RTCONFIG_CIFS),$(RTCONFIG_APP_FILEFLEX)),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
+#	$(if $(or $(RTCONFIG_CIFS),$(RTCONFIG_APP_FILEFLEX)),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
 	@cp -f $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs2.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/lib/zlib_*.*o $(PLATFORMDIR)/extras/ || true
@@ -2923,9 +2923,9 @@ getdns-configure: getdns/configure
 		--enable-static --disable-shared --disable-gost \
 		--enable-stub-only --without-libidn --without-libidn2 \
 		--without-getdns_query --without-getdns_server_mon --with-stubby \
-		--with-ssl=$(STAGEDIR)/usr --with-libyaml=$(STAGEDIR)/usr \
-		CFLAGS="-Os -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
-		LDFLAGS="-L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(EXTRALDFLAGS)" \
+		--with-ssl=$(TOP)/$(OPENSSL) --with-libyaml=$(STAGEDIR)/usr \
+		CFLAGS="-Os -I$(TOP)/$(OPENSSL)/include -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
+		LDFLAGS="-L$(TOP)/$(OPENSSL) -L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(EXTRALDFLAGS)" \
 		LIBS="-lcrypto -lssl -lyaml"
 
 getdns: $(OPENSSL) libyaml getdns/Makefile
