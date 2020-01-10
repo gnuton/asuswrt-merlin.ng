@@ -30,7 +30,7 @@ jobs:
             REGXP_TO_MATCH=.*gnuton.*
             if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
               CURRENT_TAG=${CIRCLE_TAG}
-              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha" | grep ${REGXP_TO_MATCH} | head -n 2 | sed -n 2p)
+              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha|${CIRCLE_TAG}" | grep ${REGXP_TO_MATCH} | head -n 1)
               echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
               echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
               git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|ci:|Bump' >> "${CHANGELOG_FILE}"
