@@ -1555,6 +1555,7 @@ extern void subtime(struct timeval *a, struct timeval *b, struct timeval *res);
 extern void setupset(fd_set *theset, int *numfds);
 extern void waitforconnects();
 extern int tcpcheck_main(int argc, char *argv[]);
+extern int tcpcheck_retval(int timeout, char *host_port);
 
 // readmem.c
 #ifdef BUILD_READMEM
