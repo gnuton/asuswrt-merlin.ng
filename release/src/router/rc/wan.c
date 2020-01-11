@@ -626,11 +626,42 @@ void update_wan_state(char *prefix, int state, int reason)
 		snprintf(tmp, sizeof(tmp), "/var/run/ppp-wan%d.status", unit);
 		unlink(tmp);
 	}
-        else if (state == WAN_STATE_CONNECTED) {
+
+	sprintf(tmp,"%d", unit);
+
+	switch (state) {
+	case WAN_STATE_INITIALIZING:
+		strcpy(tmp1, "init");
+		break;
+	case WAN_STATE_CONNECTING:
+		strcpy(tmp1, "connecting");
+		break;
+	case WAN_STATE_CONNECTED:
+		strcpy(tmp1, "connected");
+		break;
+	case WAN_STATE_DISCONNECTED:
+		strcpy(tmp1, "disconnected");
+		break;
+	case WAN_STATE_STOPPED:
+		strcpy(tmp1, "stopped");
+		break;
+	case WAN_STATE_DISABLED:
+		strcpy(tmp1, "disabled");
+		break;
+	case WAN_STATE_STOPPING:
+		strcpy(tmp1, "stopping");
+		break;
+	default:
+		sprintf(tmp1, "state %d", state);
+	}
+
+	run_custom_script("wan-event", 0, tmp, tmp1);
+
+	/* For backward/legacy compatibility */
+	if (state == WAN_STATE_CONNECTED) {
 		sprintf(tmp,"%c",prefix[3]);
 		run_custom_script("wan-start", 0, tmp, NULL);
-        }
-
+	}
 }
 
 #ifdef RTCONFIG_IPV6
@@ -3469,6 +3500,12 @@ start_wan(void)
 				_dprintf("%s: start_wan_if(%d)!\n", __FUNCTION__, unit);
 				start_wan_if(unit);
 			}
+#ifdef RTCONFIG_HND_ROUTER
+			else if(!strcmp(wans_mode, "fo") || !strcmp(wans_mode, "fb")){
+				_dprintf("%s: stop_wan_if(%d) for IFUP only!\n", __func__, unit);
+				stop_wan_if(unit);
+			}
+#endif
 		}
 	}
 #else // RTCONFIG_DUALWAN
@@ -4056,12 +4093,6 @@ void detwan_apply_wan(const char *wan_ifname, unsigned int wan_mask, unsigned in
 					eval("ifconfig", ifname, "up");
 				}
 			}
-#ifdef RTCONFIG_HND_ROUTER
-			else if(!strcmp(wans_mode, "fo") || !strcmp(wans_mode, "fb")){
-				_dprintf("%s: stop_wan_if(%d) for IFUP only!\n", __func__, unit);
-				stop_wan_if(unit);
-			}
-#endif
 		}
 	}
 

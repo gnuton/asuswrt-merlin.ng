@@ -11,6 +11,7 @@
 #
 #
 
+
 export HND_ROUTER := $(shell pwd | sed 's/.*hnd.*/y/g')
 ifeq ($(HND_ROUTER),y)
 export BCM_CHIP := 4908
@@ -719,6 +720,11 @@ obj-$(RTCONFIG_LETSENCRYPT) += socat
 #obj-$(RTCONFIG_SYSSTATE) += sysstate
 obj-y += sysstate
 
+obj-$(RTCONFIG_AHS) += openssl
+obj-$(RTCONFIG_AHS) += $(CURL)
+obj-$(RTCONFIG_AHS) += json-c
+obj-$(RTCONFIG_AHS) += ahs
+
 obj-$(RTCONFIG_OPENVPN) += libvpn
 
 obj-y += rc
@@ -855,12 +861,10 @@ obj-y += scsi-idle
 endif
 obj-y += libusb10
 obj-y += libusb
-obj-y += libusb-0.1.12
-ifeq ($(RTCONFIG_USB),y)
 ifneq ($(RTCONFIG_8M_SFP),y)
 obj-y += hub-ctrl
 endif
-endif
+obj-$(RTCONFIG_USB_PRINTER) += libusb-0.1.12
 obj-$(RTCONFIG_USB_PRINTER) += u2ec
 obj-$(RTCONFIG_USB_PRINTER) += LPRng
 
@@ -1983,7 +1987,7 @@ ifneq ($(RTCONFIG_USB_EXTRAS),y)
 	@rm -rf $(TARGETDIR)/lib/modules/*/kernel/drivers/connector || true
 	@rm -rf $(TARGETDIR)/lib/modules/*/kernel/drivers/block || true
 endif
-	$(if $(or $(RTCONFIG_CIFS),$(RTCONFIG_APP_FILEFLEX)),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
+#	$(if $(or $(RTCONFIG_CIFS),$(RTCONFIG_APP_FILEFLEX)),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
 	@cp -f $(TARGETDIR)/lib/modules/*/kernel/fs/cifs.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/fs/jffs2.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(or $(RTCONFIG_BRCM_NAND_JFFS2),$(RTCONFIG_JFFS2)),$(if $(RTCONFIG_JFFSV1),@mv,@cp -f),@mv) $(TARGETDIR)/lib/modules/*/kernel/lib/zlib_*.*o $(PLATFORMDIR)/extras/ || true
@@ -2923,9 +2927,9 @@ getdns-configure: getdns/configure
 		--enable-static --disable-shared --disable-gost \
 		--enable-stub-only --without-libidn --without-libidn2 \
 		--without-getdns_query --without-getdns_server_mon --with-stubby \
-		--with-ssl=$(STAGEDIR)/usr --with-libyaml=$(STAGEDIR)/usr \
-		CFLAGS="-Os -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
-		LDFLAGS="-L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(EXTRALDFLAGS)" \
+		--with-ssl=$(TOP)/$(OPENSSL) --with-libyaml=$(STAGEDIR)/usr \
+		CFLAGS="-Os -I$(TOP)/$(OPENSSL)/include -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
+		LDFLAGS="-L$(TOP)/$(OPENSSL) -L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(EXTRALDFLAGS)" \
 		LIBS="-lcrypto -lssl -lyaml"
 
 getdns: $(OPENSSL) libyaml getdns/Makefile
@@ -3265,36 +3269,37 @@ libupnp-1.3.1/Makefile: libupnp-1.3.1/Makefile.in
 		$(CONFIGURE) --prefix=/usr --disable-dependency-tracking \
 	)
 
-libusb10/stamp-h1:
-	cd libusb10 && CFLAGS="-Os -Wall $(EXTRACFLAGS)" LIBS="-lpthread -ldl -lc $(EXTRALDFLAGS)" \
-	$(CONFIGURE) --enable-shared --prefix=/usr ac_cv_lib_rt_clock_gettime=no
-	-@$(MAKE) -C libusb10 clean
-	touch $@
+libusb10/Makefile:
+	cd libusb10 && \
+	$(CONFIGURE) --enable-shared --prefix=/usr --disable-udev \
+		CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+		LIBS="-lpthread -ldl -lc $(EXTRALDFLAGS)" \
+		ac_cv_lib_rt_clock_gettime=no
 
-libusb10: libusb10/stamp-h1
+libusb10: libusb10/Makefile
 	$(MAKE) -C $@
 
 libusb10-install: libusb10
-	install -D libusb10/libusb/.libs/libusb-1.0.so.0.0.0 $(INSTALLDIR)/libusb10/usr/lib/libusb-1.0.so.0
+	install -D libusb10/libusb/.libs/libusb-1.0.so.0.2.0 $(INSTALLDIR)/libusb10/usr/lib/libusb-1.0.so.0
 	$(STRIP) $(INSTALLDIR)/libusb10/usr/lib/*.so.*
 	cd $(INSTALLDIR)/libusb10/usr/lib && \
-		ln -sf libusb-1.0.so.0 libusb-1.0.so.0.0.0 && \
+		ln -sf libusb-1.0.so.0 libusb-1.0.so.0.2.0 && \
 		ln -sf libusb-1.0.so.0 libusb-1.0.so
 
 libusb10-clean:
-	-@$(MAKE) -C libusb10 clean
-	@rm -f libusb10/stamp-h1
+	[ ! -f libusb10/Makefile ] || $(MAKE) -C libusb10 distclean
+	@rm -f libusb10/Makefile
 
-libusb/stamp-h1:
-	cd libusb && CFLAGS="-Wall -Os $(EXTRACFLAGS)" LIBS="-lpthread -ldl -lc $(EXTRALDFLAGS)" \
-	$(CONFIGURE) --prefix=/usr \
+libusb/Makefile:
+	cd libusb && \
+	$(CONFIGURE) --enable-shared --prefix=/usr \
+		CFLAGS="-Os -Wall $(EXTRACFLAGS)" \
+		LIBS="-lpthread -ldl -lc $(EXTRALDFLAGS)" \
 		LIBUSB_1_0_CFLAGS="-I$(TOP)/libusb10/libusb" \
 		LIBUSB_1_0_LIBS="-L$(TOP)/libusb10/libusb/.libs -lusb-1.0 \
 		-Wl,-R/lib:/usr/lib:/opt/usr/lib:/usr/local/share"
-	-@$(MAKE) -C libusb clean
-	touch $@
 
-libusb: libusb10 libusb/stamp-h1
+libusb: libusb10 libusb/Makefile
 	$(MAKE) -C $@
 
 libusb-install: libusb
@@ -3305,8 +3310,8 @@ libusb-install: libusb
 		ln -sf libusb-0.1.so.4 libusb.so
 
 libusb-clean:
-	-@$(MAKE) -C libusb clean
-	@rm -f libusb/stamp-h1
+	[ ! -f libusb/Makefile ] || $(MAKE) -C libusb distclean
+	@rm -f libusb/Makefile
 
 usb-modeswitch-1.2.3: libusb
 	$(MAKE) -C $@ CC=$(CC) CFLAGS="-Os $(EXTRACFLAGS) -I$(TOP)/libusb/libusb" LIBS="\
@@ -4734,6 +4739,19 @@ sysstate-clean:
 sysstate-install:
 	echo "install sysstate"
 	$(MAKE) -C sysstate install
+
+ahs: openssl $(CURL) json-c
+	@$(SEP)
+	echo "build ahs"
+	$(MAKE) -C ahs
+
+ahs-clean:
+	echo "clean ahs"
+	$(MAKE) -C ahs clean
+
+ahs-install:
+	echo "install ahs"
+	$(MAKE) -C ahs install
 
 qsr10g_image:
 aqr107_image:
@@ -6890,28 +6908,25 @@ libical-2.0.0-install:
 		ln -sf libicalvcal.so.2.0.0 libicalvcal.so.2
 
 libconfuse/Makefile:
-	cd libconfuse && $(CONFIGURE) \
-		CFLAGS="$(EXTRACFLAGS) -Os -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections -fPIC" \
-		LDFLAGS="$(LDFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections" \
-		--prefix=/usr --disable-shared \
-		--without-libiconv-prefix --without-libintl-prefix --disable-examples --disable-nls
+	cd libconfuse && $(CONFIGURE) --prefix=/usr --disable-shared \
+		--disable-examples --disable-nls \
+		--without-libiconv-prefix --without-libintl-prefix \
+		CFLAGS="-Wall -Os -ffunction-sections -fdata-sections -fPIC $(EXTRACFLAGS)" \
+		LDFLAGS="-Wl,--gc-sections $(LDFLAGS)"
 
-libconfuse: libiconv-1.14 libconfuse/Makefile
-	@$(SEP)
-	$(MAKE) -C $@
+libconfuse: libconfuse/Makefile
+	$(MAKE) -C $@ && $(MAKE) $@-stage
 
 libconfuse-install:
-	@$(SEP)
 # Do nothing
+	@true
 #	install -D libconfuse/src/.libs/libconfuse.so.1.1.0 $(INSTALLDIR)/libconfuse/usr/lib/libconfuse.so.1.1.0
 #	cd $(INSTALLDIR)/libconfuse/usr/lib && \
 #		ln -sf libconfuse.so.1.1.0 libconfuse.so.1 &&\
 #		ln -sf libconfuse.so.1.1.0 libconfuse.so
 #	$(STRIP) $(INSTALLDIR)/libconfuse/usr/lib/*.so.*
 
-
 libconfuse-clean:
-	@$(SEP)
 	[ ! -f libconfuse/Makefile ] || $(MAKE) -C libconfuse distclean
 	@rm -f libconfuse/Makefile
 
