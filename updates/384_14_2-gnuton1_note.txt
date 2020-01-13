@@ -1,0 +1,13 @@
+Changes from the latest stable gnuton build (384.14_0-gnuton1):
+* getdns: provide explicit path to OpenSSL 1.1.1 (fixes regression fom GPL 81044 merge)
+* rc: fail wanduck (and possibly other services) failing to start due to ate_mode check
+* rstats: revert some of the 384_81044 changes in an attempt to resolve the traffic spikes
+* rc: log if router is in manufacturing mode at wanduck launch
+* Updated documentation
+* rc: fix bad GPL merge
+* rc: remove no longer required kludge for STP on HND models
+* build: re-add cifs.ko module (lost with GPL 81044 merge)
+* webui: hide _0 extendno from firmware versions returned by cfg_sync
+* Updated documentation
+* Merge tag '384.14_2-mainline' into dsl-ac68u-384.14_2-mainline
+* dsl-ac68u: build: fix - picks latest previous tag in case of releases
