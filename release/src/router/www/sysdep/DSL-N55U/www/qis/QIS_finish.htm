@@ -459,7 +459,7 @@ function startLiveUpdate(){
 		//console.log("Well connected");
 		httpApi.nvramSet({"action_mode":"apply", "rc_service":"start_webs_update"}, function(){
 			setTimeout(function(){
-				var fwInfo = httpApi.nvramGet(["webs_state_update", "webs_state_info", "webs_state_flag", "firmver", "buildno", "extendno"], true);
+				var fwInfo = httpApi.nvramGet(["webs_state_update", "webs_state_info", "webs_state_flag", "firmver", "buildno", "extendno", "webs_state_level"], true);
 
 				if(fwInfo.webs_state_update == "0" || fwInfo.webs_state_update == ""){
 					setTimeout(arguments.callee, 1000);
@@ -471,6 +471,7 @@ function startLiveUpdate(){
 					newFwVersion = newFwVersion.splice(3,0,".");
 					newFwVersion = newFwVersion.splice(2,0,".");
 					newFwVersion = newFwVersion.splice(1,0,".");
+					var forceLevel = fwInfo.webs_state_level;
 					if(isNewFw != 0){
 
 						document.getElementById("QISmain").style.display = "none";
@@ -481,7 +482,12 @@ function startLiveUpdate(){
 						document.getElementById("latestFW").innerHTML = newFwVersion;
 
 						if(isNewFw == 2){
-							document.getElementById("liveUpdate_div_leftbutton").value = "<#CTL_UpgradeNight#>";
+							if(forceLevel == 1){
+								document.getElementById("liveUpdate_div_leftbutton").remove();	
+							}
+							else{
+								document.getElementById("liveUpdate_div_leftbutton").value = "<#CTL_UpgradeNight#>";
+							}
 							document.getElementById("liveUpdate_div_rightbutton").value = "<#CTL_UpgradeNow#>";
 						}
 					}
