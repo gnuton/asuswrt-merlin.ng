@@ -37,7 +37,7 @@ Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/
 Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u)
 
 ### Experimental branches
-* [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater)
+* [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
 ### Contribute
