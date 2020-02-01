@@ -1,5 +1,26 @@
-# ASUS Merlin firmware for DSL-AC68U
+<p align="center">
+    <img src="logo.jfif" alt="logo" width="220" height="220">
+</p>
 
+<h3 align="center">ASUS Merlin for DSL-AC68U</h3>
+
+<p align="center">
+  Sleek, intuitive, and powerful third party alternative firmware for DSL-AC68U Asus routers.
+  <br>
+  <a href="https://github.com/RMerl/asuswrt-merlin/wiki"><strong>Explore Asus Merlin docs»</strong></a>
+  <br>
+  <br>
+  <a href="https://github.com/gnuton/asuswrt-merlin.ng/releases/latest">Download latest firmware</a>
+  ·
+  <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=enhancement&template=feature_request.md">Request feature</a>
+  ·
+    <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=bug&template=bug_report.md">Report bug</a>
+
+</p>
+
+---------------------
+
+### Status
 [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u)
 
 Latest release:
@@ -16,26 +37,13 @@ Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/
 Support: [![Gitter chat](https://badges.gitter.im/asuswrt/merlin-dsl.png)](https://gitter.im/asuswrt/merlin-dsl "Gitter chat")
 
 
-
-### What is this repo for?
-This repo hosts the code and builds of Asus Merlin for the ASUS DSL-AC68U
-
-### Why?
-Asus DSL-AC68U is not officially supported by Asus Merlin; So this is my attempt to make happy people having this router and willing to run the great Merlin custom firmware on it.
-
-### Any chance to get official Merlin support?
-No
-
-### Where can I find the firmware to flash on my router?
-Here you can find the [latest release](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) 
-
 ### How can I flash this firmware on my DSL-AC68U?
 Download the [latest firmware](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) from the relase page then browse your router web page and upload it from there.
 
 ### Where can I find the code for the DSL-AC68U?
 Please have a look at the dsl-ac68u branch, which is based on the Merlin's  mainline branch.
 
-### Can you please add/unlock this X feature?
+### Can you please add/unlock this feature X?
 The Merlin firmware is popular for its quality and stability and not for thoudands of features. In any case for fun I can release some snapshots with unlocked features. Here below you can find the current ones:
 * REPEATER MODE - status: experimental, it works for me, but still a bit rough around the edges
 
