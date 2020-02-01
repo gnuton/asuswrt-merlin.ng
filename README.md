@@ -40,10 +40,10 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
-### Contribute
-More info [here](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md).
+### Contributing
+You can read more about it [here](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md).
 
-### Thanks
-- to Asus for the GPL releases
+### Thanks to
+- Asus for the GPL releases
 - Upstream Asus Merlin devs
 
