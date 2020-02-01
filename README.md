@@ -36,9 +36,9 @@ Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/
 
 Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-ac68u)
 
-### Can you please add/unlock this feature X?
-The Merlin firmware is popular for its quality and stability and not for thoudands of features. In any case for fun I can release some snapshots with unlocked features. Here below you can find the current ones:
-* REPEATER MODE - status: experimental, it works for me, but still a bit rough around the edges
+### Experimental branches
+* [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater)
+* [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
 ### Contribute
 More info [here](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md).
