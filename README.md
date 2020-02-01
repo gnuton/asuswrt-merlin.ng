@@ -5,7 +5,7 @@
 <h3 align="center">ASUS Merlin for DSL-AC68U</h3>
 
 <p align="center">
-  Sleek, intuitive, and powerful third party alternative firmware for DSL-AC68U Asus routers.
+  A powerful third party alternative firmware for DSL-AC68U Asus routers.
   <br>
   <a href="https://github.com/RMerl/asuswrt-merlin/wiki"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
