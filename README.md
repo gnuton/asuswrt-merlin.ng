@@ -2,7 +2,11 @@
     <img src="logo.jfif" alt="logo" width="220" height="220">
 </p>
 
-<h3 align="center">ASUS Merlin for DSL-AC68U</h3>
+<h3 align="center">
+    <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">ASUS Merlin</a> 
+    for 
+    DSL-AC68U
+</h3>
 
 <p align="center">
   A powerful third party alternative firmware for DSL-AC68U Asus routers.
