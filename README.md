@@ -3,7 +3,7 @@
 </p>
 
 <h3 align="center">
-    <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">ASUS Merlin</a> 
+    <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">AsusWrt Merlin</a> 
     for 
     DSL-AC68U
 </h3>
