@@ -49,5 +49,5 @@ You can read more about it [here](https://github.com/gnuton/asuswrt-merlin.ng/bl
 
 ### Thanks to
 - Asus for the GPL releases
-- Upstream Asus Merlin devs
+- Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
 
