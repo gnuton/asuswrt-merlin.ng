@@ -53,6 +53,6 @@ You can read more about it [here](https://github.com/gnuton/asuswrt-merlin.ng/bl
 
 <p align="center">
     <a href="https://www.paypal.me/gnuton">
-        <img src="donate.png" alt="donate" width="220" height="220">
+        <img src="donate.png" alt="donate" width="220" height="220"/>
     </a>
 </p>
