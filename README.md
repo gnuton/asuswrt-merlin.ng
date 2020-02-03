@@ -51,3 +51,8 @@ You can read more about it [here](https://github.com/gnuton/asuswrt-merlin.ng/bl
 - Asus for the GPL releases
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
 
+<p align="center">
+    <a href="https://www.paypal.me/gnuton">
+        <img src="donate.png" alt="donate" width="220" height="220">
+    </a>
+</p>
