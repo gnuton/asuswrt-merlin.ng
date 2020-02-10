@@ -3207,6 +3207,11 @@ int validate_apply(webs_t wp, json_object *root) {
 				 nvram_modified = 1;
 			}
 #endif
+			else if(!strcmp(name, "amng_custom")) {
+				write_custom_settings(value);
+				_dprintf("set amng_custom to %s\n", value);
+				nvram_modified = 1;
+			}
 
 #ifdef RTCONFIG_DISK_MONITOR
 			else if(!strncmp(name, "diskmon_", 8)) {
@@ -16752,7 +16757,7 @@ struct mime_handler mime_handlers[] = {
 	{ "feedback_mail.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_feedback_mail_cgi, do_auth },
 	{ "dfb_log.cgi", "application/force-download", NULL, do_html_post_and_get, do_dfb_log_file, do_auth },
 	{ "clean_offline_clientlist.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_clean_offline_clientlist_cgi, do_auth },
-#if !defined(RTAC3200) && !defined(RTAC87U) && !defined(RTAC68U) && !defined(RTAC86U) && !defined(DSL_AC68U) // Kludge, requires 81116 or newer
+#if !defined(RTAC3200) && !defined(RTAC87U)	// Kludge, requires 81116 or newer
 	{ "set_fw_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_set_fw_path_cgi, do_auth },
 #endif
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
@@ -24831,6 +24836,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_route_array", ej_get_route_array},
 	{ "get_tcclass_array", ej_tcclass_dump_array},
 	{ "get_connlist_array", ej_connlist_array},
+	{ "get_custom_settings", ej_get_custom_settings},
 #ifdef RTCONFIG_BCMWL6
 	{ "get_wl_status", ej_wl_status_2g_array},
 #endif

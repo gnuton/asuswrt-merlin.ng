@@ -626,11 +626,42 @@ void update_wan_state(char *prefix, int state, int reason)
 		snprintf(tmp, sizeof(tmp), "/var/run/ppp-wan%d.status", unit);
 		unlink(tmp);
 	}
-        else if (state == WAN_STATE_CONNECTED) {
+
+	sprintf(tmp,"%d", unit);
+
+	switch (state) {
+	case WAN_STATE_INITIALIZING:
+		strcpy(tmp1, "init");
+		break;
+	case WAN_STATE_CONNECTING:
+		strcpy(tmp1, "connecting");
+		break;
+	case WAN_STATE_CONNECTED:
+		strcpy(tmp1, "connected");
+		break;
+	case WAN_STATE_DISCONNECTED:
+		strcpy(tmp1, "disconnected");
+		break;
+	case WAN_STATE_STOPPED:
+		strcpy(tmp1, "stopped");
+		break;
+	case WAN_STATE_DISABLED:
+		strcpy(tmp1, "disabled");
+		break;
+	case WAN_STATE_STOPPING:
+		strcpy(tmp1, "stopping");
+		break;
+	default:
+		sprintf(tmp1, "state %d", state);
+	}
+
+	run_custom_script("wan-event", 0, tmp, tmp1);
+
+	/* For backward/legacy compatibility */
+	if (state == WAN_STATE_CONNECTED) {
 		sprintf(tmp,"%c",prefix[3]);
 		run_custom_script("wan-start", 0, tmp, NULL);
-        }
-
+	}
 }
 
 #ifdef RTCONFIG_IPV6
@@ -2805,59 +2836,6 @@ wan_up(const char *pwan_ifname)
 	adjust_netdev_if_of_wan_bled(1, wan_unit, wan_ifname);
 #endif
 
-#ifdef RTCONFIG_BWDPI
-	int enabled = check_bwdpi_nvram_setting();
-	int changed = tdts_check_wan_changed();
-
-	BWDPI_DBG("enabled = %d, changed = %d\n", enabled, changed);
-
-	if(enabled){
-		_dprintf("[%s] do dpi engine service ... \n", __FUNCTION__);
-		// if Adaptive QoS or AiProtection is enabled
-		int count = 0;
-		int val = 0;
-		while (count < 3) {
-			sleep(1);
-			val = found_default_route(0);
-			count++;
-			if ((val == 1) || (count == 3)) break;
-		}
-
-		BWDPI_DBG("found_default_route result: %d\n", val);
-
-		if (val) {
-			// if restart_wan_if, remove dpi engine related
-			if ((f_exists("/dev/detector") || f_exists("/dev/idpfw")) && changed == 0)
-			{
-				_dprintf("[%s] stop dpi engine service - %d\n", __FUNCTION__, changed);
-				stop_dpi_engine_service(0);
-			}
-			else if ((f_exists("/dev/detector") || f_exists("/dev/idpfw")) && changed == 1)
-			{
-				_dprintf("[%s] stop dpi engine service - %d\n", __FUNCTION__, changed);
-				stop_dpi_engine_service(1);
-			}
-			_dprintf("[%s] start dpi engine service\n", __FUNCTION__);
-			set_codel_patch();
-			start_dpi_engine_service();
-			start_firewall(wan_unit, 0);
-		}
-
-		if(IS_NON_AQOS()){
-			_dprintf("[wan up] tradtional qos or bandwidth limiter start\n");
-			start_iQos();
-		}
-	}
-	else{
-		if(IS_NON_AQOS()){
-			_dprintf("[wan up] tradtional qos or bandwidth limiter start\n");
-			start_iQos();
-		}
-	}
-#else
-	start_iQos();
-#endif
-
 #if !defined(RTCONFIG_MULTIWAN_CFG)
 	/* FIXME: Protect below code from 2-nd WAN temporarilly. */
 	if(wan_unit == wan_primary_ifunit())
@@ -2929,6 +2907,59 @@ wan_up(const char *pwan_ifname)
 	if (nvram_get_int("ntp_ready")) {
 		start_ovpn_eas();
 	}
+#endif
+
+#ifdef RTCONFIG_BWDPI
+	int enabled = check_bwdpi_nvram_setting();
+	int changed = tdts_check_wan_changed();
+
+	BWDPI_DBG("enabled = %d, changed = %d\n", enabled, changed);
+
+	if(enabled){
+		_dprintf("[%s] do dpi engine service ... \n", __FUNCTION__);
+		// if Adaptive QoS or AiProtection is enabled
+		int count = 0;
+		int val = 0;
+		while (count < 5) {
+			sleep(1);
+			val = found_default_route(0);
+			usleep(400*1000);
+			count++;
+			if ((val == 1) || (count == 5)) break;
+		}
+
+		BWDPI_DBG("found_default_route result: %d\n", val);
+
+		if (val) {
+			// if restart_wan_if, remove dpi engine related
+			if ((f_exists("/dev/detector") || f_exists("/dev/idpfw")) && changed == 0)
+			{
+				_dprintf("[%s] stop dpi engine service - %d\n", __FUNCTION__, changed);
+				stop_dpi_engine_service(0);
+			}
+			else if ((f_exists("/dev/detector") || f_exists("/dev/idpfw")) && changed == 1)
+			{
+				_dprintf("[%s] stop dpi engine service - %d\n", __FUNCTION__, changed);
+			stop_dpi_engine_service(1);
+			}
+			_dprintf("[%s] start dpi engine service\n", __FUNCTION__);
+			start_dpi_engine_service();
+			start_firewall(wan_unit, 0);
+		}
+
+		if(IS_NON_AQOS()){
+			_dprintf("[wan up] tradtional qos or bandwidth limiter start\n");
+			start_iQos();
+		}
+	}
+	else{
+		if(IS_NON_AQOS()){
+			_dprintf("[wan up] tradtional qos or bandwidth limiter start\n");
+			start_iQos();
+		}
+	}
+#else
+	start_iQos();
 #endif
 
 #ifdef RTCONFIG_AMAS
