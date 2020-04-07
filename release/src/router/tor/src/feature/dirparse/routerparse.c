@@ -556,6 +556,9 @@ router_parse_entry_from_string(const char *s, const char *end,
   if ((tok = find_opt_by_keyword(tokens, A_PURPOSE))) {
     tor_assert(tok->n_args);
     router->purpose = router_purpose_from_string(tok->args[0]);
+    if (router->purpose == ROUTER_PURPOSE_UNKNOWN) {
+      goto err;
+    }
   } else {
     router->purpose = ROUTER_PURPOSE_GENERAL;
   }
@@ -588,8 +591,8 @@ router_parse_entry_from_string(const char *s, const char *end,
              "Relay's onion key had invalid exponent.");
     goto err;
   }
-  router_set_rsa_onion_pkey(tok->key, &router->onion_pkey,
-                            &router->onion_pkey_len);
+  router->onion_pkey = tor_memdup(tok->object_body, tok->object_size);
+  router->onion_pkey_len = tok->object_size;
   crypto_pk_free(tok->key);
 
   if ((tok = find_opt_by_keyword(tokens, K_ONION_KEY_NTOR))) {

@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SOCK
@@ -18,11 +18,19 @@
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
 
+/* _BSD_SOURCE is not defined */
+#ifndef NI_MAXHOST
+#define NI_MAXHOST 1025
+#endif
+#ifndef NI_MAXSERV
+#define NI_MAXSERV 32
+#endif
+
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
- * Throughout this file and bio_lcl.h, the existence of the macro
+ * Throughout this file and bio_local.h, the existence of the macro
  * AI_PASSIVE is used to detect the availability of struct addrinfo,
  * getnameinfo() and getaddrinfo().  If that macro doesn't exist,
  * we use our own implementation instead, using gethostbyname,
@@ -694,9 +702,11 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             hints.ai_flags |= AI_PASSIVE;
 
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
-         * macro magic in bio_lcl.h
+         * macro magic in bio_local.h
          */
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
       retry:
+# endif
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:

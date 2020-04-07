@@ -1,6 +1,80 @@
 Asuswrt-Merlin 384/NG Changelog
 ===============================
 
+384.16 (5-Apr-2020)
+  - NEW: Added support for the RT-AX58U and RT-AX3000 (same
+         firmware), based on GPL 384_8253 + binary blobs 384_8137.
+  - NEW: Added support for the RT-AX56U, based on GPL + binary
+         blobs from 384_8253.
+  - NOTE: The RT-AC87U and RT-AC3200 are now officially considered
+          to be on limited support.  The future for these two
+          models will depend on Asus's own support in the
+          coming months.
+
+  - NEW: Added ed25519 support in Dropbear (themiron)
+  - UPDATED: Merged GPL 384_8253 for AX models.
+  - UPDATED: Merged SDK + binary blobs 384_7977 for RT-AX88U.
+  - UPDATED: Merged SDK + binary blobs 384_81352 for RT-AC86U.
+  - UPDATED: Tor to 0.4.2.6.
+  - UPDATED: curl to 7.68.0.
+  - UPDATED: nano to 4.8.
+  - UPDATED: dnsmasq to 2.81rc4-33-g7558f2b-openssl (themiron)
+  - UPDATED: inadyn to 2.7 (themiron, merlin)
+  - UPDATED: getdns to 1.6.0 (themiron)
+  - UPDATED: stubby to 0.3.0 (themiron)
+  - UPDATED: amtm to 3.1.6 (thelonelycoder)
+  - UPDATED: openssl-1.1 to 1.1.1f (themiron, merlin)
+  - UPDATED: Chart.js to 2.9.3
+  - CHANGED: Wireless Log page will now regroup Guest Network
+             clients together and identify which guest instance
+             they are connected to.
+  - CHANGED: Report temperature of second 5 GHz radio on Sysinfo page
+             for tri-band models.
+  - CHANGED: Added down/upload monitor to network status page, and
+             removed useless RAM chart to free some space.
+  - CHANGED: Security hardening in dropbear dropped CBC and 3DES
+             ciphers, removed version disclosure from ident
+             string (themiron)
+  - FIXED: DNS server was unreachable when connecting to an OpenVPN
+           server with Advertise DNS enabled, due to firewall rules.
+  - FIXED: Router Security Assessment would fail to recognize WPA3
+           as being secure.
+  - FIXED: miniupnpd would reject private WAN IPs - changed that
+           upstream behaviour to allow these.
+  - FIXED: Would require you to reset the DHCP scope if you
+           changed the LAN hostname.
+  - FIXED: Couldn't set http mode to http-only if you previously
+           had WAN access enabled but have since switched to
+           non-router mode.
+  - FIXED: Disks with a single quote in their name would fail to
+           properly list on various USB service pages.
+  - FIXED: CVE-2020-8597 security issue.
+
+
+384.13_6 (5-Apr-2020)
+  This release is only available for the RT-AC87U and RT-AC3200.
+  These two models are now considered to be on limited support, and
+  their future will depend on Asus's future support for these two.
+
+  - UPDATED: openssl-1.1 to 1.1.1f (themiron, merlin)
+  - UPDATED: amtm to 3.1.6 (thelonelycoder)
+  - CHANGED: Security hardening in dropbear: dropped CBC and 3DES
+             ciphers, removed version disclosure from ident
+             string (themiron)
+  - FIXED: DNS server was unreachable when connecting to an OpenVPN
+           server with Advertise DNS enabled, due to firewall rules.
+  - FIXED: miniupnpd would reject private WAN IPs - changed that
+           upstream behaviour to allow these.
+  - FIXED: Would require you to reset the DHCP scope if you
+           changed the LAN hostname.
+  - FIXED: Couldn't set http mode to http-only if you previously
+           had WAN access enabled but have since switched to
+           non-router mode.
+  - FIXED: Disks with a single quote in their name would fail to
+           properly list on various USB service pages.
+  - FIXED: CVE-2020-8597.
+
+
 384.15 (8-Feb-2020)
   The RT-AC87U and RT-AC3200 are not supported by this release, see
   the 384.13_4 release released separately for these two models.
@@ -35,7 +109,8 @@ Asuswrt-Merlin 384/NG Changelog
              to WAN, port bonding and mdns.
   - UPDATED: Merged GPL 384_7756 for RT-AX88U, which adds OFDMA and
              WPA3 support to that model.
-  - UPDATED: Merged with GPL 385_10002 for other models (from RT-AC68U)
+  - UPDATED: Merged with GPL 385_10002 for other models (from
+             RT-AC68U)
   - UPDATED: odhcp6c to 1.1-97-ge199804 (themiron)
   - UPDATED: curl to 7.67.0.
   - UPDATED: openssl-1.0 to 1.0.2u

@@ -52,12 +52,14 @@
 #include <pthread.h>
 #endif
 
+#include "lib/cc/ctassert.h"
+
 #define EXPOSE_CLEAN_BACKTRACE
 #include "lib/err/backtrace.h"
-#include "lib/err/torerr.h"
 
 #if defined(HAVE_EXECINFO_H) && defined(HAVE_BACKTRACE) && \
-  defined(HAVE_BACKTRACE_SYMBOLS_FD) && defined(HAVE_SIGACTION)
+  defined(HAVE_BACKTRACE_SYMBOLS_FD) && defined(HAVE_SIGACTION) && \
+  defined(HAVE_PTHREAD_H)
 #define USE_BACKTRACE
 #endif
 
@@ -68,18 +70,43 @@
 // Redundant with util.h, but doing it here so we can avoid that dependency.
 #define raw_free free
 
-#ifdef USE_BACKTRACE
 /** Version of Tor to report in backtrace messages. */
 static char bt_version[128] = "";
 
+#ifdef USE_BACKTRACE
+
 /** Largest stack depth to try to dump. */
 #define MAX_DEPTH 256
-/** Static allocation of stack to dump. This is static so we avoid stack
- * pressure. */
-static void *cb_buf[MAX_DEPTH];
+/** The size of the callback buffer, so we can clear it in unlock_cb_buf(). */
+#define SIZEOF_CB_BUF (MAX_DEPTH * sizeof(void *))
 /** Protects cb_buf from concurrent access. Pthreads, since this code
  * is Unix-only, and since this code needs to be lowest-level. */
 static pthread_mutex_t cb_buf_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/** Lock and return a static stack pointer buffer that can hold up to
+ *  MAX_DEPTH function pointers. */
+static void **
+lock_cb_buf(void)
+{
+  /* Lock the mutex first, before even declaring the buffer. */
+  pthread_mutex_lock(&cb_buf_mutex);
+
+  /** Static allocation of stack to dump. This is static so we avoid stack
+   * pressure. */
+  static void *cb_buf[MAX_DEPTH];
+  CTASSERT(SIZEOF_CB_BUF == sizeof(cb_buf));
+  memset(cb_buf, 0, SIZEOF_CB_BUF);
+
+  return cb_buf;
+}
+
+/** Unlock the static stack pointer buffer. */
+static void
+unlock_cb_buf(void **cb_buf)
+{
+  memset(cb_buf, 0, SIZEOF_CB_BUF);
+  pthread_mutex_unlock(&cb_buf_mutex);
+}
 
 /** Change a stacktrace in <b>stack</b> of depth <b>depth</b> so that it will
  * log the correct function from which a signal was received with context
@@ -104,7 +131,7 @@ clean_backtrace(void **stack, size_t depth, const ucontext_t *ctx)
     return;
 
   stack[n] = (void*) ctx->PC_FROM_UCONTEXT;
-#else /* !(defined(PC_FROM_UCONTEXT)) */
+#else /* !defined(PC_FROM_UCONTEXT) */
   (void) depth;
   (void) ctx;
   (void) stack;
@@ -115,19 +142,19 @@ clean_backtrace(void **stack, size_t depth, const ucontext_t *ctx)
  * that with a backtrace log.  Send messages via the tor_log function at
  * logger". */
 void
-log_backtrace_impl(int severity, int domain, const char *msg,
+log_backtrace_impl(int severity, log_domain_mask_t domain, const char *msg,
                    tor_log_fn logger)
 {
   size_t depth;
   char **symbols;
   size_t i;
 
-  pthread_mutex_lock(&cb_buf_mutex);
+  void **cb_buf = lock_cb_buf();
 
   depth = backtrace(cb_buf, MAX_DEPTH);
   symbols = backtrace_symbols(cb_buf, (int)depth);
 
-  logger(severity, domain, "%s. Stack trace:", msg);
+  logger(severity, domain, "%s: %s. Stack trace:", bt_version, msg);
   if (!symbols) {
     /* LCOV_EXCL_START -- we can't provoke this. */
     logger(severity, domain, "    Unable to generate backtrace.");
@@ -140,7 +167,7 @@ log_backtrace_impl(int severity, int domain, const char *msg,
   raw_free(symbols);
 
  done:
-  pthread_mutex_unlock(&cb_buf_mutex);
+  unlock_cb_buf(cb_buf);
 }
 
 static void crash_handler(int sig, siginfo_t *si, void *ctx_)
@@ -155,6 +182,8 @@ crash_handler(int sig, siginfo_t *si, void *ctx_)
   ucontext_t *ctx = (ucontext_t *) ctx_;
   int n_fds, i;
   const int *fds = NULL;
+
+  void **cb_buf = lock_cb_buf();
 
   (void) si;
 
@@ -172,7 +201,9 @@ crash_handler(int sig, siginfo_t *si, void *ctx_)
   for (i=0; i < n_fds; ++i)
     backtrace_symbols_fd(cb_buf, (int)depth, fds[i]);
 
-  abort();
+  unlock_cb_buf(cb_buf);
+
+  tor_raw_abort_();
 }
 
 /** Write a backtrace to all of the emergency-error fds. */
@@ -183,24 +214,27 @@ dump_stack_symbols_to_error_fds(void)
   const int *fds = NULL;
   size_t depth;
 
+  void **cb_buf = lock_cb_buf();
+
   depth = backtrace(cb_buf, MAX_DEPTH);
 
   n_fds = tor_log_get_sigsafe_err_fds(&fds);
   for (i=0; i < n_fds; ++i)
     backtrace_symbols_fd(cb_buf, (int)depth, fds[i]);
+
+  unlock_cb_buf(cb_buf);
 }
+
+/* The signals that we want our backtrace handler to trap */
+static int trap_signals[] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS, SIGSYS,
+  SIGIO, -1 };
 
 /** Install signal handlers as needed so that when we crash, we produce a
  * useful stack trace. Return 0 on success, -errno on failure. */
 static int
-install_bt_handler(const char *software)
+install_bt_handler(void)
 {
-  int trap_signals[] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS, SIGSYS,
-                         SIGIO, -1 };
   int i, rv=0;
-
-  strncpy(bt_version, software, sizeof(bt_version) - 1);
-  bt_version[sizeof(bt_version) - 1] = 0;
 
   struct sigaction sa;
 
@@ -222,10 +256,12 @@ install_bt_handler(const char *software)
      * libc has pre-loaded the symbols we need to dump things, so that later
      * reads won't be denied by the sandbox code */
     char **symbols;
+    void **cb_buf = lock_cb_buf();
     size_t depth = backtrace(cb_buf, MAX_DEPTH);
     symbols = backtrace_symbols(cb_buf, (int) depth);
     if (symbols)
       raw_free(symbols);
+    unlock_cb_buf(cb_buf);
   }
 
   return rv;
@@ -235,21 +271,38 @@ install_bt_handler(const char *software)
 static void
 remove_bt_handler(void)
 {
+  int i;
+
+  struct sigaction sa;
+
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = SIG_DFL;
+  sigfillset(&sa.sa_mask);
+
+  for (i = 0; trap_signals[i] >= 0; ++i) {
+    /* remove_bt_handler() is called on shutdown, from low-level code.
+     * It's not a fatal error, so we just ignore it. */
+    (void)sigaction(trap_signals[i], &sa, NULL);
+  }
+
+  /* cb_buf_mutex is statically initialised, so we can not destroy it.
+   * If we destroy it, and then re-initialise tor, all our backtraces will
+   * fail. */
 }
 #endif /* defined(USE_BACKTRACE) */
 
 #ifdef NO_BACKTRACE_IMPL
 void
-log_backtrace_impl(int severity, int domain, const char *msg,
+log_backtrace_impl(int severity, log_domain_mask_t domain, const char *msg,
                    tor_log_fn logger)
 {
-  logger(severity, domain, "%s. (Stack trace not available)", msg);
+  logger(severity, domain, "%s: %s. (Stack trace not available)",
+         bt_version, msg);
 }
 
 static int
-install_bt_handler(const char *software)
+install_bt_handler(void)
 {
-  (void) software;
   return 0;
 }
 
@@ -264,6 +317,14 @@ dump_stack_symbols_to_error_fds(void)
 }
 #endif /* defined(NO_BACKTRACE_IMPL) */
 
+/** Return the tor version used for error messages on crashes.
+ * Signal-safe: returns a pointer to a static array. */
+const char *
+get_tor_backtrace_version(void)
+{
+  return bt_version;
+}
+
 /** Set up code to handle generating error messages on crashes. */
 int
 configure_backtrace_handler(const char *tor_version)
@@ -271,10 +332,25 @@ configure_backtrace_handler(const char *tor_version)
   char version[128] = "Tor\0";
 
   if (tor_version) {
-    snprintf(version, sizeof(version), "Tor %s", tor_version);
+    int snp_rv = 0;
+    /* We can't use strlcat() here, because it is defined in
+     * string/compat_string.h on some platforms, and string uses torerr. */
+    snp_rv = snprintf(version, sizeof(version), "Tor %s", tor_version);
+    /* It's safe to call raw_assert() here, because raw_assert() does not
+     * call configure_backtrace_handler(). */
+    raw_assert(snp_rv < (int)sizeof(version));
+    raw_assert(snp_rv >= 0);
   }
 
-  return install_bt_handler(version);
+  char *str_rv = NULL;
+  /* We can't use strlcpy() here, see the note about strlcat() above. */
+  str_rv = strncpy(bt_version, version, sizeof(bt_version) - 1);
+  /* We must terminate bt_version, then raw_assert(), because raw_assert()
+   * uses bt_version. */
+  bt_version[sizeof(bt_version) - 1] = 0;
+  raw_assert(str_rv == bt_version);
+
+  return install_bt_handler();
 }
 
 /** Perform end-of-process cleanup for code that generates error messages on

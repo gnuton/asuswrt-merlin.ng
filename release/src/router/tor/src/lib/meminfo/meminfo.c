@@ -18,9 +18,6 @@
 #include "lib/log/log.h"
 #include "lib/malloc/malloc.h"
 
-#ifdef HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -35,6 +32,10 @@
 #include <windows.h>
 #endif
 #include <string.h>
+
+#if defined(HAVE_SYS_SYSCTL_H) && !defined(_WIN32) && !defined(__linux__)
+#include <sys/sysctl.h>
+#endif
 
 DISABLE_GCC_WARNING(aggregate-return)
 /** Call the platform malloc info function, and dump the results to the log at
@@ -53,7 +54,7 @@ tor_log_mallinfo(int severity)
       mi.arena, mi.ordblks, mi.smblks, mi.hblks,
       mi.hblkhd, mi.usmblks, mi.fsmblks, mi.uordblks, mi.fordblks,
       mi.keepcost);
-#else /* !(defined(HAVE_MALLINFO)) */
+#else /* !defined(HAVE_MALLINFO) */
   (void)severity;
 #endif /* defined(HAVE_MALLINFO) */
 }

@@ -47,8 +47,9 @@ const char *s = NULL;
 #ifdef OpenBSD
 /* Disable some of OpenBSD's malloc protections for this test. This helps
  * us do bad things, such as access freed buffers, without crashing. */
-const char *malloc_options="sufjj";
-#endif
+extern const char *malloc_options;
+const char *malloc_options = "sufjj";
+#endif /* defined(OpenBSD) */
 
 static unsigned
 fill_a_buffer_memset(void)

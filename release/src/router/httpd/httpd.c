@@ -337,26 +337,40 @@ void Debug2File(const char *path, const char *fmt, ...)
 		fprintf(stderr, "Open %s Error!\n", path);
 }
 
-void sethost(char *host)
+void sethost(const char *host)
 {
-	char *cp;
+	char *p = host_name;
+	size_t len;
 
-	if(!host) return;
+	if (!host || *host == '\0')
+		goto error;
 
-	memset(host_name, 0, sizeof(host_name));
-	strlcpy(host_name, host, sizeof(host_name));
+	while (*host == '.') host++;
 
-	cp = host_name;
-	for ( cp = cp + 7; *cp && *cp != '\r' && *cp != '\n'; cp++ );
-	*cp = '\0';
+	len = strcspn(host, "\r\n");
+	while (len > 0 && strchr(" \t", host[len - 1]) != NULL)
+		len--;
+	if (len > sizeof(host_name) - 1)
+		goto error;
+
+	while (len-- > 0) {
+		int c = *host++;
+		if (((c | 0x20) < 'a' || (c | 0x20) > 'z') &&
+		    ((c < '0' || c > '9')) &&
+		    strchr(".-_:[]", c) == NULL) {
+			p = host_name;
+			break;
+		}
+		*p++ = c;
+	}
+
+error:
+	*p = '\0';
 }
 
 char *gethost(void)
 {
-	if(strlen(host_name)) {
-		return host_name;
-	}
-	else return(nvram_safe_get("lan_ipaddr"));
+	return host_name[0] ? host_name : nvram_safe_get("lan_ipaddr");
 }
 
 #include <sys/sysinfo.h>
@@ -949,7 +963,7 @@ handle_request(void)
 
 	/* Initialize the request variables. */
 	authorization = boundary = cookies = referer = useragent = NULL;
-	host_name[0] = 0;
+	host_name[0] = '\0';
 	bzero( line, sizeof line );
 
 	/* Parse the first line of the request. */
@@ -2112,10 +2126,11 @@ int main(int argc, char **argv)
 
 	/* Loop forever handling requests */
 	for (;;) {
-		int max_fd, count;
+		const static struct timeval timeout = { .tv_sec = MAX_CONN_TIMEOUT, .tv_usec = 0 };
 		struct timeval tv;
 		fd_set rfds;
 		conn_item_t *item, *next;
+		int max_fd, count;
 
 		memcpy(&rfds, &active_rfds, sizeof(rfds));
 		max_fd = -1;
@@ -2131,8 +2146,7 @@ int main(int argc, char **argv)
 			max_fd = max(item->fd, max_fd);
 
 		/* Wait for new connection or incoming request */
-		tv.tv_sec = MAX_CONN_TIMEOUT;
-		tv.tv_usec = 0;
+		tv = timeout;
 		while ((count = select(max_fd + 1, &rfds, NULL, NULL, &tv)) < 0 && errno == EINTR)
 			continue;
 		if (count < 0) {
@@ -2166,6 +2180,10 @@ int main(int argc, char **argv)
 				free(item);
 				continue;
 			}
+
+			/* Set receive/send timeouts */
+			setsockopt(item->fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+			setsockopt(item->fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 
 			/* Set the KEEPALIVE option to cull dead connections */
 			setsockopt(item->fd, SOL_SOCKET, SO_KEEPALIVE, &int_1, sizeof(int_1));

@@ -35,13 +35,14 @@
 #include "core/or/circuitlist.h"
 #include "core/or/circuitstats.h"
 #include "core/or/circuituse.h"
+#include "core/or/circuitpadding.h"
 #include "core/or/connection_edge.h"
 #include "core/or/policies.h"
 #include "feature/client/addressmap.h"
 #include "feature/client/bridges.h"
 #include "feature/client/circpathbias.h"
 #include "feature/client/entrynodes.h"
-#include "feature/control/control.h"
+#include "feature/control/control_events.h"
 #include "feature/dircommon/directory.h"
 #include "feature/hs/hs_circuit.h"
 #include "feature/hs/hs_client.h"
@@ -69,7 +70,7 @@
 #include "core/or/origin_circuit_st.h"
 #include "core/or/socks_request_st.h"
 
-static void circuit_expire_old_circuits_clientside(void);
+STATIC void circuit_expire_old_circuits_clientside(void);
 static void circuit_increment_failure_count(void);
 
 /** Check whether the hidden service destination of the stream at
@@ -177,7 +178,6 @@ circuit_is_acceptable(const origin_circuit_t *origin_circ,
       purpose == CIRCUIT_PURPOSE_S_HSDIR_POST ||
       purpose == CIRCUIT_PURPOSE_C_HSDIR_GET) {
     tor_addr_t addr;
-    const int family = tor_addr_parse(&addr, conn->socks_request->address);
     if (!exitnode && !build_state->onehop_tunnel) {
       log_debug(LD_CIRC,"Not considering circuit with unknown router.");
       return 0; /* this circuit is screwed and doesn't know it yet,
@@ -198,6 +198,8 @@ circuit_is_acceptable(const origin_circuit_t *origin_circ,
           return 0; /* this is a circuit to somewhere else */
         if (tor_digest_is_zero(digest)) {
           /* we don't know the digest; have to compare addr:port */
+          const int family = tor_addr_parse(&addr,
+                                            conn->socks_request->address);
           if (family < 0 ||
               !tor_addr_eq(&build_state->chosen_exit->addr, &addr) ||
               build_state->chosen_exit->port != conn->socks_request->port)
@@ -210,12 +212,14 @@ circuit_is_acceptable(const origin_circuit_t *origin_circ,
         return 0;
       }
     }
-    if (origin_circ->prepend_policy && family != -1) {
-      int r = compare_tor_addr_to_addr_policy(&addr,
-                                              conn->socks_request->port,
-                                              origin_circ->prepend_policy);
-      if (r == ADDR_POLICY_REJECTED)
-        return 0;
+    if (origin_circ->prepend_policy) {
+      if (tor_addr_parse(&addr, conn->socks_request->address) != -1) {
+        int r = compare_tor_addr_to_addr_policy(&addr,
+                                                conn->socks_request->port,
+                                                origin_circ->prepend_policy);
+        if (r == ADDR_POLICY_REJECTED)
+          return 0;
+      }
     }
     if (exitnode && !connection_ap_can_use_exit(conn, exitnode)) {
       /* can't exit from this router */
@@ -545,6 +549,8 @@ circuit_expire_building(void)
 
   SMARTLIST_FOREACH_BEGIN(circuit_get_global_list(), circuit_t *,victim) {
     struct timeval cutoff;
+    bool fixed_time = circuit_build_times_disabled(get_options());
+
     if (!CIRCUIT_IS_ORIGIN(victim) || /* didn't originate here */
         victim->marked_for_close)     /* don't mess with marked circs */
       continue;
@@ -599,17 +605,19 @@ circuit_expire_building(void)
         if (!TO_ORIGIN_CIRCUIT(victim)->relaxed_timeout) {
           int first_hop_succeeded = TO_ORIGIN_CIRCUIT(victim)->cpath->state
                                       == CPATH_STATE_OPEN;
-          log_info(LD_CIRC,
-                 "No circuits are opened. Relaxing timeout for circuit %d "
-                 "(a %s %d-hop circuit in state %s with channel state %s).",
-                 TO_ORIGIN_CIRCUIT(victim)->global_identifier,
-                 circuit_purpose_to_string(victim->purpose),
-                 TO_ORIGIN_CIRCUIT(victim)->build_state ?
-                   TO_ORIGIN_CIRCUIT(victim)->build_state->desired_path_len :
-                   -1,
-                 circuit_state_to_string(victim->state),
-                 victim->n_chan ?
-                    channel_state_to_string(victim->n_chan->state) : "none");
+          if (!fixed_time) {
+            log_info(LD_CIRC,
+                "No circuits are opened. Relaxing timeout for circuit %d "
+                "(a %s %d-hop circuit in state %s with channel state %s).",
+                TO_ORIGIN_CIRCUIT(victim)->global_identifier,
+                circuit_purpose_to_string(victim->purpose),
+                TO_ORIGIN_CIRCUIT(victim)->build_state ?
+                  TO_ORIGIN_CIRCUIT(victim)->build_state->desired_path_len :
+                  -1,
+                circuit_state_to_string(victim->state),
+                victim->n_chan ?
+                   channel_state_to_string(victim->n_chan->state) : "none");
+          }
 
           /* We count the timeout here for CBT, because technically this
            * was a timeout, and the timeout value needs to reset if we
@@ -623,7 +631,8 @@ circuit_expire_building(void)
       } else {
         static ratelim_t relax_timeout_limit = RATELIM_INIT(3600);
         const double build_close_ms = get_circuit_build_close_time_ms();
-        log_fn_ratelim(&relax_timeout_limit, LOG_NOTICE, LD_CIRC,
+        if (!fixed_time) {
+          log_fn_ratelim(&relax_timeout_limit, LOG_NOTICE, LD_CIRC,
                  "No circuits are opened. Relaxed timeout for circuit %d "
                  "(a %s %d-hop circuit in state %s with channel state %s) to "
                  "%ldms. However, it appears the circuit has timed out "
@@ -637,6 +646,7 @@ circuit_expire_building(void)
                  victim->n_chan ?
                     channel_state_to_string(victim->n_chan->state) : "none",
                  (long)build_close_ms);
+        }
       }
     }
 
@@ -1419,6 +1429,11 @@ circuit_detach_stream(circuit_t *circ, edge_connection_t *conn)
       if (circ->purpose == CIRCUIT_PURPOSE_S_REND_JOINED) {
         hs_dec_rdv_stream_counter(origin_circ);
       }
+
+      /* If there are no more streams on this circ, tell circpad */
+      if (!origin_circ->p_streams)
+        circpad_machine_event_circ_has_no_streams(origin_circ);
+
       return;
     }
   } else {
@@ -1459,7 +1474,7 @@ circuit_detach_stream(circuit_t *circ, edge_connection_t *conn)
 /** Find each circuit that has been unused for too long, or dirty
  * for too long and has no streams on it: mark it for close.
  */
-static void
+STATIC void
 circuit_expire_old_circuits_clientside(void)
 {
   struct timeval cutoff, now;
@@ -1499,6 +1514,7 @@ circuit_expire_old_circuits_clientside(void)
                 circ->purpose == CIRCUIT_PURPOSE_C_MEASURE_TIMEOUT ||
                 circ->purpose == CIRCUIT_PURPOSE_S_ESTABLISH_INTRO ||
                 circ->purpose == CIRCUIT_PURPOSE_TESTING ||
+                circ->purpose == CIRCUIT_PURPOSE_C_CIRCUIT_PADDING ||
                 (circ->purpose >= CIRCUIT_PURPOSE_C_INTRODUCING &&
                 circ->purpose <= CIRCUIT_PURPOSE_C_REND_READY_INTRO_ACKED) ||
                 circ->purpose == CIRCUIT_PURPOSE_S_CONNECT_REND) {
@@ -1564,10 +1580,14 @@ circuit_expire_old_circuits_serverside(time_t now)
     or_circ = TO_OR_CIRCUIT(circ);
     /* If the circuit has been idle for too long, and there are no streams
      * on it, and it ends here, and it used a create_fast, mark it for close.
+     *
+     * Also if there is a rend_splice on it, it's a single onion service
+     * circuit and we should not close it.
      */
     if (or_circ->p_chan && channel_is_client(or_circ->p_chan) &&
         !circ->n_chan &&
         !or_circ->n_streams && !or_circ->resolving_streams &&
+        !or_circ->rend_splice &&
         channel_when_last_xmit(or_circ->p_chan) <= cutoff) {
       log_info(LD_CIRC, "Closing circ_id %u (empty %d secs ago)",
                (unsigned)or_circ->p_circ_id,
@@ -1664,7 +1684,7 @@ circuit_testing_failed(origin_circuit_t *circ, int at_last_hop)
 void
 circuit_has_opened(origin_circuit_t *circ)
 {
-  control_event_circuit_status(circ, CIRC_EVENT_BUILT, 0);
+  circuit_event_status(circ, CIRC_EVENT_BUILT, 0);
 
   /* Remember that this circuit has finished building. Now if we start
    * it building again later (e.g. by extending it), we will know not
@@ -2513,8 +2533,7 @@ circuit_get_open_circ_or_launch(entry_connection_t *conn,
           circ->rend_data = rend_data_dup(edge_conn->rend_data);
         } else if (edge_conn->hs_ident) {
           circ->hs_ident =
-            hs_ident_circuit_new(&edge_conn->hs_ident->identity_pk,
-                                 HS_IDENT_CIRCUIT_INTRO);
+            hs_ident_circuit_new(&edge_conn->hs_ident->identity_pk);
         }
         if (circ->base_.purpose == CIRCUIT_PURPOSE_C_ESTABLISH_REND &&
             circ->base_.state == CIRCUIT_STATE_OPEN)
@@ -2586,6 +2605,12 @@ link_apconn_to_circ(entry_connection_t *apconn, origin_circuit_t *circ,
   /* add it into the linked list of streams on this circuit */
   log_debug(LD_APP|LD_CIRC, "attaching new conn to circ. n_circ_id %u.",
             (unsigned)circ->base_.n_circ_id);
+
+  /* If this is the first stream on this circuit, tell circpad
+   * that streams are attached */
+  if (!circ->p_streams)
+    circpad_machine_event_circ_has_streams(circ);
+
   /* reset it, so we can measure circ timeouts */
   ENTRY_TO_CONN(apconn)->timestamp_last_read_allowed = time(NULL);
   ENTRY_TO_EDGE_CONN(apconn)->next_stream = circ->p_streams;
@@ -3056,6 +3081,12 @@ circuit_change_purpose(circuit_t *circ, uint8_t new_purpose)
               circ->purpose,
               circuit_purpose_to_string(new_purpose),
               new_purpose);
+
+    /* Take specific actions if we are repurposing a hidden service circuit. */
+    if (circuit_purpose_is_hidden_service(circ->purpose) &&
+        !circuit_purpose_is_hidden_service(new_purpose)) {
+      hs_circ_cleanup(circ);
+    }
   }
 
   old_purpose = circ->purpose;
@@ -3064,6 +3095,8 @@ circuit_change_purpose(circuit_t *circ, uint8_t new_purpose)
   if (CIRCUIT_IS_ORIGIN(circ)) {
     control_event_circuit_purpose_changed(TO_ORIGIN_CIRCUIT(circ),
                                           old_purpose);
+
+    circpad_machine_event_circ_purpose_changed(TO_ORIGIN_CIRCUIT(circ));
   }
 }
 
@@ -3097,7 +3130,9 @@ circuit_sent_valid_data(origin_circuit_t *circ, uint16_t relay_body_len)
 {
   if (!circ) return;
 
-  tor_assert_nonfatal(relay_body_len <= RELAY_PAYLOAD_SIZE);
+  tor_assertf_nonfatal(relay_body_len <= RELAY_PAYLOAD_SIZE,
+                       "Wrong relay_body_len: %d (should be at most %d)",
+                       relay_body_len, RELAY_PAYLOAD_SIZE);
 
   circ->n_delivered_written_circ_bw =
       tor_add_u32_nowrap(circ->n_delivered_written_circ_bw, relay_body_len);

@@ -12,7 +12,7 @@
 #define BUFFERS_PRIVATE
 #include "orconfig.h"
 #include <stddef.h>
-#include "lib/container/buffers.h"
+#include "lib/buf/buffers.h"
 #include "lib/tls/buffers_tls.h"
 #include "lib/cc/torint.h"
 #include "lib/log/log.h"
@@ -68,9 +68,9 @@ buf_read_from_tls(buf_t *buf, tor_tls_t *tls, size_t at_most)
 
   check_no_tls_errors();
 
-  if (BUG(buf->datalen >= INT_MAX))
+  IF_BUG_ONCE(buf->datalen >= INT_MAX)
     return -1;
-  if (BUG(buf->datalen >= INT_MAX - at_most))
+  IF_BUG_ONCE(buf->datalen >= INT_MAX - at_most)
     return -1;
 
   while (at_most > total_read) {

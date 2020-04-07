@@ -1674,9 +1674,11 @@ void start_dnsmasq(void)
 		if (*value)
 			fprintf(fp, "dhcp-option=lan,option6:24,%s\n", value);
 
-		/* NTP server */
-		if (nvram_get_int("ntpd_enable"))
+		/* SNTP & NTP server */
+		if (nvram_get_int("ntpd_enable")) {
+			fprintf(fp, "dhcp-option=lan,option6:31,%s\n", "[::]");
 			fprintf(fp, "dhcp-option=lan,option6:56,%s\n", "[::]");
+		}
 	}
 #endif
 
@@ -1746,8 +1748,7 @@ void start_dnsmasq(void)
 	} else
 #endif
 	if (nvram_get_int("dnssec_enable")) {
-		fprintf(fp, "trust-anchor=.,19036,8,2,49AAC11D7B6F6446702E54A1607371607A1A41855200FD2CE1CDDE32F24E8FB5\n"
-		            "trust-anchor=.,20326,8,2,E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D\n"
+		fprintf(fp, "trust-anchor=.,20326,8,2,E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D\n"
 		            "dnssec\n");
 
 		/* If NTP isn't set yet, wait until rc's ntp signals us to start validating time */
@@ -3547,8 +3548,6 @@ start_ddns(void)
 		service = "default@dyndns.org";
 	else if (strcmp(server, "WWW.DYNDNS.ORG(STATIC)")==0)
 		service = "default@dyndns.org";
-	else if (strcmp(server, "WWW.TZO.COM")==0)
-		service = "default@tzo.com";
 	else if (strcmp(server, "WWW.ZONEEDIT.COM")==0)
 		service = "default@zoneedit.com";
 	else if (strcmp(server, "WWW.JUSTLINUX.COM")==0)
@@ -3656,6 +3655,8 @@ start_ddns(void)
 				fprintf(fp, "wildcard = true\n");
 
 			fprintf(fp, "}\n");
+			if (!nvram_get_int("ntp_ready"))
+				fprintf(fp, "broken-rtc = true\n");
 #if 1
 			if (asus_ddns == 1)
 				fprintf(fp, "secure-ssl = false\n");
@@ -3680,10 +3681,10 @@ start_ddns(void)
 
 			char *argv[] = { "/usr/sbin/inadyn",
 			                 "-e", "/sbin/ddns_updated",
-					"--exec-nochg", "/sbin/ddns_updated",
 			                 "-l", loglevel,
 #ifdef RTCONFIG_LETSENCRYPT
 			                 (asus_ddns == 1 ? "-1" : NULL),
+			                 (asus_ddns == 1 ? "--force" : NULL),
 #endif
 			                 NULL };
 
@@ -3827,6 +3828,8 @@ asusddns_reg_domain(int reg)
 		fprintf(fp, "username = %s\n", get_lan_hwaddr());
 		fprintf(fp, "password = %s\n", nvram_safe_get("secret_code"));
 		fprintf(fp, "}\n");
+		if (!nvram_get_int("ntp_ready"))
+			fprintf(fp, "broken-rtc = true\n");
 #if 1
 		fprintf(fp, "secure-ssl = false\n");
 #endif
@@ -3842,7 +3845,7 @@ asusddns_reg_domain(int reg)
 		else
 			loglevel = "notice";
 
-		char *argv[] = { "/usr/sbin/inadyn", "-1",
+		char *argv[] = { "/usr/sbin/inadyn", "-1", "--force",
 				"-e", "/sbin/ddns_updated",
 				"-l", loglevel,
 			NULL };
@@ -3905,6 +3908,8 @@ _dprintf("%s: do inadyn to unregister! unit = %d wan_ifname = %s nserver = %s ho
 		fprintf(fp, "username = %s\n", get_lan_hwaddr());
 		fprintf(fp, "password = %s\n", nvram_safe_get("secret_code"));
 		fprintf(fp, "}\n");
+		if (!nvram_get_int("ntp_ready"))
+			fprintf(fp, "broken-rtc = true\n");
 #if 1
 		fprintf(fp, "secure-ssl = false\n");
 #endif
@@ -3924,7 +3929,7 @@ _dprintf("%s: do inadyn to unregister! unit = %d wan_ifname = %s nserver = %s ho
 		else
 			loglevel = "notice";
 
-		char *argv[] = { "/usr/sbin/inadyn", "-1",
+		char *argv[] = { "/usr/sbin/inadyn", "-1", "--force",
 				"-e", "/sbin/ddns_updated",
 				"-l", loglevel,
 			NULL };
@@ -14324,7 +14329,8 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 		fprintf(stderr,
 			"WARNING: rc notified of unrecognized event `%s'.\n",
 					script);
-		logmessage("rc", "received unrecognized event: %s", script);
+		if (nvram_get_int("rc_debug"))
+			logmessage("rc", "received unrecognized event: %s", script);
 	}
 
 skip:

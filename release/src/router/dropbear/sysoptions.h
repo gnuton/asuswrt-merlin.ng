@@ -7,7 +7,9 @@
 #define DROPBEAR_VERSION "2019.78"
 #endif
 
+#ifndef LOCAL_IDENT
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
+#endif
 #define PROGNAME "dropbear"
 
 /* Spec recommends after one hour or 1 gigabyte of data. One hour
@@ -145,7 +147,8 @@ If you test it please contact the Dropbear author */
 #define DROPBEAR_SHA384 (DROPBEAR_ECC_384)
 /* LTC SHA384 depends on SHA512 */
 #define DROPBEAR_SHA512 ((DROPBEAR_SHA2_512_HMAC) || (DROPBEAR_ECC_521) \
-			|| (DROPBEAR_SHA384) || (DROPBEAR_DH_GROUP16))
+			|| (DROPBEAR_SHA384) || (DROPBEAR_DH_GROUP16) \
+			|| (DROPBEAR_ED25519))
 #define DROPBEAR_MD5 (DROPBEAR_MD5_HMAC)
 
 #define DROPBEAR_DH_GROUP14 ((DROPBEAR_DH_GROUP14_SHA256) || (DROPBEAR_DH_GROUP14_SHA1))
@@ -186,7 +189,7 @@ If you test it please contact the Dropbear author */
 /* For a 4096 bit DSS key, empirically determined */
 #define MAX_PRIVKEY_SIZE 1700
 
-#define MAX_HOSTKEYS 3
+#define MAX_HOSTKEYS 4
 
 /* The maximum size of the bignum portion of the kexhash buffer */
 /* Sect. 8 of the transport rfc 4253, K_S + e + f + K */
@@ -249,7 +252,7 @@ If you test it please contact the Dropbear author */
 	#error "At least one encryption algorithm must be enabled. AES128 is recommended."
 #endif
 
-#if !(DROPBEAR_RSA || DROPBEAR_DSS || DROPBEAR_ECDSA)
+#if !(DROPBEAR_RSA || DROPBEAR_DSS || DROPBEAR_ECDSA || DROPBEAR_ED25519)
 	#error "At least one hostkey or public-key algorithm must be enabled; RSA is recommended."
 #endif
 
@@ -311,8 +314,12 @@ If you test it please contact the Dropbear author */
  * Currently server is enabled but client is disabled by default until there
  * is further compatibility testing */
 #ifdef __linux__
+#ifndef DROPBEAR_SERVER_TCP_FAST_OPEN
 #define DROPBEAR_SERVER_TCP_FAST_OPEN 1
+#endif
+#ifndef DROPBEAR_CLIENT_TCP_FAST_OPEN
 #define DROPBEAR_CLIENT_TCP_FAST_OPEN 0
+#endif
 #else
 #define DROPBEAR_SERVER_TCP_FAST_OPEN 0
 #define DROPBEAR_CLIENT_TCP_FAST_OPEN 0

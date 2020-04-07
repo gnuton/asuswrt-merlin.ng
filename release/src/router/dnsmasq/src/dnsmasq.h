@@ -95,7 +95,11 @@ typedef unsigned long long u64;
 #if defined(HAVE_SOLARIS_NETWORK)
 #  include <sys/sockio.h>
 #endif
-#include <sys/poll.h>
+#if defined(HAVE_POLL_H)
+#  include <poll.h>
+#else
+#  include <sys/poll.h>
+#endif
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/un.h>
@@ -137,6 +141,7 @@ typedef unsigned long long u64;
 #endif
 
 #if defined(HAVE_LINUX_NETWORK)
+#include <linux/version.h>
 #include <linux/sockios.h>
 #include <linux/capability.h>
 /* There doesn't seem to be a universally-available 
@@ -259,7 +264,8 @@ struct event_desc {
 #define OPT_UBUS           58
 #define OPT_IGNORE_CLID    59
 #define OPT_SINGLE_PORT    60
-#define OPT_LAST           61
+#define OPT_LEASE_RENEW    61
+#define OPT_LAST           62
 
 #define OPTION_BITS (sizeof(unsigned int)*8)
 #define OPTION_SIZE ( (OPT_LAST/OPTION_BITS)+((OPT_LAST%OPTION_BITS)!=0) )
@@ -370,13 +376,17 @@ struct ds_config {
   struct ds_config *next;
 };
 
-#define ADDRLIST_LITERAL 1
-#define ADDRLIST_IPV6    2
-#define ADDRLIST_REVONLY 4
+#define ADDRLIST_LITERAL  1
+#define ADDRLIST_IPV6     2
+#define ADDRLIST_REVONLY  4
+#define ADDRLIST_PREFIX   8
+#define ADDRLIST_WILDCARD 16
+#define ADDRLIST_DECLINED 32
 
 struct addrlist {
   union all_addr addr;
-  int flags, prefixlen; 
+  int flags, prefixlen;
+  time_t decline_time;
   struct addrlist *next;
 };
 
@@ -472,7 +482,7 @@ struct crec {
 #define F_NO_RR     (1u<<25)
 #define F_IPSET     (1u<<26)
 #define F_NOEXTRA   (1u<<27)
-#define F_SERVFAIL  (1u<<28)
+#define F_SERVFAIL  (1u<<28) /* currently unused. */
 #define F_RCODE     (1u<<29)
 #define F_SRV       (1u<<30)
 
@@ -694,6 +704,7 @@ struct frec {
 #define LEASE_NA            32  /* IPv6 no-temporary lease */
 #define LEASE_TA            64  /* IPv6 temporary lease */
 #define LEASE_HAVE_HWADDR  128  /* Have set hwaddress */
+#define LEASE_EXP_CHANGED  256  /* Lease expiry time changed */
 
 struct dhcp_lease {
   int clid_len;          /* length of client identifier */
@@ -762,8 +773,9 @@ struct dhcp_config {
   unsigned char *clid;   /* clientid */
   char *hostname, *domain;
   struct dhcp_netid_list *netid;
+  struct dhcp_netid *filter;
 #ifdef HAVE_DHCP6
-  struct in6_addr addr6;
+  struct addrlist *addr6;
 #endif
   struct in_addr addr;
   time_t decline_time;
@@ -785,7 +797,6 @@ struct dhcp_config {
 #define CONFIG_DECLINED       1024    /* address declined by client */
 #define CONFIG_BANK           2048    /* from dhcp hosts file */
 #define CONFIG_ADDR6          4096
-#define CONFIG_WILDCARD       8192
 #define CONFIG_ADDR6_HOSTS   16384    /* address added by from /etc/hosts */
 
 struct dhcp_opt {
@@ -1095,7 +1106,7 @@ extern struct daemon {
   int inotifyfd;
 #endif
 #if defined(HAVE_LINUX_NETWORK)
-  int netlinkfd;
+  int netlinkfd, kernel_version;
 #elif defined(HAVE_BSD_NETWORK)
   int dhcp_raw_fd, dhcp_icmp_fd, routefd;
 #endif
@@ -1277,9 +1288,12 @@ int memcmp_masked(unsigned char *a, unsigned char *b, int len,
 int expand_buf(struct iovec *iov, size_t size);
 char *print_mac(char *buff, unsigned char *mac, int len);
 int read_write(int fd, unsigned char *packet, int size, int rw);
-
+void close_fds(long max_fd, int spare1, int spare2, int spare3);
 int wildcard_match(const char* wildcard, const char* match);
 int wildcard_matchn(const char* wildcard, const char* match, int num);
+#ifdef HAVE_LINUX_NETWORK
+int kernel_version(void);
+#endif
 
 /* log.c */
 void die(char *message, char *arg1, int exit_code) ATTRIBUTE_NORETURN;
@@ -1513,7 +1527,6 @@ void dhcp6_init(void);
 void dhcp6_packet(time_t now);
 struct dhcp_context *address6_allocate(struct dhcp_context *context,  unsigned char *clid, int clid_len, int temp_addr,
 				       unsigned int iaid, int serial, struct dhcp_netid *netids, int plain_range, struct in6_addr *ans);
-int config_valid(struct dhcp_config *config, struct dhcp_context *context, struct in6_addr *addr);
 struct dhcp_context *address6_available(struct dhcp_context *context, 
 					struct in6_addr *taddr,
 					struct dhcp_netid *netids,
@@ -1523,7 +1536,7 @@ struct dhcp_context *address6_valid(struct dhcp_context *context,
 				    struct dhcp_netid *netids,
 				    int plain_range);
 struct dhcp_config *config_find_by_address6(struct dhcp_config *configs, struct in6_addr *net, 
-					    int prefix, u64 addr);
+					    int prefix, struct in6_addr *addr);
 void make_duid(time_t now);
 void dhcp_construct_contexts(time_t now);
 void get_client_mac(struct in6_addr *client, int iface, unsigned char *mac, 
@@ -1560,7 +1573,8 @@ struct dhcp_config *find_config(struct dhcp_config *configs,
 				struct dhcp_context *context,
 				unsigned char *clid, int clid_len,
 				unsigned char *hwaddr, int hw_len, 
-				int hw_type, char *hostname);
+				int hw_type, char *hostname,
+				struct dhcp_netid *filter);
 int config_has_mac(struct dhcp_config *config, unsigned char *hwaddr, int len, int type);
 #ifdef HAVE_LINUX_NETWORK
 char *whichdevice(void);

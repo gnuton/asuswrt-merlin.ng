@@ -820,7 +820,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 	else{
 		banner_code +='<div class="banner1" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
 		banner_code +='<div style="margin-top:13px;margin-left:-90px;*margin-top:0px;*margin-left:0px;" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
-		banner_code +='<div style="margin-left:25px;width:160px;height:52px;margin-top:0px;float:left;" align="left"><span><a href="https://github.com/gnuton/asuswrt-merlin.ng" target="_blank"><img src="images/merlin-logo.png" style="border: 0;"></span></div>';
+		banner_code +='<div style="margin-left:25px;width:160px;height:52px;margin-top:0px;float:left;" align="left"><span><a href="https://github.com/gnuton/asuswrt-merlin.ng" target="_blank" rel="noreferrer"><img src="images/merlin-logo.png" style="border: 0;"></span></div>';
 
 		// logout, reboot
 		banner_code +='<a href="javascript:logout();"><div style="margin-top:13px;margin-left:25px; *width:136px;" class="titlebtn" align="center"><span><#t1Logout#></span></div></a>\n';
@@ -1930,7 +1930,7 @@ function show_loading_obj(){
 	code +='<table cellpadding="5" cellspacing="0" id="loadingBlock" class="loadingBlock" align="center">\n';
 	code +='<tr>\n';
 	code +='<td width="20%" height="80" align="center"><img src="/images/loading.gif"></td>\n';
-	code +='<td><span id="proceeding_main_txt"><#Main_alert_proceeding_desc4#></span><span id="proceeding_txt" style="color:#FFFFCC;"></span></td>\n';
+	code +='<td><span id="proceeding_main_txt" style="color:#FFFFFF;"><#Main_alert_proceeding_desc4#></span> <span id="proceeding_txt" style="color:#FFFFFF;"></span></td>\n'
 	code +='</tr>\n';
 	code +='</table>\n';
 	code +='<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->\n';

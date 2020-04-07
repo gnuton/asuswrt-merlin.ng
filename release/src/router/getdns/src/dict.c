@@ -83,7 +83,7 @@ static char *_json_ptr_first(const struct mem_funcs *mf,
 static struct getdns_dict_item *
 _find_dict_item(const getdns_dict *dict, const char *jptr)
 {
-	char first_spc[1024], *first;
+	char first_spc[1024] = "", *first;
 	struct getdns_dict_item *d;
 
 	first = _json_ptr_first(&dict->mf, jptr,
@@ -1149,7 +1149,9 @@ getdns_pp_dict(gldns_buffer * buf, size_t indent,
 		case t_bindata:
 			if ((strcmp(item->node.key, "address_data") == 0 ||
 			     strcmp(item->node.key, "ipv4_address") == 0 ||
-			     strcmp(item->node.key, "ipv6_address") == 0 ) &&
+			     strcmp(item->node.key, "ipv6_address") == 0 ||
+			     strcmp(item->node.key, "answer_ipv4_address") == 0 ||
+			     strcmp(item->node.key, "answer_ipv6_address") == 0) &&
 			    (item->i.data.bindata->size == 4  ||
 			     item->i.data.bindata->size == 16 )) {
 

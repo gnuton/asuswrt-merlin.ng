@@ -19,7 +19,7 @@
 #   3: a command failed - the test could not be completed
 #
 
-if [ $# -eq 0 ] || [ ! -f ${1} ] || [ ! -x ${1} ]; then
+if [ $# -eq 0 ] || [ ! -f "${1}" ] || [ ! -x "${1}" ]; then
   echo "Usage: ${0} PATH_TO_TOR [-z|-d|-e]"
   exit 1
 elif [ $# -eq 1 ]; then
@@ -31,7 +31,7 @@ else #[$# -gt 1 ]; then
   shift
 fi
 
-DATA_DIR=`mktemp -d -t tor_zero_length_keys.XXXXXX`
+DATA_DIR=$(mktemp -d -t tor_zero_length_keys.XXXXXX)
 if [ -z "$DATA_DIR" ]; then
   echo "Failure: mktemp invocation returned empty string" >&2
   exit 3
@@ -40,13 +40,14 @@ if [ ! -d "$DATA_DIR" ]; then
   echo "Failure: mktemp invocation result doesn't point to directory" >&2
   exit 3
 fi
-trap "rm -rf '$DATA_DIR'" 0
+trap 'rm -rf "$DATA_DIR"' 0
 
 touch "$DATA_DIR"/empty_torrc
+touch "$DATA_DIR"/empty_defaults_torrc
 
 # DisableNetwork means that the ORPort won't actually be opened.
 # 'ExitRelay 0' suppresses a warning.
-TOR="${TOR_BINARY} --hush --DisableNetwork 1 --ShutdownWaitLength 0 --ORPort 12345 --ExitRelay 0 -f $DATA_DIR/empty_torrc"
+TOR="${TOR_BINARY} --hush --DisableNetwork 1 --ShutdownWaitLength 0 --ORPort 12345 --ExitRelay 0 -f $DATA_DIR/empty_torrc --defaults-torrc $DATA_DIR/empty_defaults_torrc"
 
 if [ -s "$DATA_DIR"/keys/secret_id_key ] && [ -s "$DATA_DIR"/keys/secret_onion_key ] &&
    [ -s "$DATA_DIR"/keys/secret_onion_key_ntor ]; then
