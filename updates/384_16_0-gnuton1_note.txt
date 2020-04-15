@@ -1,0 +1,110 @@
+Changes from the latest stable gnuton build (384.15_0-gnuton1):
+* nano: updated to 4.8 (closes #364)
+* tor: updated to 0.3.5.9
+* curl: updated to 7,68.0
+* Updated documentation
+* rc: openvpn: rework pushed DNS handling for OpenVPN servers set to Internet-Only mode
+* httpd: replace Guest flag with unit number in client list, and remove placeholder for primary AP clients
+* webui: regroup guest clients together on wireless log page
+* Updated documentation
+* dnsmasq: update to 2.80-148-g3ce803d-openssl
+* webui: improve warning content when router IP is within your DHCP pool
+* rc/shared: move is_valid_hostname/domainname to shared
+* httpd: fix host header parsing
+* Updated documentation
+* httpd: fix host header parsing one more time
+* Updated documentation
+* getdns/stubby: update to 1.6.0-beta.1/0.3.0-beta.1
+* getdns: fix build with older gcc
+* getdns: fix ATTR_UNUSED detection
+* stubby: add syslog support
+* Updated Wiki links in the documentation
+* getdns/stubby: fix size optimization with aarch64 default cflags
+* inadyn: clean up build rules
+* inadyn: clean up build tree and .gitignore
+* inadyn: add RC_DDNS_RSP_AUTH_FAIL and rework asuscomm plugin
+* inadyn: fix unreliable dnsomatic ip checking
+* inadyn: allow not yet valid certificates with "broken-rtc"
+* inadyn: update to 2.6
+* inadyn: add maintainer mode to avoid autoreconf
+* inadyn: follow upstream, use default ipify for dnsomatic
+* rc: follow inadyn update
+* rc: follow inadyn update, drop tzo.com
+* inadyn/rc: drop exec-nochg, force same script call for the first time
+* rc: inadyn: force update for asus ddns with inadyn 2.6
+* getdns: drop unconditional libpthread
+* Updated documentation
+* inadyn: fix non-working --force option
+* Release amtm 3.1.4
+* stubby: disable TCP_FASTOPEN_CONNECT in runtime
+* busybox: add false applet (to match with upstream)
+* build: fix typo when enabling  CONFIG_NETFILTER_XTABLES
+* getdns/stubby: update to 1.6.0/0.3.0
+* dnsmasq: dhcpv6: revert ntp server, use sntp server option instead
+* dnsmasq: update to 2.81rc1-29-g5b6f222
+* Updated documentation
+* dropbear: Add support for Ed25519 as a public key type
+* rc: ssh: add ed25519 key generation
+* dropbear: comment typo fix, cosmetics
+* webui: update OUI database to 2019-11-26 version
+* webui: show SSID in guest network client headers, on the wireless client log
+* Updated documentation
+* httpd: fix old LE cert path
+* inadyn: fix use of non-initialized buffer in freedns hash generation
+* build: update utility scripts to handle RT-AX58U and current git branches
+* rc: only log unrecognized events when rc_debug is set, since script authors are now legitimately using their own events
+* tor: upgrade to tor 0.4.2.6
+* pppd: Fix bounds check in EAP code
+* rstats: backport fixes from 386_36400
+* httpd: webui: report second 5 GHz radio temperature
+* webui: add up/down meters to networkmap page; remove useless RAM graphic to save space
+* Updated documentation
+* regenerate aclocal.m4
+* dnsmasq: update to 2.81rc3-29-g495e518-openssl
+* rc: offer local sntp & ntp servers since 630ce162804a44ac647975f87622c918a665233a
+* webui: add noreferrer attribute to home link
+* webui: reworked site survey layout; fixed HTML entity escaping
+* webui: fix entity decoding on legacy site survey page
+* webui: remove stray label from traffic monitor graphs
+* webui: updated Chart.js to 2.9.3
+* httpd: handle icmp entries in netstat-nat's conntrack output
+* webui: use QoS settings as starting max values for networkmap meter
+* webui: fix typo in DDNS page field class
+* Merge pull request #445 from dave14305/patch-1
+* miniupnpd: revert previous upstream changes that prevented the use of a private IP on the WAN interface (ref. issue #444)
+* webui: no longer offer to reset DHCP scope when changing LAN hostname (fixes #428)
+* webui: only forbid setting protocol to http-ony if in router mode (fixes #417)
+* Updated documentation
+* shared: fix duplicate dnspriv entries in defaults.c
+* rstats: Still broken - Revert "rstats: backport fixes from 386_36400"
+* webui: fix incorrect guest SSID variables accessed for 5GHz-2
+* memaccess: re-add it to the build, the RT-AX56U uses it to properly configure its LEDs
+* memaccess: rename unused 'sh' applet for 'sh.bcm' to avoid conflict with the shell
+* rc: dnsmasq remove expired KSK-2010
+* openssl-1.1: updated to 1.1.1e
+* webui: remove Guest flag from all guests clients, not just the first client
+* webui: reuse colours matching other meters for the download/upload meters
+* webui: fix layout and colours on the Please Wait progress report
+* webui: report subunit clients as being Local Clients rather than Guests when in repeater mode
+* Merge pull request #453 from dave14305/patch-1
+* Merge pull request #447 from dave14305/patch-2
+* inadyn: updated to 2.7
+* dnsmasq: update to 2.81rc4-33-g7558f2b-openssl
+* Updated documentation
+* Merge RT-AC86U SDK + binary blobs from 384_81352
+* inadyn: drop autogenerated stuff for easier updates
+* inadyn: missed part of acef2a0c71f32c64934c7db4102b8a27ce50c7f9
+* dropbear: disable 3des & cbc, tune fastopen options
+* dropbear: fix security notify (backport from mainline)
+* dropbear: strip version from ident
+* httpd: fix support for USB disks with a single quote in their model name
+* webui: fix field layout for tlsremote setting on ovpn client page
+* usb: let the scheduler handle CPU affinity for smbd on HND
+* busybox: disable modutils alias support
+* Updated documentation
+* httpd: add recv & send timeouts
+* openssl: update to 1.1.1f
+* Release amtm 3.1.6
+* Merge pull request #470 from decoderman/master
+* Updated documentation
+* Merge tag '384.16-mainline' into dsl-ac68u-384.16
