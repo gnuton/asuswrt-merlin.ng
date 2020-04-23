@@ -195,3 +195,7 @@ workflows:
               ignore: /.*/
           requires:
             - build
+notify:
+  webhooks:
+    - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
+
