@@ -235,6 +235,8 @@ function addRow_Group(upper){
 		document.form.dhcp_staticmac_x_0.value = "";
 		document.form.dhcp_dnsip_x_0.value = "";
 		document.form.dhcp_staticname_x_0.value = "";
+
+		sortdir = sortdir * -1;	/* sortlist() will switch order back */
 		sortlist(sortfield);
 		showdhcp_staticlist();		
 
@@ -682,8 +684,12 @@ function table_sort(a, b){
 		case 0:
 			if(clientList[a.mac])
 				aa = (clientList[a.mac].nickName == "") ? clientList[a.mac].name : clientList[a.mac].nickName;
+			else
+				aa = "";
 			if(clientList[b.mac])
 				bb = (clientList[b.mac].nickName == "") ? clientList[b.mac].name : clientList[b.mac].nickName;
+			else
+				bb = "";
 			isIP = 0;
 			break;
 		case 1:
