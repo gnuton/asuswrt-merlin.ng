@@ -13,6 +13,7 @@ Because it makes the build faster since it doesn't need to install toolchains ev
 ```bash
 git clone git@github.com:gnuton/asuswrt-merlin.ng.git
 cd asuswrt-merlin.ng/
+docker run -it --rm -v "$PWD:/build" gnuton/asuswrt-merlin-toolchains-docker /bin/bash
 cd release/src-rt-6.x.4708/
 make dsl-ac68u
 ```
