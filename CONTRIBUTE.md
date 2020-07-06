@@ -9,10 +9,15 @@ Because we are in 201x and Circle CI is an excellent CI solution which builds an
 Because it makes the build faster since it doesn't need to install toolchains every time and because it makes the build reproducible everywhere even not in the cloud.
 
 ### Hey man I forked your repo and...
-#### How can I build Asus Merlin for DSL-AC68U or other routers by myself?
-TODO
+#### How can I locally build Asus Merlin for DSL-AC68U?
+```bash
+git clone git@github.com:gnuton/asuswrt-merlin.ng.git
+cd asuswrt-merlin.ng/
+cd release/src-rt-6.x.4708/
+make dsl-ac68u
+```
 
-#### Hey man the code is not up-to-date, how can I update it by myself?
+#### Hey man the code is not up-to-date, how can I update it?
 In case I have not done it yet, ping me or just please feel free to do it and send me a PR.
 
 #### BTW Here are the steps to update the merlin upstream code and the GPL pre-builds and files:
