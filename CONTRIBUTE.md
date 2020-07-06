@@ -14,7 +14,10 @@ Because it makes the build faster since it doesn't need to install toolchains ev
 git clone git@github.com:gnuton/asuswrt-merlin.ng.git
 cd asuswrt-merlin.ng/
 docker run -it --rm -v "$PWD:/build" gnuton/asuswrt-merlin-toolchains-docker /bin/bash
-cd release/src-rt-6.x.4708/
+cd release
+rm src-rt-6.x.4708/toolchains
+ln -s /opt/am-toolchains/brcm-arm-sdk  src-rt-6.x.4708/toolchains
+cd src-rt-6.x.4708/
 make dsl-ac68u
 ```
 
