@@ -35,11 +35,13 @@
 #define POLY1305_KEY_LEN 32
 #define POLY1305_TAG_LEN 16
 
-const struct dropbear_cipher dropbear_chachapoly =
-	{NULL, CHACHA20_KEY_LEN*2, CHACHA20_BLOCKSIZE};
+static const struct ltc_cipher_descriptor dummy = {.name = NULL};
 
 static const struct dropbear_hash dropbear_chachapoly_mac =
 	{NULL, POLY1305_KEY_LEN, POLY1305_TAG_LEN};
+
+const struct dropbear_cipher dropbear_chachapoly =
+	{&dummy, CHACHA20_KEY_LEN*2, CHACHA20_BLOCKSIZE};
 
 static int dropbear_chachapoly_start(int UNUSED(cipher), const unsigned char* UNUSED(IV),
 			const unsigned char *key, int keylen,
@@ -80,7 +82,7 @@ static int dropbear_chachapoly_crypt(unsigned int seq,
 		return CRYPT_ERROR;
 	}
 
-	STORE64H(seq, seqbuf);
+	STORE64H((uint64_t)seq, seqbuf);
 	chacha_ivctr64(&state->chacha, seqbuf, sizeof(seqbuf), 0);
 	if ((err = chacha_keystream(&state->chacha, key, sizeof(key))) != CRYPT_OK) {
 		return err;
@@ -120,13 +122,13 @@ static int dropbear_chachapoly_getlength(unsigned int seq,
 	unsigned char seqbuf[8], buf[4];
 	int err;
 
-	TRACE2(("enter dropbear_chachapoly_parse"))
+	TRACE2(("enter dropbear_chachapoly_getlength"))
 
 	if (len < sizeof(buf)) {
 		return CRYPT_ERROR;
 	}
 
-	STORE64H(seq, seqbuf);
+	STORE64H((uint64_t)seq, seqbuf);
 	chacha_ivctr64(&state->header, seqbuf, sizeof(seqbuf), 0);
 	if ((err = chacha_crypt(&state->header, in, sizeof(buf), buf)) != CRYPT_OK) {
 		return err;
@@ -134,7 +136,7 @@ static int dropbear_chachapoly_getlength(unsigned int seq,
 
 	LOAD32H(*outlen, buf);
 
-	TRACE2(("leave dropbear_chachapoly_parse"))
+	TRACE2(("leave dropbear_chachapoly_getlength"))
 	return CRYPT_OK;
 }
 

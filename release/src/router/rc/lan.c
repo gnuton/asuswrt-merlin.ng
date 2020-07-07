@@ -3005,15 +3005,21 @@ NEITHER_WDS_OR_PSTA:
 			snprintf(modem_type, sizeof(modem_type), "%s", nvram_safe_get(strcat_r(prefix2, "act_type", tmp2)));
 			_dprintf("hotplug net: %s=%s.\n", tmp2, modem_type);
 
-			snprintf(nvram_name, sizeof(nvram_name), "usb_path%s_act", port_path);
-			snprintf(word, sizeof(word), "%s", nvram_safe_get(nvram_name));
-			_dprintf("hotplug net(%s): %s %s.\n", interface, nvram_name, word);
+			if(strcmp(modem_type, "rndis")){
+				snprintf(nvram_name, sizeof(nvram_name), "usb_path%s_act", port_path);
+				snprintf(word, sizeof(word), "%s", nvram_safe_get(nvram_name));
+				_dprintf("hotplug net(%s): %s %s.\n", interface, nvram_name, word);
 
-			logmessage("hotplug", "set net %s.", interface);
-			_dprintf("hotplug net: set net %s.\n", interface);
-			nvram_set(nvram_name, interface);
-			nvram_set(strcat_r(prefix2, "act_dev", tmp2), interface);
-			nvram_set(strcat_r(prefix, "ifname", tmp), interface);
+				logmessage("hotplug", "set net %s.", interface);
+				_dprintf("hotplug net: set net %s.\n", interface);
+				nvram_set(nvram_name, interface);
+				nvram_set(strcat_r(prefix2, "act_dev", tmp2), interface);
+				nvram_set(strcat_r(prefix, "ifname", tmp), interface);
+			}
+			else{
+				logmessage("hotplug", "android skip to set net %s.", interface);
+				_dprintf("hotplug net: android skip set net %s.\n", interface);
+			}
 
 #if defined(RTCONFIG_DUALWAN) && !defined(RTCONFIG_ALPINE) && !defined(RTCONFIG_LANTIQ)
 			// avoid the busy time of every start_wan when booting.
@@ -4759,9 +4765,6 @@ void restart_wl(void)
 	init_wllc();
 #endif
 
-#ifndef RTCONFIG_QCA
-	nvram_set_int("wlready", 1);
-#endif
 	nvram_set("reload_svc_radio", "1");
 #ifndef RTCONFIG_QCA
 	timecheck();
@@ -5094,7 +5097,7 @@ void restart_wireless(void)
 	stop_chilli();
 	stop_CP();
 #endif
-#if defined(RTCONFIG_WLCEVENTD) && (defined(CONFIG_BCMWL5) || defined(RTCONFIG_RALINK))
+#if defined(RTCONFIG_WLCEVENTD) && defined(CONFIG_BCMWL5)
 	stop_wlceventd();
 #endif
 	stop_wps();
@@ -5155,7 +5158,7 @@ void restart_wireless(void)
 	start_8021x();
 #endif
 	start_wps();
-#if defined(RTCONFIG_WLCEVENTD) && (defined(CONFIG_BCMWL5) || defined(CONFIG_REALTEK) || defined(RTCONFIG_RALINK))
+#if defined(RTCONFIG_WLCEVENTD) && defined(CONFIG_BCMWL5) || defined(CONFIG_REALTEK)
 	start_wlceventd();
 #endif
 #ifdef RTCONFIG_BCMWL6
@@ -5199,6 +5202,9 @@ void restart_wireless(void)
 #ifndef RTCONFIG_DHDAP
 	restart_wl();
 	lanaccess_wl();
+#endif
+#ifndef RTCONFIG_QCA
+	nvram_set_int("wlready", 1);
 #endif
 
 #ifdef CONFIG_BCMWL5

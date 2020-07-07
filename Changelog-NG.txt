@@ -1,6 +1,45 @@
 Asuswrt-Merlin 384/NG Changelog
 ===============================
 
+384.18 (28-June-2020)
+  - NOTE: A number of changes for some models are not backward
+          compatible with previous versions.  Downgrading to
+          a previous release will require a factory default reset
+          afterward in many cases.
+  - UPDATED: Merged GPL 384_8563 for AX models.
+  - UPDATED: Merged GPL 384_81918 for mainline models.
+  - UPDATED: Merged SDK + binary blobs 384_81918 for RT-AC86U.
+  - UPDATED: Merged SDK + binary blobs 384_81902 for RT-AC5300.
+  - UPDATED: Merged SDK + binary blobs 385_20490 for RT-AC68U.
+  - UPDATED: Merged binary blobs 385_20490 for RT-AC3100.
+  - UPDATED: Merged binary blobs 384_81918 for RT-AC88U.
+  - UPDATED: Merged SDK + binary blobs 384_8563 for RT-AX58U.
+  - UPDATED: amtm to 3.1.7.
+  - UPDATED: Root certificate bundle to June 3rd 2020.
+  - UPDATED: OUI database used by the webui.
+  - UPDATED: Dropbear 2020.80 (themiron)
+  - UPDATED: nano to 4.9.3.
+  - CHANGED: Optimized OpenVPN routing policy storage (this change
+             is NOT backward compatible with previous firmwares)
+  - FIXED: ssh/scp client would fail to connect while negotiating
+           a chacha20 connection (themiron)
+
+
+
+384.13_10 (28-June-2020)
+  This release will most likely be the last release for the
+  RT-AC87U and RT-AC3200, due to limited upstream support.
+
+  - UPDATED: amtm to 3.1.7.
+  - UPDATED: Root certificate bundle to June 3rd 2020.
+  - UPDATED: OUI database used by the webui.
+  - UPDATED: Dropbear 2020.80 (themiron)
+  - UPDATED: Wireless driver from 382_52230 for RT-AC87U and
+             RT-AC3200 (should in theory address Kr00k)
+  - FIXED: ssh/scp client would fail to connect while negotiating
+           a chacha20 connection (themiron)
+
+
 384.17 (26-Apr-2020)
   Updating some models (like the RT-AC88U) from stock firmware
   3.0.0.4.384_81790 and newer will require a factory default reset

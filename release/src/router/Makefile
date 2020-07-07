@@ -11,7 +11,6 @@
 #
 #
 
-
 export HND_ROUTER := $(shell pwd | sed 's/.*hnd.*/y/g')
 ifeq ($(HND_ROUTER),y)
 export BCM_CHIP := 4908
@@ -720,10 +719,14 @@ obj-$(RTCONFIG_LETSENCRYPT) += socat
 #obj-$(RTCONFIG_SYSSTATE) += sysstate
 obj-y += sysstate
 
+obj-$(RTCONFIG_LIBASC) += libasc
+
 obj-$(RTCONFIG_AHS) += openssl
 obj-$(RTCONFIG_AHS) += $(CURL)
 obj-$(RTCONFIG_AHS) += json-c
 obj-$(RTCONFIG_AHS) += ahs
+
+obj-$(RTCONFIG_ASD) += asd
 
 obj-$(RTCONFIG_OPENVPN) += libvpn
 
@@ -815,6 +818,7 @@ ifeq ($(RTCONFIG_AMAS),y)
 obj-y  += jansson-2.7
 obj-y  += libevent-2.0.21
 obj-y  += lldpd-0.9.8
+obj-y  += libxml2
 endif
 
 .PHONY: emf$(BCMEX)$(EX7) igs$(BCMEX)$(EX7) hspot_ap$(BCMEX)$(EX7) wps$(BCMEX)$(EX7)
@@ -2740,7 +2744,7 @@ rc: shared nvram$(BCMEX)$(EX7) libdisk $(if $(RTCONFIG_FBWIFI),fb_wifi) $(if $(R
 # Dig into our collection of prebuilt objects based on model
 	@-rm -f rc/prebuild/*.o || true
 	@-cp -f rc/prebuild/$(BUILD_NAME)/* rc/prebuild/
-	@$(MAKE) -C rc
+	@$(MAKE) -C rc $(PARALLEL_BUILD)
 
 rc-install:
 	$(MAKE) -C rc INSTALLDIR=$(INSTALLDIR)/rc install
@@ -2943,6 +2947,7 @@ getdns/build/Makefile:
 		-DCMAKE_DISABLE_FIND_PACKAGE_Libsystemd=TRUE \
 		-DUSE_LIBIDN2=FALSE \
 		-DSTRPTIME_WORKS_EXITCODE=0 \
+		-DSTRPTIME_WORKS_EXITCODE__TRYRUN_OUTPUT=0 \
 		..
 
 getdns: $(OPENSSL) libyaml getdns/build/Makefile
@@ -4264,7 +4269,7 @@ dropbear/config.h: dropbear/config.h.in
 	cd dropbear && \
 		CPPFLAGS="-O2 -Wall $(EXTRACFLAGS) -DARGTYPE=3 -ffunction-sections -fdata-sections -I$(STAGEDIR)/usr/include \
 			$(if $(RTCONFIG_PROTECTION_SERVER),-DSECURITY_NOTIFY,)" \
-		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -L$(STAGEDIR)/usr/lib" \
+		LDFLAGS="-Wl,--gc-sections -L$(STAGEDIR)/usr/lib" \
 		LIBS="$(if $(RTCONFIG_PROTECTION_SERVER),-lptcsrv)" \
 		$(CONFIGURE) --disable-harden --disable-zlib --disable-pam \
 		--enable-openpty --enable-syslog --enable-shadow --enable-bundled-libtom \
@@ -4276,7 +4281,7 @@ dropbear/config.h: dropbear/config.h.in
 
 dropbear: dropbear/config.h
 	@$(SEP)
-	@$(MAKE) -C $@ PROGRAMS="dropbear dbclient dropbearkey scp" MULTI=1 $(PARALLEL_BUILD)
+	@$(MAKE) -C $@ PROGRAMS="dropbear dbclient dropbearkey scp" MULTI=1 IGNORE_SPEED=1 $(PARALLEL_BUILD)
 
 dropbear-install:
 	install -D dropbear/dropbearmulti $(INSTALLDIR)/dropbear/usr/bin/dropbearmulti
@@ -4443,12 +4448,12 @@ endif
 
 flac/stamp-h1: libogg
 	cd flac && \
-	CFLAGS="-Os $(EXTRACFLAGS) -fPIC -ffunction-sections -fdata-sections" \
-	CPPFLAGS="-I$(TOP)/libogg/include" \
+	CFLAGS="-Os -fPIC -ffunction-sections -fdata-sections" \
 	LDFLAGS="-L$(TOP)/libogg/src/.libs -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	$(CONFIGURE) --enable-shared --enable-static --prefix='' --disable-rpath \
 		--disable-doxygen-docs --disable-xmms-plugin --disable-cpplibs \
-		--without-libiconv-prefix --disable-altivec --disable-3dnow --disable-sse
+		--without-libiconv-prefix --disable-altivec --disable-3dnow --disable-sse \
+		--with-ogg-libraries=$(TOP)/libogg/src/.libs --with-ogg-includes=$(TOP)/libogg/include
 	touch $@
 
 flac: flac/stamp-h1 libogg
@@ -4752,7 +4757,7 @@ sysstate-install:
 	echo "install sysstate"
 	$(MAKE) -C sysstate install
 
-ahs: openssl $(CURL) json-c
+ahs: libasc json-c
 	@$(SEP)
 	echo "build ahs"
 	$(MAKE) -C ahs
@@ -4764,6 +4769,19 @@ ahs-clean:
 ahs-install:
 	echo "install ahs"
 	$(MAKE) -C ahs install
+
+libasc: openssl $(CURL)
+	@$(SEP)
+	echo "build libasc"
+	$(MAKE) -C libasc
+
+libasc-clean:
+	echo "clean libasc"
+	$(MAKE) -C libasc clean
+
+libasc-install:
+	echo "install libasc"
+	$(MAKE) -C libasc install
 
 qsr10g_image:
 aqr107_image:
@@ -5119,7 +5137,7 @@ openvpn/Makefile:
 		IPROUTE="/usr/sbin/ip" IFCONFIG="/sbin/ifconfig" ROUTE="/sbin/route" \
 		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 			--disable-debug --enable-management --disable-small \
-			--disable-selinux --disable-socks --enable-password-save \
+			--disable-selinux \
 			--enable-plugin-auth-pam \
 			ac_cv_lib_resolv_gethostbyname=no \
         )
@@ -5573,7 +5591,8 @@ fb_wifi-clean:
 
 #libcurl
 curl/configure:
-	@cd curl && buildconf
+	@cd curl && ./buildconf
+
 curl/Makefile: curl/configure
 	@cd curl && $(CONFIGURE) CC=$(CC) \
 		--prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
@@ -6471,7 +6490,7 @@ wget/Makefile: wget/Makefile.in
 		LDFLAGS="$(EXTRALDFLAGS) -Wl,--gc-sections -pthread"
 
 wget: $(OPENSSL) zlib wget/Makefile
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 wget-clean:
 	[ ! -f wget/Makefile ] || $(MAKE) -C wget distclean
@@ -6480,6 +6499,8 @@ wget-clean:
 wget-install:
 	install -D wget/src/wget $(INSTALLDIR)/wget/usr/sbin/wget
 	$(STRIP) $(INSTALLDIR)/wget/usr/sbin/wget
+	install -d $(INSTALLDIR)/wget/rom/etc
+	echo "ca_certificate=/etc/ssl/certs/ca-certificates.crt" > $(INSTALLDIR)/wget/rom/etc/wgetrc
 
 rtk_wifi_eventd: $(if $(RTCONFIG_CFGSYNC), cfg_mnt)
 
@@ -7311,6 +7332,18 @@ sysstat-10.0.3-install:
 	$(MAKE) -C sysstat-10.0.3 install_base DESTDIR=$(INSTALLDIR)/sysstat-10.0.3 INSTALL_DOC=n
 	mv $(INSTALLDIR)/sysstat-10.0.3/etc $(INSTALLDIR)/sysstat-10.0.3/etc_sysstat
 	rm -rf $(INSTALLDIR)/sysstat-10.0.3/var
+
+asd: shared nvram$(BCMEX)$(EX7) $(CURL) openssl libasc
+	$(MAKE) -C $@
+
+asd-install:
+	install -D asd/asd $(INSTALLDIR)/asd/usr/bin/asd
+	$(STRIP) $(INSTALLDIR)/asd/usr/bin/asd
+
+asd-clean:
+	$(MAKE) -C asd clean
+
+
 #
 # tunnel related
 #
