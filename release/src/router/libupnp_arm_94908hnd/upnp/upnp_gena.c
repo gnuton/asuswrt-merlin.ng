@@ -90,7 +90,7 @@ delete_subscriber(UPNP_SCBRCHAIN *scbrchain, UPNP_SUBSCRIBER *subscriber)
 
 /* Parse the header, CALLBACK, to get host address (ip, port) and uri */
 char *
-parse_callback(char *callback, struct in_addr *ipaddr, unsigned short *port)
+parse_callback(UPNP_CONTEXT *context, char *callback, struct in_addr *ipaddr, unsigned short *port)
 {
 	char *p;
 	int pos;
@@ -98,6 +98,8 @@ parse_callback(char *callback, struct in_addr *ipaddr, unsigned short *port)
 	char *uri;
 	int host_port;
 	struct in_addr host_ip;
+	UPNP_INTERFACE *iflist;
+	bool lan_match=FALSE;
 
 	/* callback: "<http://192.168.2.13:5000/notify>" */
 	if (memcmp(callback, "<http://", 8) != 0) {
@@ -140,8 +142,42 @@ parse_callback(char *callback, struct in_addr *ipaddr, unsigned short *port)
 
 	/* make ip */
 	host[pos] = 0;
-	if (inet_aton(host, &host_ip) == 0)
+	if (inet_aton(host, &host_ip) == 0) {
+#ifdef DBG_CODE
+		printf("%s:%d: inet_aton failed for %s\n", __FUNCTION__, __LINE__, host);
+#endif
 		return 0;
+	}
+
+	iflist = context->iflist;
+	while (iflist != NULL) {
+#ifdef DBG_CODE
+		char *s_ipaddr;
+		char *s_netmask;
+		s_ipaddr = strdup(inet_ntoa(iflist->ipaddr));
+		s_netmask = strdup(inet_ntoa(iflist->netmask));
+		printf("ifname = %s  ipaddr = %s  netmask = %s\n",
+			iflist->ifname, s_ipaddr, s_netmask);
+		free(s_ipaddr);
+		free(s_netmask);
+#endif
+
+		/* Check if callback URL is in the same subnet of registered LAN interfaces */
+		if ((host_ip.s_addr & iflist->netmask.s_addr) ==
+				(iflist->ipaddr.s_addr & iflist->netmask.s_addr)) {
+			lan_match = TRUE;
+			break;
+		}
+
+		iflist = iflist->next;
+	}
+
+	if (lan_match != TRUE) {
+#ifdef DBG_CODE
+		printf("%s:%d: lan_match failed for %s\n", __FUNCTION__, __LINE__, host);
+#endif
+		return 0;
+	}
 
 	*ipaddr = host_ip;
 	*port = host_port;
@@ -587,9 +623,9 @@ subscribe(UPNP_CONTEXT *context)
 		if (gena_callback == 0)
 			return R_ERROR;
 
-		uri = parse_callback(gena_callback, &ipaddr, &port);
+		uri = parse_callback(context, gena_callback, &ipaddr, &port);
 		if (uri == 0)
-			return R_ERROR;
+			return R_BAD_REQUEST;
 
 		/* Find exist subscriber and free it */
 		subscriber = scbrchain->subscriberlist;
