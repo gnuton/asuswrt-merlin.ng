@@ -583,3 +583,160 @@ int wl_set_mcsindex(char *ifname, int *is_auto, int *idx, char *idx_type, int *s
 }
 #endif
 
+int get_wlan_service_status(int bssidx, int vifidx)
+{
+	char tmp[128] = {0}, prefix[] = "wlXXXXXXXXXX_";
+	char *ifname = NULL;
+	int ret = 0;
+	int result = 0;
+	int bsscfg_idx = 0;
+	char data_buf[WLC_IOCTL_MAXLEN];
+
+	if (nvram_get_int("wlready") == 0)
+		return -1;
+
+	if (vifidx > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", bssidx, vifidx);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d", bssidx);
+
+	ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	bsscfg_idx = htod32(vifidx);
+
+	ret = wl_iovar_getbuf(ifname, "bss", &bsscfg_idx, sizeof(bsscfg_idx),
+		data_buf, WLC_IOCTL_MAXLEN);
+	if (ret < 0) {
+		dbg("failed to get bss on %s\n", ifname);
+		return -1;
+	}
+
+	result = *(int*)data_buf;
+        result = dtoh32(result);
+
+	//dbg("result: %d\n", result);
+
+	return result;
+}
+
+void set_wlan_service_status(int bssidx, int vifidx, int enabled)
+{
+
+	char tmp[128]={0}, prefix[] = "wlXXXXXXXXXX_";
+	char *ifname = NULL;
+	int val, ret;
+	struct ether_addr addr = {{255, 255, 255, 255, 255, 255}};
+	struct {int bsscfg_idx; int enable;} setbuf;
+
+#ifdef RTCONFIG_BRCM_HOSTAPD
+	int hapd_is_ready = 0;
+#endif	// RTCONFIG_BRCM_HOSTAPD
+	if (nvram_get_int("wlready") == 0)
+		return;
+
+	if (vifidx > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", bssidx, vifidx);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", bssidx);
+
+	ifname = strdup(nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+	if (ifname == NULL || strlen(ifname) == 0) {
+		_dprintf("Getting bssidx(%d) vifidx(%d) ifname fail.\n", bssidx, vifidx);
+		if (ifname)
+			free(ifname);
+		return;
+	}
+
+#ifdef RTCONFIG_BRCM_HOSTAPD
+        FILE *fp1 = NULL;
+        char cmd1[64], buf1[256];
+        if(nvram_match("hapd_enable", "1")) {
+                snprintf(cmd1, sizeof(cmd1), "hostapd_cli -i %s ping", ifname);
+                fp1 = popen(cmd1, "r");
+                if(fp1) {
+                        while (fgets(buf1, sizeof(buf1), fp1) != NULL) {
+                                if(strstr(buf1, "PONG") != NULL)
+                                {
+                                    hapd_is_ready = 1;
+                                    break;
+                                }
+                        }
+                        pclose(fp1);
+                }
+        }
+#endif	// RTCONFIG_BRCM_HOSTAPD
+
+#ifdef RTCONFIG_BRCM_HOSTAPD
+	if (hapd_is_ready) {
+#endif	// RTCONFIG_BRCM_HOSTAPD
+
+	if (enabled == 0) {
+
+		/* deauthe all sta */
+		if (wl_ioctl(ifname, WLC_SCB_DEAUTHENTICATE, &addr, ETHER_ADDR_LEN) < 0) {
+			dbg("deauth all sta failed on %s\n", ifname);
+		}
+#if defined(RTCONFIG_HND_ROUTER_AX)
+                val = 0;
+#elif defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER)
+                val = 9;
+#else
+                val = 0;
+#endif
+	}
+	else
+	{
+#if defined(RTCONFIG_HND_ROUTER_AX)
+                val = 1;
+#elif defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER)
+                val = 8;
+#else
+                val = 1;
+#endif
+	}
+
+	setbuf.bsscfg_idx = htod32(vifidx);
+	setbuf.enable = htod32(val);
+
+	dbg("set bss to %d on %s\n", val, ifname);
+
+	ret = wl_iovar_set(ifname, "bss", &setbuf, sizeof(setbuf));
+	if (ret) {
+		dbg("failed to set bss to %d on %s\n", val, ifname);
+	}
+
+#ifdef RTCONFIG_BRCM_HOSTAPD
+	} else {
+		dbg("%s: Hostapd not running\n", ifname);
+	}
+#endif	// RTCONFIG_BRCM_HOSTAPD
+
+
+#ifdef RTCONFIG_BRCM_HOSTAPD
+	FILE *fp = NULL;
+	char cmd[64], buf[256];
+	int hapd_is_running = 0;
+	if(nvram_match("hapd_enable", "1")) {
+		snprintf(cmd, sizeof(cmd), "hostapd_cli -i %s ping", ifname);
+		fp = popen(cmd, "r");
+		if(fp) {
+			while (fgets(buf, sizeof(buf), fp) != NULL) {
+				if(strstr(buf, "PONG") != NULL)
+				{
+				    hapd_is_running = 1;
+				    break;
+				}
+			}
+			pclose(fp);
+		}
+
+		// restart hostapd in case previous start hostapd operation is unsuccess since bss is down
+		if(!hapd_is_running && enabled) {
+			snprintf(cmd, sizeof(cmd), "hostapd %s /tmp/%s_hapd.conf &",
+				(nvram_match("hapd_dbg", "1") ? "-ddt" : "-B"), ifname);
+			system(cmd);
+		}
+	}
+#endif
+	free(ifname);
+}
