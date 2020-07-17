@@ -45,6 +45,8 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
 ### Contributing
+Most of the help I need is in testing. You can test BETA releases when available and report bugs here.
+Beta releases are safe to be tested and they get promoted to stable once they are tested from enough people and time.
 You can read more about it [here](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md).
 
 ### Thanks to
