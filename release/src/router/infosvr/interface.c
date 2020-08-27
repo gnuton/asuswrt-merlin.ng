@@ -16,7 +16,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+#if (defined(__GLIBC__) || defined(__UCLIBC__))
 #include <error.h>
+#endif
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
