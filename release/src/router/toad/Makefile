@@ -20,7 +20,7 @@ endif
 #CFLAGS	+= -gstabs -DDEBUG
 CFLAGS	+= -I. -I$(TOP)/shared -I$(SRCBASE)/include ${WLAN_StdIncPathA} -I$(SRCBASE)/common/include
 CFLAGS	+= $(if $(WLAN_ComponentIncPath),$(WLAN_ComponentIncPath),$(addprefix -I,$(wildcard $(SRCBASE)/shared/bcmwifi/include)))
-LDFLAGS += -L$(TOP)/nvram${BCMEX} -lnvram
+LDFLAGS += -L$(TOP_PLATFORM)/nvram${BCMEX} -lnvram
 LDFLAGS += -L$(TOP)/shared -L$(INSTALLDIR)/shared/usr/lib -lshared
 LDFLAGS += -lgcc_s
 LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
