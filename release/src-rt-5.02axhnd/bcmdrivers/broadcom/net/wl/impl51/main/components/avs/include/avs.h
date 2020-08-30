@@ -1,7 +1,7 @@
 /*
  * Common interface for Adaptive Voltage Scaling module
  *
- * Copyright 2019 Broadcom
+ * Copyright 2020 Broadcom
  *
  * This program is the proprietary software of Broadcom and/or
  * its licensors, and may only be used, duplicated, modified or distributed
@@ -72,16 +72,12 @@ int avs_track(avs_context_t *avs);
 void avs_reset(avs_context_t *avs);
 int avs_get_value(avs_context_t *avs, avs_value_index_t index, uint *value);
 
-#if defined(BCMDBG) || defined(AVS_ENABLE_STATUS)
+/* Debug functions are public for all builds */
 int avs_status(avs_context_t *avs, struct bcmstrbuf *buf);
-#endif // endif
-
-#ifdef BCMDBG
 int avs_set_vlimit_low(avs_context_t *avs, uint value);
 int avs_set_vlimit_high(avs_context_t *avs, uint value);
 int avs_set_vmargin_low(avs_context_t *avs, uint value);
 int avs_set_vmargin_high(avs_context_t *avs, uint value);
 int avs_set_threshold_margin(avs_context_t *avs, uint value);
-#endif /* BCMDBG */
 
 #endif /* _avs_h_ */

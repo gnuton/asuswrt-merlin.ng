@@ -2,7 +2,7 @@
  * Common header file shared between bus layer and wl layer
  * As of today, splitrx related and cached flow processing related headers are shared here
  *
- * Copyright (C) 2019, Broadcom. All Rights Reserved.
+ * Copyright (C) 2020, Broadcom. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -136,6 +136,8 @@ extern void wlc_cfp_tx_sendup(int cfp_unit, uint16 cfp_flowid, uint8 pkt_prio,
 extern int wlc_sqs_sendup(uint16 sqs_flowid, uint8 prio, uint16 pkt_count);
 typedef uint16 (*pkt_pull_cb_t)(void *arg, uint16 ringid, uint16 request_cnt);
 extern void wlc_sqs_pull_packets_register(pkt_pull_cb_t cb, void* arg);
+typedef bool (*flow_ring_status_cb_t)(void *arg, uint16 ringid);
+extern void wlc_sqs_flowring_status_register(flow_ring_status_cb_t cb, void* arg);
 
 typedef int (*eops_rqst_cb_t)(void *arg);
 extern void wlc_sqs_eops_rqst_register(eops_rqst_cb_t cb, void* arg);
@@ -144,6 +146,7 @@ extern void wlc_sqs_eops_rqst_register(eops_rqst_cb_t cb, void* arg);
 extern void wlc_sqs_v2r_sendup(uint16 sqs_flowid, uint8 prio,
 	void *pktlist_head, void *pktlist_tail, uint16 pkt_count);
 
+extern bool wlc_sqs_scb_data_open(uint16 cfp_flowid);
 extern bool wlc_sqs_capable(uint16 cfp_flowid, uint8 prio);
 extern uint16 wlc_sqs_vpkts(uint16 sqs_flowid, uint8 prio);
 extern uint16 wlc_sqs_v2r_pkts(uint16 cfp_flowid, uint8 prio);

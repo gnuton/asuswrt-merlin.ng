@@ -1,7 +1,7 @@
 # Helper makefile for building Broadcom wps libaries
 # This file maps wps feature flags (import) to WPSFLAGS and WPSFILES (export).
 #
-# Copyright 2019 Broadcom
+# Copyright 2020 Broadcom
 #
 # This program is the proprietary software of Broadcom and/or
 # its licensors, and may only be used, duplicated, modified or distributed
