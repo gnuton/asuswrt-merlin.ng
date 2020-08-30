@@ -1,7 +1,7 @@
 /*
  * WPS aplockdown
  *
- * Copyright 2018 Broadcom
+ * Copyright 2019 Broadcom
  *
  * This program is the proprietary software of Broadcom and/or
  * its licensors, and may only be used, duplicated, modified or distributed
@@ -45,11 +45,31 @@
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: wps_aplockdown.h 525052 2015-01-08 20:18:35Z $
+ * $Id: wps_aplockdown.h 772297 2019-02-20 06:50:21Z $
  */
 
 #ifndef __WPS_APLOCKDOWN_H__
 #define __WPS_APLOCKDOWN_H__
+
+typedef struct wps_aplockdown_custom_callback {
+	/* callback to override aplockdown counters
+	 *   start_cnt:    threshold of pin failure to start aplockdown
+	 *   forever_cnt:  threshold of pin failure to lockdown ap forever
+	 *   failed_cnt:   current pin failure counter
+	 *   return value: return 0 if success.
+	 */
+	int (*init)(int *start_cnt, int *forever_cnt, int *failed_cnt);
+	/* callback for each wps pin failue
+	 *   start_cnt:       threshold of pin failure to start aplockdown
+	 *   forever_cnt:     threshold of ping failure to lockdown ap forever
+	 *   new_failed_cnt:  current pin failure counter, including current one.
+	 *   return value:    return 0 if success.
+	 */
+	int (*wps_pinfail_added)(int start_cnt, int forever_cnt,
+		int *new_failed_cnt);
+} wps_aplockdown_custom_callback_t;
+
+extern wps_aplockdown_custom_callback_t wps_aplockdown_custom;
 
 int wps_aplockdown_init();
 int wps_aplockdown_add(void);

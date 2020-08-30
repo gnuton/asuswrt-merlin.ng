@@ -1,7 +1,7 @@
 /*
  * WPS push button
  *
- * Copyright 2018 Broadcom
+ * Copyright 2019 Broadcom
  *
  * This program is the proprietary software of Broadcom and/or
  * its licensors, and may only be used, duplicated, modified or distributed
@@ -45,13 +45,14 @@
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: wps_pb.h 676559 2016-12-22 17:02:55Z $
+ * $Id: wps_pb.h 771467 2019-01-28 10:19:54Z $
  */
 
 #ifndef __WPS_PB_H__
 #define __WPS_PB_H__
 
 #include <wps_wps.h>
+#include <wlif_utils.h>
 
 #define PBC_OVERLAP_CNT			2
 #define WPS_PB_SELECTING_MAX_TIMEOUT	10	/* second */
@@ -68,6 +69,17 @@ enum {
 	WPS_PB_STATE_SELECTING
 } WPS_PB_STATE_T;
 
+#ifdef BCMWPSAPSTA
+#define WPS_MAX_PBC_APSTA 3
+typedef struct {
+	char name[32];
+	char ifname[IFNAMSIZ];
+} wps_pbc_apsta_intf_t;
+
+extern wps_pbc_apsta_intf_t wps_pbc_ap_ifnames[WPS_MAX_PBC_APSTA];
+extern wps_pbc_apsta_intf_t wps_pbc_sta_ifnames[WPS_MAX_PBC_APSTA];
+#endif // endif
+
 int wps_pb_check_pushtime(unsigned long time);
 void wps_pb_update_pushtime(unsigned char *mac, uint8 *uuid);
 void wps_pb_get_uuids(uint8 *buf, int len);
@@ -79,5 +91,5 @@ int wps_pb_deinit();
 void wps_pb_reset();
 void wps_pb_timeout(int session_opened);
 int wps_pb_state_reset();
-
+void wps_pb_ifname_reset();
 #endif	/* __WPS_PB_H__ */

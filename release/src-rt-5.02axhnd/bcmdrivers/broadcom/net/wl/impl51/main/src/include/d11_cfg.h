@@ -2,7 +2,7 @@
  * Common header file shared between bus layer and wl layer
  * As of today, splitrx related and cached flow processing related headers are shared here
  *
- * Copyright (C) 2018, Broadcom. All Rights Reserved.
+ * Copyright (C) 2019, Broadcom. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -35,7 +35,7 @@
 #define	RXMODE3	3	/* fifo split + classification */
 #define	RXMODE4	4	/* fifo split + classification + hdr conversion */
 
-#ifdef BCMSPLITRX
+#if defined(BCMSPLITRX)
 	extern bool _bcmsplitrx;
 	#if defined(ROM_ENAB_RUNTIME_CHECK) || !defined(DONGLEBUILD)
 		#define BCMSPLITRX_ENAB() (_bcmsplitrx)
@@ -93,7 +93,8 @@
  */
 #define CFP_FLOWID_RSVD_TOTAL           (1)
 #define CFP_FLOWID_SCB_TOTAL            (MAXSCB)
-#define CFP_FLOWID_INT_TOTAL            (WLC_MAXBSSCFG + 1 + 1)
+/* 4 internal SCBs for primary BSS, 1 SCB for each virtual BSS */
+#define CFP_FLOWID_INT_TOTAL            (WLC_MAXBSSCFG + 3)
 
 #define CFP_FLOWID_SCB_STARTID          (1)
 #define CFP_FLOWID_INT_STARTID          (MAXSCB + 1)
@@ -133,6 +134,11 @@ extern void wlc_cfp_tx_sendup(int cfp_unit, uint16 cfp_flowid, uint8 pkt_prio,
 #ifdef WLSQS
 /** Wireless SQS entry point. */
 extern int wlc_sqs_sendup(uint16 sqs_flowid, uint8 prio, uint16 pkt_count);
+typedef uint16 (*pkt_pull_cb_t)(void *arg, uint16 ringid, uint16 request_cnt);
+extern void wlc_sqs_pull_packets_register(pkt_pull_cb_t cb, void* arg);
+
+typedef int (*eops_rqst_cb_t)(void *arg);
+extern void wlc_sqs_eops_rqst_register(eops_rqst_cb_t cb, void* arg);
 
 /** Entry point for v2r packets */
 extern void wlc_sqs_v2r_sendup(uint16 sqs_flowid, uint8 prio,
@@ -141,12 +147,17 @@ extern void wlc_sqs_v2r_sendup(uint16 sqs_flowid, uint8 prio,
 extern bool wlc_sqs_capable(uint16 cfp_flowid, uint8 prio);
 extern uint16 wlc_sqs_vpkts(uint16 sqs_flowid, uint8 prio);
 extern uint16 wlc_sqs_v2r_pkts(uint16 cfp_flowid, uint8 prio);
-extern void wlc_sqs_v2r_enqueue(uint16 cfp_flowid, uint8 prio, int *v2r_request);
-extern void wlc_sqs_v2r_dequeue(uint16 cfp_flowid, uint8 prio, uint16 pkt_count);
+extern uint16 wlc_sqs_n_pkts(uint16 cfp_flowid, uint8 prio);
+extern uint16 wlc_sqs_tbr_pkts(uint16 cfp_flowid, uint8 prio);
+extern uint16 wlc_sqs_in_transit_pkts(uint16 cfp_flowid, uint8 prio);
+extern void wlc_sqs_v2r_enqueue(uint16 cfp_flowid, uint8 prio, uint16 pkt_count);
+extern void wlc_sqs_v2r_dequeue(uint16 cfp_flowid, uint8 prio, uint16 pkt_count, bool sqs_force);
 extern void wlc_sqs_v2r_revert(uint16 cfp_flowid, uint8 prio, uint16 v2r_reverts);
 extern void wlc_sqs_vpkts_enqueue(uint16 cfp_flowid, uint8 prio, uint16 v_pkts);
 extern void wlc_sqs_vpkts_rewind(uint16 cfp_flowid, uint8 prio, uint16 count);
 extern void wlc_sqs_vpkts_forward(uint16 cfp_flowid, uint8 prio, uint16 count);
-extern bool wlc_sqs_stride_paused(uint8 prio);
+extern void wlc_sqs_taf_txeval_trigger(void);
+extern void wlc_sqs_eops_rqst(void);
+extern void wlc_sqs_eops_response(void);
 #endif /* WLSQS */
 #endif /* _d11_cfg_h_ */
