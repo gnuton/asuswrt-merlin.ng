@@ -1,7 +1,7 @@
 /*
  * HWA library exported routines.
  *
- * Copyright (C) 2018, Broadcom. All Rights Reserved.
+ * Copyright (C) 2019, Broadcom. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,29 +23,39 @@
 #ifndef _HWA_EXPORT_H
 #define _HWA_EXPORT_H
 
-/* NOTE: These HWA REVISION definitions must be placed at first place. */
 /**
+ * -----------------------------------------------------------------------------
  * HWA Core 0x851
  *
  * Family   Revision     Chips
- * ------   --------     -------------------------------------------------------
- * HWA2.0   128          43684A0,A1
- * HWA2.1   129          43684B0
+ * ------   --------     ----------------------------
+ * HWA2.0   128          43684Ax (Deprecated/Deleted)
+ * HWA2.1   129          43684Bx
+ * HWA2.1   130          43684Cx
+ * HWA2.2   131           6715Ax
  *
+ * vim: set ts=4 noet sw=4 tw=80:
+ * -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * -----------------------------------------------------------------------------
  */
+
+// List all revisions first. -DBCMHWA = ### specified in #chip#.mk file.
 #define HWA_REVISION_ID         (BCMHWA)
-#define HWA_REVISION_EQ_128     (HWA_REVISION_ID == 128)
-#define HWA_REVISION_GE_128     (HWA_REVISION_ID >= 128)
+
+// BCM43684 Ax : rev 128 support has been deleted
+// BCM43684 Bx
 #define HWA_REVISION_EQ_129     (HWA_REVISION_ID == 129)
 #define HWA_REVISION_GE_129     (HWA_REVISION_ID >= 129)
 
-#if HWA_REVISION_EQ_128
-#define HWA_FAMILY              "2.0"
-#endif  /* HWA_REVISION_EQ_128 */
+// BCM43684 C0
+#define HWA_REVISION_EQ_130     (HWA_REVISION_ID == 130)
+#define HWA_REVISION_GE_130     (HWA_REVISION_ID >= 130)
 
-#if HWA_REVISION_EQ_129
+// BCM6715 A0
+#define HWA_REVISION_EQ_131     (HWA_REVISION_ID == 131)
+#define HWA_REVISION_GE_131     (HWA_REVISION_ID >= 131)
+
 #define HWA_FAMILY              "2.1"
-#endif  /* HWA_REVISION_EQ_129 */
 
 #include <hwa_defs.h>
 
@@ -56,7 +66,6 @@ struct hwa_dev;
 extern struct hwa_dev *hwa_dev;
 
 // Aggregation Compact WI format. 0 means no aggregation
-
 #define HWA_PCIEIPC_WI_AGGR_CNT     0 // 1a, 2b, 4b aggregation
 
 // Processing HWA DPC functions with bound or not.
@@ -100,8 +109,6 @@ void    hwa_rxfill_rxfree_audit(struct hwa_dev *dev, uint32 core,
 int     hwa_rxpath_dma_reset(struct hwa_dev *dev, uint32 core);
 // Reclaim MAC Rx DMA posted buffer
 void    hwa_rxpath_dma_reclaim(struct hwa_dev *dev);
-// Free lfrag's RPH before real cb.
-void    hwa_rxpath_cancel_rx_pktfetch_fast(struct hwa_dev *dev, void *lfrag);
 
 #endif /* HWA_RXPATH_BUILD */
 
@@ -110,6 +117,11 @@ void    hwa_rxpath_cancel_rx_pktfetch_fast(struct hwa_dev *dev, void *lfrag);
 // Query the type of filter match in a rxstatus, if any
 uint32  hwa_rxdata_fhr_is_pktfetch(uint32 fhr_filter_match);
 uint32  hwa_rxdata_fhr_is_l2filter(uint32 fhr_filter_match);
+uint32  hwa_rxdata_fhr_is_llc_snap_da(uint32 fhr_filter_match);
+uint32  hwa_rxdata_fhr_is_udpv6(uint32 fhr_filter_match);
+uint32  hwa_rxdata_fhr_is_udpv4(uint32 fhr_filter_match);
+uint32  hwa_rxdata_fhr_is_tcp(uint32 fhr_filter_match);
+uint32  hwa_rxdata_fhr_unchainable(uint32 fhr_filter_match);
 
 #endif /* HWA_RXDATA_BUILD */
 
@@ -131,18 +143,19 @@ void    hwa_txpost_schecmd_dens(struct hwa_dev *dev, struct bcmstrbuf *b, bool c
 // Dump TxPost HWA packet
 void    hwa_txpost_dump_pkt(hwa_txfifo_pkt_t *pkt, struct bcmstrbuf *b,
 	const char *title, uint32 pkt_index, bool one_shot);
-
+// Update schedule command flags for last request
+int	hwa_txpost_schedcmd_flags_update(struct hwa_dev *dev,
+	uint8 schedule_flags);
 #endif /* HWA_TXPOST_BUILD */
 
 #if defined(HWA_TXFIFO_BUILD)
 
-#if HWA_REVISION_EQ_128
-#define HWA_TXFIFO_LIMIT_THRESHOLD      0x20
-#define HWA_TXFIFO_EMPTY_THRESHOLD      0x21
-#else
+/* XXX Need better description in HWA-2.0 reg spec as to what these do
+ * See frameid mismatch (txs->frameid 0xa5c1 txh->TxFrameID 0x65c1)
+ * when set HWA_TXFIFO_LIMIT_THRESHOLD to 1024
+ */
 #define HWA_TXFIFO_LIMIT_THRESHOLD      512
 #define HWA_TXFIFO_EMPTY_THRESHOLD      4
-#endif // endif
 
 // Configure a TxFIFO's pkt and aqm descriptor ring context in HWA AXI memory
 int     hwa_txfifo_config(struct hwa_dev *dev, uint32 core, uint32 fifo_idx,
@@ -161,19 +174,18 @@ uint    hwa_txfifo_dma_active(struct hwa_dev *dev, uint32 core, uint32 fifo_idx)
 // Clear OvflowQ pkt_count, mpdu_count to avoid 3b process reclaimed packets
 void    hwa_txfifo_clear_ovfq(struct hwa_dev *dev, uint32 core, uint32 fifo_idx);
 // Handle a request from WLAN driver for transmission of a packet chain
-int     hwa_txfifo_pktchain_xmit_request(struct hwa_dev *dev, uint32 core,
+bool    hwa_txfifo_pktchain_xmit_request(struct hwa_dev *dev, uint32 core,
             uint32 fifo_idx, void *pktchain_head, void *pktchain_tail,
             uint16 pkt_count, uint16 mpdu_count);
+// Is the TXFIFO Pktchain Ring full.
+bool    hwa_txfifo_pktchain_ring_isfull(struct hwa_dev *dev);
 // Provide the TXed packet
 void    *hwa_txfifo_getnexttxp32(struct hwa_dev *dev, uint32 fifo_idx, uint32 range);
 // Like hwa_txfifo_getnexttxp32 but no reclaim
 void    *hwa_txfifo_peeknexttxp(struct hwa_dev *dev, uint32 fifo_idx);
 // HWA txfifo map function.
 int     hwa_txfifo_map_pkts(struct hwa_dev *dev, uint32 fifo_idx, void *cb, void *ctx);
-#if HWA_REVISION_EQ_128
-void    *hwa_txfifo_picknext2txp32(struct hwa_dev *dev, uint32 fifo_idx);
-#endif /* HWA_REVISION_EQ_128 */
-#if defined(BCMDBG)
+#if defined(BCMDBG) || defined(HWA_DUMP)
 void    hwa_txfifo_dump_shadow(struct hwa_dev *dev, struct bcmstrbuf *b, uint32 fifo_idx);
 void    hwa_txfifo_dump_ovfq(struct hwa_dev *dev, struct bcmstrbuf *b, uint32 fifo_idx);
 void    hwa_txfifo_dump_fifoctx(struct hwa_dev *dev, struct bcmstrbuf *b, uint32 fifo_idx);
@@ -187,10 +199,8 @@ void    hwa_txfifo_dump_fifoctx(struct hwa_dev *dev, struct bcmstrbuf *b, uint32
 
 #if defined(HWA_TXSTAT_BUILD)
 
-// Consume all txstatus in H2S txstatus interface
-int     hwa_txstat_process(struct hwa_dev *dev, uint32 core, bool bound);
 // HWA4a TxStatus block reclaim
-void    hwa_txstat_reclaim(struct hwa_dev *dev);
+void    hwa_txstat_reclaim(struct hwa_dev *dev, uint32 core);
 
 #endif /* HWA_TXSTAT_BUILD */
 
@@ -245,7 +255,7 @@ typedef enum hwa_mac_config
 
 // Invoked by MAC to configure the HWA Common block registers
 void    hwa_mac_config(hwa_mac_config_t config, uint32 core,
-            volatile void *ptr, uintptr val);
+            volatile void *ptr, uint32 val);
 
 /*
  * -----------------------------------------------------------------------------
@@ -274,35 +284,40 @@ typedef enum hwa_pktc_type
 	HWA_PKTC_TYPE_MAX            = 4
 } hwa_pktc_type_t;
 
-#if defined(BCMDBG)
-/* HWA block bit for debug dump */
-#define HWA_DUMP_TOP	(1 << 0)
-#define HWA_DUMP_CMN	(1 << 1)
-#define HWA_DUMP_DMA	(1 << 2)
-#define HWA_DUMP_1A	(1 << 3)
-#define HWA_DUMP_1B	(1 << 4)
-#define HWA_DUMP_2A	(1 << 5)
-#define HWA_DUMP_2B	(1 << 6)
-#define HWA_DUMP_3A	(1 << 7)
-#define HWA_DUMP_3B	(1 << 8)
-#define HWA_DUMP_4A	(1 << 9)
-#define HWA_DUMP_4B	(1 << 10)
-#define HWA_DUMP_ALL    (0xFFFFFFFF)
+#if defined(BCMDBG) || defined(HWA_DUMP)
+/* HWA blocks identified by a 32 bit block_bitmap, used in debug dump */
+#define HWA_DUMP_TOP            (1 <<  0)
+#define HWA_DUMP_CMN            (1 <<  1)
+#define HWA_DUMP_DMA            (1 <<  2)
+#define HWA_DUMP_1A             (1 <<  3)
+#define HWA_DUMP_1B             (1 <<  4)
+#define HWA_DUMP_2A             (1 <<  5)
+#define HWA_DUMP_2B             (1 <<  6)
+#define HWA_DUMP_3A             (1 <<  7)
+#define HWA_DUMP_3B             (1 <<  8)
+#define HWA_DUMP_4A             (1 <<  9)
+#define HWA_DUMP_4B             (1 << 10)
+#define HWA_DUMP_PP             (1 << 11)
+#define HWA_DUMP_ALL            (0xFFFFFFFF)
 
 int     hwa_wl_dump(struct hwa_dev *dev, struct bcmstrbuf *b);
+int     hwa_dhd_dump(struct hwa_dev *dev, char *dump_args);
 void    hwa_dump(struct hwa_dev *dev, struct bcmstrbuf *b, uint32 block_bitmap,
 	bool verbose, bool dump_regs, bool dump_txfifo_shadow, uint8 *fifo_bitmap);
 #endif /* BCMDBG */
 
-#if defined(WLTEST)
+#if defined(WLTEST) || defined(HWA_DUMP)
 int     hwa_dbg_regread(struct hwa_dev *dev, char *type, uint32 reg_offset, int32 *ret_int_ptr);
+#if defined(WLTEST)
 int     hwa_dbg_regwrite(struct hwa_dev *dev, char *type, uint32 reg_offset, uint32 val);
+#endif // endif
 #endif // endif
 
 // OSL related API
 #ifdef HWA_DPC_BUILD
 void    hwa_osl_detach(struct hwa_dev *dev);
 #endif // endif
+extern void hwa_dpc_invoke(struct hwa_dev *dev, uint32 intmask);
 
 // Others
 struct hwa_dev *BCMATTACHFN(hwa_attach)(void *wlc, uint device, osl_t *osh,
@@ -310,5 +325,22 @@ struct hwa_dev *BCMATTACHFN(hwa_attach)(void *wlc, uint device, osl_t *osh,
 void    BCMATTACHFN(hwa_detach)(struct hwa_dev *dev);
 void    hwa_config(struct hwa_dev *dev);
 void    hwa_set_reinit(struct hwa_dev *dev);
+si_t   *hwa_get_wlc_sih(void *wlc);
+
+#ifndef DONGLEBUILD
+int BCMATTACHFN(hwa_probe)(struct hwa_dev *dev, uint irq, uint coreid, uint unit);
+#endif // endif
+
+/* Schedule flags definitions
+ * 1-7 bits are reserved for future use
+ */
+typedef enum schedcmd_flags {
+	TXPOST_SCHED_FLAGS_RESP_PEND = 0,
+	TXPOST_SCHED_FLAGS_SQS_FORCE = 1
+} schedcmd_flags_t;
+
+/* schedule flags bitfields */
+#define TXPOST_SCHED_FLAGS_RESP_PEND_MASK	(1 << TXPOST_SCHED_FLAGS_RESP_PEND)
+#define TXPOST_SCHED_FLAGS_SQS_FORCE_MASK	(1 << TXPOST_SCHED_FLAGS_SQS_FORCE)
 
 #endif	/* _HWA_EXPORT_H */

@@ -1,7 +1,7 @@
 # Helper makefile for building Broadcom wps libaries
 # This file maps wps feature flags (import) to WPSFLAGS and WPSFILES (export).
 #
-# Copyright 2018 Broadcom
+# Copyright 2019 Broadcom
 #
 # This program is the proprietary software of Broadcom and/or
 # its licensors, and may only be used, duplicated, modified or distributed
@@ -104,6 +104,7 @@ WPSFILES += $(WPSBASE)/brcm_apps/apps/wps_ie.c
 WPSFILES += $(WPSBASE)/brcm_apps/apps/wps_ui.c
 WPSFILES += $(WPSBASE)/brcm_apps/apps/wps_led.c
 WPSFILES += $(WPSBASE)/brcm_apps/apps/wps_apputils.c
+WPSFILES += $(WPSBASE)/brcm_apps/apps/wps_1905.c
 
 WPS_ROUTERHALFILES += brcm_apps/arch/bcm947xx/wps_gpio.c
 WPS_ROUTERHALFILES += brcm_apps/arch/bcm947xx/wps_hal.c
@@ -142,6 +143,13 @@ WPS_ROUTERHALFILES += brcm_apps/arch/bcm947xx/wps_wl.c
 	WPSFILES += $(WPSBASE)/brcm_apps/nfc/app_mgt.c
 	WPSFILES += $(WPSBASE)/brcm_apps/nfc/app_nsa_utils.c
 	endif
+
+ifneq ($(CMWIFI),)
+	ifneq ($(CMWIFI_IEEE1905),)
+	WPSFILES += src/wps/brcm_apps/apps/wps_1905.c
+	endif
+endif
+
 WPSFLAGS += -DWPS_ROUTER
 endif # end WPS ROUTER
 

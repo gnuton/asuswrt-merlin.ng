@@ -1,7 +1,7 @@
 /*
  * WPS app utilies
  *
- * Copyright 2018 Broadcom
+ * Copyright 2019 Broadcom
  *
  * This program is the proprietary software of Broadcom and/or
  * its licensors, and may only be used, duplicated, modified or distributed
@@ -50,6 +50,9 @@
 
 #ifndef __WPS_APPUTILS_H__
 #define __WPS_APPUTILS_H__
+
+extern int (*wpsapp_update_custom_cred_callback)(char *, char *, char *,
+		char *, int, bool, uint8);
 
 int wpsapp_utils_update_custom_cred(char *ssid, char *key, char *akm, char *crypto, int oob_addenr,
 	bool b_wps_Version2);

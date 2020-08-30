@@ -1,7 +1,7 @@
 /*
  * WPS include
  *
- * Copyright 2018 Broadcom
+ * Copyright 2019 Broadcom
  *
  * This program is the proprietary software of Broadcom and/or
  * its licensors, and may only be used, duplicated, modified or distributed
@@ -45,7 +45,7 @@
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: wps_wps.h 676559 2016-12-22 17:02:55Z $
+ * $Id: wps_wps.h 772297 2019-02-20 06:50:21Z $
  */
 #ifndef __WPS_H__
 #define __WPS_H__
@@ -104,6 +104,9 @@ enum {
 	WPS_RECEIVE_PKT_UI = 1,
 	WPS_RECEIVE_PKT_PB,
 	WPS_RECEIVE_PKT_EAP,
+#ifdef MULTIAP
+	WPS_RECEIVE_PKT_1905,
+#endif /* MULTIAP */
 	WPS_RECEIVE_PKT_UPNP,
 	WPS_RECEIVE_PKT_NFC
 } WPS_RECEIVE_PKT_T;
@@ -115,6 +118,9 @@ typedef struct {
 	int (*close)(void *);
 	int (*process)(void *, char *, int, int);
 	int (*check_timeout)(void *);
+#if defined(MULTIAP)
+	int (*map_timeout)(void *);
+#endif	/* MULTIAP */
 } wps_app_t;
 
 /* Macros */
@@ -151,6 +157,13 @@ typedef struct {
 #define dtohchanspec(i) i
 #endif // endif
 
+/* NVRAM values for different types of multiap bss */
+#if defined(MULTIAP)
+#define	WPS_NVVAL_MAP_FH_BSS	1	/* Fronthaul BSS */
+#define	WPS_NVVAL_MAP_BH_BSS	2	/* Backhaul BSS */
+#define	WPS_NVVAL_MAP_BH_STA	4	/* Backhaul STA */
+#endif	/* MULTIAP */
+
 void wps_osl_restart_wl();
 
 /* Common APIs */
@@ -176,5 +189,18 @@ int wpsap_open_session(wps_app_t *wps_app, int sc_mode, unsigned char *mac, unsi
 
 /* Common interface to sta wksp */
 int wpssta_open_session(wps_app_t *wps_app, char*ifname);
-
+#if defined(MULTIAP)
+unsigned long wpssta_get_start_time();
+void wpssta_set_start_time(unsigned long time);
+unsigned char *wps_map_get_settings();
+void wps_map_do_configure();
+int wps_map_eap_init();
+void wps_map_eap_dinit();
+int wps_map_escan_handler();
+#endif	/* MULTIAP */
+#ifdef BCMWPSAPSTA
+void wps_init_escan_bss_results(char *ifname, int idx);
+#endif // endif
+void wps_custom_init();
+void wps_custom_deinit();
 #endif /* __WPS_H__ */

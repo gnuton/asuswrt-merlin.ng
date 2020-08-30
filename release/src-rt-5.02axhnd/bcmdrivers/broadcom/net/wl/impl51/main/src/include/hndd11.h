@@ -1,7 +1,7 @@
 /*
  * Generic functions for d11 access
  *
- * Copyright (C) 2018, Broadcom. All Rights Reserved.
+ * Copyright (C) 2019, Broadcom. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: hndd11.h 765198 2018-06-22 11:27:24Z $
+ * $Id: hndd11.h 775299 2019-05-27 10:08:55Z $
  */
 
 #ifndef	_hndd11_h_
@@ -81,7 +81,10 @@ BWL_PRE_PACKED_STRUCT struct sts_buff {
 		/* 8-byte padding to align-size to 8x */
 		uint8	pad0[8];
 		struct {
-			uint16	dma_idx;
+			union {
+				uint16	dma_idx;
+				int16	bmebuf_idx;
+			};
 			uint16	ref_cnt;
 			void	*link;
 		};
@@ -89,9 +92,12 @@ BWL_PRE_PACKED_STRUCT struct sts_buff {
 		uint8	pad_0[32];
 		struct {
 			uint8	pad_1[20];
-			uint16	dma_idx;
-			uint16 	ref_cnt;
-			void 	*link;
+			union {
+				uint16	dma_idx;
+				int16	bmebuf_idx;
+			};
+			uint16	ref_cnt;
+			void	*link;
 		};
 #endif /* DONGLEBUILD */
 	};
@@ -106,27 +112,25 @@ struct sts_buff_pool {
 	int n_items;          /**< number of sts_buff in pool */
 	int n_fail;           /**< number of times a STS_ALLOC() returned NULL */
 	int high_watermark;   /**< max number of sts_buff items in pool at any time */
+	void *ctx;         /**< control/config block */
+		              /**< circular buffer release callback function */
+	void (*free_sts_fn)(void *ctx, int16 bufidx);
 };
 
-/* Structure to hold d11 corerev information */
-typedef struct d11_info d11_info_t;
-struct d11_info {
-    uint revid;
-};
-
-#define STSBUF_MP_N_OBJ	                256
 #define STSBUF_RECV_OFFSET	        8
-
 #define	STSBUF_DATA(sts)		(((sts))->phystshdr)
 #define	STSBUF_LEN(sts)			(((sts))->phystshdr->len)
-#define	STSBUF_SEQ(sts)		        (((sts))->phystshdr->seq)
+#define	STSBUF_SEQ(sts)		    (((((sts))->phystshdr->seq & 0xf000) >> 4) |\
+								(((sts))->phystshdr->seq & 0xff))
 #define	STSBUF_LINK(sts)		(((sts))->link)
 #define	STSBUF_SETLINK(sts, x)		(((sts))->link = (x))
 #define	STSBUF_DMAIDX(sts)		(((sts))->dma_idx)
 #define	STSBUF_SETDMAIDX(sts, x)	(((sts))->dma_idx = (x))
+#define	STSBUF_BMEBUFIDX(sts)		(((sts))->bmebuf_idx)
 
 #define STSBUF_ALLOC(sts_mempool)		stsbuf_alloc((sts_mempool))
 #define STSBUF_FREE(sts_buff, sts_mempool)	stsbuf_free((sts_buff), (sts_mempool))
+#define STSBUF_BME_INVALID_IDX			(-1)	/* valid index start from 0 */
 
 /** @ret  a statusbuffer taken from a stack of free status buffers */
 static INLINE sts_buff_t *
@@ -149,16 +153,24 @@ stsbuf_alloc(struct sts_buff_pool *sts_pool)
 static INLINE void
 stsbuf_free(sts_buff_t *sts_buff, struct sts_buff_pool *sts_pool)
 {
-	struct sts_buff *sts_last = sts_buff; /* last sts in caller provided list */
+	struct sts_buff *sts_last, *sts_curr ; /* last sts in caller provided list */
 
 	ASSERT(sts_buff != NULL);
+	sts_curr = sts_last = sts_buff;
 
-	while (STSBUF_LINK(sts_last) != NULL) {
-		sts_last = STSBUF_LINK(sts_last);
+	while (sts_curr) {
+		/* Need to call free function if this it is set (used by WLC_OFFLOADS_RXSTS) */
+		if (sts_pool->free_sts_fn != NULL &&
+		    STSBUF_BMEBUFIDX(sts_curr) != STSBUF_BME_INVALID_IDX) {
+			sts_pool->free_sts_fn(sts_pool->ctx, STSBUF_BMEBUFIDX(sts_curr));
+			STSBUF_BMEBUFIDX(sts_curr) = STSBUF_BME_INVALID_IDX;
+		}
 		sts_pool->n_items++;
+
+		sts_last = sts_curr;
+		sts_curr = STSBUF_LINK(sts_curr);
 	}
 
-	sts_pool->n_items++;
 	sts_pool->high_watermark = MAX(sts_pool->high_watermark, sts_pool->n_items);
 
 	STSBUF_SETLINK(sts_last, sts_pool->top);
@@ -192,7 +204,7 @@ extern int hndd11_get_reginfo(si_t *sih, d11regs_info_t *regsinfo, uint coreunit
 /*
  * Generic functions for d11 access
  *
- * Copyright (C) 2018, Broadcom. All Rights Reserved.
+ * Copyright (C) 2019, Broadcom. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -206,5 +218,5 @@ extern int hndd11_get_reginfo(si_t *sih, d11regs_info_t *regsinfo, uint coreunit
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndd11.h 765198 2018-06-22 11:27:24Z $
+ * $Id: hndd11.h 775299 2019-05-27 10:08:55Z $
  */
