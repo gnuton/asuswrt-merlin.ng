@@ -82,7 +82,6 @@ CmsRet qdmWifi_getNumberOfCardLocked_dev2(int *count);
 UINT32 qdmWifi_getRadioIndexBySsidFullPathLocked_dev2(const char *ssidFullPath);
 CmsRet qdmWifi_getIntfNameBySsidFullPathLocked_dev2(const char *ssidFullPath, char *ifname);
 UBOOL8 qdmWifi_isDpstaIntf_dev2(const char *ifName);
-
 #endif /* _QDM_WIFI_H_ */
 
 
