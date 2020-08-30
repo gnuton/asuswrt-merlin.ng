@@ -1,7 +1,7 @@
 /*
  * HWA library exported routines.
  *
- * Copyright (C) 2019, Broadcom. All Rights Reserved.
+ * Copyright (C) 2020, Broadcom. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,6 +48,7 @@
 #define HWA_REVISION_GE_129     (HWA_REVISION_ID >= 129)
 
 // BCM43684 C0
+#define HWA_REVISION_LE_130     (HWA_REVISION_ID <= 130)
 #define HWA_REVISION_EQ_130     (HWA_REVISION_ID == 130)
 #define HWA_REVISION_GE_130     (HWA_REVISION_ID >= 130)
 
@@ -80,11 +81,9 @@ void    hwa_caps(struct hwa_dev *dev, struct bcmstrbuf *b);
 // Fixed length of Rx buffers posted
 uint16  hwa_rxpost_data_buf_len(void);
 
-#if !defined(HWA_RXPOST_ONLY_BUILD)
 // When HWA1a and HWA1b are built, SW can allocate an RPH from HWA1a
 hwa_rxpost_hostinfo_t *hwa_rph_allocate(uint32 *bufid, uint16 *len,
 	dma64addr_t *haddr64, bool pre_req);
-#endif /* !HWA_RXPOST_ONLY_BUILD */
 
 #endif /* HWA_RXPOST_BUILD */
 
@@ -200,7 +199,7 @@ void    hwa_txfifo_dump_fifoctx(struct hwa_dev *dev, struct bcmstrbuf *b, uint32
 #if defined(HWA_TXSTAT_BUILD)
 
 // HWA4a TxStatus block reclaim
-void    hwa_txstat_reclaim(struct hwa_dev *dev, uint32 core);
+void    hwa_txstat_reclaim(struct hwa_dev *dev, uint32 core, bool reinit);
 
 #endif /* HWA_TXSTAT_BUILD */
 
