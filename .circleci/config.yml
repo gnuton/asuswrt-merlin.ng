@@ -44,8 +44,9 @@ jobs:
             # For brcm-arm-sdk/ Broadcom SDK6/SDK7 ARM platform (RT-AC56 upto RT-AC5300)
             if [ "$SDK_PLATFORM" == "sdk" ]; then
               echo "Setting up brcm-arm-sdk toolchains"
-              rm ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
-              ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
+              # FIXME - 
+              #rm ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
+              #ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
             fi
             # For brcm-arm-hnd/ Broadcom HND ARM platform (RT-AC86U)
             if [ "$SDK_PLATFORM" == "hnd" ]; then
