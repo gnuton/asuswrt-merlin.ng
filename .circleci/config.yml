@@ -1,0 +1,201 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: gnuton/asuswrt-merlin-toolchains-docker
+        environment:
+          MAKEFLAGS: "-j 1"
+          PROJECT_DIR: "/root/project"
+          CHANGELOG_FILE: "/tmp/CHANGELOG"
+          MODEL: "rt-ac68u"
+          SDK_PLATFORM: "sdk"
+          RELEASE_DIR: "src-rt-6.x.4708"
+    steps:
+      - checkout
+      - run:
+          name: Set Version from TAG 
+          shell: /bin/bash
+          command: |
+            if [ -z "${CIRCLE_TAG}" ]; then
+              echo "Nothing to do. Not a release."
+            else
+              MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
+              MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
+              sed -i "s/SERIALNO=.*/SERIALNO=${MAJOR_VER}/g" release/src-rt/version.conf
+              sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
+            fi
+      - run:
+          name: Generate changelog (only for tags)
+          command: |
+            REGXP_TO_MATCH=.*gnuton.*
+            if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
+              CURRENT_TAG=${CIRCLE_TAG}
+              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha|${CIRCLE_TAG}" | grep ${REGXP_TO_MATCH} | head -n 1)
+              echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
+              echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
+              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|ci:|Bump' >> "${CHANGELOG_FILE}" || echo "WARNING: The Changelog is empty!!"
+              cat "${CHANGELOG_FILE}"
+            else
+              echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
+            fi;
+      - run:
+          name: Setup toolchain
+          command: |
+            # For brcm-arm-sdk/ Broadcom SDK6/SDK7 ARM platform (RT-AC56 upto RT-AC5300)
+            if [ "$SDK_PLATFORM" == "sdk" ]; then
+              echo "Setting up brcm-arm-sdk toolchains"
+              rm ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
+              ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
+            fi
+            # For brcm-arm-hnd/ Broadcom HND ARM platform (RT-AC86U)
+            if [ "$SDK_PLATFORM" == "hnd" ]; then
+              echo "Setting up brcm-arm-hnd toolchains"
+              ln -s ~/am-toolchains/brcm-arm-hnd /opt/toolchains
+              echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
+              echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/lib" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin" >> ~/.profile
+            fi
+            # For  brcm-arm-hnd/ Broadcom HND ARM platform 802.11ax models (eg HND AX ARM (RT-AX88U))
+            if [ "$SDK_PLATFORM" == "hnd-ax" ]; then
+              echo "Setting up brcm-arm-hnd-ax toolchains"
+              ln -s ~/am-toolchains/brcm-arm-hnd /opt/toolchains
+              echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
+              echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/lib" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin" >> ~/.profile
+              echo "PATH=\$PATH:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin" >> ~/.profile
+            fi
+      - run:
+          name: Build firmware
+          shell: /bin/bash
+          no_output_timeout: 120m
+          command: |
+            export MERLINUPDATE=y
+            cd ${PROJECT_DIR}/release/${RELEASE_DIR}
+            ls
+            pwd
+            make clean || echo "maybe already clean, so if it fails please continue"
+            make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
+            ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
+      - run:
+          name: Remove image without firmware
+          command: |
+            cd ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
+            rm $(ls DSL-* | grep -v ".*DSL.*DSL.*") -f
+            ls
+      - run:
+          name: Prepare workspace
+          command: |
+            mkdir -p workspace/release
+            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release
+            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release || :
+            cp /tmp/build.log workspace/release
+             if [ -z "${CIRCLE_TAG}" ]; then
+              echo "No CHANGELOG to copy. Not a release build."
+            else
+              cp "${CHANGELOG_FILE}" workspace/release
+            fi
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - release
+  publish-manifest-and-notes:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - attach_workspace:
+          at: workspace
+      - add_ssh_keys:
+          fingerprints:
+            - "92:8c:58:f4:aa:44:98:aa:2f:ac:bc:8b:a5:de:f5:c2"
+      - run:
+          name: "Publish manifest and release note for the current build"
+          command: |
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            git config --global user.email "bot@gnuton.org"
+            git config --global user.name "Circle CI BOT"
+            git config --global push.default simple
+            git clone -b master --single-branch git@github.com:gnuton/asuswrt-merlin.ng.git
+            cd asuswrt-merlin.ng
+            UPDATE_DIR=updates
+            MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
+            MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
+            RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
+            echo "Generating manifest file..."
+            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" > ${UPDATE_DIR}/manifest.txt
+            cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
+            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
+            git add ${UPDATE_DIR}
+            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [ci skip]" -a
+            git push origin
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - attach_workspace:
+          at: workspace
+      - run: ls workspace/release
+      - run:
+          name: "Publish Release on Github"
+          command: |
+            echo "Uploading release..."
+            RELEASE_TITLE="Stable: ${CIRCLE_TAG}"
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" ${CIRCLE_TAG} workspace/release/
+  publish-github-ci-pre-release:
+    docker:
+      - image: cibuilds/github:latest
+    steps:
+      - attach_workspace:
+          at: workspace
+      - run: ls workspace/release
+      - run:
+          name: "Publish CI pre-release on Github"
+          command: |
+            echo "Uploading CI pre-release..."
+            RELEASE_TITLE="Unstable: ${CIRCLE_TAG}"
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
+ 
+workflows:
+  version: 2
+  build_and_release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+               - master
+               - mainline
+      - publish-manifest-and-notes:
+          filters:
+            tags:
+              only: /[0-9]+.*gnuton[0-9]+/
+            branches:
+              ignore: /.*/
+          requires:
+            - build
+      - publish-github-release:
+          filters:
+            tags:
+              only: /[0-9]+.*gnuton[0-9]+/
+            branches:
+              ignore: /.*/
+          requires:
+            - build
+            - publish-manifest-and-notes
+      - publish-github-ci-pre-release:
+          filters:
+            tags:
+              only: 
+               - /gnuton-snapshot-.*/
+               - /[0-9]+.*gnuton[0-9]+_beta[0-9]+/
+               - /[0-9]+.*gnuton[0-9]+_alpha[0-9]+/
+            branches:
+              ignore: /.*/
+          requires:
+            - build
+notify:
+  webhooks:
+    - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
+
