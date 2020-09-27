@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: gnuton/asuswrt-merlin-toolchains-docker
+      - image: gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04
         environment:
           MAKEFLAGS: "-j 1"
           PROJECT_DIR: "/root/project"
