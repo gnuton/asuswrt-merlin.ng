@@ -61,6 +61,7 @@ jobs:
             cd ${PROJECT_DIR}/release/${RELEASE_DIR}
             ls
             pwd
+            env
             source  ~/.profile
             make clean || echo "maybe already clean, so if it fails please continue"
             make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
