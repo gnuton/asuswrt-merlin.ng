@@ -4,7 +4,6 @@ jobs:
     docker:
       - image: gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04
         environment:
-          MAKEFLAGS: "-j 1"
           PROJECT_DIR: "/root/project"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
           MODEL: "rt-ac68u"
