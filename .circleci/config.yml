@@ -57,7 +57,7 @@ jobs:
             source  ~/.profile
       - run:
           name: Build firmware
-          shell: /bin/dash
+          shell: /bin/bash
           no_output_timeout: 120m
           command: |
             export MERLINUPDATE=y
