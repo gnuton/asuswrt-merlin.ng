@@ -29,6 +29,9 @@
 #ifndef _d11_cfg_h_
 #define _d11_cfg_h_
 #include <wlconf.h>
+#ifdef BCMPCIEDEV_ENABLED
+#include <bcmpcie.h>
+#endif // endif
 
 #define	RXMODE1	1	/* descriptor split */
 #define	RXMODE2	2	/* descriptor split + classification */
@@ -72,45 +75,54 @@
 
 #define HW_HDR_CONV_PAD 2
 
-#ifdef WLCFP
 /**
  *  CFP opens up a direct path between wl and bus layers.
  *  It skips regular dongle/rte layers.
  *  Inorder to achieve that below macros and functions
  *  are externed to be accessible by both layers
  */
-#define CFP_ALL_FLOWS                   (-1)
+#define SCB_ALL_FLOWS                   (-1)
 /**
- * Max CFP Flows = 1 per STA + SCB INTERNAL[1 BCMC per bsscfg + 1 HWRS + 1 OLPC]
- * Since flowid=0 is reserved, we add 1 more to CFP_FLOWS_MAX
+ * Max SCB Flows = 1 per STA + SCB INTERNAL[1 BCMC per bsscfg + 1 HWRS + 1 OLPC]
+ * Since flowid=0 is reserved, we add 1 more to SCB_MAX_FLOWS
  *
- * See wl_pktfwd.h where CFP flowids in the [0 .. MAXSCB) range are used. A
- * CFP flowid of N is essentially a pktlist::dest value of N-1, with a dest=0
+ * See wl_pktfwd.h where SCB flowids in the [0 .. MAXSCB) range are used. A
+ * SCB flowid of N is essentially a pktlist::dest value of N-1, with a dest=0
  * being a valid value.
  *
  * Following are used in wlc_cfp.c, to carve out two flowid allocators service
- * CFP flowids in the ranges [1 .. MAXSCB] and [MAXSCB+1 .. CFP_FLOWS_MAX-1]
+ * SCB flowids in the ranges [1 .. MAXSCB] and [MAXSCB+1 .. SCB_MAX_FLOWS -1]
  */
-#define CFP_FLOWID_RSVD_TOTAL           (1)
-#define CFP_FLOWID_SCB_TOTAL            (MAXSCB)
+#define SCB_FLOWID_RSVD_TOTAL 		(1)
+#define SCB_USER_FLOWID_TOTAL		(MAXSCB)
+#define	CFP_FLOWID_SCB_TOTAL		SCB_USER_FLOWID_TOTAL /* dupliate till we fix wl_pktfd.c */
 /* 4 internal SCBs for primary BSS, 1 SCB for each virtual BSS */
-#define CFP_FLOWID_INT_TOTAL            (WLC_MAXBSSCFG + 3)
+#define SCB_INT_FLOWID_TOTAL		(WLC_MAXBSSCFG + 3)
 
-#define CFP_FLOWID_SCB_STARTID          (1)
-#define CFP_FLOWID_INT_STARTID          (MAXSCB + 1)
+#define SCB_USER_FLOWID_STARTID		(1)
+#define SCB_INT_FLOWID_STARTID		(MAXSCB + 1)
 
-#define CFP_FLOWS_MAX \
-	(CFP_FLOWID_RSVD_TOTAL + CFP_FLOWID_SCB_TOTAL + CFP_FLOWID_INT_TOTAL)
+#define SCB_MAX_FLOWS \
+	(SCB_FLOWID_RSVD_TOTAL + SCB_USER_FLOWID_TOTAL + SCB_INT_FLOWID_TOTAL)
 
-#define CFP_FLOWID_INVALID              (CFP_FLOWS_MAX)
-#define CFP_FLOWID_RESERVED             (0)
-#define CFP_FLOWID_VALID(id)            (((uint16)(id) != CFP_FLOWID_INVALID) && \
-					((uint16)(id) != CFP_FLOWID_RESERVED) && \
-					((uint16)(id) < CFP_FLOWS_MAX))
+#define SCB_FLOWID_INVALID		(SCB_MAX_FLOWS)
+#define SCB_FLOWID_RESERVED		(0)
+#define SCB_FLOWID_VALID(id)		(((uint16)(id) != SCB_FLOWID_INVALID) && \
+					((uint16)(id) != SCB_FLOWID_RESERVED) && \
+					((uint16)(id) < SCB_MAX_FLOWS))
 /** Debug Asserts */
-#define ASSERT_CFP_FLOWID(id)           ASSERT(CFP_FLOWID_VALID(id))
-#define ASSERT_CFP_PRIO(prio)           ASSERT(prio < NUMPRIO)
+#define ASSERT_SCB_FLOWID(id)		ASSERT(SCB_FLOWID_VALID(id))
+#define ASSERT_SCB_PRIO(prio)		ASSERT(prio < NUMPRIO)
 
+/* Host FLow ringid max values */
+#ifdef BCMPCIEDEV_ENABLED
+#define SCB_HOST_RINGID_MAX		(BCMPCIE_MAX_TX_FLOWS + BCMPCIE_H2D_COMMON_MSGRINGS)
+#define SCB_HOST_RINGID_INVALID		SCB_HOST_RINGID_MAX
+#define SCB_HOST_RINGID_VALID(id)	((uint16)(id) < SCB_HOST_RINGID_MAX)
+#define ASSERT_SCB_HOST_RINGID(id)	ASSERT(SCB_HOST_RINGID_VALID(id))
+#endif /* BCMPCIEDEV_ENABLED */
+
+#ifdef WLCFP
 /** Fetch wireless tx packet exptime. */
 /** Check if CFP enabled for given ID. Fetch wireless tx packet exptime. */
 #if defined(DONGLEBUILD)
@@ -150,12 +162,8 @@ extern bool wlc_sqs_scb_data_open(uint16 cfp_flowid);
 extern bool wlc_sqs_capable(uint16 cfp_flowid, uint8 prio);
 extern uint16 wlc_sqs_vpkts(uint16 sqs_flowid, uint8 prio);
 extern uint16 wlc_sqs_v2r_pkts(uint16 cfp_flowid, uint8 prio);
-extern uint16 wlc_sqs_n_pkts(uint16 cfp_flowid, uint8 prio);
-extern uint16 wlc_sqs_tbr_pkts(uint16 cfp_flowid, uint8 prio);
-extern uint16 wlc_sqs_in_transit_pkts(uint16 cfp_flowid, uint8 prio);
 extern void wlc_sqs_v2r_enqueue(uint16 cfp_flowid, uint8 prio, uint16 pkt_count);
 extern void wlc_sqs_v2r_dequeue(uint16 cfp_flowid, uint8 prio, uint16 pkt_count, bool sqs_force);
-extern void wlc_sqs_v2r_revert(uint16 cfp_flowid, uint8 prio, uint16 v2r_reverts);
 extern void wlc_sqs_vpkts_enqueue(uint16 cfp_flowid, uint8 prio, uint16 v_pkts);
 extern void wlc_sqs_vpkts_rewind(uint16 cfp_flowid, uint8 prio, uint16 count);
 extern void wlc_sqs_vpkts_forward(uint16 cfp_flowid, uint8 prio, uint16 count);
