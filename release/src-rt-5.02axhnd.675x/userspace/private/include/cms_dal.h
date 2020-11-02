@@ -62,6 +62,10 @@
 #include "cms_msg.h"  /* for NetworkAccessMode enum */
 #include "beep_networking.h"  /* for IntfGrpBridgeMode enum */
 
+#ifdef BRCM_WLAN
+#include "wl_common_defs.h"
+#endif /* BRCM_WLAN */
+
 /** Board data buf len (legacy) ?
  */
 #define WEB_MD_BUF_SIZE_MAX   264
@@ -71,6 +75,13 @@
 
 /** PortMapping Interface list size */
 #define PMAP_INTF_LIST_SIZE 724
+
+/* Maximum number of WLAN interfaces */
+#ifdef WL_MAX_NUM_RADIO
+#define WLAN_MAX_NUM_WLIF      WL_MAX_NUM_RADIO
+#else
+#define WLAN_MAX_NUM_WLIF      4
+#endif
 
 /** Legacy structure used by httpd and cli to hold a bunch of variables.
  */
@@ -133,6 +144,8 @@ typedef struct {
    SINT32  pppShowAuthErrorRetry;
    SINT32  pppAuthErrorRetry;
    SINT32  enblPppDebug;
+   SINT32  enblPppDemand;
+   SINT32  pppIdleTimeLimit;
    SINT32  pppToBridge;  /**< ppp to bridge */
 
    SINT32  logStatus;   /**< Enabled or disabled */
@@ -425,6 +438,8 @@ typedef struct {
    UBOOL8 pmEthAutoPwrDwnEn;    /* Ethernet Auto Power Down */
    UBOOL8 pmEthEEE; /* Energy Efficient Ethernet Enable */
    UBOOL8 pmAvsEn;               /* Adaptive Voltage Scaling */
+   UINT32 pmWlIfNum;                  /* Number of WLAN Interfaces for pm */
+   UBOOL8 pmWlDpd[WLAN_MAX_NUM_WLIF]; /* WLAN deep power down per interface */
 #endif /* aka SUPPORT_PWRMNGT */
 #ifdef SUPPORT_BMU
    char bmuVersion[BUFLEN_64];

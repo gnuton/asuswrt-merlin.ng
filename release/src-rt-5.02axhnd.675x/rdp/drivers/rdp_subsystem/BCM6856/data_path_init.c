@@ -1212,10 +1212,14 @@ static int runner_init(int is_basic)
 
     /* scheduler configuration */
     drv_rnr_set_sch_cfg();
-    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(cpu_tx_runner_image), DRV_RNR_4SP_12RR);
-    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(us_tm_runner_image), DRV_RNR_16SP);    
     ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(ds_tm_runner_image), DRV_RNR_4SP_12RR);
-    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(processing4_runner_image), DRV_RNR_8SP_8RR);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(image_1_runner_image), DRV_RNR_8SP_8RR);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(image_2_runner_image), DRV_RNR_8SP_8RR);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(us_tm_runner_image), DRV_RNR_16SP);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(image_4_runner_image), DRV_RNR_8SP_8RR);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(image_5_runner_image), DRV_RNR_8SP_8RR);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(image_6_runner_image), DRV_RNR_8SP_8RR);
+    ag_drv_rnr_regs_cfg_sch_cfg_set(get_runner_idx(image_7_runner_image), DRV_RNR_8SP_8RR);
 
     fpm_base_phys_addr = p_dpi_cfg->rdp_ddr_pkt_base_phys;
     GET_ADDR_HIGH_LOW(addr_hi, addr_lo, fpm_base_phys_addr);
@@ -1273,7 +1277,6 @@ static int runner_init(int is_basic)
     rdd_init_params.dhd_hw_config.ddr_sop_offset = ((ddr_sop_offset0 + DHD_DATA_OFFSET + 7) >> 3) << 3;
 #endif
 
-    rdd_init_params.fw_clang_dis = p_dpi_cfg->fw_clang_dis;
     rdd_init_params.is_gateway = p_dpi_cfg->is_gateway;
     rc = rdd_data_structures_init(&rdd_init_params, &iptv_hw_config);
 
@@ -1501,18 +1504,11 @@ static int dispatcher_reorder_init(void)
     /* VIQ for COMMON_REPROCESSING - 26, currently in use for TCP/UDP Speed test only */
 #if defined(CONFIG_BCM_TCPSPDTEST_SUPPORT) || defined(CONFIG_BCM_UDPSPDTEST_SUPPORT)
 
-#ifdef CONFIG_BCM_SPDT_FC_SUPPORT
     /* VIQ destination is dispatcher */
     dispatcher_reorder_viq_init(&cfg, &ingress_congs_init, &egress_congs_init, get_runner_idx(tcpspdtest_engine_runner_image),
 	    (IMAGE_1_COMMON_REPROCESSING_DISPATCHER_CREDIT_TABLE_ADDRESS >> 3 | IMAGE_1_IMAGE_1_COMMON_REPROCESSING_THREAD_NUMBER << 12),
 		dsptchr_viq_dest_disp, dsptchr_viq_delayed, DISP_REOR_VIQ_COMMON_REPROCESSING, DSPTCHR_GUARANTEED_MAX_LIMIT_PER_NORMAL_VIQ,
 		DSPTCHR_COMMON_MAX_LIMIT_PER_VIQ, 0);
-#else
-    dispatcher_reorder_viq_init(&cfg, &ingress_congs_init, &egress_congs_init, get_runner_idx(tcpspdtest_engine_runner_image),
-	    (IMAGE_1_COMMON_REPROCESSING_DISPATCHER_CREDIT_TABLE_ADDRESS >> 3 | IMAGE_1_IMAGE_1_COMMON_REPROCESSING_THREAD_NUMBER << 12),
-		dsptchr_viq_dest_reor, dsptchr_viq_delayed, DISP_REOR_VIQ_COMMON_REPROCESSING, DSPTCHR_GUARANTEED_MAX_LIMIT_PER_NORMAL_VIQ,
-		DSPTCHR_COMMON_MAX_LIMIT_PER_VIQ, 0);
-#endif
 
 #endif
 
@@ -1545,9 +1541,7 @@ static int dispatcher_reorder_init(void)
         (1 << DISP_REOR_VIQ_CPU_TX_FORWARD) | (1 << DISP_REOR_VIQ_WAN_LOOPBACK);;
 
 #if defined(CONFIG_BCM_TCPSPDTEST_SUPPORT) || defined(CONFIG_BCM_UDPSPDTEST_SUPPORT)
-#ifdef CONFIG_BCM_SPDT_FC_SUPPORT
     cfg.dsptchr_rnr_group_list[0].queues_mask |= (1 << DISP_REOR_VIQ_COMMON_REPROCESSING); 
-#endif
 #endif
 
 #ifdef CONFIG_DHD_RUNNER
@@ -1586,6 +1580,7 @@ static int dispatcher_reorder_init(void)
     rc = rc ? rc : drv_dis_reor_tasks_to_rg_init();
     rc = rc ? rc : drv_dis_reor_free_linked_list_init();
     rc = rc ? rc : drv_dis_reor_cfg(&cfg);
+    rc = rc ? rc : ag_drv_dsptchr_load_balancing_lb_cfg_set(1, 2); /*set strict task priority mode in dispatcher*/
     return rc;
 }
 
@@ -2055,12 +2050,12 @@ static int qm_init(void)
     rc = rc ? rc : ag_drv_qm_rnr_group_cfg_set(qm_rnr_group_3, &rnr_group_cfg);
 
     /* cpu - group 6 (cpu_rx_copy fifo task) */
-    rnr_group_cfg.start_queue = QM_QUEUE_CPU_RX_COPY_EXCLUSIVE; /* 2 queues for CPU RX COPY*/
-    rnr_group_cfg.end_queue = QM_QUEUE_CPU_RX_COPY_NORMAL; 
+    rnr_group_cfg.start_queue = QM_QUEUE_CPU_RX_COPY_NORMAL; /* 2 queues for CPU RX COPY*/
+    rnr_group_cfg.end_queue = QM_QUEUE_CPU_RX_COPY_EXCLUSIVE; 
     rnr_group_cfg.pd_fifo_base = (IMAGE_1_CPU_RX_COPY_PD_FIFO_TABLE_ADDRESS >> 3);
     rnr_group_cfg.rnr_task = IMAGE_1_IMAGE_1_CPU_RX_COPY_THREAD_NUMBER;
     rnr_group_cfg.upd_fifo_base = (IMAGE_1_CPU_RX_COPY_UPDATE_FIFO_TABLE_ADDRESS >> 3);
-    rnr_group_cfg.pd_fifo_size = qm_pd_fifo_size_2;
+    rnr_group_cfg.pd_fifo_size = qm_pd_fifo_size_4;
     rnr_group_cfg.upd_fifo_size = qm_update_fifo_size_8;
     rnr_group_cfg.rnr_bb_id = get_runner_idx(cpu_rx_runner_image);
     rnr_group_cfg.rnr_enable = 1;

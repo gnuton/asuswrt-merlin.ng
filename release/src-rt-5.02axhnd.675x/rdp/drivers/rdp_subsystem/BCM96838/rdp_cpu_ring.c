@@ -1231,7 +1231,13 @@ int rdp_cpu_fill_feed_ring(int budget)
     int rc = 0;
     int i;
 
+#ifndef RDP_SIM  
+    bdmf_fastlock_lock(&feed_ring_lock);
+#endif
     rdp_cpu_get_read_idx(FEED_RING_ID, rdpa_ring_feed, &feed_ring_descr->shadow_read_idx);
+#ifndef RDP_SIM  
+    bdmf_fastlock_unlock(&feed_ring_lock);
+#endif
 
     for (i = 0; i < budget; i++)
     {

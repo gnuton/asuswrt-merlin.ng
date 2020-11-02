@@ -61,6 +61,9 @@ void gponCtl_stopAdminStateTrace(BCM_Ploam_StopInfo *info);
 void gponCtl_getControlStatesTrace(BCM_Ploam_StateInfo *info);
 void gponCtl_setTO1TO2Trace(BCM_Ploam_TO1TO2Info *info);
 void gponCtl_getTO1TO2Trace(BCM_Ploam_TO1TO2Info *info);
+void gponCtl_setDWELL_TIMERTrace(BCM_Ploam_DWELL_TIMERInfo *info);
+void gponCtl_getDWELL_TIMERTrace(BCM_Ploam_DWELL_TIMERInfo *info);
+void gponCtl_getRebootFlagsTrace(BCM_Ploam_RebootFlagsInfo *info);
 void gponCtl_setTO6Trace(BCM_Ploam_TO6Info *info);
 void gponCtl_getTO6Trace(BCM_Ploam_TO6Info *info);
 

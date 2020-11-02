@@ -110,6 +110,9 @@ typedef enum
    BCM_PLOAM_IOC_GET_DRIVER_VERSION           ,  /*Return codes: 0*/
    BCM_PLOAM_IOC_SET_TO1_TO2                  ,  /*Return codes: EINVAL_PLOAM_ARG*/
    BCM_PLOAM_IOC_GET_TO1_TO2                  ,  /*Return codes: 0*/
+   BCM_PLOAM_IOC_SET_DWELL_TIMER              ,  /*Return codes: EINVAL_PLOAM_ARG*/
+   BCM_PLOAM_IOC_GET_DWELL_TIMER              ,  /*Return codes: 0*/
+   BCM_PLOAM_IOC_GET_REBOOT_FLAGS             ,  /*Return codes: 0*/
    BCM_PLOAM_IOC_SET_TO6                      ,
    BCM_PLOAM_IOC_GET_TO6                      ,
    BCM_PLOAM_IOC_GET_TCONT_CFG                , 
@@ -138,6 +141,7 @@ typedef enum
 #define BCM_PLOAM_EVENT_GEM_STATE_CHANGE       (1<<5)
 #define BCM_PLOAM_EVENT_USER_TOD_RX_OVERFLOW   (1<<6)
 #define BCM_PLOAM_EVENT_ENCR_STATE_CHANGED     (1<<7)
+#define BCM_PLOAM_EVENT_REBOOT                 (1<<8)
 
 /*Type of ioctl argument pointer for commands BCM_PLOAM_IOC_GET_EVENT_STATUS*/
 typedef struct {
@@ -240,7 +244,8 @@ typedef enum {
   BCM_PLOAM_OSTATE_OPERATION_O5,
   BCM_PLOAM_OSTATE_POPUP_O6,
   BCM_PLOAM_OSTATE_EMERGENCY_STOP_O7,
-  BCM_PLOAM_OSTATE_DEACTIVATED_O8,
+  BCM_PLOAM_OSTATE_DS_TUNING_O8,
+  BCM_PLOAM_OSTATE_US_TUNING_O9,
   BCM_PLOAM_OSTATE_MAX,
 } BCM_Ploam_OperState;
 
@@ -347,6 +352,7 @@ typedef struct
     OUT UINT32 txReg;             /* Tx registration PLOAM counter */
     OUT UINT32 txAck;             /* Tx acknowledge PLOAM counter */
     OUT UINT32 txKeyRep;          /* Tx key report PLOAM counter */
+    OUT UINT32 txSleepRequest;    /* Tx sleep request PLOAM counter */
 
     OUT UINT32 successAct;        /* successful activations counter
                                      persistent - not cleared on reset
@@ -818,14 +824,28 @@ typedef struct {
 #define BCM_PLOAM_MAX_TO1_MS 10000000
 #define BCM_PLOAM_MAX_TO2_MS 10000000
 #define BCM_PLOAM_MAX_TO6_MS 10000000
+#define BCM_PLOAM_MAX_DWELL_TIMER_MS 10000000
 
 /*Type of ioctl argument pointer for command BCM_PLOAM_IOC_SET_TO1_TO2 and
  *BCM_PLOAM_IOC_GET_TO1_TO2*/
 typedef struct {
   INOUT UINT32 to1;
   INOUT UINT32 to2;
-
 } BCM_Ploam_TO1TO2Info;
+
+/*Type of ioctl argument pointer for command BCM_PLOAM_IOC_SET_DWELL_TIMER and
+ *BCM_PLOAM_IOC_GET_DWELL_TIMER*/
+typedef struct {
+  INOUT UINT32 dwell_timer;
+} BCM_Ploam_DWELL_TIMERInfo;
+
+/*Type of ioctl argument pointer for command BCM_PLOAM_IOC_GET_REBOOT_FLAGS */
+typedef struct {
+  OUT   UINT8  reboot_depth;
+  OUT   UINT8  reboot_image;
+  OUT   UINT8  onu_state;
+  OUT   UINT8  flags;
+} BCM_Ploam_RebootFlagsInfo;
 
 /*Type of ioctl argument pointer for command BCM_PLOAM_IOC_SET_TO6 and
  *BCM_PLOAM_IOC_GET_TO6*/
@@ -939,5 +959,45 @@ typedef struct
     IN UINT32   ilowpower_doze;
     IN UINT32   ilowpower_wsleep;
 } BCM_Ploam_PowerManagementParams;
+
+/******************************************************************************/
+/* This type carries the reboot PLOAM flags.  Used in rdpa too                */
+/******************************************************************************/
+typedef struct
+{
+    unsigned char reboot_depth;
+    unsigned char reboot_image;
+    unsigned char onu_state;
+    unsigned char flags;
+}
+PON_REBOOT_PLOAM_FLAGS;
+
+typedef enum {
+    reboot_ploam_reboot_depth_mib_reset = 0,
+    reboot_ploam_reboot_depth_omci_reboot,
+    reboot_ploam_reboot_depth_power_cycle,
+    reboot_ploam_reboot_restoredefaults,
+}
+REBOOT_PLOAM_REBOOT_DEPTH;
+
+typedef enum {
+    reboot_ploam_reboot_image_committed = 0,
+    reboot_ploam_reboot_image_uncommitted,
+}
+REBOOT_PLOAM_REBOOT_IMAGE;
+
+typedef enum {
+    reboot_ploam_onu_state_any = 0,
+    reboot_ploam_onu_state_o123,
+}
+REBOOT_PLOAM_ONU_STATE;
+
+/* flags encoding is the same as OmciRebootFlag */
+typedef enum {
+    reboot_ploam_flags_unconditional = 0,
+    reboot_ploam_flags_novc,
+    reboot_ploam_flags_noec,
+}
+REBOOT_PLOAM_FLAGS;
 
 #endif /*BCM_PLOAM_IOC_API_H*/

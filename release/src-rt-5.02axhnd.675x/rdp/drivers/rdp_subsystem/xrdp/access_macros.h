@@ -203,7 +203,13 @@ extern uint8_t *soc_base_address;
 #elif defined(RDP_SIM)
 #define MEMSET(a, v, sz)                memset(a, v, sz)
 #else
+
+#if defined(DUAL_ISSUE)
+#define MEMSET(a, v, sz) _xrdp__memset(a, v, sz)
+#else
 #define MEMSET(a, v, sz)                memset_io(a, v, sz)
+#endif
+
 #endif
 #endif // !defined(XRDP_EMULATION)
 
@@ -259,7 +265,7 @@ extern uint8_t *soc_base_address;
 #define WRITE_I_32(a, i, r) (*((volatile uint32_t *)DEVICE_ADDRESS(a) + (i)) = swap4bytes(*(uint32_t *)&(r)))
 
 #define do_div(x,y)             (x = x/y);
-#else
+#else /* defined(RDP_SIM) */
 
 #define VAL32(_a)       (*(volatile uint32_t *)(DEVICE_ADDRESS(_a)))
 #define READ_8(a, r)        (*(volatile uint8_t *)&(r) = *(volatile uint8_t *)DEVICE_ADDRESS(a))
@@ -362,13 +368,38 @@ extern uint8_t *soc_base_address;
 #define MREAD_I_32(a, i, r)     ((r) = MGET_I_32((a), (i)))
 
 #if defined(_CFE_) || defined(RDP_SIM)
+
 #define MREAD_BLK_8(d, s, sz) memcpy(d, s, sz)
 #define MREAD_BLK_16(d, s, sz) memcpy(d, s, sz)
 #define MREAD_BLK_32(d, s, sz) memcpy(d, s, sz)
+
 #else
-#define MREAD_BLK_8(d, s, sz) memcpy_fromio(d, s, sz)
-#define MREAD_BLK_16(d, s, sz) memcpy_fromio(d, s, sz)
-#define MREAD_BLK_32(d, s, sz) memcpy_fromio(d, s, sz)
+
+#if defined(DUAL_ISSUE)
+    #define MREAD_BLK_8(d, s, sz)  _xrdp__memcpy(d, s, sz)
+#else /* defined(DUAL_ISSUE) */
+    #define MREAD_BLK_8(d, s, sz)  memcpy_fromio(d, s, sz)
+#endif
+#define MREAD_BLK_16(d, s, sz) \
+    do { \
+        uint32_t i, val; \
+        for (i = 0; i < (sz/sizeof(uint16_t)); i++) \
+        { \
+            val = *((volatile uint16_t *)(s) + (i)); \
+            MREAD_I_16((uintptr_t)(d), i, val); \
+        } \
+    } while (0)
+
+#define MREAD_BLK_32(d, s, sz) \
+    do { \
+        uint32_t i, val; \
+        for (i = 0; i < (sz/sizeof(uint32_t)); i++) \
+        { \
+            val = *((volatile uint32_t *)(s) + (i)); \
+            MREAD_I_32((uintptr_t)(d), i, val); \
+        } \
+    } while (0)
+
 #endif
 #else /* XRDP_EMULATION */
 
@@ -490,10 +521,14 @@ extern read8_p read8;
 #if defined(_CFE_) || defined(RDP_SIM)
 #define MWRITE_BLK_8(d, s, sz) memcpy(d, s, sz)
 #else
+#if defined(DUAL_ISSUE)
+#define MWRITE_BLK_8(d, s, sz) _xrdp__memcpy(d, s, sz)
+#else
 #if defined(CONFIG_ARM64)
 #define MWRITE_BLK_8(d, s, sz) memcpy_toio(d, s, sz)
 #else
 #define MWRITE_BLK_8(d, s, sz) memcpy(d, s, sz)
+#endif
 #endif
 #endif
 #define MWRITE_BLK_16(d, s, sz) \
@@ -628,5 +663,12 @@ extern read8_p read8;
 #define GROUP_FIELD_MWRITE_8(group, addr, lsb, width, val) _rdd_field_write(group, (addr), val, lsb, width, rdd_size_8)
 #define GROUP_FIELD_MWRITE_16(group, addr, lsb, width, val) _rdd_field_write(group, (addr), val, lsb, width, rdd_size_16)
 #define GROUP_FIELD_MWRITE_32(group, addr, lsb, width, val) _rdd_field_write(group, (addr), val, lsb, width, rdd_size_32)
+
+#if !defined(_CFE_) && !defined(RDP_SIM) && defined(DUAL_ISSUE)
+
+volatile void *_xrdp__memcpy(volatile void *dst, const volatile void *src, size_t len) ;
+volatile void *_xrdp__memset(volatile void *dst, int val, size_t len);
+
+#endif /* !defined(_CFE_) && !defined(RDP_SIM) && defined(DUAL_ISSUE) */
 
 #endif /* __ACCESS_MACROS_H_INCLUDED */

@@ -569,7 +569,7 @@ int rdp_drv_dhd_cpu_tx(const rdpa_dhd_tx_post_info_t *info, void *buffer, uint32
     /* get skb pointer list free index */
     free_index = rdp_drv_dhd_skb_fifo_table[rdp_drv_dhd_skb_free_indexes_head_ptr].free_skb_index;
 
-    if (unlikely(free_index > RDD_CPU_TX_SKB_LIMIT_DEFAULT))
+    if (unlikely(free_index >= RDD_CPU_TX_SKB_LIMIT_DEFAULT))
     {
         bdmf_print("ERROR: RDD_cpu_tx  allocated SKB: idx=0x%x, head_ptr=0x%x\n", free_index,
               rdp_drv_dhd_skb_free_indexes_head_ptr);
@@ -665,7 +665,7 @@ int rdp_drv_dhd_helper_dhd_complete_message_get(rdpa_dhd_complete_data_t *dhd_co
         if (buf_type == DHD_TX_POST_HOST_BUFFER_VALUE)
         {
             /* It is a buffer from offloaded ring - release an index and pass the ptr to DHD */
-            index_to_free = request_id_buffer_type & RDD_CPU_TX_SKB_INDEX_MASK;                
+            index_to_free = request_id_buffer_type & (RDD_CPU_TX_SKB_LIMIT_DEFAULT - 1);
 
 #if (defined(CONFIG_BCM_SPDSVC) || defined(CONFIG_BCM_SPDSVC_MODULE))
             if (index_to_free == spdsvc_free_index)

@@ -76,6 +76,10 @@ else
     FULL_SOURCE_OBJS += mdm_initvoice.o
 endif
 
+ifneq ($(strip $(BCA_HND_EAP)),)
+	CFLAGS += -DBCA_HND_EAP
+endif
+
 CFLAGS += $(SSP_TYP_COMPILER_OPTS) $(SSP_TYP_LIBS)  $(SSP_LIB_INC)
 
 

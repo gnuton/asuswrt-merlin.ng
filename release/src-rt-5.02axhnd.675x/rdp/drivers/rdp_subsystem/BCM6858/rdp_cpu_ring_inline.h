@@ -371,6 +371,10 @@ static inline int ReadPacketFromRing(RING_DESCTIPTOR *ring_descr, CPU_RX_PARAMS 
     else if (!rx_desc.wan.is_src_lan)
         rx_params->flow_id = rx_desc.wan.wan_flow_id;
     rx_params->reason = (rdpa_cpu_reason)rx_desc.wan.reason;
+    if (unlikely(rx_params->reason == rdpa_cpu_rx_reason_omci))
+    {
+        rx_params->omci_enc_key_index = rx_desc.omci.enc_key_index;
+    }
 #ifdef CONFIG_CPU_REDIRECT_MODE_SUPPORT
     if (rx_params->reason == rdpa_cpu_rx_reason_cpu_redirect)
     {

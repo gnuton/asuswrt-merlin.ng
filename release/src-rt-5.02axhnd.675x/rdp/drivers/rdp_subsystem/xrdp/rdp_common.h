@@ -90,6 +90,7 @@ typedef enum  ddr_buf_size_e
 
 void lookup_bbh_tx_bufsz_by_fpm_bufsz(uint32_t *fpm_bufsize, uint8_t *bbh_tx_bufsize);
 void lookup_dma_bufsz_by_fpm_bufsz(uint32_t *fpm_bufsz, uint8_t* dma_bufsz);
+void rdpa_system_group_allocation_defaults_set(uint8_t us, uint8_t ds, uint8_t wlan);
 
 typedef struct
 {
@@ -146,6 +147,7 @@ typedef struct
     fpm_token_allocation_t us_fpm_tokens_allocation; /**< define the max number of fpm tokens assigned to US */
     fpm_token_allocation_t ds_fpm_tokens_allocation; /**< define the max number of fpm tokens assigned to DS */
     fpm_token_allocation_t wlan_fpm_tokens_allocation; /**< define the max number of fpm tokens assigned to WLAN */
+    bdmf_boolean fpm_token_allocation_user_mode; /**< use user mode UG*/
 #ifdef G9991
     rdpa_emac system_port;
     uint32_t g9991_port_vec;

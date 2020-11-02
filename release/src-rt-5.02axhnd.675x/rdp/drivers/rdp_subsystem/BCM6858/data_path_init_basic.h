@@ -38,6 +38,15 @@ extern "C" {
 #define XRDP
 #endif
 
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS  0x82d0002c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS1 0x82d0402c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS2 0x82d0802c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS3 0x82d0c02c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS4 0x82d1002c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS5 0x82d1402c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS6 0x82d1802c
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS7 0x82d1c02c
+
 /* includes */
 #include "bdmf_data_types.h"
 #include "rdp_common.h"
@@ -54,6 +63,7 @@ typedef enum
 /* functions */
 int data_path_init(dpi_params_t *dpi_params);
 int data_path_init_basic(dpi_params_t *dpi_params);
+void data_path_init_basic_update_fpm(dpi_params_t *dpi_params);
 
 #ifdef __cplusplus 
 }

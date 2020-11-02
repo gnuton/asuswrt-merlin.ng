@@ -1674,18 +1674,11 @@ static int dispatcher_reorder_init(void)
     /* VIQ for COMMON_REPROCESSING - 30, currently in use for TCP/UDP Speed test only */
 #if defined(CONFIG_BCM_TCPSPDTEST_SUPPORT) || defined(CONFIG_BCM_UDPSPDTEST_SUPPORT)
 
-#ifdef CONFIG_BCM_SPDT_FC_SUPPORT
     /* VIQ destination is dispatcher */
     dispatcher_reorder_viq_init(&cfg, &ingress_congs_init, &egress_congs_init, get_runner_idx(tcpspdtest_engine_runner_image),
 	    (IMAGE_1_COMMON_REPROCESSING_DISPATCHER_CREDIT_TABLE_ADDRESS >> 3 | IMAGE_1_CPU_IF_1_COMMON_REPROCESSING_THREAD_NUMBER << 12),
 		dsptchr_viq_dest_disp, dsptchr_viq_delayed, DISP_REOR_VIQ_COMMON_REPROCESSING, DSPTCHR_GUARANTEED_MAX_LIMIT_PER_NORMAL_VIQ,
 		DSPTCHR_COMMON_MAX_LIMIT_PER_VIQ, 0);
-#else
-    dispatcher_reorder_viq_init(&cfg, &ingress_congs_init, &egress_congs_init, get_runner_idx(tcpspdtest_engine_runner_image),
-	    (IMAGE_1_COMMON_REPROCESSING_DISPATCHER_CREDIT_TABLE_ADDRESS >> 3 | IMAGE_1_CPU_IF_1_COMMON_REPROCESSING_THREAD_NUMBER << 12),
-		dsptchr_viq_dest_reor, dsptchr_viq_delayed, DISP_REOR_VIQ_COMMON_REPROCESSING, DSPTCHR_GUARANTEED_MAX_LIMIT_PER_NORMAL_VIQ,
-		DSPTCHR_COMMON_MAX_LIMIT_PER_VIQ, 0);
-#endif
 
 #endif
 
@@ -1741,9 +1734,7 @@ static int dispatcher_reorder_init(void)
         (1 << DISP_REOR_VIQ_CPU_TX_FORWARD) | (1 << DISP_REOR_VIQ_WAN_LOOPBACK);
 
 #if defined(CONFIG_BCM_TCPSPDTEST_SUPPORT) || defined(CONFIG_BCM_UDPSPDTEST_SUPPORT)
-#ifdef CONFIG_BCM_SPDT_FC_SUPPORT
     cfg.dsptchr_rnr_group_list[0].queues_mask |= (1 << DISP_REOR_VIQ_COMMON_REPROCESSING); 
-#endif
 #endif
 
 #ifdef CONFIG_DHD_RUNNER
@@ -2356,24 +2347,24 @@ static int qm_init(void)
 
 #ifdef G9991
     /* cpu - group 8 (cpu_rx_copy fifo task) */
-    rnr_group_cfg.start_queue = QM_QUEUE_CPU_RX_COPY_EXCLUSIVE; /* 2 queues for CPU RX COPY*/
-    rnr_group_cfg.end_queue = QM_QUEUE_CPU_RX_COPY_NORMAL;
+    rnr_group_cfg.start_queue = QM_QUEUE_CPU_RX_COPY_NORMAL; /* 2 queues for CPU RX COPY*/
+    rnr_group_cfg.end_queue = QM_QUEUE_CPU_RX_COPY_EXCLUSIVE;
     rnr_group_cfg.pd_fifo_base = (IMAGE_2_CPU_RX_COPY_PD_FIFO_TABLE_ADDRESS >> 3);
     rnr_group_cfg.rnr_task = IMAGE_2_CPU_IF_2_CPU_RX_COPY_THREAD_NUMBER;
     rnr_group_cfg.upd_fifo_base = (IMAGE_2_CPU_RX_COPY_UPDATE_FIFO_TABLE_ADDRESS >> 3);
-    rnr_group_cfg.pd_fifo_size = qm_pd_fifo_size_2;
+    rnr_group_cfg.pd_fifo_size = qm_pd_fifo_size_4;
     rnr_group_cfg.upd_fifo_size = qm_update_fifo_size_8;
     rnr_group_cfg.rnr_bb_id = get_runner_idx(cpu_rx_runner_image);
     rnr_group_cfg.rnr_enable = 1;
     rc = rc ? rc : ag_drv_qm_rnr_group_cfg_set(qm_rnr_group_8, &rnr_group_cfg);
 #else
     /* cpu - group 8 (cpu_rx_copy fifo task) */
-    rnr_group_cfg.start_queue = QM_QUEUE_CPU_RX_COPY_EXCLUSIVE; /* 2 queues for CPU RX COPY*/
-    rnr_group_cfg.end_queue = QM_QUEUE_CPU_RX_COPY_NORMAL;
+    rnr_group_cfg.start_queue = QM_QUEUE_CPU_RX_COPY_NORMAL; /* 2 queues for CPU RX COPY*/
+    rnr_group_cfg.end_queue = QM_QUEUE_CPU_RX_COPY_EXCLUSIVE;
     rnr_group_cfg.pd_fifo_base = (IMAGE_1_CPU_RX_COPY_PD_FIFO_TABLE_ADDRESS >> 3);
     rnr_group_cfg.rnr_task = IMAGE_1_CPU_IF_1_CPU_RX_COPY_THREAD_NUMBER;
     rnr_group_cfg.upd_fifo_base = (IMAGE_1_CPU_RX_COPY_UPDATE_FIFO_TABLE_ADDRESS >> 3);
-    rnr_group_cfg.pd_fifo_size = qm_pd_fifo_size_2;
+    rnr_group_cfg.pd_fifo_size = qm_pd_fifo_size_4;
     rnr_group_cfg.upd_fifo_size = qm_update_fifo_size_8;
     rnr_group_cfg.rnr_bb_id = get_runner_idx(cpu_rx_runner_image);
     rnr_group_cfg.rnr_enable = 1;
@@ -2419,6 +2410,7 @@ static int qm_init(void)
     
     /* Cancel drop qm counters accumulation in HW */
     /* counters accumulation is done in SW */    
+    /* this setting is reverted when drop counter is used as high watermark QM queue counter */
     rc = rc ? rc : ag_drv_qm_drop_counters_ctrl_get(&drop_ctrl);
     drop_ctrl.read_clear_bytes = 1;
     drop_ctrl.read_clear_pkts = 1;

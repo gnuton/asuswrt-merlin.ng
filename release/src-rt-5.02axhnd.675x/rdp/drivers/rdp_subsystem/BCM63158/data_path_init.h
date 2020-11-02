@@ -71,6 +71,7 @@ extern "C" {
 /* default value for BBH-RX */
 #define SOP_OFFSET 18
 #define MIN_ETH_PKT_SIZE  64
+#define MIN_DSL_PKT_SIZE  4
 #define MIN_WAN_PKT_SIZE  16
 #define MIN_OMCI_PKT_SIZE 14
 #define MAX_OMCI_PKT_SIZE 1980

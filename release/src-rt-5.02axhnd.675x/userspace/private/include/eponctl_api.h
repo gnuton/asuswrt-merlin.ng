@@ -813,5 +813,15 @@ int eponStack_CtlHoldMacState(BOOL isHold);
 extern
 int eponStack_CtlTxTestPacket(EponTxTestPacketParam * txPara);
 
+////////////////////////////////////////////////////////////////////////////////
+/// \brief API to set/get epon fatal error auto reset configuration
+///
+/// \param id
+///  ope           Set or Get operator.
+///  enable       enable auto reset
+////////////////////////////////////////////////////////////////////////////////
+extern
+int eponStack_CtlCfgFatalErrRst(EponCtlOpe ope, Bool* enable);
+
 #endif /* _EPONCTL_API_H_ */
 

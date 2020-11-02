@@ -16864,7 +16864,7 @@ extern const ru_reg_rec DQM_QueueSharedMem_qsmdata_REG;
 extern const ru_reg_rec PSRAM_MEM_MEMORY_DATA_REG;
 #define PSRAM_MEM_MEMORY_DATA_REG_OFFSET 0x00000000
 
-#define PSRAM_MEM_MEMORY_DATA_REG_RAM_CNT 0x0000bfff
+#define PSRAM_MEM_MEMORY_DATA_REG_RAM_CNT 0x00007fff
 
 extern const ru_reg_rec FPM_FPM_CTL_REG;
 #define FPM_FPM_CTL_REG_OFFSET 0x00000000

@@ -393,6 +393,9 @@ extern "C" {
 #define MEMC_GLB_GCFG_DRAM_SIZE1_SHIFT	           0
 #define MEMC_GLB_GCFG_DRAM_SIZE1_MASK	           0xf
 
+#define MEMC_CHN_TIM_PHY_ST                        0x230
+#define MEMC_CHN_TIM_PHY_ST_PHY_ST_POWER_UP        0x1
+
 /***************************************************************************
  *MEMC_SRAM_REMAP - "MC non-secure address remapping to internal SRAM"
  ***************************************************************************/
@@ -401,6 +404,18 @@ extern "C" {
 #define MEMC_SRAM_REMAP_INIT                       0x00000024 /* SRAM Remap Initialization */
 #define MEMC_SRAM_REMAP_LOG_INFO_0                 0x00000028 /* SRAM Remap Log Info 0 */
 #define MEMC_SRAM_REMAP_LOG_INFO_1                 0x0000002c /* SRAM Remap Log Info 1 */
+
+/***************************************************************************
+ *DDRPHY Registers
+ ***************************************************************************/
+#define DDRPHY_OFFSET                              0x00002000 /* offset from memc base */
+#define DDRPHY_VREF_DAC_CTRL                       0x0000019c
+#define DDRPHY_VREF_DAC_CTRL_PDN_SHIFT             12
+#define DDRPHY_VREF_DAC_CTRL_PDN_MASK              (0xf << DDRPHY_VREF_DAC_CTRL_PDN_SHIFT)
+#define DDRPHY_VREF_DAC_CTRL_DAC1_SHIFT            6
+#define DDRPHY_VREF_DAC_CTRL_DAC1_MASK             (0x3f << DDRPHY_VREF_DAC_CTRL_DAC1_SHIFT)
+#define DDRPHY_VREF_DAC_CTRL_DAC0_SHIFT            0
+#define DDRPHY_VREF_DAC_CTRL_DAC0_MASK             (0x3f << DDRPHY_VREF_DAC_CTRL_DAC0_SHIFT)
 
 /*
 #####################################################################

@@ -413,4 +413,25 @@ UINT32 qdmIntf_getAllWanL2IntfNames_dev2(char *ifNamesBuf, UINT32 len);
 #endif
 
 
+/** Get Bridge interface name in the given interface name.
+ *  @return Bridge interface name in buffer.
+ */
+
+CmsRet qdmIntf_getBridgeNameByIntfName(const char *intfname, char *bridgeifcName);
+CmsRet qdmIntf_getBridgeNameByIntfName_igd(const char *intfname, char *bridgeifcName);
+CmsRet qdmIntf_getBridgeNameByIntfName_dev2(const char *intfname, char *bridgeifcName);
+
+#if defined(SUPPORT_DM_LEGACY98)
+#define qdmIntf_getBridgeNameByIntfName(b, l)  qdmIntf_getBridgeNameByIntfName_igd((b), (l))
+#elif defined(SUPPORT_DM_HYBRID)
+#define qdmIntf_getBridgeNameByIntfName(b, l)  qdmIntf_getBridgeNameByIntfName_igd((b), (l))
+#elif defined(SUPPORT_DM_PURE181)
+#define qdmIntf_getBridgeNameByIntfName(b, l)  qdmIntf_getBridgeNameByIntfName_dev2((b), (l))
+#elif defined(SUPPORT_DM_DETECT)
+#define qdmIntf_getBridgeNameByIntfName(b, l)   (cmsMdm_isDataModelDevice2() ? \
+                                   qdmIntf_getBridgeNameByIntfName_dev2((b), (l)) : \
+                                   qdmIntf_getBridgeNameByIntfName_igd((b), (l)))
+#endif
+
+
 #endif /* _QDM_INTF_H_ */

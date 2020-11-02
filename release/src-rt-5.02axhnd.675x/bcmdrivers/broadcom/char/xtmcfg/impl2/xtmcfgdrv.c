@@ -66,6 +66,7 @@
 #include <bcmtypes.h>
 #include <xtmcfgdrv.h>
 #include "bcm_OS_Deps.h"
+#include "board.h"
 
 /* Typedefs. */
 typedef void (*FN_IOCTL) (uintptr_t arg);
@@ -146,7 +147,15 @@ static int __init bcmxtmcfg_init( void )
 {
 #if defined(CONFIG_BCM_55153_DPU)
     XTM_INITIALIZATION_PARMS initparms;
+#endif
 
+   if (!kerSysGetDslPhyEnable())
+   {
+       printk( "bcmxtmcfg is not enabled\n");
+       return -1;
+   }
+
+#if defined(CONFIG_BCM_55153_DPU)
     memset(&initparms, 0, sizeof(initparms));
     initparms.bondConfig.sConfig.atmBond = BC_ATM_BONDING_DISABLE;
     initparms.bondConfig.sConfig.ptmBond = BC_PTM_BONDING_DISABLE;

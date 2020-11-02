@@ -193,6 +193,7 @@ typedef enum FcacheIoctl
     FCACHE_DECL(FCACHE_IOCTL_LOW_PKT_RATE)
     FCACHE_DECL(FCACHE_IOCTL_SET_NOTIFY_PROC_MODE)
     FCACHE_DECL(FCACHE_IOCTL_SW_DEFER)
+    FCACHE_DECL(FCACHE_IOCTL_4O6_FRAG)
     FCACHE_DECL(FCACHE_IOCTL_INVALID)
 } FcacheIoctl_t;
 
@@ -222,12 +223,13 @@ typedef struct {
         uint16_t fc_status      : 1;
         uint16_t ovs_status     : 1;
         uint16_t fc_gre         : 1;
-        uint16_t mcast_learn    : 1;
+        uint16_t mcast_learn    : 2;
         uint16_t accel_mode     : 1;
         uint16_t tcp_ack_mflows : 1;
         uint16_t hw_accel       : 1;
         uint16_t notify_proc_mode: 1;
-        uint16_t unused         : 4;
+        uint16_t fc_4o6_frag    : 1;
+        uint16_t unused         : 2;
       } flags;	
 }FcStatusInfo_t;
 
@@ -487,6 +489,9 @@ extern int  fcacheMonitor(int monitor);
 extern int  fcacheChkHwSupport(Blog_t * blog_p);
 extern void fcacheBindHwSupportHook(HOOKP hw_support_fn);
 extern unsigned int  fcacheChkHwFeature(void);
+
+extern int fcache_udp_port_no_accel(uint16_t dport, uint16_t sport);
+extern int fcache_tcp_port_no_accel(uint16_t dport, uint16_t sport);
 
 /*
  *------------------------------------------------------------------------------
@@ -807,6 +812,7 @@ struct fdbEnt_t {
 
     uint16_t        hashix;         /* FDB hash index                         */
     FcMac_t         mac;
+    uint32_t        ifidx;          /* mac dev ifindex                        */
     unsigned long   upd_time;       /* last update time in jiffies            */
     void            *nwe_p;         /* ptr to Linux FDB                       */
 

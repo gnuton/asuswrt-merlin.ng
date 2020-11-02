@@ -128,6 +128,9 @@ int gponCtl_stopAdminState(BCM_Ploam_StopInfo *info);
 int gponCtl_getControlStates(BCM_Ploam_StateInfo *info);
 int gponCtl_setTO1TO2(BCM_Ploam_TO1TO2Info *info);
 int gponCtl_getTO1TO2(BCM_Ploam_TO1TO2Info *info);
+int gponCtl_setDWELL_TIMER(BCM_Ploam_DWELL_TIMERInfo *info);
+int gponCtl_getDWELL_TIMER(BCM_Ploam_DWELL_TIMERInfo *info);
+int gponCtl_getRebootFlags(BCM_Ploam_RebootFlagsInfo *info);
 int gponCtl_setTO6(BCM_Ploam_TO6Info *info);
 int gponCtl_getTO6(BCM_Ploam_TO6Info *info);
 

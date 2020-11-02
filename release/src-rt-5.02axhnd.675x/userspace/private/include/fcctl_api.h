@@ -147,7 +147,8 @@ int fcCtlResetStats(void);
 #define FCACHE_CONFIG_OPT_NOTIFY_PROC_MODE  11      /* Set notify processing mode   */
 #define FCACHE_CONFIG_OPT_SW_DEFER          12      /* Set pkt SW deferral rate value*/
 #define FCACHE_CONFIG_OPT_GRE               13      /* GRE enable/disable values    */
-#define FCACHE_CONFIG_OPT_MAX               14       
+#define FCACHE_CONFIG_OPT_4O6_FRAG          14      /* 4over6 frag support          */
+#define FCACHE_CONFIG_OPT_MAX               15       
 
 #define FCACHE_DUMP_OPT_FLOW_INFO   1       /* Dump flow info               */
 

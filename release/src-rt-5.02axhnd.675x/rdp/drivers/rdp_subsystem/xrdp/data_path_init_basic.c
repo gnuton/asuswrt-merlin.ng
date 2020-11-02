@@ -57,12 +57,54 @@ int data_path_init_basic(dpi_params_t *dpi_params)
     int rc = 0;
 
     p_dpi_cfg = dpi_params;
-
+    printf("ddr base address is 0x%p\n", dpi_params->rdp_ddr_pkt_base_virt);
     printf("%s: Restore HW configuration\n", __FUNCTION__);
     rc = access_log_restore(init_data);
+    data_path_init_basic_update_fpm(dpi_params);
     printf("%s: Restore HW configuration done. rc=%d\n", __FUNCTION__, rc);
 
     return rc;
+}
+#if defined(BCM6878)
+extern uint32_t fpm_ddr_address;
+#endif
+
+void data_path_init_basic_update_fpm(dpi_params_t *dpi_params)
+{
+	uint32_t data;
+	volatile uint32_t *p_addr;
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS;
+	data = (uintptr_t)dpi_params->rdp_ddr_pkt_base_virt;
+	p_addr[0] = (uint32_t)data;
+
+#if defined(BCM6858)
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS1;
+	p_addr[0] = (uint32_t)data;
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS2;
+	p_addr[0] = (uint32_t)data;
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS3;
+	p_addr[0] = (uint32_t)data;
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS4;
+	p_addr[0] = (uint32_t)data;
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS5;
+	p_addr[0] = (uint32_t)data;
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS6;
+	p_addr[0] = (uint32_t)data;
+
+	p_addr = (volatile uint32_t *)BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS7;
+	p_addr[0] = (uint32_t)data;
+#endif
+
+#if defined(BCM6878)
+	fpm_ddr_address = (uint32_t)dpi_params->rdp_ddr_pkt_base_virt;
+    RDD_FPM_GLOBAL_CFG_FPM_BASE_LOW_WRITE_G(fpm_ddr_address,RDD_FPM_GLOBAL_CFG_ADDRESS_ARR,0);
+#endif
 }
 
 #endif

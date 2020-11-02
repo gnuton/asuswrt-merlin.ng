@@ -81,6 +81,7 @@ bdmf_error_t drv_cnpl_policer_read_command_set(uint8_t group, uint8_t policer_nu
 bdmf_error_t drv_cnpl_policer_read(void *policers, uint8_t group, uint8_t num_of_policers, bdmf_boolean reset);
 bdmf_error_t drv_cnpl_counter_read(void *counters, uint8_t group, uint16_t start_counter, uint8_t num_of_counters);
 bdmf_error_t drv_cnpl_counter_clr(uint8_t group, uint32_t cntr_id);
+bdmf_error_t drv_cnpl_counter_set(uint8_t group, uint32_t cntr_id, uint8_t value);
 
 #ifdef USE_BDMF_SHELL
 int drv_cnpl_cli_config_get(bdmf_session_handle session, bdmfmon_cmd_parm_t parm[], uint16_t n_parms);

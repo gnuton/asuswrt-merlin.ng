@@ -257,6 +257,7 @@ typedef enum
     BCMEPONCfgPowerSavingDebugState,
     BCMEPONCfgHoldMacState,
     BCMEPONCfgTxTestPacket,
+    BCMEPONCfgFatalErrRst,
     BCM_EPON_IOCTL_MAX
     } EponioctlCmd_e;
 
@@ -957,6 +958,7 @@ typedef union {
         EponPowerSavingRunningState runningState;
         BOOL holdMacState;
         EponTxTestPacketParam txTestPacketPara;
+        U8 fatalErrRstEn;
 } PACK EponParm;
 
 typedef struct {

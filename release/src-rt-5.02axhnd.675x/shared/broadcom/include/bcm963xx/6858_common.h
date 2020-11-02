@@ -264,6 +264,24 @@ extern "C" {
 ***************************************************************************/
 #define MEMC_SRAM_REMAP_CONTROL                    0x00000020 /* SRAM Remap Control */
 
+/***************************************************************************
+*MEMC_CHN_TIM
+***************************************************************************/
+#define MEMC_CHN_TIM_PHY_ST                        0x230
+#define MEMC_CHN_TIM_PHY_ST_PHY_ST_POWER_UP        0x1
+
+/***************************************************************************
+ *DDRPHY Registers
+ ***************************************************************************/
+#define DDRPHY_OFFSET                              0x00020000 /* offset from memc base */
+#define DDRPHY_VREF_DAC_CTRL                       0x00000194
+#define DDRPHY_VREF_DAC_CTRL_PDN_SHIFT             12
+#define DDRPHY_VREF_DAC_CTRL_PDN_MASK              (0xf << DDRPHY_VREF_DAC_CTRL_PDN_SHIFT)
+#define DDRPHY_VREF_DAC_CTRL_DAC1_SHIFT            6
+#define DDRPHY_VREF_DAC_CTRL_DAC1_MASK             (0x3f << DDRPHY_VREF_DAC_CTRL_DAC1_SHIFT)
+#define DDRPHY_VREF_DAC_CTRL_DAC0_SHIFT            0
+#define DDRPHY_VREF_DAC_CTRL_DAC0_MASK             (0x3f << DDRPHY_VREF_DAC_CTRL_DAC0_SHIFT)
+
 /*
 #####################################################################
 # UART Control Registers

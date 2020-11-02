@@ -159,11 +159,11 @@ extern "C"
 #if defined(BCM6856)
 #define QM_MBR_PROFILE__NUM_OF              4           /* Number of QM minimum buffer reservation profiles 
                                                           available for allocation. Profile 0 should remain 0*/ 
-#define QM_MBR_PROFILE_RESOLUTION           16          /* HW uses bits [11:4] from profile */
+#define QM_MBR_PROFILE_RESOLUTION           16          /* ECO fix HW uses bits [11:4] from profile */
 #elif defined(BCM63158_B0)
 #define QM_MBR_PROFILE__NUM_OF              8           /* Number of QM minimum buffer reservation profiles 
                                                           available for allocation. Profile 0 should remain 0*/ 
-#define QM_MBR_PROFILE_RESOLUTION           16          /* HW uses bits [11:4] from profile */
+#define QM_MBR_PROFILE_RESOLUTION           16          /* ECO fix HW uses bits [11:4] from profile */
 #else
 #define QM_MBR_PROFILE__NUM_OF              8           /* Number of QM minimum buffer reservation profiles 
                                                           available for allocation. Profile 0 should remain 0*/
@@ -253,6 +253,16 @@ typedef enum qm_cpu_indr_cmd_e
     qm_cpu_indr_cmd_read = 2
 } qm_cpu_indr_cmd_t;
 
+/*
+ * Minimum buffer reservation support
+ */
+
+ typedef struct {
+    uint16_t token_threshold;              /* number of reserved tokens */
+    uint16_t attached_ds_q_num;           /* DS queues using this minimum buffer reservation profile*/
+    uint16_t attached_us_q_num;           /* US queues using this minimum buffer reservation profile*/
+} qm_mbr_profile;
+
 /* Index of WRED profile that is reserved for disabled queues - DROP ALL */
 #define QM_WRED_PROFILE_DROP_ALL        15
 #define QM_WRED_PROFILE_CPU_RX          14
@@ -299,7 +309,7 @@ bdmf_error_t drv_qm_queue_enable(rdp_qm_queue_idx_t q_idx);
 bdmf_error_t drv_qm_queue_disable(rdp_qm_queue_idx_t q_idx, bdmf_boolean flush);
 
 /* Set/Reset force copy to DDR on queue */
-bdmf_error_t force_copy_ddr_on_queue(rdp_qm_queue_idx_t q_idx, bdmf_boolean force_copy_to_ddr);
+bdmf_error_t force_copy_ddr_on_queue(rdp_qm_queue_idx_t q_idx, bdmf_boolean force_copy_to_ddr, uint32_t is_epon_wan);
 
 #ifndef _CFE_
 extern bdmf_fastlock  qm_engine_lock[2];
@@ -377,6 +387,8 @@ int drv_qm_config_clock_autogate(bdmf_boolean auto_gate, uint8_t timer_val);
 bdmf_error_t drv_qm_fpm_buffer_reservation_profile_cfg(uint8_t profile_id, uint16_t token_threshold);
 bdmf_error_t set_fpm_budget(int resource_num, int add, uint32_t reserved_packet_buffer);
 bdmf_boolean is_qm_queue_aggregation_context_valid(uint16_t qm_queue);
+int drv_qm_get_number_of_extra_mbr(void);
+
 
 #ifdef USE_BDMF_SHELL
 int drv_qm_cli_debug_get(bdmf_session_handle session, bdmfmon_cmd_parm_t parm[], uint16_t n_parms);

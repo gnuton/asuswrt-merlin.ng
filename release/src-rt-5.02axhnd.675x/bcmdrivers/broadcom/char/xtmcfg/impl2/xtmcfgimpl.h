@@ -424,7 +424,7 @@ public:
 
     void PreInit ( void ) ;
     BCMXTM_STATUS Initialize( UINT32 ulPort, UINT32 ulInternalPort, UINT32 ulBondingPort,
-                              UINT32 autoSenseATM);
+                              UINT32 autoSenseATM, FN_XTMRT_REQ pfnXtmrtReq);
     BCMXTM_STATUS Uninitialize( void );
     BCMXTM_STATUS ReInitialize( UINT32 ulBondingPort );
     BCMXTM_STATUS GetCfg(PXTM_INTERFACE_CFG pCfg,XTM_CONNECTION_TABLE *pConnTbl);
@@ -455,16 +455,14 @@ public:
 
     PXTM_INTERFACE_LINK_DELAY GetLinkDelay( void )
         { return( &m_LinkDelay ); }
-#if defined(CONFIG_BCM963158) || defined(CONFIG_BCM963178)
+#if defined(XTM_PORT_SHAPING)
     void SetSitUt( UINT32 ulSitUt, UINT32 ulSitLoUt )
         { ms_ulSitUt = ulSitUt;  ms_ulSitLoUt = ulSitLoUt; }
     void ConfigureShapingRatio( UINT32 ratio )
         { m_ulPortShapingRatio = ratio; }
     UINT32 ConfigureTxPortShaping (UINT32 ulTrafficType) ;
     void DisableTxPortShaping();
-#endif
-
-#if defined(CONFIG_BCM963158)
+    void ResetHWTxPortShaping (void) ;
     BCMXTM_STATUS ConfigureMaxUTPortShaping ( UINT32 ulTrafficType );
 #endif
 
@@ -482,6 +480,7 @@ private:
     UINT32 m_ulIfInPacketsPtm;
 
     UINT32 m_ulAutoSenseATM ;
+    FN_XTMRT_REQ m_pfnXtmrtReq;
     
     XTM_INTERFACE_CFG m_Cfg;
     XTM_INTERFACE_LINK_INFO m_LinkInfo;
@@ -493,11 +492,10 @@ private:
     UINT32  m_ulUsStatus ;
     UINT32  m_ulDsStatus ;
     UINT32  m_ulXTMLinkMode;
-#if defined(CONFIG_BCM963158) || defined(CONFIG_BCM963178)
+#if defined(XTM_PORT_SHAPING)
     UINT32  ms_ulSitUt;
     UINT32  ms_ulSitLoUt;
     UINT32  m_ulEnableShaping;
-    UINT32  m_ulMinBitRate;
     UINT32  m_ulShapeRate;
     UINT16  m_usMbs;
     UINT32  m_ulPortShapingRatio;
@@ -550,8 +548,8 @@ private:
 /* Definitions corresponding to PTM/ATM Bonding ASM (Autonomous State Message)
  * protocol implementation. G.998.1
  */
-#define XTM_MAJ_VER           23
-#define XTM_MIN_VER           7
+#define XTM_MAJ_VER           24
+#define XTM_MIN_VER           1
 #define XTM_BUILD_VER         0
 
 #define MAX_BONDED_LINES      2
@@ -897,10 +895,8 @@ public:
     void CheckAndResetSAR( UINT32 ulPortId, PXTM_INTERFACE_LINK_INFO pLinkInfo) ;
     BCMXTM_STATUS Configure ( PXTM_CONFIGURATION_PARMS pConfigInfo );
     BCMXTM_STATUS ManageThreshold (PXTM_THRESHOLD_PARMS pThreshold);
-#if defined(CONFIG_BCM963158) || defined(CONFIG_BCM963178)
+#if defined(XTM_PORT_SHAPING)
     void ConfigureTxPortShapingRatios(UINT32 ulPhysPort, UINT32 ulTrafficType);
-#endif
-#if defined(CONFIG_BCM963158)
     void UpdateSitSlr(UINT32 ulPort) ;
 #endif
 private:
