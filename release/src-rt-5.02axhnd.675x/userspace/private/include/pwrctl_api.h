@@ -68,8 +68,10 @@ int pwr_api_xrdp_clock_gate_get(char *param, int *enable);
 int pwr_api_xrdp_clock_gate_set(char *param, int enable);
 int pwr_api_net_down_get(char *param, int *enable);
 int pwr_api_net_down_set(char *param, int enable);
+int pwr_api_net_down_show(char *param);
 int pwr_api_phy_down_get(char *param, int *enable);
 int pwr_api_phy_down_set(char *param, int enable);
+int pwr_api_phy_down_show(char *param);
 int pwr_api_phy_eee_get(char *param, int *enable);
 int pwr_api_phy_eee_set(char *param, int enable);
 int pwr_api_phy_apd_get(char *param, int *enable);
@@ -78,6 +80,13 @@ int pwr_api_sf2_dgm_get(char *param, int *enable);
 int pwr_api_sf2_dgm_set(char *param, int enable);
 int pwr_api_dram_sr_get(char *param, int *enable);
 int pwr_api_dram_sr_set(char *param, int enable);
+int pwr_api_avs_get(char *param, int *enable);
+int pwr_api_avs_set(char *param, int enable);
+int pwr_api_wldpd_get(char *param, int *enable);
+int pwr_api_wldpd_set(char *param, int enable);
+int pwr_api_wldpd_show(char *param);
+int pwr_api_pmd_get(char *param, int *enable);
+int pwr_api_pmd_set(char *param, int enable);
 
 
 typedef enum
@@ -97,7 +106,9 @@ typedef enum
     PWR_TYPE_APD,
     PWR_TYPE_DGM,
     PWR_TYPE_SR,
-    PWR_TYPE_AVS
+    PWR_TYPE_AVS,
+    PWR_TYPE_WLDPD,
+    PWR_TYPE_PMD
 } pwr_type_t;
 
 typedef struct
@@ -106,6 +117,7 @@ typedef struct
     char *name;
     int (*enable_set)(char *param, int enable);
     int (*enable_get)(char *param, int *enable);
+    int (*enable_show)(char *param);
 } pwr_drv_t;
 
 typedef struct
@@ -117,7 +129,7 @@ typedef struct
 
 int pwr_enable_set(pwr_type_t type, char *param, int enable);
 int pwr_profile_activate(pwr_entry_t *profile);
-int pwr_status_show(void);
+int pwr_status_show(pwr_type_t type, char *param);
 
 #endif
 

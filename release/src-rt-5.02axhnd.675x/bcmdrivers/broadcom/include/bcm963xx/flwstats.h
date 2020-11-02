@@ -331,7 +331,7 @@ typedef struct {
 typedef union {
     FlwStatsCreateQueryInfo_t  create;
     FlwStatsGetQueryInfo_t     get;
-	FlwStatsClearQueryInfo_t   clear; 
+    FlwStatsClearQueryInfo_t   clear; 
     FlwStatsDeleteQueryInfo_t  delete;
 }FlwStatsQueryInfo_t;
 
@@ -382,5 +382,65 @@ typedef struct {
 /* Supported Protocols in Queries */
 #define FLWSTATS_PROTO_TCP  6
 #define FLWSTATS_PROTO_UDP  17
+
+/*
+ *---------------------------------------------------------------------------
+ * Function Name: flwStatsCreateQuery
+ * Description  : Creates a statistics query for later use.
+ * Parameters   :
+ *  newQuery    : Pointer to an  FlwStatsQueryInfo_t structure where 
+ *                the FlwStatsQueryTuple_t portion will be used to set
+ *                up the query. 
+ *                A unique handle would be returned for later use.
+ * Returns      : 0 - success, non-0 - error
+ *-----------------------------------------------------------------------------
+ */
+ 
+int flwStatsCreateQuery(FlwStatsQueryInfo_t *newQuery);
+
+/*
+ *-----------------------------------------------------------------------------
+ * Function Name: flwStatsGetQuery
+ * Description  : Retrieves statistics for a query previously set up by a 
+ *                call to flwStatsCreateQuery().
+ * Parameters   :
+ *  Query       : Handle returned by earlier flwStatsCreateQuery() is
+ *                passed as input. 
+ *                Results are stored in flwSt field in FlwStatsQueryInfo_t.
+ * Returns      : 0 - success, non-0 - error
+ *-----------------------------------------------------------------------------
+ */
+int flwStatsGetQuery(FlwStatsQueryInfo_t *Query);
+
+/*
+ *-----------------------------------------------------------------------------
+ * Function Name: flwStatsClearQuery
+ * Description  : Zeroes out the counters for one or all queries previously  
+ *                set up by a call to flwStatsCreateQuery().
+ 
+ * Parameters   :
+ *  Query :       Handle returned by earlier flwStatsCreateQuery() is
+ *                passed as input. 
+ *                The special value
+ *                ALL_STATS_QUERIES_HANDLE may be used to clear the counters for all queries.
+ * Returns      : 0 - success, non-0 - error
+ *-----------------------------------------------------------------------------
+ */
+
+int flwStatsClearQuery(FlwStatsQueryInfo_t *Query);
+
+/*
+ *-----------------------------------------------------------------------------
+ * Function Name: flwStatsDeleteQuery
+ * Description  : Deletes one or all queries previously set up by a call  
+ *                to flwStatsCreateQuery().
+ * Parameters   :
+ *  Query : Handle returned by earlier flwStatsCreateQuery() is
+ *                passed as input. 
+ *                The special value ALL_STATS_QUERIES_HANDLE may be used to delete all queries.
+ * Returns      : 0 - success, non-0 - error
+ *-----------------------------------------------------------------------------
+ */
+int flwStatsDeleteQuery(FlwStatsQueryInfo_t *Query);
 
 #endif  /* defined(__FLWSTATS_H_INCLUDED__) */

@@ -73,6 +73,8 @@ int rdpaCtl_GetPortTmParms(
          int  *pCfgFlags,
          BOOL *pbFound);
 
+int rdpaCtl_GetTmMemoryInfo(int  *fpmPoolMemorySize);
+
 int rdpaCtl_GetRootTm(
          int  devType,
          int  devId,

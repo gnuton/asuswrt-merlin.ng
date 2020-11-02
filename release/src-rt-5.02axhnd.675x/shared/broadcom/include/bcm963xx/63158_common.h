@@ -231,6 +231,9 @@ extern "C" {
 #define MEMC_CHN_CFG_DRAM_SIZE_CHK_LIMIT_MASK      (0xf<<4)
 #define MEMC_CHN_CFG_DRAM_SIZE_CHK_LIMIT_SHIFT     4
 
+#define MEMC_CHN_TIM_PHY_ST                        0x230
+#define MEMC_CHN_TIM_PHY_ST_PHY_ST_POWER_UP        0x1
+
 /***************************************************************************
  *MEMC_SRAM_REMAP - "MC non-secure address remapping to internal SRAM"
  ***************************************************************************/
@@ -242,6 +245,17 @@ extern "C" {
 #define MEMC_SRAM_REMAP_LOG_INFO_1                 0x00000030 /* SRAM Remap Log Info 1 */
 #define MEMC_SRAM_REMAP_LOG_INFO_2                 0x00000034 /* SRAM Remap Log Info 2 */
 
+/***************************************************************************
+ *DDRPHY Registers
+ ***************************************************************************/
+#define DDRPHY_OFFSET                              0x00020000 /* offset from memc base */
+#define DDRPHY_VREF_DAC_CTRL                       0x00000194
+#define DDRPHY_VREF_DAC_CTRL_PDN_SHIFT             12
+#define DDRPHY_VREF_DAC_CTRL_PDN_MASK              (0xf << DDRPHY_VREF_DAC_CTRL_PDN_SHIFT)
+#define DDRPHY_VREF_DAC_CTRL_DAC1_SHIFT            6
+#define DDRPHY_VREF_DAC_CTRL_DAC1_MASK             (0x3f << DDRPHY_VREF_DAC_CTRL_DAC1_SHIFT)
+#define DDRPHY_VREF_DAC_CTRL_DAC0_SHIFT            0
+#define DDRPHY_VREF_DAC_CTRL_DAC0_MASK             (0x3f << DDRPHY_VREF_DAC_CTRL_DAC0_SHIFT)
 /*
 #####################################################################
 # UART Control Registers
@@ -378,29 +392,25 @@ extern "C" {
 #define JTAG_OTP_GENERAL_STATUS_1               0x20
 #define JTAG_OTP_GENERAL_STATUS_1_CMD_DONE      (1 << 1)
 
-/* row 10 */
-#define OTP_SATA_DISABLE_ROW			10
-#define OTP_SATA_DISABLE_SHIFT			24
-#define OTP_SATA_DISABLE_MASK			(0x1 << OTP_SATA_DISABLE_SHIFT)
+/* row 8 */
+#define OTP_CPU_CORE_CFG_ROW                    8
+#define OTP_CPU_CORE_CFG_SHIFT                  28
+#define OTP_CPU_CORE_CFG_MASK                   (0x3 << OTP_CPU_CORE_CFG_SHIFT)
 
-/* row 11 */
-#define OTP_PMC_BOOT_ROW			11
-#define OTP_PMC_BOOT_SHIFT			25
-#define OTP_PMC_BOOT_MASK			(0x1 << OTP_PMC_BOOT_SHIFT)
-
-/* row 12 */
-#define OTP_PCM_DISABLE_ROW			12
-#define OTP_PCM_DISABLE_SHIFT			12
-#define OTP_PCM_DISABLE_MASK			(0x1 << OTP_PCM_DISABLE_SHIFT)
+/* row 9 */
+#define OTP_CPU_CLOCK_FREQ_ROW                  9
+#define OTP_CPU_CLOCK_FREQ_SHIFT                0
+#define OTP_CPU_CLOCK_FREQ_MASK                 (0x7 << OTP_CPU_CLOCK_FREQ_SHIFT)
 
 /* row 14 */
-#define OTP_CPU_CLOCK_FREQ_ROW			14
-#define OTP_CPU_CLOCK_FREQ_SHIFT		9
-#define OTP_CPU_CLOCK_FREQ_MASK			(0x7 << OTP_CPU_CLOCK_FREQ_SHIFT)
+#define OTP_PCM_DISABLE_ROW                     14
+#define OTP_PCM_DISABLE_SHIFT                   13
+#define OTP_PCM_DISABLE_MASK                    (0x1 << OTP_PCM_DISABLE_SHIFT)
 
-#define OTP_CPU_CORE_CFG_ROW			14
-#define OTP_CPU_CORE_CFG_SHIFT			14
-#define OTP_CPU_CORE_CFG_MASK			(0x3 << OTP_CPU_CORE_CFG_SHIFT)
+/* row 14 */
+#define OTP_SATA_DISABLE_ROW                    14
+#define OTP_SATA_DISABLE_SHIFT                  28
+#define OTP_SATA_DISABLE_MASK                   (0x1 << OTP_SATA_DISABLE_SHIFT)
 
 /* row 17 */
 #define OTP_BRCM_BTRM_BOOT_ENABLE_ROW           17
@@ -412,9 +422,9 @@ extern "C" {
 #define OTP_CUST_BTRM_BOOT_ENABLE_SHIFT         15
 #define OTP_CUST_BTRM_BOOT_ENABLE_MASK          (7 << OTP_CUST_BTRM_BOOT_ENABLE_SHIFT)
 
-/* row 19 */
-#define OTP_CUST_BTRM_UART_DISABLE_ROW          19
-#define OTP_CUST_BTRM_UART_DISABLE_SHIFT        29
+/* row 18 */
+#define OTP_CUST_BTRM_UART_DISABLE_ROW          18
+#define OTP_CUST_BTRM_UART_DISABLE_SHIFT        18
 #define OTP_CUST_BTRM_UART_DISABLE_MASK         (1 << OTP_CUST_BTRM_UART_DISABLE_SHIFT)
 
 /* row 23 */

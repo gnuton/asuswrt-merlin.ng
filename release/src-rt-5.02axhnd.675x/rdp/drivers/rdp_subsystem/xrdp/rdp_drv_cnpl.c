@@ -198,6 +198,44 @@ bdmf_error_t drv_cnpl_counter_clr(uint8_t group, uint32_t cntr_id)
     return BDMF_ERR_OK;
 }
 
+bdmf_error_t drv_cnpl_counter_set(uint8_t group, uint32_t cntr_id, uint8_t value)
+{
+    uint8_t cntr_bytes_num;
+    uint32_t cntr_mem_offset;
+    bdmf_error_t rc;
+    cnpl_counter_cfg counter_cfg = {};
+    uint8_t tmp[CNPL_READ_COUNTER_BUFFER] = {0, 0, value, 0};
+
+#ifndef _CFE_
+    bdmf_fastlock_lock(&counter_read_lock);
+#endif
+
+    rc = ag_drv_cnpl_counter_cfg_get(group, &counter_cfg);
+    if (rc)
+    {
+#ifndef _CFE_
+        bdmf_fastlock_unlock(&counter_read_lock);
+#endif 
+        return rc;
+    }
+
+    /* check burst size */
+    if (counter_cfg.cn0_byts > 0) 
+        cntr_bytes_num = (counter_cfg.cn_double + 1) * (counter_cfg.cn0_byts * 2);
+    else
+        cntr_bytes_num = (counter_cfg.cn_double + 1);
+
+    cntr_mem_offset = (counter_cfg.ba << 3) + (cntr_id * cntr_bytes_num);
+
+    ag_drv_cnpl_memory_data_set((cntr_mem_offset / sizeof(uint32_t)), *(uint32_t *)tmp);
+
+#ifndef _CFE_
+    bdmf_fastlock_unlock(&counter_read_lock);
+#endif
+
+    return BDMF_ERR_OK;
+}
+
 bdmf_error_t drv_cnpl_counter_read(void *counters, uint8_t group, uint16_t start_counter, uint8_t num_of_counters)
 {    
     bdmf_error_t rc = BDMF_ERR_OK;
@@ -212,7 +250,7 @@ bdmf_error_t drv_cnpl_counter_read(void *counters, uint8_t group, uint16_t start
     bdmf_fastlock_lock(&counter_read_lock);
 #endif    
     
-#if !defined(RDP_SIM) && !defined(XRDP_EMULATION)    
+#if !defined(RDP_SIM) && !defined(XRDP_EMULATION)
     rc = ag_drv_cnpl_counter_cfg_get(group, &counter_cfg);
     if (rc)
     {
@@ -249,14 +287,13 @@ bdmf_error_t drv_cnpl_counter_read(void *counters, uint8_t group, uint16_t start
 #else
     rc = rdp_cpu_counter_read(group, start_counter, counters, num_of_counters, &counter_cfg.cn_double, &counter_cfg.cn0_byts);
 #endif
-    
+
     /* read the HW registers data */
     rc = rc ? rc : drv_cnpl_counter_read_command_get(counters, num_of_counters, counter_cfg.cn_double, counter_cfg.cn0_byts, (start_counter % 2));
 
-
 #ifndef _CFE_
     bdmf_fastlock_unlock(&counter_read_lock);
-#endif    
+#endif
     return rc;
 }
 

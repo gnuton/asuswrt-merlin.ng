@@ -94,6 +94,13 @@ typedef struct
         uint32_t word3;
         uint32_t wl_metadata; /* For WLAN unicast */
         struct {
+            uint32_t    is_exception:1;
+            uint32_t    is_rx_offload:1;
+            uint32_t    is_ucast:1;
+            uint32_t    enc_key_index:2;
+            uint32_t    reserved7:27;
+        } omci;
+        struct {
             uint16_t    is_exception:1;
             uint16_t    is_rx_offload:1;
             uint16_t    is_ucast:1;
@@ -218,6 +225,13 @@ typedef struct
     union {
         uint32_t word3;
         uint32_t wl_metadata; /* For WLAN unicast */
+        struct {
+            uint32_t    reserved7:27;
+            uint32_t    enc_key_index:2;
+            uint32_t    is_ucast:1;
+            uint32_t    is_rx_offload:1;
+            uint32_t    is_exception:1;
+        } omci;
         struct {
             union {
                 uint16_t dst_ssid_vector; /* For WLAN multicast */

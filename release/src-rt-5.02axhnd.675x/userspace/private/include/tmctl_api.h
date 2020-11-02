@@ -107,6 +107,11 @@
     BCMCTL_SYSLOGCODE(tmctl, LOG_ERR, fmt, ##arg); \
 }
 
+
+#define QUEUE_SIZE_FACTOR 1536
+#define TMCTL_DEF_Q_SIZE_1_MB ((1024 * 1024) / QUEUE_SIZE_FACTOR)
+#define TMCTL_DEF_Q_SIZE_400KB ((400 * 1024) / QUEUE_SIZE_FACTOR)
+
 #if defined(BCM_PON_RDP)
 #define TMCTL_DEF_ETH_Q_SZ_US     (256)
 #define TMCTL_DEF_ETH_Q_SZ_DS     (128)
@@ -117,14 +122,10 @@
 #define TMCTL_DEF_TCONT_Q_SZ      tmctl_getDefQSize(TMCTL_DEV_GPON, TMCTL_DIR_UP)
 #define TMCTL_DEF_LLID_Q_SZ       tmctl_getDefQSize(TMCTL_DEV_EPON, TMCTL_DIR_UP)
 #define TMCTL_DEF_ETH_Q_SZ_US_10G (768) /* ~1200k bytes */
-#define TMCTL_DEF_ETH_Q_SZ_US_1G_GPON  (195) /* ~300k bytes */
+#define TMCTL_DEF_ETH_Q_SZ_US_1G_GPON  tmctl_getAutoQSize() 
 #define TMCTL_DEF_ETH_Q_SZ_US_1G_EPON  (130) /* ~200K bytes */
 #define TMCTL_DEF_ETH_Q_SZ_US     tmctl_getDefQSize(TMCTL_DEV_ETH, TMCTL_DIR_UP)
-#if defined(CHIP_6846)
-#define TMCTL_DEF_ETH_Q_SZ_DS     (130) /* ~200k bytes */
-#else
-#define TMCTL_DEF_ETH_Q_SZ_DS     (260) /* ~400k bytes*/
-#endif
+#define TMCTL_DEF_ETH_Q_SZ_DS     tmctl_getAutoQSize() 
 #elif defined(CHIP_63268)
 /* FAP TM queue size = 512 (4 local sram + 508 sdram) */
 #define TMCTL_DEF_ETH_Q_SZ_US     (512)
@@ -1019,6 +1020,19 @@ tmctl_ret_e tmctl_setQueueShaper(tmctl_devType_e devType,
  * ----------------------------------------------------------------------------
  */
 int tmctl_getDefQSize(tmctl_devType_e devType, tmctl_dir_e dir);
+
+/* ----------------------------------------------------------------------------
+ * This function return the default queue size according to tm memory.
+ *
+ * Parameters:
+ *
+ * Return:
+ *    queue size.
+ * ----------------------------------------------------------------------------
+ */
+#if defined(BCM_PON_XRDP) || defined(BCM_DSL_XRDP)
+int tmctl_getAutoQSize(void);
+#endif
 
 /* ----------------------------------------------------------------------------
  * This function creates a policer.

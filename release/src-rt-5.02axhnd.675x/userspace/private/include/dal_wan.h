@@ -108,6 +108,7 @@ CmsRet dalWan_getWanMocaObject(InstanceIdStack *iidStack,
 CmsRet dalWan_getWanL2tpAcObject(InstanceIdStack *iidStack, void **obj);
 CmsRet dalWan_getWanL2tpAcObject_igd(InstanceIdStack *iidStack, void **obj);
 CmsRet dalWan_getWanL2tpAcObject_dev2(InstanceIdStack *iidStack, void **obj);
+CmsRet dalWan_getWanL2tpIidStatck(InstanceIdStack *iidStack);
 
 #if defined(SUPPORT_DM_LEGACY98)
 #define dalWan_getWanL2tpAcObject(v, a)  dalWan_getWanL2tpAcObject_igd((v), (a))

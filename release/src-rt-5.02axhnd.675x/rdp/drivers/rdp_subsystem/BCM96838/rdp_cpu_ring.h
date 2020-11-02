@@ -134,6 +134,7 @@ typedef struct
    uint8_t  cpu_redirect_egress_queue;
    uint8_t  cpu_redirect_wan_flow;
 #endif
+   uint8_t  omci_enc_key_index;
 }
 CPU_RX_PARAMS;
 

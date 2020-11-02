@@ -91,20 +91,6 @@ written consent.
 #endif
 
 /******************************************************************************
- * Logging
- ******************************************************************************/
-
-/* Number of register accesses in the register logging ring buffer */
-#ifndef RU_LOG_SIZE
-#define RU_LOG_SIZE 65536
-#endif
-
-/* Number of unique logging rules that may be used at any time */
-#ifndef RU_RULE_POOL_SIZE
-#define RU_RULE_POOL_SIZE 256
-#endif
-
-/******************************************************************************
  * Print and error
  ******************************************************************************/
 

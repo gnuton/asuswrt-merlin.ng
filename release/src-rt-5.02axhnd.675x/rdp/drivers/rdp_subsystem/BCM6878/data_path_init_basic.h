@@ -38,6 +38,8 @@ extern "C" {
 #define XRDP
 #endif
 
+#define BBH_TX_COMMON_CONFIGURATION_DDRMBASEL_BASE_ADDRESS 0x82d9002c
+
 /* includes */
 #include "bdmf_data_types.h"
 #include "rdp_common.h"
@@ -45,6 +47,7 @@ extern "C" {
 /* functions */
 int data_path_init(dpi_params_t *dpi_params);
 int data_path_init_basic(dpi_params_t *dpi_params);
+void data_path_init_basic_update_fpm(dpi_params_t *dpi_params);
 
 #ifdef __cplusplus 
 }

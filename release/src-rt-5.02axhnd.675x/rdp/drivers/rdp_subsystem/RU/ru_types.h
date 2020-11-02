@@ -101,22 +101,6 @@ typedef struct
     const ru_reg_rec **regs;            /*< All registers for block, private */
 } ru_block_rec;                         /*< Info for a block instance */
 
-typedef enum
-{
-    ru_log_none     = 0x00,             /*< Do not log */
-    ru_log_read     = 0x01,             /*< Log read access only */
-    ru_log_write    = 0x02,             /*< Log write access only */
-    ru_log_both     = 0x03              /*< Log both read and write */
-} ru_log_type;                          /*< Access logging type */
-
-typedef enum
-{
-    ru_op_equal,                        /*< (Register & Mask) == Value */
-    ru_op_not_equal,                    /*< (Register & Mask) != Value */
-    ru_op_greater_than,                 /*< (Register & Mask) > Value */
-    ru_op_less_than                     /*< (Register & Mask) < Value */
-} ru_log_op;                            /*< Logging comparator operation */
-
 #define RU_BLK(b) b##_BLOCK
 #define RU_REG(b,r) b##_##r##_REG
 #define RU_REG_OFFSET(b,r) b##_##r##_REG_OFFSET

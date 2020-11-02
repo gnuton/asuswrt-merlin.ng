@@ -63,6 +63,7 @@ extern "C" {
 /* functions */
 int data_path_init(dpi_params_t *dpi_params);
 int data_path_init_basic(dpi_params_t *dpi_params);
+int data_path_init_basic_update_fpm(dpi_params_t *dpi_params);
 
 #ifdef __cplusplus 
 }

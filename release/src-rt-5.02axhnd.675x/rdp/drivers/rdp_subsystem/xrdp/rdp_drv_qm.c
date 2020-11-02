@@ -61,6 +61,8 @@
 #include "rdd_runner_reg_dump.h"
 #include "data_path_init.h"
 
+
+qm_mbr_profile mbr_profile[QM_MBR_PROFILE__NUM_OF];
 extern dpi_params_t *p_dpi_cfg;
 
 typedef struct
@@ -546,20 +548,29 @@ bdmf_error_t drv_qm_queue_enable(rdp_qm_queue_idx_t q_idx)
 
     return rc;
 }
-
-bdmf_error_t force_copy_ddr_on_queue(rdp_qm_queue_idx_t q_idx, bdmf_boolean copy_to_ddr)
+/**************************************************************************************
+ * force_copy_ddr_on_queue - enable, disable copy to ddr flag on queue
+ * ASSUMPTION: queue should be dissabled and flushed before calling to this function
+ * INPUT PARAMS: queue index, enable/disable copy flag
+ * OUTPUT: err/ok flag
+ **************************************************************************************/
+bdmf_error_t force_copy_ddr_on_queue(rdp_qm_queue_idx_t q_idx, bdmf_boolean copy_to_ddr, uint32_t is_epon_wan)
 {
     qm_q_context q_cfg = {};
-    bdmf_error_t rc = drv_qm_queue_disable(q_idx, 1);
+    bdmf_error_t rc;
 
-    rc = rc ? rc : drv_qm_queue_get_config(q_idx, &q_cfg);
+    if (is_epon_wan)
+        drv_qm_queue_disable(q_idx, 0);
+
+    rc = drv_qm_queue_get_config(q_idx, &q_cfg);
 
     q_cfg.copy_to_ddr = copy_to_ddr;
 
     /* If copy to DDR set, reset ddr_copy_disable*/
     q_cfg.ddr_copy_disable = copy_to_ddr ? 0 : q_cfg.ddr_copy_disable;
     rc = rc ? rc : drv_qm_queue_config(q_idx, &q_cfg);
-    rc = rc ? rc : drv_qm_queue_enable(q_idx);
+    if (is_epon_wan)
+        rc = rc ? rc : drv_qm_queue_enable(q_idx);;
 
     return rc;
 }
@@ -601,6 +612,22 @@ int drv_qm_drop_stat_get(drv_qm_drop_cntr_t *qm_drop_stat)
     return rc;
 }
 
+int drv_qm_get_number_of_extra_mbr(void)
+{
+#if defined(BCM6856) || defined(BCM63158_B0) || defined(DUAL_ISSUE)
+    int temp = 0;
+    int i;
+    for (i = 1; i < QM_MBR_PROFILE__NUM_OF; i++)
+    {
+        temp = temp + ((mbr_profile[i].attached_ds_q_num + mbr_profile[i].attached_us_q_num) * (mbr_profile[i].token_threshold));
+    }
+    BDMF_TRACE_DBG("number of required mbr profiles are = %d\n", temp);
+    return temp;
+#else
+    return 0;
+#endif
+}
+
 bdmf_error_t drv_qm_fpm_buffer_reservation_profile_cfg(uint8_t profile_id, uint16_t token_threshold)
 {
     bdmf_error_t err;
@@ -608,10 +635,8 @@ bdmf_error_t drv_qm_fpm_buffer_reservation_profile_cfg(uint8_t profile_id, uint1
 #if defined(BCM6856) || defined(BCM63158_B0) || defined(DUAL_ISSUE)
 
     /* for 6856 there is a 16 bit dedicated register for each profile threshold */
-    /* but only bits [11:4] are used. verify threshold is not lower than min resolution*/
-    if ((token_threshold != 0) && (token_threshold < QM_MBR_PROFILE_RESOLUTION))
-        token_threshold = QM_MBR_PROFILE_RESOLUTION;
-    
+    /* but only bits [11:4] are used. verify threshold is not lower than min resolution(round up)*/
+    token_threshold = ((token_threshold + QM_MBR_PROFILE_RESOLUTION - 1) / QM_MBR_PROFILE_RESOLUTION) * QM_MBR_PROFILE_RESOLUTION;
     err = ag_drv_qm_fpm_buffer_reservation_data_set(profile_id, token_threshold);
 #else
     /* for all platforms but 6856 there are 2 registers, 8bit per profile. starting from profile 0 to 7*/
@@ -622,8 +647,11 @@ bdmf_error_t drv_qm_fpm_buffer_reservation_profile_cfg(uint8_t profile_id, uint1
 
     err = ag_drv_qm_global_cfg_qm_fpm_buffer_grp_res_get(reg_idx, &res_thr[0], &res_thr[1], &res_thr[2], &res_thr[3]);
     
-    /* calculate KB threshold. We can't take a worst case of single PD per token*/
-    range_check = ((uint32_t)token_threshold) * p_dpi_cfg->fpm_buf_size / RDD_MBR_BUFFER_SIZE_QUANTUM;
+    /* calculate KB threshold. We can't take a worst case of single PD per token, in case of 1 - hard coded for 512*/
+    if (token_threshold == 1)
+        range_check = 1;
+    else
+        range_check = ((uint32_t)token_threshold) * p_dpi_cfg->fpm_buf_size / RDD_MBR_BUFFER_SIZE_QUANTUM;
     
     /* Test uint_8 compliance */
     if (range_check >= (1U<<8))
@@ -667,6 +695,8 @@ bdmf_error_t set_fpm_budget(int resource_num, int add, uint32_t reserved_packet_
     int dhd_rx_post_fpm = 0;
     unsigned int fpm_thr[NUM_OF_FPM_UG];
     qm_fpm_ug_thr fpm_ug_thr;
+    int fpm_tokens_remove_for_mbr = drv_qm_get_number_of_extra_mbr();
+    int total_available_tokens = TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens() - fpm_tokens_remove_for_mbr;
 
 #if defined(BCM6856) || defined(BCM63158_B0) || defined(DUAL_ISSUE)
     /* This section is not necessary here but we can keep it in case queue minimum buffer allocation will
@@ -719,7 +749,7 @@ bdmf_error_t set_fpm_budget(int resource_num, int add, uint32_t reserved_packet_
 #endif
 
     /* User defined token allocation. US test only since both US and DS were tested for non zero allocation at configuration */
-    if (p_dpi_cfg->us_fpm_tokens_allocation.total_fpm_tokens)
+    if (p_dpi_cfg->fpm_token_allocation_user_mode)
     {
         fpm_thr[FPM_DS_UG] = p_dpi_cfg->ds_fpm_tokens_allocation.total_fpm_tokens;
         fpm_thr[FPM_US_UG] = p_dpi_cfg->us_fpm_tokens_allocation.total_fpm_tokens;
@@ -728,9 +758,10 @@ bdmf_error_t set_fpm_budget(int resource_num, int add, uint32_t reserved_packet_
     }
     else /* Default configuration will apply */
     {
-        fpm_thr[FPM_DS_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * DS_FPM_UG_DEFAULT_PERCENTAGE;
-        fpm_thr[FPM_US_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * US_FPM_UG_DEFAULT_PERCENTAGE;
-        fpm_thr[FPM_WLAN_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * WLAN_FPM_UG_DEFAULT_PERCENTAGE;
+        fpm_thr[FPM_DS_UG] = (total_available_tokens / 100) * DS_FPM_UG_DEFAULT_PERCENTAGE;
+        fpm_thr[FPM_US_UG] = (total_available_tokens / 100) * US_FPM_UG_DEFAULT_PERCENTAGE;
+        fpm_thr[FPM_WLAN_UG] = (total_available_tokens /100) * WLAN_FPM_UG_DEFAULT_PERCENTAGE;
+        rdpa_system_group_allocation_defaults_set(US_FPM_UG_DEFAULT_PERCENTAGE, DS_FPM_UG_DEFAULT_PERCENTAGE, WLAN_FPM_UG_DEFAULT_PERCENTAGE);
 
 #if defined(CONFIG_DHD_RUNNER) && !defined(_CFE_)
         /* in case WLAN default configuration will apply */
@@ -738,35 +769,26 @@ bdmf_error_t set_fpm_budget(int resource_num, int add, uint32_t reserved_packet_
         {
             if (xepon_port_on)
             {
-                fpm_thr[FPM_DS_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * DS_FPM_UG_XEPON_PERCENTAGE;
-                fpm_thr[FPM_US_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * US_FPM_UG_XEPON_PERCENTAGE;
-                BUG_ON((((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * WLAN_FPM_UG_XEPON_PERCENTAGE) < dhd_rx_post_fpm);
-                fpm_thr[FPM_WLAN_UG] = (((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * WLAN_FPM_UG_XEPON_PERCENTAGE) - dhd_rx_post_fpm;
+                fpm_thr[FPM_DS_UG] = (total_available_tokens / 100) * DS_FPM_UG_XEPON_PERCENTAGE;
+                fpm_thr[FPM_US_UG] = (total_available_tokens / 100) * US_FPM_UG_XEPON_PERCENTAGE;
+                BUG_ON(((total_available_tokens / 100) * WLAN_FPM_UG_XEPON_PERCENTAGE) < dhd_rx_post_fpm);
+                fpm_thr[FPM_WLAN_UG] = ((total_available_tokens / 100) * WLAN_FPM_UG_XEPON_PERCENTAGE) - dhd_rx_post_fpm;
+                rdpa_system_group_allocation_defaults_set(US_FPM_UG_XEPON_PERCENTAGE, DS_FPM_UG_XEPON_PERCENTAGE, WLAN_FPM_UG_XEPON_PERCENTAGE);
             }
             else
             {
-                fpm_thr[FPM_DS_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * DS_FPM_UG_NO_XEPON_PERCENTAGE;
-                fpm_thr[FPM_US_UG] = ((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * US_FPM_UG_NO_XEPON_PERCENTAGE;
-                BUG_ON((((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * WLAN_FPM_UG_NO_XEPON_PERCENTAGE) < dhd_rx_post_fpm);
-                fpm_thr[FPM_WLAN_UG] = (((TOTAL_DYNAMIC_FPM - fpm_get_dqm_extra_fpm_tokens())/100) * WLAN_FPM_UG_NO_XEPON_PERCENTAGE) - dhd_rx_post_fpm;
+                fpm_thr[FPM_DS_UG] = (total_available_tokens / 100) * DS_FPM_UG_NO_XEPON_PERCENTAGE;
+                fpm_thr[FPM_US_UG] = (total_available_tokens / 100) * US_FPM_UG_NO_XEPON_PERCENTAGE;
+                BUG_ON(((total_available_tokens / 100) * WLAN_FPM_UG_NO_XEPON_PERCENTAGE) < dhd_rx_post_fpm);
+                fpm_thr[FPM_WLAN_UG] = ((total_available_tokens / 100) * WLAN_FPM_UG_NO_XEPON_PERCENTAGE) - dhd_rx_post_fpm;
+                rdpa_system_group_allocation_defaults_set(US_FPM_UG_NO_XEPON_PERCENTAGE, DS_FPM_UG_NO_XEPON_PERCENTAGE, WLAN_FPM_UG_NO_XEPON_PERCENTAGE);
             }
         }
 #endif
     }
 
     /* Update DS UG thresholds */
-#if defined(BCM6856) || defined(BCM63158_B0) || defined(DUAL_ISSUE)
-    fpm_ug_thr.higher_thr = fpm_thr[FPM_DS_UG] - (fpm_thr[FPM_DS_UG] * p_dpi_cfg->ds_fpm_tokens_allocation.excl_prio_rsv_percent) / 100;
-    /* check if total FPM allocated for all queues exceeds the global allocation */
-    if (ds_mbr * 100 > (fpm_thr[FPM_DS_UG] * p_dpi_cfg->ds_fpm_tokens_allocation.excl_prio_rsv_percent))
-    {
-        BDMF_TRACE_ERR("Not enough packet buffers for DS minimum buffer reservation. DS allocation=%d Total queues requirement=%d\n",
-            ((fpm_thr[FPM_DS_UG] * p_dpi_cfg->ds_fpm_tokens_allocation.excl_prio_rsv_percent) / 100), ds_mbr);
-        return BDMF_ERR_RANGE;
-    }
-#else
     fpm_ug_thr.higher_thr = fpm_thr[FPM_DS_UG];
-#endif
     fpm_ug_thr.mid_thr = fpm_thr[FPM_DS_UG] - (fpm_thr[FPM_DS_UG] * p_dpi_cfg->ds_fpm_tokens_allocation.excl_prio_rsv_percent) / 100;
     /* Certain percent from total allocation are reserved for high priority traffic */
     fpm_ug_thr.lower_thr = fpm_ug_thr.mid_thr - (fpm_thr[FPM_DS_UG] * p_dpi_cfg->ds_fpm_tokens_allocation.high_prio_rsv_percent) / 100;
@@ -782,18 +804,7 @@ bdmf_error_t set_fpm_budget(int resource_num, int add, uint32_t reserved_packet_
         return rc;
     
     /* Update US UG thresholds */
-#if defined(BCM6856) || defined(BCM63158_B0) || defined(DUAL_ISSUE)
-    fpm_ug_thr.higher_thr = fpm_thr[FPM_US_UG] - (fpm_thr[FPM_US_UG] * p_dpi_cfg->us_fpm_tokens_allocation.excl_prio_rsv_percent) / 100;
-    /* check if total FPM allocated for all queues exceeds the global allocation */
-    if (us_mbr * 100 > (fpm_thr[FPM_US_UG] * p_dpi_cfg->us_fpm_tokens_allocation.excl_prio_rsv_percent))
-    {
-        BDMF_TRACE_ERR("Not enough packet buffers for US minimum buffer reservation. US allocation=%d Total queues requirement=%d\n",
-            ((fpm_thr[FPM_DS_UG] * p_dpi_cfg->ds_fpm_tokens_allocation.excl_prio_rsv_percent) / 100), us_mbr);
-        return BDMF_ERR_RANGE;
-    }
-#else
     fpm_ug_thr.higher_thr = fpm_thr[FPM_US_UG];
-#endif
     fpm_ug_thr.mid_thr = fpm_thr[FPM_US_UG] - (fpm_thr[FPM_US_UG] * p_dpi_cfg->us_fpm_tokens_allocation.excl_prio_rsv_percent) / 100;
     /* Certain percent from total allocation are reserved for high priority traffic */
     fpm_ug_thr.lower_thr = fpm_ug_thr.mid_thr - (fpm_thr[FPM_US_UG] * p_dpi_cfg->us_fpm_tokens_allocation.high_prio_rsv_percent) / 100;

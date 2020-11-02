@@ -78,14 +78,15 @@ extern "C"
 /* SBPM */
 #define SBPM_BASE_ADDRESS                   0
 #define SBPM_MAX_BUFFER_NUMBER              0x7FF
-#define SBPM_INIT_OFFSET                    (SBPM_MAX_BUFFER_NUMBER - 2) /* last 2 buffers used for tunneling */
+#define SBPM_PRE_ALLOCTED_BUFFERS_NUMBER    2
+#define SBPM_INIT_OFFSET                    (SBPM_MAX_BUFFER_NUMBER - SBPM_PRE_ALLOCTED_BUFFERS_NUMBER) /* last 2 buffers used for tunneling */
 #define SBPM_UG0_BN_THRESHOLD               0x3FD
 #define SBPM_UG0_EXCL_LOW_THRESHOLD         0x384
 #define SBPM_UG0_EXCL_LOW_HIST              0x14
 #define SBPM_UG1_BN_THRESHOLD               0x400
 #define SBPM_UG1_EXCL_LOW_THRESHOLD         0x100
 #define SBPM_UG1_EXCL_LOW_HIST              0x14
-#define SBPM_MAX_NUM_OF_BNS                 2048
+#define SBPM_MAX_NUM_OF_BNS                 ((SBPM_MAX_BUFFER_NUMBER + 1) - SBPM_PRE_ALLOCTED_BUFFERS_NUMBER)
 #define TUNNEL_BN_FIRST                     (SBPM_MAX_BUFFER_NUMBER - 1)
 
 /* BBH_RX */

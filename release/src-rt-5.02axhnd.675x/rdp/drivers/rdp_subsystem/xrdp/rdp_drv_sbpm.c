@@ -415,7 +415,7 @@ error:
 
 int drv_sbpm_cli_debug_get(bdmf_session_handle session, bdmfmon_cmd_parm_t parm[], uint16_t n_parms)
 {
-    static uint32_t sbpm_debug[] = {cli_sbpm_bac, cli_sbpm_regs_sbpm_ug_status};
+    static uint32_t sbpm_debug[] = {cli_sbpm_bac, cli_sbpm_regs_sbpm_ug_status, cli_sbpm_regs_sbpm_ug_bac_max};
 
     /* get sbpm debug information */
     bdmf_session_print(session, "\nSBPM debug:\n");
@@ -424,9 +424,118 @@ int drv_sbpm_cli_debug_get(bdmf_session_handle session, bdmfmon_cmd_parm_t parm[
     return drv_sbpm_cli_sanity_check(session, parm, n_parms);
 }
 
+#if defined BCM6858 || defined BCM6856
+static void drv_sbpm_parse_irr(bdmf_session_handle session, uint8_t cmd_sa, uint8_t cmd_ta, uint32_t cmd_data_22to0, uint32_t cmd_data_23to63)
+{
+    if (cmd_sa || cmd_ta || cmd_data_22to0 || cmd_data_23to63) {
+        bdmf_session_print(session, "\nError:SBPM: Interrupt information register\n");
+
+        switch(cmd_sa) {
+        case BB_ID_RNR0 ... BB_ID_RNR15:
+            bdmf_session_print(session, "Runner core %d ", cmd_sa);
+            break;
+
+#ifdef BCM6858
+        case BB_ID_RX_BBH_0 ... BB_ID_TX_BBH_6:
+            if (cmd_sa % 2)
+                bdmf_session_print(session, "BBH RX LAN %d ", (cmd_sa - BB_ID_RX_BBH_0) / 2);
+            else
+                bdmf_session_print(session, "BBH TX LAN %d ", (cmd_sa - BB_ID_TX_BBH_0) / 2);
+#endif
+#ifdef BCM6856
+        case BB_ID_RX_BBH_0 ... BB_ID_RX_BBH_5:
+           if (cmd_sa == BB_ID_TX_LAN)
+               bdmf_session_print(session, "BBH TX LAN");
+           else
+               bdmf_session_print(session, "BBH RX LAN %d ", (cmd_sa - BB_ID_RX_BBH_0) / 2);
+#endif
+            break;
+
+#ifdef BCM6858
+        case BB_ID_RX_BBH_7:
+            bdmf_session_print(session, "BBH RX LAN7 ");
+            break;
+
+        case BB_ID_TX_BBH_7:
+            bdmf_session_print(session, "BBH TX LAN7 ");
+            break;
+#endif
+#ifdef BCM6856
+        case BB_ID_RX_PON:
+#endif
+#ifdef BCM6858
+        case BB_ID_RX_PON_ETH:
+#endif
+            bdmf_session_print(session, "BBH RX WAN ");
+            break;
+
+        case BB_ID_TX_PON_ETH_PD ... BB_ID_TX_PON_ETH_STAT:
+            bdmf_session_print(session, "BBH TX WAN ");
+            break;
+
+        case BB_ID_QM_CP_SDMA ... BB_ID_QM_CP_MACHINE :
+            bdmf_session_print(session, "QM ");
+            break;
+
+        default:
+            bdmf_session_print(session, "SA not supported ");
+            break;
+        }
+
+        bdmf_session_print(session, "to SBPM ");
+
+        switch(cmd_ta) {
+        case 0:
+            bdmf_session_print(session, "multi get next BN = 0x%x\n", cmd_data_22to0);
+            break;
+
+        case 1:
+            bdmf_session_print(session, "alloc\n");
+            break;
+
+        case 2:
+            bdmf_session_print(session, "multicast increment BN = 0x%x value= %d\n",
+                               cmd_data_22to0 & 0x3FFF, (cmd_data_22to0 & 0x3FC000) >> 14);
+            break;
+
+        case 3:
+            bdmf_session_print(session, "free with context BN = 0x%x last BN = 0x%x\n",
+                               cmd_data_22to0 & 0x3FFF, (cmd_data_23to63 & 0x7FFE00) >> 9);
+            break;
+
+        case 4:
+            bdmf_session_print(session, "connect BN = 0x%x next BN = 0x%x\n",
+                               cmd_data_22to0 & 0x3FFF,
+                               (cmd_data_22to0 & 0x7F0000) >> 16 | (cmd_data_23to63 & 0x7F) << 7);
+            break;
+
+        case 5:
+            bdmf_session_print(session, "get next BN = 0x%x\n", cmd_data_22to0);
+            break;
+
+        case 6:
+            bdmf_session_print(session, "free without context BN = 0x%x  bb_src_id = %d\n",
+                               cmd_data_22to0 & 0x3FFF, (cmd_data_22to0 & 0xFC000) >> 14);
+            break;
+
+        case 7:
+            bdmf_session_print(session, "ingress to egress number of buffers = %d\n",
+                               cmd_data_22to0 & 0x7F);
+            break;
+        }
+    }
+}
+#endif
+
 int drv_sbpm_cli_sanity_check(bdmf_session_handle session, bdmfmon_cmd_parm_t parm[], uint16_t n_parms)
 {
     sbpm_intr_ctrl_isr intr_ctrl_isr = {};
+#if defined BCM6858 || defined BCM6856
+    uint8_t cmd_sa;
+    uint8_t cmd_ta;
+    uint32_t cmd_data_22to0;
+    uint32_t cmd_data_23to63;
+#endif
     int rc;
 
     rc = ag_drv_sbpm_intr_ctrl_isr_get(&intr_ctrl_isr);
@@ -448,6 +557,13 @@ int drv_sbpm_cli_sanity_check(bdmf_session_handle session, bdmfmon_cmd_parm_t pa
         if (intr_ctrl_isr.cnct_null)
             bdmf_session_print(session, "\nError:SBPM: connect null buffer\n");
     }
+
+#if defined BCM6858 || defined BCM6856
+    rc = rc ? rc : ag_drv_sbpm_regs_sbpm_iir_low_get(&cmd_sa, &cmd_ta, &cmd_data_22to0);
+    rc = rc ? rc : ag_drv_sbpm_regs_sbpm_iir_high_get(&cmd_data_23to63);
+
+    drv_sbpm_parse_irr(session, cmd_sa, cmd_ta, cmd_data_22to0, cmd_data_23to63);
+#endif
 
     return rc;
 }

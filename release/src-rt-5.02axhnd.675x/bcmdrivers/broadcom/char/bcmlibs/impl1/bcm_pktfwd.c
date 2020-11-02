@@ -381,6 +381,7 @@ void
 pktlist_context_dump(pktlist_context_t * pktlist_context,
     bool dump_peer, bool dump_verbose)
 {
+    int32_t credits = ~0;
     uint32_t prio, dest;
     uint32_t total_len   = 0U;
 
@@ -401,7 +402,7 @@ pktlist_context_dump(pktlist_context_t * pktlist_context,
     if (dump_verbose == false)
         return;
 
-    printk(" DEST PRIO KEY  PACKETS\n");
+    printk(" DEST PRIO KEY  PACKETS    CREDITS\n");
     for (prio = 0U; prio < PKTLIST_PRIO_MAX; ++prio)
     {
         for (dest = 0U; dest < PKTLIST_DEST_MAX; ++dest)
@@ -409,7 +410,15 @@ pktlist_context_dump(pktlist_context_t * pktlist_context,
             pktlist = &pktlist_context->table->elem[prio][dest].pktlist;
             if (pktlist->len != 0)
             {
-                printk(PKTLIST_FMT "\n", PKTLIST_VAL(pktlist));
+#if defined(BCM_PKTFWD_FLCTL)
+                if (pktlist_context->fctable != PKTLIST_FCTABLE_NULL)
+                {
+                    credits = __pktlist_fctable_get_credits(pktlist_context,
+                                                            prio, dest);
+                }
+#endif /* BCM_PKTFWD_FLCTL */
+
+                printk(PKTLIST_FMT "    %d\n", PKTLIST_VAL(pktlist), credits);
                 total_len   += pktlist->len;
             }
         }
@@ -1691,6 +1700,7 @@ d3lut_dump(d3lut_t * d3lut)
 d3lut_elem_t * /* Convert key to element */
 d3lut_k2e(d3lut_t * d3lut, d3lut_key_t key)
 {
+	d3lut_elem_t * d3lut_elem;
     D3LUT_ASSERT((d3lut != D3LUT_NULL) && (d3lut_gp == d3lut));
     if (d3lut == D3LUT_NULL) {
         return D3LUT_ELEM_NULL;
@@ -1703,8 +1713,17 @@ d3lut_k2e(d3lut_t * d3lut, d3lut_key_t key)
 
     D3LUT_ASSERT(key.index < D3LUT_ELEM_TOT);
 
-    return D3LUT_TABLE_ELEM(d3lut->elem_base, key.index);
+    d3lut_elem = D3LUT_TABLE_ELEM(d3lut->elem_base, key.index);
 
+	/* compare the retrieved key with the supplied key to ensure the provided
+	 * entry is not stale
+	 */
+	if (d3lut_elem->key.v16 == key.v16) {
+		return d3lut_elem;
+	} else {
+        D3LUT_WARN("Stale d3lut_elem key in packet");
+		return D3LUT_ELEM_NULL;
+	}
 }   /* d3lut_k2e() */
 
 
