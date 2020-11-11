@@ -103,7 +103,7 @@ Networking:
    - Policy routing for the OpenVPN client (based on source or
      destination IPs), sometimes referred to as "selective routing")
    - DNSSEC support
-   - fq_codel queue discipline for QoS
+   - fq_codel queue discipline for Traditional QoS
    - Full cone NAT support (HND devices only)
    - Detailed wireless troubleshooting information (HND devices
      only)
@@ -172,6 +172,10 @@ wiki:
 
 https://github.com/RMerl/asuswrt-merlin.ng/wiki
 
+There are also support forums hosted at SNBForums.
+
+Firmware support: https://www.snbforums.com/forums/asuswrt-merlin.42/
+AddOns support: https://www.snbforums.com/forums/asuswrt-merlin-addons.60/
 
 
 Source code

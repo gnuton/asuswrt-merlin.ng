@@ -461,10 +461,12 @@ add_option (char *p[], int line, int unit)
 			nvram_pf_set(prefix, "comp", "no");
 		}
 	}
+#if 0
 	else if (streq (p[0], "cipher") && p[1])
 	{
 		nvram_pf_set(prefix, "cipher", p[1]);
 	}
+#endif
 	else if (streq (p[0], "auth") && p[1])
 	{
 		nvram_pf_set(prefix, "digest", p[1]);
@@ -711,10 +713,10 @@ void parse_openvpn_status(int unit)
 	char nv_name[32] = "";
 	char prefix_vpn[] = "vpn_serverXX_";
 
-	sprintf(buf, "/etc/openvpn/server%d/status", unit);
+	snprintf(buf, sizeof(buf), "/etc/openvpn/server%d/status", unit);
 	fpi = fopen(buf, "r");
 
-	sprintf(buf, "/etc/openvpn/server%d/client_status", unit);
+	snprintf(buf, sizeof(buf), "/etc/openvpn/server%d/client_status", unit);
 	fpo = fopen(buf, "w");
 
 	snprintf(prefix_vpn, sizeof(prefix_vpn), "vpn_server%d_", unit);

@@ -489,7 +489,11 @@ void add_EbtablesRules_BW()
 
 			if(nvram_get_int(strcat_r(wlv, "_bss_enabled", tmp)) && 
 			   nvram_get_int(strcat_r(wlv, "_bw_enabled" , tmp))) {
+#ifdef RTCONFIG_AMAS_WGN
 				WGN_ifname(i, j, wl_if);
+#else
+				get_wlxy_ifname(i, j, wl_if);
+#endif
 				if (!strcmp(wl_if, "")) continue;
 				snprintf(mssid_mark, sizeof(mssid_mark), "%d", guest_mark);
 				eval("ebtables", "-t", "nat", "-D", "PREROUTING",  "-i", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
@@ -564,6 +568,7 @@ static int add_qos_rules(char *pcWANIF)
 	/* action and manual_return */
 	char *action = NULL;
 	int model = get_model();
+	int evalRet;
 
 	switch (model) {
 		case MODEL_RTAC56S:
@@ -1024,7 +1029,8 @@ static int add_qos_rules(char *pcWANIF)
 	fclose(fn);
 
 	chmod(mangle_fn, 0700);
-	eval("iptables-restore", (char*)mangle_fn);
+	evalRet = eval("iptables-restore", (char*)mangle_fn);
+	rule_apply_checking("qos", __LINE__, (char*)mangle_fn, evalRet);
 #ifdef RTCONFIG_IPV6
 	if (fn_ipv6 && ipv6_enabled())
 	{
@@ -1416,6 +1422,7 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 	char addr_new[40];
 	int addr_type;
 	char *action = NULL;
+	int evalRet;
 
 	if ((fn = fopen(mangle_fn, "w")) == NULL) return -2;
 	del_iQosRules(); // flush all rules in mangle table
@@ -1530,7 +1537,8 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 	fprintf(fn, "COMMIT\n");
 	fclose(fn);
 	chmod(mangle_fn, 0700);
-	eval("iptables-restore", (char*)mangle_fn);
+	evalRet = eval("iptables-restore", (char*)mangle_fn);
+	rule_apply_checking("qos", __LINE__, (char*)mangle_fn, evalRet);
 	QOSDBG("[BWLIT] Create iptables rules done.\n");
 
 	/* Setup guest network's ebtables rules */
@@ -2197,9 +2205,11 @@ int add_iQosRules(char *pcWANIF)
 {
 	int status = 0;
 
+#if 0
 	if (IS_AQOS()) {
 		set_codel_patch();
 	}
+#endif
 
 	if (pcWANIF == NULL || nvram_get_int("qos_enable") != 1 || nvram_get_int("qos_type") == 1) return -1;
 	
@@ -2282,6 +2292,7 @@ void ForceDisableWLan_bw(void)
 	QOSDBG("[BWLIT] ALL Guest Netwok of Bandwidth Limiter has been Didabled.\n");
 }
 
+#if 0
 #ifdef RTCONFIG_BCMARM
 void set_codel_patch(void)
 {
@@ -2312,3 +2323,4 @@ void remove_codel_patch(void)
 #endif
 #endif
 
+#endif

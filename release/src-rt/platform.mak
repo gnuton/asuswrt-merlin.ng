@@ -128,6 +128,10 @@ define platformRouterOptions
 		sed -i "/RTCONFIG_HAS_5G_2/d" $(1); \
 		echo "RTCONFIG_HAS_5G_2=y" >>$(1); \
 	fi; \
+	if [ "$(BCM_OAM)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM_OAM/d" $(1); \
+		echo "RTCONFIG_BCM_OAM=y" >>$(1); \
+	fi; \
 	)
 endef
 
@@ -434,7 +438,11 @@ define platformKernelConfig
 				(cd rdp/projects/WL4908/target/rdpa_gpl; rm -rf include; ln -sf ../../../../../rdp/drivers/rdpa_gpl/include include); \
 				(cd rdp/projects/WL4908/target/bdmf; rm -rf framework; ln -sf ../../../../../rdp/drivers/bdmf/framework framework); \
 				(cd rdp/projects/WL4908/target/bdmf; rm -rf system; ln -sf ../../../../../rdp/drivers/bdmf/system system); \
-				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_enet.o $(HND_SRC)/bcmdrivers/opensource/net/enet/impl5/bcm_enet$(PRBM_EXT).o ; \
+				if [ "$(HND_ROUTER_AX)" = "y" ]; then \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_enet.o $(HND_SRC)/bcmdrivers/opensource/net/enet/impl7/bcm_enet$(PRBM_EXT).o ; \
+				else \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_enet.o $(HND_SRC)/bcmdrivers/opensource/net/enet/impl5/bcm_enet$(PRBM_EXT).o ; \
+				fi; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wfd.o $(HND_SRC)/bcmdrivers/opensource/net/wfd/impl1/wfd$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmpdc.o $(HND_SRC)/bcmdrivers/opensource/char/pdc/impl1/bcmpdc$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmspu.o $(HND_SRC)/bcmdrivers/opensource/char/spudd/impl4/bcmspu$(PRBM_EXT).o ; \
@@ -460,7 +468,6 @@ define platformKernelConfig
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmvlan.o $(HND_SRC)/bcmdrivers/broadcom/char/vlan/impl1/bcmvlan$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/chipinfo.o $(HND_SRC)/bcmdrivers/broadcom/char/chipinfo/impl1/chipinfo$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/cmdlist.o $(HND_SRC)/bcmdrivers/broadcom/char/cmdlist/impl1/cmdlist$(PRBM_EXT).o ; \
-				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmlibs.o $(HND_SRC)/bcmdrivers/broadcom/char/bcmlibs/impl1/bcmlibs$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/nciTMSkmod.o $(HND_SRC)/bcmdrivers/broadcom/char/tms/impl1/nciTMSkmod$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/pktflow.o $(HND_SRC)/bcmdrivers/broadcom/char/pktflow/impl1/pktflow$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/pwrmngtd.o $(HND_SRC)/bcmdrivers/broadcom/char/pwrmngt/impl1/pwrmngtd$(PRBM_EXT).o ; \
@@ -475,7 +482,6 @@ define platformKernelConfig
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/igs.o $(HND_SRC)/bcmdrivers/broadcom/net/wl/bcm9$(BCM_CHIP)/main/src/igs/linux/prebuilt/igs.o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wl.o $(HND_SRC)/bcmdrivers/broadcom/net/wl/bcm9$(BCM_CHIP)/main/src/wl/linux/prebuilt/wl_apsta.o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wl.o $(HND_SRC)/bcmdrivers/broadcom/net/wl/bcm9$(BCM_CHIP)/main/src/wl/linux/prebuilt/wl.o ; \
-				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/otp.o $(HND_SRC)/bcmdrivers/broadcom/char/otp/impl1/otp$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmwifi_rates.h $(HND_SRC)/bcmdrivers/broadcom/net/wl/bcm9$(BCM_CHIP)/dhd/src/shared/bcmwifi/include/bcmwifi_rates.h ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wlc_types.h $(HND_SRC)/bcmdrivers/broadcom/net/wl/bcm9$(BCM_CHIP)/main/src/wl/sys/ ; \
 			fi; \

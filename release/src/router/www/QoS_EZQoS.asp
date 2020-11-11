@@ -273,6 +273,8 @@ var dsl_DataRateUp = parseInt("<% nvram_get("dsllog_datarateup"); %>");
 var fc_disable_orig = '<% nvram_get("fc_disable"); %>';
 var runner_disable_orig = '<% nvram_get("runner_disable"); %>';
 
+var qos_xobw_orig = parseInt(httpApi.nvramGet(["qos_xobw"], true).qos_xobw);
+var qos_xobw1_orig = parseInt(httpApi.nvramGet(["qos_xobw1"], true).qos_xobw1);
 
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");
 var category_title = ["", "<#Adaptive_Game#>", "<#Adaptive_Stream#>", "<#Adaptive_Message#>", "<#Adaptive_WebSurf#>","<#Adaptive_FileTransfer#>", "<#Adaptive_Others#>", "<#Adaptive_eLearning#>"];
@@ -286,8 +288,7 @@ var machine_name = '<% get_machine_name(); %>';
 var codel_support = (machine_name.search(/arm|aarch64/) == -1) ? false : true;
 
 /* ATM, overhead, label */
-var overhead_presets = [["0", "0", ""],
-			["0", "4", "Ethernet VLAN"],
+var overhead_presets = [["0", "4", "Ethernet VLAN"],
 			["0", "18", "Cable (DOCSIS)"],
 			["0", "27", "PPPoE VDSL"],
 			["0", "19", "Bridged/IPoE VDSL"],
@@ -394,12 +395,8 @@ function initial(){
 		document.getElementById("manu").checked = true;
 	}
 
-	if(codel_support){
-		free_options(document.form.qos_overhead_preset);
-		add_option(document.form.qos_overhead_preset, "Select preset:", 0, 1);
-		for(var i = 1; i < overhead_presets.length; i++) {
-			add_option(document.form.qos_overhead_preset, overhead_presets[i][2], i, 0);
-		}
+	if(codel_support) {
+		build_overhead_presets()
 	}
 
 	var qos_type = document.form.qos_type.value;
@@ -438,7 +435,7 @@ function initial(){
 				document.getElementById('settingSelection').style.display = "none";
 			}
 
-			if((codel_support) && (document.getElementById('qos_sched').value != "0")){
+			if((codel_support) && (qos_type != 1) && (document.getElementById('qos_sched').value != "0")){
 				document.getElementById('qos_overhead_tr').style.display = "";
 			}
 
@@ -650,11 +647,28 @@ function validForm(){
 				document.form.ibw.value = 0;
 			}
 
+			if(qos_xobw_orig > 0){
+				if((qos_xobw_orig/1024).toFixed(2) < document.form.obw.value){
+					alert("<#value_lower_than#> "+ (qos_xobw_orig/1024).toFixed(2));
+					document.form.obw.focus();
+					document.form.obw.select();
+					return false;
+				}
+			}
 			document.form.qos_obw.disabled = false;
 			document.form.qos_ibw.disabled = false;
 			document.form.qos_obw.value = document.form.obw.value*1024;
 			document.form.qos_ibw.value = document.form.ibw.value*1024;
 			if(mtwancfg_support) {
+
+				if(qos_xobw1_orig > 0){
+					if((qos_xobw1_orig/1024).toFixed(2) < document.form.obw1.value){
+						alert("<#value_lower_than#> "+(qos_xobw1_orig/1024).toFixed(2));
+						document.form.obw1.focus();
+						document.form.obw1.select();
+						return false;
+					}
+				}
 				document.form.qos_obw1.disabled = false;
 				document.form.qos_ibw1.disabled = false;
 				document.form.qos_obw1.value = document.form.obw1.value*1024;
@@ -828,8 +842,9 @@ function change_qos_type(value){
 			document.getElementById('GeForce_type').checked = false;
 		document.getElementById('list_table').style.display = "none";
 		if (codel_support) {
-			document.getElementById('qos_sched_tr').style.display = "";
-			change_scheduler(document.form.qos_sched.value);
+			document.getElementById('qos_sched_tr').style.display = "none";
+			document.getElementById('qos_overhead_tr').style.display = "none";
+//			change_scheduler(document.form.qos_sched.value);
 		}
 		if(document.form.qos_type_orig.value == 1 && document.form.qos_enable_orig.value != 0)
 			document.form.action_script.value = "restart_qos;restart_firewall";
@@ -1527,9 +1542,35 @@ function setGroup(name){
 	hideClients_Block();
 }
 
-function set_overhead(obj){
-	document.getElementById('qos_overhead').value = overhead_presets[obj.value][1];
-	document.getElementById('qos_atm_x').checked = (overhead_presets[obj.value][0] == "1" ? true : false);
+function build_overhead_presets(){
+	var code = "";
+	for(var i = 0; i < overhead_presets.length; i++) {
+		code += '<a><div onclick="set_overhead(' + i +');">' + overhead_presets[i][2] + '</div></a>';
+	}
+
+	document.getElementById("overhead_presets_list").innerHTML += code;
+	$(".ovh_pull_arrow").show();
+}
+
+function pullOverheadList(_this) {
+	event.stopPropagation();
+	var $element = $("#overhead_presets_list");
+	var isMenuopen = $element[0].offsetWidth > 0 || $element[0].offsetHeight > 0;
+	if(isMenuopen == 0) {
+		$(_this).attr("src","/images/arrow-top.gif");
+		$element.show();
+	}
+	else {
+		$(_this).attr("src","/images/arrow-down.gif");
+		$element.hide();
+	}
+}
+
+function set_overhead(entry){
+	document.getElementById('qos_overhead').value = overhead_presets[entry][1];
+	document.getElementById('qos_atm_x').checked = (overhead_presets[entry][0] == "1" ? true : false);
+	document.getElementById("ovh_pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('overhead_presets_list').style.display='none';
 }
 
 function change_scheduler(value){
@@ -1709,7 +1750,7 @@ function change_scheduler(value){
 								<td valign="top">
 									<table style="margin-left:3px;" width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr id="GeForce_upnp" style="display: none;">
-											<th>Enable GeForce NOW QoS UPnP control</th>
+											<th><#GeForce_NOW_itemname#></th>
 											<td colspan="2">
 												<input type="radio" name="nvgfn_enable" class="input" value="1" <% nvram_match("nvgfn_enable", "1", "checked"); %>><#checkbox_Yes#>
 												<input type="radio" name="nvgfn_enable" class="input" value="0" <% nvram_match("nvgfn_enable", "0", "checked"); %>><#checkbox_No#>
@@ -1807,10 +1848,10 @@ function change_scheduler(value){
 										<tr id="qos_overhead_tr" style="display:none">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50, 28);">WAN packet overhead</a></th>
 											<td colspan="2">
-												<select name="qos_overhead_preset" class="input_option" onchange="set_overhead(this);">
-												</select>
-												<input type="text" maxlength="4" class="input_6_table" name="qos_overhead" id="qos_overhead" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, -127, 128);" value="<% nvram_get("qos_overhead"); %>" style="margin-left:20px;">
-												<input type="checkbox" name="qos_atm_x" id="qos_atm_x" <% nvram_match("qos_atm", "1", "checked"); %>>ATM</input>
+												<input type="text" maxlength="4" class="input_6_table" name="qos_overhead" id="qos_overhead" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, -127, 128);" value="<% nvram_get("qos_overhead"); %>" style="float:left;">
+												<img id="ovh_pull_arrow" class="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullOverheadList(this);">
+												<div id="overhead_presets_list" style="height:auto;" class="dns_server_list_dropdown"></div>
+												<input style="margin-left:40px;" type="checkbox" name="qos_atm_x" id="qos_atm_x" <% nvram_match("qos_atm", "1", "checked"); %>>ATM</input>
 											</td>
 										</tr>
 										<tr id="wan_1_tr" style="display:none">

@@ -153,8 +153,8 @@ int	hwa_txpost_schedcmd_flags_update(struct hwa_dev *dev,
  * See frameid mismatch (txs->frameid 0xa5c1 txh->TxFrameID 0x65c1)
  * when set HWA_TXFIFO_LIMIT_THRESHOLD to 1024
  */
-#define HWA_TXFIFO_LIMIT_THRESHOLD      512
-#define HWA_TXFIFO_EMPTY_THRESHOLD      4
+#define HWA_TXFIFO_LIMIT_THRESHOLD      63
+#define HWA_TXFIFO_EMPTY_THRESHOLD      73
 
 // Configure a TxFIFO's pkt and aqm descriptor ring context in HWA AXI memory
 int     hwa_txfifo_config(struct hwa_dev *dev, uint32 core, uint32 fifo_idx,

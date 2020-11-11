@@ -18,12 +18,16 @@ Asuswrt-Merlin 386/NG Changelog
          considered deprecated, and will be removed most likely
          in OpenVPN 2.6, for security reasons.
   - NEW: Added tls-crypt-v2 support to OpenVPN clients.
-  - UPDATED: Merged GPL 386_39179 (beta GPL from Asus).
-  - UPDATED: Merged 386_39179 binary blobs for RT-AC86U,
-             RT-AC68U, RT-AC5300 and RT-AX88U.
-  - UPDATED: Updated to OpenVPN 2.5.0 Beta 3.  Note that OpenVPN
+  - UPDATED: Merged GPL 386_40577 (beta GPL from Asus).
+  - UPDATED: Openssl to 1.1.1h.
+  - UPDATED: Updated to OpenVPN 2.5.0.  Note that OpenVPN
              2.4.0 or newer is now required by the exported
              client config file.
+  - UPDATED: nano to 5.2.
+  - UPDATED: curl to 7.72.0.
+  - UPDATED: zlib to 1.2.11.
+  - UPDATED: lz4 to 1.9.2.
+  - UPDATED: e2fsprogs to 1.45.6.
   - CHANGED: firmware update checks are no longer using the
              server address stored in nvram, for security
              purposes.  Devs who were using that nvram
@@ -32,8 +36,23 @@ Asuswrt-Merlin 386/NG Changelog
   - CHANGED: The old legacy cipher setting is now only available
              when running with static key authentication.
   - CHANGED: Tweaks to the OpenVPN webui layout
+  - CHANGED: OpenVPN clients will now NAT all outbound traffic,
+             regardless of the source subnet.
+  - CHANGED: Reworked the display of DNSPrivacy presets
+  - CHANGED: Added AdGuard (ad blocking) and CIRA Canadian Shield
+             (non US-based service) to the DNSPrivacy presets.
+  - CHANGED: At boot time, OpenVPN killswitch will only be
+             applied for clients set to auto-start with WAN.
+  - CHANGED: Increased number of available mount points for addon
+             webpages to 20.
+  - FIXED: DHCP could fail to renew its lease with some ISPs when
+           Trend Micro engine was enabled (workaround provided
+           by Asus)
   - REMOVED: Option to disable NCP.  The NCP cipher list is
              now used both for NCP and non-NCP endpoints.
+  - REMOVED: fq_codel support for Adaptive QoS.  Due to a change
+             in how Trend Micro configures QoS, it is no longer
+             possible to intercept these to inject fq_codel.
 
 
 384.19 (14-Aug-2020)

@@ -57,10 +57,6 @@
 extern char *strsep(char **stringp, char *delim);
 #endif
 
-#ifdef HND_ROUTER
-#include <shared.h>
-#endif
-
 /* CGI hash table */
 static struct hsearch_data htab;
 
@@ -93,7 +89,7 @@ get_cgi(char *name)
 	if (!htab.__tab)
 #else
 	if (!htab.table)
-#endif		
+#endif
 		return NULL;
 
 	e.key = name;
@@ -150,7 +146,7 @@ set_cgi(char *name, char *value)
 	if (!htab.__tab)
 #else
 	if (!htab.table)
-#endif		
+#endif
 		return;
 
 	e.key = name;

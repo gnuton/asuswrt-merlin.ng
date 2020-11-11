@@ -148,8 +148,7 @@ helpcontent[7] = new Array("",
 							 "The IP address of the nameserver.",
 							 "TLS Port  (defaults to 853 if left empty).",
 							 "Authentication domain name checked against the server certificate.",
-							 "(Optional) Base64 hash value of the sha256 fingerprint of the public key.",
-							 "Pre-configured servers, select one to prefill the fields below for you, then click on the Add button to add it to the list.");	//41
+							 "(Optional) Base64 hash value of the sha256 fingerprint of the public key.");	// 40
 
 //Firewall
 helpcontent[8] = new Array("",
@@ -364,7 +363,7 @@ helpcontent[32] = new Array("",
 							"Add an additional layer of HMAC authentication on top of the TLS control channel to protect against DoS attacks. An OpenVPN static key will be used.",/*untranslated*/	//10
 							"This directive will set up an OpenVPN server which will allocate addresses to clients out of the given network/netmask. The server itself will take the \".1\" address of the given network for use as the server-side end‐point of the local TUN/TAP interface.",/*untranslated*/
 							"The IP address of the local and remote VPN endpoint in p2p mode.",/*untranslated*/
-							"<b>Yes</b>: Use LAN DHCP server to allocate IP address;<br> <b>No</b>: Allocate IP address from the Address Pool",/*untranslated*/
+							"<b><#checkbox_Yes#></b>: Use LAN DHCP server to allocate IP address;<br> <b><#checkbox_No#></b>: Allocate IP address from the Address Pool",/*untranslated*/
 							"The first address and the last address in the pool to be assigned to clients.",/*untranslated*/							
 							"Response the DNS query from clients.",/*untranslated*/
 							"In server mode, provide DNS information to clients.",/*untranslated*/
@@ -384,7 +383,8 @@ helpcontent[32] = new Array("",
 
 //IPSec
 helpcontent[33] = new Array("",
-							"<#vpn_ipsec_Key_Retries_Hint#>"
+							"<#vpn_ipsec_Key_Retries_Hint#>",
+							"<#vpn_ipsec_re_cert_hint#>"
 							);
 
 
