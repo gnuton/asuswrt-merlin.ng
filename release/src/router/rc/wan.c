@@ -1955,9 +1955,10 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 
 #ifdef RTCONFIG_DSL_REMOTE
 			if (get_dsl_prefix_by_wan_unit(unit, dsl_prefix, sizeof(dsl_prefix)) == 0)
-			(
+			{
 				if (nvram_pf_match(dsl_prefix, "proto", "ipoa"))
 					start_ipoa();
+			}
 #endif
 
 			/* MTU */
