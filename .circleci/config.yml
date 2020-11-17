@@ -71,10 +71,8 @@ jobs:
             env
             echo "----- CLEANING -----"
             make clean || echo "maybe already clean, so if it fails please continue"
-            echo "----- BUILD (try 1) -----"
+            echo "----- BUILD -----"
             make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
-            echo "----- BUILD (try 2) -----"
-            make ${MODEL} | tee "/tmp/build.log"
             echo "------ DONE -----"
             ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
       - run:
