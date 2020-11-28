@@ -8,7 +8,7 @@
 #        REPO will contain the location of your local repository
 
 BUILD_NAME=$1
-REPO=/home/merlin/amng
+REPO=${REPO:-/home/merlin/amng}
 
 echo "*** Copying platform-specific files..."
 if [ "$BUILD_NAME" == "RT-AC88U" ] || [ "$BUILD_NAME" == "RT-AC3100" ] || [ "$BUILD_NAME" == "RT-AC5300" ]
@@ -115,11 +115,53 @@ then
 	cp release/src-rt-5.02axhnd.675x/wl/exe/prebuilt/* $REPO/release/src-rt-5.02axhnd.675x/wl/exe/prebuilt/
 	cp -a release/src/router/tuxera/broadcom_arm_ax_6750/* $REPO/release/src/router/tuxera/broadcom_arm_ax_6750/
 	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-AXHND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
+
+elif [ "$BUILD_NAME" == "DSL-AC68U" ]
+then
+	SDK=""
+	ARCH="_arm"
+	HND=""
+
+	mkdir -p $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/protect_srv/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/protect_srv/lib/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/aaews/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/wb/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/webdav_client/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/u2ec/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/asuswebstorage/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/bwdpi_source/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/bwdpi_source/asus_sql/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/asusnatnl/natnl/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/wlceventd/prebuilt/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/lighttpd-1.4.39/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/nt_center/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/nt_center/actMail/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/nt_center/lib/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/inotify/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/usbclient/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/dropbox_client/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/sysstate/log_daemon/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/sysstate/commands/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/dhd_monitor/prebuilt/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/networkmap/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/libasuslog/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/dblog/commands/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/dblog/daemon/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/sambaclient/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/wlc_nt/prebuild/$BUILD_NAME
+	mkdir -p $REPO/release/src/router/ftpclient/prebuild/$BUILD_NAME
+
+	#cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
+	#cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$BUILD_NAME/
+	#cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
+	#cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
+	#cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-BCM7.x-6.x $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 else
 	echo "Unrecognized BUILD_NAME!"
 	exit
 fi
-
 
 # Common to all
 
@@ -149,7 +191,7 @@ cp release/src/router/asuswebstorage/prebuild/* $REPO/release/src/router/asusweb
 cp release/src/router/inotify/prebuild/* $REPO/release/src/router/inotify/prebuild/$BUILD_NAME/
 cp release/src/router/libletsencrypt/prebuild/* $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME/
 cp release/src/router/libbcm/prebuilt/* $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME/
-
+ 
 # Common to most
 echo "*** Copying optional files - ignore errors"
 cp release/src/router/dblog/daemon/prebuild/* $REPO/release/src/router/dblog/daemon/prebuild/$BUILD_NAME/
@@ -171,6 +213,7 @@ cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt
 echo "*** Copying exceptions and special cases..."
 
 # HND exceptions
+# DSL-AC68 - FIXME - This overwrites RT-AC68U and other prebuilds
 if [ "$HND" == "" ]
 then
 	cp release/src/router/et$ARCH$SDK/prebuilt/* $REPO/release/src/router/et$ARCH$SDK/prebuilt/
@@ -183,13 +226,16 @@ fi
 if [ "$BUILD_NAME" != "RT-AX88U" ] && [ "$BUILD_NAME" != "RT-AX92U" ] && [ "$BUILD_NAME" != "RT-AX56U" ] && [ "$BUILD_NAME" != "RT-AX58U" ] && [ "$BUILD_NAME" != "RT-AX86U" ]
 then
 	cp release/src/router/acsd$ARCH$SDK/prebuilt/* $REPO/release/src/router/acsd$ARCH$SDK/prebuilt/
-	cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
 	cp -a release/src/router/libupnp$ARCH$SDK/* $REPO/release/src/router/libupnp$ARCH$SDK/
 	cp release/src/router/nas$ARCH$SDK/nas/prebuilt/* $REPO/release/src/router/nas$ARCH$SDK/nas/prebuilt/
 	cp release/src/router/wlconf$ARCH$SDK/prebuilt/* $REPO/release/src/router/wlconf$ARCH$SDK/prebuilt/
 	cp release/src/router/wps$ARCH$SDK/prebuilt/* $REPO/release/src/router/wps$ARCH$SDK/prebuilt/
 	cp release/src/router/wlceventd/prebuilt/* $REPO/release/src/router/wlceventd/prebuilt/$BUILD_NAME/
-	cp release/src/router/dhd_monitor/prebuilt/* $REPO/release/src/router/dhd_monitor/prebuilt/$BUILD_NAME/
+	if [ "$BUILD_NAME" != "DSL-AC68U" ] 
+	then
+		cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
+		cp release/src/router/dhd_monitor/prebuilt/* $REPO/release/src/router/dhd_monitor/prebuilt/$BUILD_NAME/
+	fi
 fi
 
 
@@ -202,6 +248,39 @@ fi
 # Anything newer than SDK6
 if [ "$SDK" != "" ]
 then
-		cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
-		cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
+	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
+	cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
 fi
+
+release/src/router/aaews/prebuild/DSL-AC68U/aaews
+release/src/router/aaews/prebuild/DSL-AC68U/mastiff
+release/src/router/asuswebstorage/prebuild/DSL-AC68U/asuswebstorage
+release/src/router/dropbox_client/prebuild/DSL-AC68U/dropbox_client
+release/src/router/ftpclient/prebuild/DSL-AC68U/ftpclient
+release/src/router/inotify/prebuild/DSL-AC68U/inotify
+release/src/router/libbcm/prebuilt/DSL-AC68U/libbcm.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_aicloud_auth.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_aicloud_invite.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_aicloud_sharelink.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_aidisk_access.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_captive_portal_uam.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_create_captcha_image.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_query_field_json.so
+release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/mod_smbdav.so
+release/src/router/networkmap/prebuild/DSL-AC68U/asusdiscovery
+release/src/router/networkmap/prebuild/DSL-AC68U/networkmap
+release/src/router/nt_center/actMail/prebuild/DSL-AC68U/nt_actMail
+release/src/router/nt_center/prebuild/DSL-AC68U/Notify_Event2NC
+release/src/router/nt_center/prebuild/DSL-AC68U/nt_center
+release/src/router/nt_center/prebuild/DSL-AC68U/nt_monitor
+release/src/router/protect_srv/lib/prebuild/DSL-AC68U/libptcsrv.so
+release/src/router/protect_srv/prebuild/DSL-AC68U/Send_Event2ptcsrv
+release/src/router/protect_srv/prebuild/DSL-AC68U/protect_srv
+release/src/router/sambaclient/prebuild/DSL-AC68U/sambaclient
+release/src/router/u2ec/prebuild/DSL-AC68U/u2ec
+release/src/router/usbclient/prebuild/DSL-AC68U/usbclient
+release/src/router/wb/prebuild/DSL-AC68U/libws.so
+release/src/router/webdav_client/prebuild/DSL-AC68U/webdav_client
+release/src/router/wlc_nt/prebuild/DSL-AC68U/libwlc_nt_client.so
+release/src/router/wlc_nt/prebuild/DSL-AC68U/wlc_nt
+release/src/router/wlceventd/prebuilt/DSL-AC68U/wlceventd
