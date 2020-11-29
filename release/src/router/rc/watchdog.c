@@ -4009,15 +4009,15 @@ void btn_check(void)
 #endif
 
 #if defined(RTCONFIG_LP5523)
-//				lp55xx_leds_proc(LP55XX_ALL_LEDS_OFF, LP55XX_PREVIOUS_STATE);
+				lp55xx_leds_proc(LP55XX_ALL_LEDS_OFF, LP55XX_PREVIOUS_STATE);
 #else
 				led_control_normal();
 #endif // RTCONFIG_LP5523
 
 				alarmtimer(NORMAL_PERIOD, 0);
 #if defined(RTCONFIG_BCM_CLED) && defined(RTCONFIG_SINGLE_LED)
-			bcm_cled_ctrl(BCM_CLED_WHITE, BCM_CLED_STEADY_NOBLINK);
-			nvram_unset("bcm_cled_in_wps");
+				bcm_cled_ctrl(BCM_CLED_WHITE, BCM_CLED_STEADY_NOBLINK);
+				nvram_unset("bcm_cled_in_wps");
 #endif
 #if defined(RTCONFIG_CONCURRENTREPEATER)
 				nvram_set_int("led_status", LED_WPS_FAIL);
@@ -4129,10 +4129,6 @@ void btn_check(void)
 		/* 0123456789 */
 		/* 1010101010 */
 #if defined(RTCONFIG_LP5523)
-/* obsoleted
-		if (btn_count_setup == 1)
-			lp55xx_leds_proc(LP55XX_WPS_SYNC_LEDS, LP55XX_WPS_PARAM_SYNC);
-*/
 #elif defined(RTCONFIG_FIXED_BRIGHTNESS_RGBLED)
 #elif defined(BLUECAVE)
 		if (!bc_wps_led) {
@@ -5031,7 +5027,7 @@ aggled_control(int mode)
 #endif
 
 #if !defined(RTAX55) && !defined(RTAX1800)
-static int lstatus = 0;
+static int lstatus = -1;
 #endif
 #ifndef RTCONFIG_LAN4WAN_LED
 #if defined(RTCONFIG_LED_BTN) || defined(RTCONFIG_WPS_ALLLED_BTN) || (!defined(RTCONFIG_WIFI_TOG_BTN) && !defined(RTCONFIG_QCA))
@@ -7031,7 +7027,7 @@ static void auto_firmware_check()
 #if defined(RTL_WTDOG)
 			stop_rtl_watchdog();
 #endif
-			nvram_set("webs_update_trigger", "watchdog");
+			nvram_set("webs_update_trigger", "WDG");
 			eval("/usr/sbin/webs_update.sh");
 #if defined(RTL_WTDOG)
 			start_rtl_watchdog();
@@ -8873,7 +8869,7 @@ wdp:
 		modem_flow_check(modem_unit);
 #endif
 #endif
-#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
+#if 0
 	auto_firmware_check();
 #elif RTCONFIG_MERLINUPDATE
 	auto_firmware_check_merlin();
@@ -8976,6 +8972,15 @@ watchdog_main(int argc, char *argv[])
 #endif
 	g_boost_status[BOOST_ACS_DFS_SW] = !!nvram_get_int("acs_dfs");
 	g_boost_status[BOOST_LED_SW] = !!nvram_get_int("AllLED");
+#endif
+#ifdef RPAX56
+	if(ATE_BRCM_FACTORY_MODE()) {
+		_dprintf("watchdog turn on factory mode led\n");
+                eval("sw", "0xff803014", "0xfffff75f");
+                eval("sw", "0xff803018", "0x00001000");
+		_bcm_cled_ctrl(BCM_CLED_BLUE, BCM_CLED_STEADY_NOBLINK);
+                eval("sw", "0xFF80301c", "0xc8a0");
+	}
 #endif
 
 #ifdef RTCONFIG_CONCURRENTREPEATER
@@ -9153,49 +9158,40 @@ int wdg_monitor_main(int argc, char *argv[])
 // Asuswrt-Merlin's code, without the auto-upgrade and debug logging
 void auto_firmware_check_merlin()
 {
-	static int period_retry = -1;
-	static int period = 5757;
+	int periodic_check = 0;
+	static int period_retry = 0;
+	static int bootup_check_period = 3;	//wait 3 times(90s) to check
 	static int bootup_check = 1;
-	static int periodic_check = 0;
-	int cycle_manual = nvram_get_int("fw_check_period");
-	int cycle = (cycle_manual > 1) ? cycle_manual : 5760;
 	int initial_state;
-
 	time_t now;
-	struct tm *tm;
+	struct tm local;
 	static int rand_hr, rand_min;
 
-	if (!nvram_get_int("ntp_ready") || !nvram_get_int("firmware_check_enable"))
+#if defined(RTAX58U) || defined(RTAX56U)
+	if (!strncmp(nvram_safe_get("territory_code"), "CX", 2))
 		return;
-
-	if (!bootup_check && !periodic_check)
-	{
-		time(&now);
-		tm = localtime(&now);
-
-		if ((tm->tm_hour == (2 + rand_hr)) &&	// every 48 hours at 2 am + random offset
-		    (tm->tm_min == rand_min))
-		{
-			periodic_check = 1;
-			period = -1;
-		}
+#endif
+	if (!nvram_get_int("ntp_ready")){
+		return;
 	}
 
-	if (bootup_check || periodic_check)
-		period = (period + 1) % cycle;
-	else
+	if(bootup_check_period > 0){	//bootup wait 90s to check
+		bootup_check_period--;
 		return;
+	}
 
-	if (!period || (period_retry < 2 && bootup_check == 0))
+	time(&now);
+	localtime_r(&now, &local);
+
+	if(local.tm_hour == (2 + rand_hr) && local.tm_min == rand_min) //at 2 am + random offset to check
+		periodic_check = 1;
+
+	if (bootup_check || periodic_check || period_retry!=0)
 	{
-		period_retry = (period_retry+1) % 3;
-		if (bootup_check)
-		{
-			bootup_check = 0;
-			rand_hr = rand_seed_by_time() % 4;
-			rand_min = rand_seed_by_time() % 60;
-		}
-
+#if defined(RTCONFIG_ASUSCTRL) && defined(GTAC5300)
+		if (periodic_check)
+			asus_ctrl_sku_update();
+#endif
 #ifdef RTCONFIG_ASD
 		//notify asd to download version file
 		if (pids("asd"))
@@ -9204,16 +9200,37 @@ void auto_firmware_check_merlin()
 		}
 #endif
 
+		if (bootup_check)
+		{
+			bootup_check = 0;
+			rand_hr = rand_seed_by_time() % 4;
+			rand_min = rand_seed_by_time() % 60;
+#ifdef RTCONFIG_AMAS
+			if(nvram_match("re_mode", "1"))
+				return;
+#endif
+		}
+
+		if (!nvram_get_int("firmware_check_enable") ||
+		    nvram_contains_word("rc_support", "noupdate"))
+			return;
+
+		period_retry = (period_retry+1) % 3;
 		initial_state = nvram_get_int("webs_state_flag");
 
-		if(!nvram_contains_word("rc_support", "noupdate")){
-			eval("/usr/sbin/webs_update.sh");
-		}
+#if defined(RTL_WTDOG)
+		stop_rtl_watchdog();
+#endif
+		eval("/usr/sbin/webs_update.sh");
+#if defined(RTL_WTDOG)
+		start_rtl_watchdog();
+#endif
 
 		if (nvram_get_int("webs_state_update") &&
 		    !nvram_get_int("webs_state_error") &&
 		    strlen(nvram_safe_get("webs_state_info_am")))
 		{
+			period_retry = 0;	// We got a response from server, no need to retry
 			if ((initial_state == 0) && (nvram_get_int("webs_state_flag") == 1))		// New update
 			{
 				char version[4], revision[3], build[16];

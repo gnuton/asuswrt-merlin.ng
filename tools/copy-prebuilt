@@ -48,7 +48,7 @@ then
 	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
 	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-BCM7.x-6.x $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 
-elif [ "$BUILD_NAME" == "RT-AC86U" ]
+elif [ "$BUILD_NAME" == "RT-AC86U" ] || [ "$BUILD_NAME" == "GT-AC2900" ]
 then
 	SDK="_94908hnd"
 	ARCH="_arm"
@@ -95,13 +95,12 @@ then
 	cp -a release/src/router/tuxera/broadcom$ARCH$HND/* $REPO/release/src/router/tuxera/broadcom$ARCH$HND/
 	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-HND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 
-elif [ "$BUILD_NAME" == "RT-AX88U" ] || [ "$BUILD_NAME" == "RT-AX92U" ] || [ "$BUILD_NAME" == "RT-AX86U" ]
+elif [ "$BUILD_NAME" == "RT-AX88U" ] || [ "$BUILD_NAME" == "RT-AX92U" ]
 then
 	SDK="_axhnd"
 	ARCH="_arm"
 	HND="_axhnd"
 
-#TODO: handle wl for AX86U
 	cp release/src-rt-5.02axhnd/wl/exe/prebuilt/* $REPO/release/src-rt-5.02axhnd/wl/exe/prebuilt/
 	cp -a release/src/router/tuxera/broadcom_arm_ax/* $REPO/release/src/router/tuxera/broadcom_arm_ax/
 	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-AXHND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
@@ -153,11 +152,20 @@ then
 	mkdir -p $REPO/release/src/router/wlc_nt/prebuild/$BUILD_NAME
 	mkdir -p $REPO/release/src/router/ftpclient/prebuild/$BUILD_NAME
 
-	#cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
-	#cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$BUILD_NAME/
-	#cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
-	#cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
-	#cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-BCM7.x-6.x $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
+	cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
+	cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$BUILD_NAME/
+	cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
+	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
+	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-BCM7.x-6.x $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
+elif [ "$BUILD_NAME" == "RT-AX86U" ]
+then
+	SDK="_axhnd"
+	ARCH="_arm"
+	HND="_axhnd"
+
+	cp release/src-rt-5.02p1axhnd.675x/wl/exe/prebuilt/* $REPO/release/src-rt-5.02p1axhnd.675x/wl/exe/prebuilt/
+	cp -a release/src/router/tuxera/broadcom_arm_ax/* $REPO/release/src/router/tuxera/broadcom_arm_ax/
+	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-AXHND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 else
 	echo "Unrecognized BUILD_NAME!"
 	exit
@@ -243,6 +251,10 @@ fi
 if [ "$BUILD_NAME" == "RT-AC88U" ]
 then
 	cp release/src/router/rtl_bin/prebuilt/* $REPO/release/src/router/rtl_bin/prebuilt/
+fi
+if [ "$BUILD_NAME" == "GT-AC2900" ]
+then
+        cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
 fi
 
 # Anything newer than SDK6

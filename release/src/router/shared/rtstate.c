@@ -1024,12 +1024,13 @@ void set_dualwan_type(char *type)
 void add_dualwan_type(char *type)
 {
 	char types[128];
+	int len;
 
 	strcpy(types, nvram_safe_get("wans_dualwan"));
 
-	if(strlen(types)==0) nvram_set("wans_dualwan", type);
+	if((len = strlen(types))==0) nvram_set("wans_dualwan", type);
 	else {
-		sprintf(types, "%s %s", types, type);
+		sprintf(types+len, " %s", type);
 		nvram_set("wans_dualwan", types);
 	}
 }
@@ -1232,7 +1233,7 @@ char *get_default_ssid(int unit, int subunit)
 #endif
 #if defined(DSL_AX82U) && !defined(RTCONFIG_BCM_MFG)
 		if (is_ax5400_i1())
-			sprintf((char *)ssidbase, "OPTUSGR%02x%02x%02x", mac_binary[3], mac_binary[4], mac_binary[5]);
+			sprintf((char *)ssidbase, "OPTUSGR%02X%02X%02X", mac_binary[3], mac_binary[4], mac_binary[5]);
 		else
 #endif
 			sprintf((char *)ssidbase, "%s_%02X", SSID_PREFIX, mac_binary[5]);
@@ -1371,7 +1372,6 @@ char *get_userdns_r(const char *prefix, char *buf, size_t buflen)
 	return buf;
 }
 
-#if defined(RTCONFIG_BROOP) || defined(RTCONFIG_AMAS_ETHDETECT)
 /* brif can be NULL for any bridge */
 int is_bridged(const char *brif, const char *ifname)
 {
@@ -1387,7 +1387,6 @@ int is_bridged(const char *brif, const char *ifname)
 
 	return l_exists(path) || d_exists(path) || f_exists(path);
 }
-#endif
 
 #ifdef RTCONFIG_BROOP
 

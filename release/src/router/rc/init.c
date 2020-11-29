@@ -96,7 +96,7 @@
 #endif
 
 #if defined(RTCONFIG_DWB)
-extern void dwb_init_settings(void);
+#include <amas_dwb.h>
 #endif
 
 static int fatalsigs[] = {
@@ -3194,7 +3194,7 @@ void chk_gmac3_excludes()
 //  wl_ifnames
 //  btn_xxxx_gpio
 //  led_xxxx_gpio
-
+static int reset_gpio = 1;
 int init_nvram(void)
 {
 	const int sw_mode __attribute__((unused)) = sw_mode();
@@ -3232,103 +3232,106 @@ int init_nvram(void)
 	memset(wan_ifaces, 0, sizeof(wan_ifaces));
 	memset(wl_ifaces, 0, sizeof(wl_ifaces));
 	nvram_set("rc_support", "");
-	nvram_set_int("btn_rst_gpio", 0xff);
-	nvram_set_int("btn_wps_gpio", 0xff);
-	nvram_set_int("btn_radio_gpio", 0xff);
-	nvram_set_int("led_pwr_gpio", 0xff);
-	nvram_set_int("led_wps_gpio", 0xff);
-	nvram_set_int("pwr_usb_gpio", 0xff);
-	nvram_set_int("pwr_usb_gpio2", 0xff);
-	nvram_set_int("led_usb_gpio", 0xff);
-	nvram_set_int("led_lan_gpio", 0xff);
-	nvram_set_int("led_lan1_gpio", 0xff);
-	nvram_set_int("led_lan2_gpio", 0xff);
-	nvram_set_int("led_lan3_gpio", 0xff);
-	nvram_set_int("led_lan4_gpio", 0xff);
-	nvram_set_int("led_wan_gpio", 0xff);
+	if (reset_gpio) {
+		nvram_set_int("btn_rst_gpio", 0xff);
+		nvram_set_int("btn_wps_gpio", 0xff);
+		nvram_set_int("btn_radio_gpio", 0xff);
+		nvram_set_int("led_pwr_gpio", 0xff);
+		nvram_set_int("led_wps_gpio", 0xff);
+		nvram_set_int("pwr_usb_gpio", 0xff);
+		nvram_set_int("pwr_usb_gpio2", 0xff);
+		nvram_set_int("led_usb_gpio", 0xff);
+		nvram_set_int("led_lan_gpio", 0xff);
+		nvram_set_int("led_lan1_gpio", 0xff);
+		nvram_set_int("led_lan2_gpio", 0xff);
+		nvram_set_int("led_lan3_gpio", 0xff);
+		nvram_set_int("led_lan4_gpio", 0xff);
+		nvram_set_int("led_wan_gpio", 0xff);
 #if defined(RTCONFIG_WANLEDX2)
-	nvram_unset("led_wan2_gpio");
+		nvram_unset("led_wan2_gpio");
 #endif
 #ifdef HND_ROUTER
-	nvram_set_int("led_wan_normal_gpio", 0xff);
+		nvram_set_int("led_wan_normal_gpio", 0xff);
 #endif
 #ifdef RTCONFIG_EXTPHY_BCM84880
-	nvram_set_int("led_extphy_gpio", 0xff);
+		nvram_set_int("led_extphy_gpio", 0xff);
 #endif
-	nvram_set_int("led_2g_gpio", 0xff);
-	nvram_set_int("led_5g_gpio", 0xff);
-	nvram_set_int("led_all_gpio", 0xff);
-	nvram_set_int("led_logo_gpio", 0xff);
-	nvram_set_int("led_usb3_gpio", 0xff);
-	nvram_set_int("fan_gpio", 0xff);
-	nvram_set_int("have_fan_gpio", 0xff);
+		nvram_set_int("led_2g_gpio", 0xff);
+		nvram_set_int("led_5g_gpio", 0xff);
+		nvram_set_int("led_all_gpio", 0xff);
+		nvram_set_int("led_logo_gpio", 0xff);
+		nvram_set_int("led_usb3_gpio", 0xff);
+		nvram_set_int("fan_gpio", 0xff);
+		nvram_set_int("have_fan_gpio", 0xff);
 #ifdef RTCONFIG_SWMODE_SWITCH
 #if defined(PLAC66U)
-	nvram_set_int("btn_swmode1_gpio", 0xff);
+		nvram_set_int("btn_swmode1_gpio", 0xff);
 #else
-	nvram_set_int("btn_swmode1_gpio", 0xff);
-	nvram_set_int("btn_swmode2_gpio", 0xff);
-	nvram_set_int("btn_swmode3_gpio", 0xff);
-	nvram_set_int("swmode_switch", 0);
+		nvram_set_int("btn_swmode1_gpio", 0xff);
+		nvram_set_int("btn_swmode2_gpio", 0xff);
+		nvram_set_int("btn_swmode3_gpio", 0xff);
+		nvram_set_int("swmode_switch", 0);
 #endif	/* Model */
 #endif	/* RTCONFIG_SWMODE_SWITCH */
 #ifdef RTCONFIG_WIRELESS_SWITCH
-	nvram_set_int("btn_wifi_gpio", 0xff);
+		nvram_set_int("btn_wifi_gpio", 0xff);
 #endif
 #ifdef RTCONFIG_WIFI_TOG_BTN
-	nvram_set_int("btn_wltog_gpio", 0xff);
+		nvram_set_int("btn_wltog_gpio", 0xff);
 #else
-	nvram_unset("btn_wltog_gpio");
+		nvram_unset("btn_wltog_gpio");
 #endif
 #ifdef RTCONFIG_LED_BTN
-	nvram_set_int("btn_led_gpio", 0xff);
+		nvram_set_int("btn_led_gpio", 0xff);
 #else
-	nvram_unset("btn_led_gpio");
+		nvram_unset("btn_led_gpio");
 #endif
 #ifdef RTCONFIG_EJUSB_BTN
-	nvram_set_int("btn_ejusb1_gpio", 0xff);
-	nvram_set_int("btn_ejusb2_gpio", 0xff);
+		nvram_set_int("btn_ejusb1_gpio", 0xff);
+		nvram_set_int("btn_ejusb2_gpio", 0xff);
 #endif
 #ifdef RTCONFIG_TURBO_BTN
-	nvram_set_int("btn_turbo_gpio", 0xff);
-	nvram_set_int("led_turbo_gpio", 0xff);
+		nvram_set_int("btn_turbo_gpio", 0xff);
+		nvram_set_int("led_turbo_gpio", 0xff);
 #endif
 #if defined(RTCONFIG_WANRED_LED)
-	nvram_unset("led_wan_red_gpio");
+		nvram_unset("led_wan_red_gpio");
 #if defined(RTCONFIG_WANLEDX2)
-	nvram_unset("led_wan2_red_gpio");
+		nvram_unset("led_wan2_red_gpio");
 #endif
 #endif
 #if defined(RTCONFIG_PWRRED_LED)
-	nvram_unset("led_pwr_red_gpio");
+		nvram_unset("led_pwr_red_gpio");
 #endif
 #if defined(RTCONFIG_FAILOVER_LED)
-	nvram_unset("led_failover_gpio");
+		nvram_unset("led_failover_gpio");
 #endif
 #if defined(RTCONFIG_M2_SSD)
-	nvram_unset("led_sata_gpio");
+		nvram_unset("led_sata_gpio");
 #endif
 #if defined(RTCONFIG_R10G_LED)
-	nvram_unset("led_r10g_gpio");
+		nvram_unset("led_r10g_gpio");
 #endif
 #if defined(RTCONFIG_SFPP_LED)
-	nvram_unset("led_sfpp_gpio");
+		nvram_unset("led_sfpp_gpio");
 #endif
 #ifdef RTCONFIG_INTERNAL_GOBI
-	nvram_unset("btn_lte_gpio");
-	nvram_unset("led_3g_gpio");
-	nvram_unset("led_lte_gpio");
-	nvram_unset("led_sig1_gpio");
-	nvram_unset("led_sig2_gpio");
-	nvram_unset("led_sig3_gpio");
+		nvram_unset("btn_lte_gpio");
+		nvram_unset("led_3g_gpio");
+		nvram_unset("led_lte_gpio");
+		nvram_unset("led_sig1_gpio");
+		nvram_unset("led_sig2_gpio");
+		nvram_unset("led_sig3_gpio");
 #endif
 #ifdef BLUECAVE
-	nvram_unset("led_ctl_sig1_gpio");
-	nvram_unset("led_ctl_sig2_gpio");
-	nvram_unset("led_ctl_sig3_gpio");
-	nvram_unset("led_idr_sig1_gpio");
-	nvram_unset("led_idr_sig1_gpio");
+		nvram_unset("led_ctl_sig1_gpio");
+		nvram_unset("led_ctl_sig2_gpio");
+		nvram_unset("led_ctl_sig3_gpio");
+		nvram_unset("led_idr_sig1_gpio");
+		nvram_unset("led_idr_sig1_gpio");
 #endif
+		reset_gpio = 0;
+	}
 #ifdef RTCONFIG_NBR_RPT
 	nvram_unset("channel_2g");
 	nvram_unset("channelclass_2g");
@@ -5725,6 +5728,7 @@ int init_nvram(void)
 //#define XP4_OLD
 	case MODEL_PLAX56XP4:
 		{ // XP4
+			int xp4_old = (nvram_get_int("HwVer") < 1);
 		/* PLC on eth1 */
 		if (!strlen(nvram_safe_get("HwId"))) { // for old SR sample
 			_dprintf("!!!WARNING!!! No HwId found, setto A!!\n");
@@ -5745,22 +5749,21 @@ int init_nvram(void)
 		} else {
 			set_basic_ifname_vars(wan_ifaces, "eth3 eth1", wl_ifaces, NULL, NULL, NULL, NULL, 0);
 		}
-#if 1 // after ER
-#ifdef XP4_OLD
+	    if (xp4_old)
+		nvram_unset("btn_rst_gpio");
+	    else if(0)
 		nvram_set_int("btn_rst_gpio", 0|GPIO_ACTIVE_LOW);
-#else
+	    else
 		nvram_set_int("btn_rst_gpio", 34|GPIO_ACTIVE_LOW);
-#endif
-#endif
 		nvram_set_int("btn_wps_gpio", 9|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_blue_gpio", 25);
-#ifdef XP4_OLD
+	    if (xp4_old) {
 		nvram_set_int("led_green_gpio", 33);
 		nvram_set_int("led_red_gpio", 32);
-#else
+	    } else {
 		nvram_set_int("led_green_gpio", 32);
 		nvram_set_int("led_red_gpio", 33);
-#endif
+	    }
 		nvram_set_int("led_white_gpio", 22);
 
 		/* enable bled */
@@ -5811,6 +5814,7 @@ int init_nvram(void)
 		add_rc_support("pwrctrl");
 		add_rc_support("noitunes");
 		add_rc_support("nodm");
+		add_rc_support("wpa3");
 		// the following values is model dep. so move it from default.c to here
 		nvram_set("wl0_HT_TxStream", "2");
 		nvram_set("wl0_HT_RxStream", "2");
@@ -5832,7 +5836,7 @@ int init_nvram(void)
 			} else {
 				nvram_set("wl1_channel", "36"); /* fixed channel speeds up sta1 connection */
 				nvram_set("eth_ifnames", "eth1 eth2 eth3"); /* PLC, LAN1, LAN2 */
-				nvram_set("amas_ethif_type", "4 4 4"); /* 1G, 1G, 1G */
+				nvram_set("amas_ethif_type", "65536 4 4"); /* PLC, 1G, 1G */
 				nvram_set("eth_priority", "0 3 1" " 1 1 1" " 2 2 1"); /* PLC priority:3, LAN1:1, LAN2:2 */
 				nvram_set("sta_priority", "2 0 5 1" " 5 1 4 1"); /* 2G priority:5, 5G priority:4 */
 				nvram_set("sta_phy_ifnames", "sta1 sta0"); /* 2G name, 5G name */
@@ -5846,10 +5850,10 @@ int init_nvram(void)
 				_dprintf("[%s][%d] sw mode = %d, repeater=%d, ap= %d ",
 							__func__, __LINE__,
 							sw_mode(),SW_MODE_REPEATER,SW_MODE_AP);
-				nvram_set("eth_ifnames", wan_ifaces[WAN_IFACE_ID]); /* normal WAN, eth4 */
-				nvram_set("amas_ethif_type", "4"); /* 1G */
-				nvram_set("eth_priority", "0 1 1"); /* WAN priority:1 */
-				nvram_set("sta_priority", "2 0 3 1 5 1 2 1"); /* 2G priority:3, 5G priority:2 */
+				nvram_set("eth_ifnames", "eth1 eth4"); /* PLC(eth1), normal WAN(eth4)*/
+				nvram_set("amas_ethif_type", "65536 4"); /* PLC, 1G */
+				nvram_set("eth_priority", "0 3 1" " 1 1 1"); /* PLC priority:3, WAN priority:1 */
+				nvram_set("sta_priority", "2 0 3 1" " 5 1 2 1"); /* 2G priority:3, 5G priority:2 */
 				nvram_set("sta_phy_ifnames", "sta1 sta0"); /* 2G name, 5G name */
 				nvram_set("sta_ifnames", "sta1 sta0"); /* 2G name, 5G name */
 				nvram_unset("dfschinfo");
@@ -8483,7 +8487,10 @@ int init_nvram(void)
 			nvram_set("wait_wifi", "0");
 		}
 
-		nvram_set("eth_ifnames", "eth0");
+		nvram_set("eth_ifnames", "eth0 eth5"); // 1G, 2.5G
+		nvram_set("amas_ethif_type", "4 8"); // 1G, 2.5G
+		nvram_set("eth_priority", "0 1 1 1 2 1"); // eth0: 1G(idx:0,prio:1,used:1) > eth5: 2.5G(idx:1,prio:2,used:1)
+		nvram_set("sta_priority", "2 0 5 1 5 1 4 0 5 2 3 1"); // 2.4G:(prio:5), 5G-1:(prio:4), 5G-2:(prio:3)
 		nvram_set("sta_ifnames", "eth6 eth7 eth8");
 		nvram_set("wired_ifnames", "eth1 eth2 eth3 eth4 eth5");
 #endif
@@ -8685,7 +8692,6 @@ int init_nvram(void)
 		nvram_set_int("btn_wps_gpio", 29|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_rst_gpio", 4|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_led_gpio", 31|GPIO_ACTIVE_LOW);
-
 #if 0
 #ifdef RTCONFIG_XHCIMODE
                 nvram_set("xhci_ports", "2-1 2-2");
@@ -9670,7 +9676,7 @@ int init_nvram(void)
 				}
 			}
 			else
-				nvram_set("wan_ifnames", "eth0 usb");
+				nvram_set("wan_ifnames", "eth4 usb");
 		}
 		else
 			nvram_unset("wan1_ifname");
@@ -10120,6 +10126,11 @@ int init_nvram(void)
 			else if(*nvram_safe_get("wlc1_ssid") && !*nvram_safe_get("wlc0_ssid"))
 				nvram_set("wlc_band", "1");
 		}
+		if(client_mode()) {
+			_dprintf("disable atf when clients\n");
+			nvram_set("wl_atf", "0");
+			nvram_set("wl1_atf", "0");
+		}
 
 		//nvram_unset("sb/0/ledbh39");
 		//nvram_unset("sb/1/ledbh7");
@@ -10157,9 +10168,9 @@ int init_nvram(void)
 
 #if defined(RTAX86U) || defined(RTAX5700)
 	case MODEL_RTAX86U:
-		nvram_set("dhd0_rnr_flowring_physize", "0");
-		nvram_set("dhd1_rnr_flowring_physize", "0");
-		nvram_set("dhd2_rnr_flowring_physize", "0");
+		nvram_unset("dhd0_rnr_flowring_physize");
+		nvram_unset("dhd1_rnr_flowring_physize");
+		nvram_unset("dhd2_rnr_flowring_physize");
 #ifdef RTCONFIG_EXTPHY_BCM84880
 		get_ext_phy_id();
 #endif
@@ -10194,7 +10205,10 @@ int init_nvram(void)
 			nvram_set("wait_wifi", "0");
 		}
 
-		nvram_set("eth_ifnames", "eth0");
+		nvram_set("eth_ifnames", "eth0 eth5"); // 1G, 2.5G
+		nvram_set("amas_ethif_type", "4 8"); // 1G, 2.5G
+		nvram_set("eth_priority", "0 1 1 1 2 1"); // eth0: 1G(idx:0,prio:1,used:1) > eth5: 2.5G(idx:1,prio:2,used:1)
+		nvram_set("sta_priority", "2 0 4 1 5 1 3 0"); // 2.4G:(prio:4), 5G-1:(prio:3)
 		nvram_set("sta_ifnames", "eth6 eth7");
 		nvram_set("wired_ifnames", "eth4 eth3 eth2 eth1 eth5");
 #endif
@@ -10506,9 +10520,9 @@ int init_nvram(void)
 
 #if defined(GTAXE11000)
 	case MODEL_GTAXE11000:
-		nvram_set("dhd0_rnr_flowring_physize", "0");
-		nvram_set("dhd1_rnr_flowring_physize", "0");
-		nvram_set("dhd2_rnr_flowring_physize", "0");
+		nvram_unset("dhd0_rnr_flowring_physize");
+		nvram_unset("dhd1_rnr_flowring_physize");
+		nvram_unset("dhd2_rnr_flowring_physize");
 #ifdef RTCONFIG_EXTPHY_BCM84880
 		get_ext_phy_id();
 #endif
@@ -10556,7 +10570,7 @@ int init_nvram(void)
 		nvram_set_int("led_wan_gpio", 10|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_wan_normal_gpio", 21);
 		nvram_set_int("led_lan_gpio", 25);
-		nvram_set_int("led_wps_gpio", 20|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_wps_gpio", 17|GPIO_ACTIVE_LOW);
 		nvram_set_int("pwr_usb_gpio", 26);
 #ifdef RTCONFIG_WIFI_TOG_BTN
 		nvram_set_int("btn_wltog_gpio", 27|GPIO_ACTIVE_LOW);
@@ -12809,6 +12823,11 @@ NO_USB_CAP:
 	add_rc_support("gameMode");
 #endif
 
+#ifdef RTCONFIG_REDIRECT_DNAME
+	if (sw_mode() == SW_MODE_REPEATER || sw_mode() == SW_MODE_AP)
+		add_rc_support("redirect_dname");
+#endif
+
 	return 0;
 }
 
@@ -14229,7 +14248,6 @@ static void sysinit(void)
 #if defined(RTCONFIG_FIXED_BRIGHTNESS_RGBLED)
 	nvram_set("success_start_service", "0");
 #endif
-
 	init_nvram();  // for system indepent part after getting model
 
 #ifdef RTCONFIG_JFFS_NVRAM
@@ -14686,7 +14704,8 @@ int init_main(int argc, char *argv[])
 				stop_wan();
 
 #if defined(RTCONFIG_QCA_PLC_UTILS) || defined(RTCONFIG_QCA_PLC2)
-			reset_plc();
+			void reset_plc(int);
+			reset_plc(1);
 #endif
 			stop_lan();
 			stop_vlan();
@@ -14913,10 +14932,6 @@ _dprintf("%s %d turnning on power on ethernet here\n", __func__, __LINE__);
 #endif
 #endif
 
-#if defined(RTCONFIG_HND_ROUTER_AX_675X)
-	load_wl_modules();
-	restart_wireless();
-#endif
 #ifdef HND_ROUTER
 			if (is_router_mode()) start_mcpd_proxy();
 #endif
@@ -15022,6 +15037,7 @@ _dprintf("%s %d turnning on power on ethernet here\n", __func__, __LINE__);
 
 #if defined(DSL_AX82U)
 			ifconfig(nvram_safe_get("wan_ifname"), IFUP, NULL, NULL);
+			if (is_ax5400_i1()) config_obw();
 #endif
 
 #if defined(RTCONFIG_BCM_7114) || (defined(HND_ROUTER) && !defined(RTCONFIG_HND_ROUTER_AX))
@@ -15240,6 +15256,7 @@ _dprintf("%s %d turnning on power on ethernet here\n", __func__, __LINE__);
 			force_free_caches();
 #endif
 
+			extern int start_misc_services(void);
 			start_misc_services();
 #ifdef RTCONFIG_AMAS
 			nvram_set("start_service_ready", "1");
@@ -15306,6 +15323,7 @@ _dprintf("%s %d turnning on power on ethernet here\n", __func__, __LINE__);
 		}
 
 #ifdef RTCONFIG_ASD
+		extern int monitor_asd(void);
 		monitor_asd();
 #endif
 		do {
