@@ -1,22 +1,25 @@
-version: 2
+version: 2.1
 jobs:
   build:
+    parameters:
+      model:
+        type: string
+      release_dir:
+        type: string
     docker:
       - image: gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04
         environment:
-          PROJECT_DIR: "/root/project"
+          PROJECT_DIR: "/home/docker/project"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
-          MODEL: "dsl-ac68u"
-          SDK_PLATFORM: "sdk"
-          RELEASE_DIR: "src-rt-6.x.4708"
-          LD_LIBRARY_PATH: "/root/am-toolchains/brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib"
-          LD_LIBRARY_PATH2: "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/lib"
+          MODEL: << parameters.model >>
+          RELEASE_DIR: << parameters.release_dir >>
+          LD_LIBRARY_PATH: "$LD_LIBRARY:~/am-toolchains/brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib"
           PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/brcm-arm/bin:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/brcm-arm/bin"
           TERM: "xterm-256color"
     steps:
       - checkout
       - run:
-          name: Set Version from TAG 
+          name: Set Version from TAG
           shell: /bin/bash
           command: |
             if [ -z "${CIRCLE_TAG}" ]; then
@@ -42,22 +45,6 @@ jobs:
               echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
             fi;
       - run:
-          name: Setup toolchain
-          command: |
-            ln -s /root/am-toolchains/ /opt/
-            rm ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
-            ln -s /opt/am-toolchains/brcm-arm-sdk  ${PROJECT_DIR}/release/${RELEASE_DIR}/toolchains
-            echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/lib" >> ~/.profile
-            echo "export TOOLCHAIN_BASE=/opt/toolchains" >> ~/.profile
-            echo "PATH=\$PATH:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin" >> ~/.profile
-            echo "PATH=\$PATH:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin" >> ~/.profile
-            echo "export LD_LIBRARY_PATH=$LD_LIBRARY:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/lib" >> ~/.profile
-            echo "PATH=\$PATH:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin" >> ~/.profile
-            echo "PATH=\$PATH:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin" >> ~/.profile
-            echo "PATH=\$PATH:/opt/brcm-arm/bin" >> ~/.profile
-            source  ~/.profile
-            ldconfig -v
-      - run:
           name: Build firmware
           shell: /bin/bash
           no_output_timeout: 120m
@@ -69,13 +56,15 @@ jobs:
             echo "----- ENV VARS -----"
             source  ~/.profile
             env
-            echo "----- CLEANING -----"
-            make clean || echo "maybe already clean, so if it fails please continue"
             echo "----- SETTING UP SECRET FILES -----"
-            echo $BWDPI_KEYS_DSLAC68U | base64 -d > /tmp/keys.tgz
-            tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/DSL-AC68U
+            if [[ ${MODEL} == "dsl-ac68u" ]]; then
+              echo $BWDPI_KEYS_DSLAC68U | base64 -d > /tmp/keys.tgz
+              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/DSL-AC68U
+            elif [[ ${MODEL} == "rt-ax58u" ]]; then
+              echo "NO KEYS FOR ${MODEL} yet"
+            fi
             echo "----- BUILD -----"
-            make ${MODEL} | tee "/tmp/build.log" # | grep -i "error\|-e"
+            make ${MODEL} | tee "/tmp/build.log"
             echo "------ DONE -----"
             ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
       - run:
@@ -87,14 +76,23 @@ jobs:
       - run:
           name: Prepare workspace
           command: |
-            mkdir -p workspace/release
-            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release
-            cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release || :
-            cp /tmp/build.log workspace/release
-             if [ -z "${CIRCLE_TAG}" ]; then
+            mkdir -p workspace/release/
+            if [[ ${MODEL} == "dsl-ac68u" ]]; then
+              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release/
+              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release/ || :
+            elif [[ ${MODEL} == "rt-ax58u" ]]; then
+              echo "Skip ${MODEL} for the time being"
+              #cp ${PROJECT_DIR}/release/${RELEASE_DIR}/targets/96750GW/*_cferom_pureubi.w workspace/release
+              #cp ${PROJECT_DIR}/release/${RELEASE_DIR}/targets/96750GW/*_cferom_pureubi.md5 workspace/release || :
+            fi
+            cp /tmp/build.log workspace/release/${MODEL}-build.log
+            if [ -z "${CIRCLE_TAG}" ]; then
               echo "No CHANGELOG to copy. Not a release build."
             else
-              cp "${CHANGELOG_FILE}" workspace/release
+              # Changelogs are the same for each models since we are building from the same branch. We do use only the one generated by DSL-AC68U for now.
+              if [[ ${MODEL} == "dsl-ac68u" ]]; then
+                cp "${CHANGELOG_FILE}" workspace/release
+              fi
             fi
       - persist_to_workspace:
           root: workspace
@@ -155,19 +153,33 @@ jobs:
             echo "Uploading CI pre-release..."
             RELEASE_TITLE="Unstable: ${CIRCLE_TAG}"
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
- 
+
 workflows:
-  version: 2
+  version: 2.1
   build_and_release:
     jobs:
       - build:
+          name: "build_dsl-ac68u"
+          model: "dsl-ac68u"
+          release_dir: "src-rt-6.x.4708"
           filters:
             tags:
               only: /.*/
             branches:
               ignore:
-               - master
-               - mainline
+                - master
+                - mainline
+      - build:
+          name: "build_dsl-ax82u"
+          model: "rt-ax58u"
+          release_dir: "src-rt-5.02axhnd.675x"
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -175,7 +187,8 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build
+            - build_dsl-ax82u
+            - build_dsl-ac68u
       - publish-github-release:
           filters:
             tags:
@@ -183,7 +196,8 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build
+            - build_dsl-ax82u
+            - build_dsl-ac68u
             - publish-manifest-and-notes
       - publish-github-ci-pre-release:
           filters:
@@ -195,8 +209,8 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build
+            - build_dsl-ax82u
+            - build_dsl-ac68u
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
-
