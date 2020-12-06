@@ -166,7 +166,9 @@ cp release/src/router/webdav_client/prebuild/* $REPO/release/src/router/webdav_c
 cp release/src/router/usbclient/prebuild/* $REPO/release/src/router/usbclient/prebuild/$BUILD_NAME/
 cp release/src/router/asuswebstorage/prebuild/* $REPO/release/src/router/asuswebstorage/prebuild/$BUILD_NAME/
 cp release/src/router/inotify/prebuild/* $REPO/release/src/router/inotify/prebuild/$BUILD_NAME/
-cp release/src/router/libletsencrypt/prebuild/* $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME/
+if [ "$BUILD_NAME" != "DSL-AC86U" ]; then
+  cp release/src/router/libletsencrypt/prebuild/* $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME/
+fi
 cp release/src/router/libbcm/prebuilt/* $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME/
 
 # Common to most
