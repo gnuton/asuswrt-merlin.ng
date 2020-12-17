@@ -1,0 +1,2 @@
+Changes from the latest stable gnuton build (384.16_0-gnuton2):
+* This is a test 
