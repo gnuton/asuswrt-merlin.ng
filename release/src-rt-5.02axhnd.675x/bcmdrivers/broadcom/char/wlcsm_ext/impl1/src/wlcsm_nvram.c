@@ -276,9 +276,10 @@ int wlcsm_nvram_k_set(char *name, char *value)
 
 #ifdef CONFIG_JFFS_NVRAM
 static char *large_nvram_list[] = {
+	"MULTIFILTER_MAC",
 	"MULTIFILTER_DEVICENAME",
 	"MULTIFILTER_MACFILTER_DAYTIME",
-    "MULTIFILTER_MACFILTER_DAYTIME_V2",
+	"MULTIFILTER_MACFILTER_DAYTIME_V2",
 	"MULTIFILTER_TMP",
 	"Tor_redir_list",
 	"asus_device_list",
