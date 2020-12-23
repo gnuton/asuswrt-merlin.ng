@@ -85,7 +85,7 @@ typedef struct {
 } phyState;
 #endif
 
-
+extern int dev_nvram_getall(char *buf, int count);
 
 unsigned int get_phy_temperature(int radio);
 unsigned int get_wifi_clients(int unit, int querytype);
@@ -245,14 +245,14 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			sysinfo(&sys);
 			sprintf(result,"%.2f",(sys.loads[2] / (float)(1<<SI_LOAD_SHIFT)));
 		} else if(strcmp(type,"nvram.total") == 0) {
-			sprintf(result,"%d",NVRAM_SPACE);
+			sprintf(result,"%d",MAX_NVRAM_SPACE);
 		} else if(strcmp(type,"nvram.used") == 0) {
 			char *buf;
 			int size = 0;
 
-			buf = malloc(NVRAM_SPACE);
+			buf = malloc(MAX_NVRAM_SPACE);
 			if (buf) {
-				nvram_getall(buf, NVRAM_SPACE);
+				dev_nvram_getall(buf, MAX_NVRAM_SPACE);
 				tmp = buf;
 				while (*tmp) tmp += strlen(tmp) +1;
 
