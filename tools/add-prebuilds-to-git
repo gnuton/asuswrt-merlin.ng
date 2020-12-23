@@ -1,0 +1,96 @@
+#!/bin/bash
+set -e
+
+# DSL-AC68U
+# Run this script after having reviewed the merge
+
+BUILD_NAME=$1
+
+echo "*** Adding files to GIT after a GPL Merge..."
+if [ "$BUILD_NAME" == "DSL-AC68U" ]
+then
+    git add -f $REPO/release/src/router/bwdpi_source/asus_sql/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/bwdpi_source/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/cfg_mnt/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/dblog/daemon/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/emf_arm/*
+    git add -f $REPO/release/src/router/et_arm/prebuilt/*
+    git add -f $REPO/release/src/router/httpd/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/libletsencrypt/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/lighttpd-1.4.39/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/networkmap/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/nt_center/actMail/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/nt_center/lib/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/nt_center/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/rc/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/sambaclient/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/shared/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/sw-hw-auth/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/wb/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/wl_arm/prebuilt/DSL-AC68U/*
+    git add -f $REPO/release/src/router/wlceventd/prebuilt/DSL-AC68U/*
+    git add -f $REPO/release/src/router/wlconf_arm/prebuilt/*
+    git add -f $REPO/release/src/router/wps_arm/*
+    git add -f $REPO/release/src/router/bwdpi_source/asus/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/bwdpi_source/asus/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/asusnatnl/natnl/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/asd/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/amas-utils/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/ahs/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/acsd_arm/prebuilt/*
+    git add -f $REPO/release/src/router/aaews/prebuild/*
+elif [ "$BUILD_NAME" == "DSL-AX82U" ]
+then
+    git add -f $REPO/release/src-rt-5.02axhnd.675x/wl/exe/prebuilt/*
+    git add -f $REPO/release/src-rt-5.02axhnd.675x/hostTools/prebuilt/$BUILD_NAME/*
+    git add -f $REPO/release/src/router/tuxera/broadcom_arm_ax_6750/*
+    git add -f $REPO/release/src/router/lighttpd-1.4.39/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/httpd/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/rc/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/shared/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/sw-hw-auth/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/bwdpi_source/asus/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/bwdpi_source/asus_sql/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/bwdpi_source/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/dropbox_client/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/ftpclient/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/protect_srv/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/protect_srv/lib/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/sambaclient/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/u2ec/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/wlc_nt/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/networkmap/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/nt_center/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/nt_center/actMail/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/nt_center/lib/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/webdav_client/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/usbclient/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/asuswebstorage/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/inotify/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME/
+
+    git add -f $REPO/release/src/router/dblog/daemon/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/dblog/commands/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/ahs/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/asd/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/libasc/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/amas-utils/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/cfg_mnt/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/aaews/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/asusnatnl/natnl/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/libasuslog/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/sysstate/log_daemon/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/sysstate/commands/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/wb/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/eventd/prebuilt/$BUILD_NAME/
+
+    git add -f $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
+    git add -f $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
+else
+    echo "Unrecognized BUILD_NAME!"
+    exit
+fi
+
+
+
