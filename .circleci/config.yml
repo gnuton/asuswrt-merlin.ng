@@ -80,7 +80,7 @@ jobs:
             if [[ ${MODEL} == "dsl-ac68u" ]]; then
               cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release/
               cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release/ || :
-            elif [[ ${MODEL} == "rt-ax58u" ]]; then
+            elif [[ ${MODEL} == "dsl-ax82u" ]]; then
               echo "Skip ${MODEL} for the time being"
               #cp ${PROJECT_DIR}/release/${RELEASE_DIR}/targets/96750GW/*_cferom_pureubi.w workspace/release
               #cp ${PROJECT_DIR}/release/${RELEASE_DIR}/targets/96750GW/*_cferom_pureubi.md5 workspace/release || :
@@ -173,7 +173,7 @@ workflows:
                 - mainline
       - build:
           name: "build_dsl-ax82u"
-          model: "rt-ax58u"
+          model: "dsl-ax82u"
           release_dir: "src-rt-5.02axhnd.675x"
           filters:
             tags:
