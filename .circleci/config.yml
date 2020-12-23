@@ -94,6 +94,8 @@ jobs:
                 cp "${CHANGELOG_FILE}" workspace/release
               fi
             fi
+      - store_artifacts:
+          path: workspace/release      
       - persist_to_workspace:
           root: workspace
           paths:
