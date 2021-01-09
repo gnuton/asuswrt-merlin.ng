@@ -13,7 +13,6 @@
 #include <iwlib.h>
 #include "utils.h"
 #include "shutils.h"
-#include "flash_mtd.h"
 #include <shared.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
@@ -374,7 +373,6 @@ void set_radio(int on, int unit, int subunit)
 		return;
 	}
 
-#if defined(RTCONFIG_SOC_IPQ8074)
 	if(sub)
 	{
 		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, sub);
@@ -383,6 +381,7 @@ void set_radio(int on, int unit, int subunit)
 	else	
 		strlcpy(wds_iface, get_wififname(unit), sizeof(wds_iface));
 
+#if defined(RTCONFIG_SOC_IPQ8074)
 #if defined(RTCONFIG_SINGLE_HOSTAPD)
 		if (on) {
 			char bss_cfg[sizeof("bss_config=") + IFNAMSIZ + sizeof(":/etc/Wireless/conf/hostapd_XXX.conf") + IFNAMSIZ];
@@ -404,6 +403,17 @@ void set_radio(int on, int unit, int subunit)
 			eval("hostapd", "-d", "-B", "-P", pid_path, "-e", entropy_path, conf_path);
 		} else {
 			kill_pidfile(pid_path);
+		}
+#endif
+#else // NOT IPQ8074
+#if defined(RTCONFIG_CFG80211) && defined(RTCONFIG_SINGLE_HOSTAPD)
+		if (on) {
+			char bss_cfg[sizeof("bss_config=") + IFNAMSIZ + sizeof(":/etc/Wireless/conf/hostapd_XXX.conf") + IFNAMSIZ];
+
+			snprintf(bss_cfg, sizeof(bss_cfg), "bss_config=%s:/etc/Wireless/conf/hostapd_%s.conf", wds_iface, wds_iface);
+			eval(QWPA_CLI, "-g", QHOSTAPD_CTRL_IFACE, "raw", "ADD", bss_cfg);
+		} else {
+			eval(QWPA_CLI, "-g", QHOSTAPD_CTRL_IFACE, "raw", "REMOVE", wds_iface);
 		}
 #endif
 #endif
@@ -1231,6 +1241,9 @@ static void set_cpu_power_save_mode(void)
 	case 1:
 		/* CPU: On Demand - auto */
 		set_cpufreq_attr("scaling_governor", "ondemand");
+#if defined(RTCONFIG_SOC_IPQ8074)
+		set_cpufreq_attr("scaling_min_freq", "1382400");
+#endif
 		break;
 	default:
 		/* CPU: performance - max. freq */
@@ -1308,17 +1321,6 @@ static void set_nss_power_save_mode(void)
 
 void set_power_save_mode(void)
 {
-#if defined(RTCONFIG_WIFI_QCN5024_QCN5054)
-	uint32_t val;
-
-	if (!nvram_match("pwrsave_mode", "0")
-	 && !FRead((unsigned char*)&val, OFFSET_L2CEILING, sizeof(val))) {
-		if (val == UINT32_MAX)
-			val = 0;
-		if (val > 0)
-			nvram_set("pwrsave_mode", "0");
-	}
-#endif
 	set_cpu_power_save_mode();
 	set_nss_power_save_mode();
 }
@@ -1592,7 +1594,7 @@ int get_sta_ifname_unit(const char *ifname)
 		SKIP_ABSENT_BAND(band);
 
 		if (!strncmp(ifname, sta[band], strlen(sta[band])))
-			return band;
+			return swap_5g_band(band);
 	}
 	return -1;
 }
@@ -1944,7 +1946,7 @@ cprintf("## %s(): ret(%d) ap_addr(%02x:%02x:%02x:%02x:%02x:%02x)\n", __func__, r
 
 
 #if defined(RTCONFIG_BCN_RPT)
-int save_wlxy_mac(char *mode, char* ifname)
+void save_wlxy_mac(char *mode, char* ifname)
 {
 	char cmdbuf[20],buf[1024];
  	FILE *fp;
@@ -2876,7 +2878,7 @@ void execute_bt_bscp()
 	}
 
 	if (generate_bt_bscp_conf()) {
-		doSystem("bccmd -t bcsp -b 115200 -d %s psload %s", BTDEV, BT_BSCP_CONF_PATH);
+		doSystem("bccmd -t bcsp -b 115200 -d %s psload -r %s", BTDEV, BT_BSCP_CONF_PATH);
 		sleep(1);
 		_eval(hciattach_argv, NULL, 0, NULL);
 	}

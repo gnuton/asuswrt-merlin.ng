@@ -1,6 +1,6 @@
-/* $Id: natpmp.c,v 1.55 2018/03/12 22:41:54 nanard Exp $ */
+/* $Id: natpmp.c,v 1.57 2019/09/24 11:48:01 nanard Exp $ */
 /* MiniUPnP project
- * (c) 2007-2017 Thomas Bernard
+ * (c) 2007-2019 Thomas Bernard
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
@@ -320,7 +320,7 @@ void ProcessIncomingNATPMPPacket(int s, unsigned char *msg_buff, int len,
 								resp[3] = 2;	/* Not Authorized/Refused */
 								break;
 							} else {
-								syslog(LOG_DEBUG, "NAT-PMP %s port %hu mapping removed",
+								syslog(LOG_INFO, "NAT-PMP %s port %hu mapping removed",
 								       proto2==IPPROTO_TCP?"TCP":"UDP", eport2);
 								index--;
 							}

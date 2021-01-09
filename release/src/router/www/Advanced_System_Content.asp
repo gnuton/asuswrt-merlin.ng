@@ -206,9 +206,6 @@ function initial(){
 	httpApi.faqURL("1037370", function(url){document.getElementById("ntp_faq").href=url;});
 	show_http_clientlist();
 	showNTPList();
-	if(odmpid == "DSL-AX5400"){
-		document.getElementById("ntp_pull_arrow").style.display = "";
-	}
 	display_spec_IP(document.form.http_client.value);
 
 	if(reboot_schedule_support){
@@ -325,18 +322,27 @@ function initial(){
 	}
 
 	/* MODELDEP */
-//	if(tmo_support){
-	if(1){
-		document.getElementById("telnet_tr").style.display = "none";
+	if(isSupport("is_ax5400_i1")){
+		document.getElementById("ntp_pull_arrow").style.display = "";
+	}
+
+
+	if(isSupport("is_ax5400_i1") || tmo_support){
+		document.getElementById("telnetd_sshd_table").style.display = "none";
 		document.form.telnetd_enable[0].disabled = true;
 		document.form.telnetd_enable[1].disabled = true;
+		document.form.sshd_enable.disabled = true;
 	}
 	else{
-		document.getElementById("telnet_tr").style.display = "";
-		document.form.telnetd_enable[0].disabled = false;
-		document.form.telnetd_enable[1].disabled = false;
+		document.getElementById("telnetd_sshd_table").style.display = "";
+//		document.form.telnetd_enable[0].disabled = false;
+//		document.form.telnetd_enable[1].disabled = false;
 		telnet_enable(httpApi.nvramGet(["telnetd_enable"]).telnetd_enable);
 	}
+
+	document.getElementById("telnet_tr").style.display = "none";
+	document.form.telnetd_enable[0].disabled = true;
+	document.form.telnetd_enable[1].disabled = true;
 
 	if(powerline_support)
 		document.getElementById("plc_sleep_tr").style.display = "";
@@ -1001,10 +1007,10 @@ var timezones = [
 	["UTC-5.45",	"(GMT+05:45) <#TZ57#>"],
 	["RFT-6",	"(GMT+06:00) <#TZ60#>"],
 	["UTC-6",	"(GMT+06:00) <#TZ58#>"],
-	["UTC-6_2",	"(GMT+06:00) <#TZ62_1#>"],
 	["UTC-6.30",	"(GMT+06:30) <#TZ61#>"],
 	["UTC-7",	"(GMT+07:00) <#TZ62#>"],
 	["UTC-7_2",	"(GMT+07:00) <#TZ63#>"],
+	["UTC-7_3",     "(GMT+07:00) <#TZ62_1#>"],      //UTC-6_2
 	["CST-8",	"(GMT+08:00) <#TZ64#>"],
 	["CST-8_1",	"(GMT+08:00) <#TZ65#>"],
 	["SST-8",	"(GMT+08:00) <#TZ66#>"],
@@ -1462,7 +1468,7 @@ function change_url(num, flag){
 	else if(flag == 'https_wan'){
 		var https_wanport = num;
 		var host_addr = "";
-		if(ddns_enable_x == "1" && ddns_hostname_x_t.length != 0)
+		if(check_ddns_status())
 				host_addr = ddns_hostname_x_t;
 		else
 			host_addr = wan_ipaddr;
@@ -2323,13 +2329,13 @@ function pullNTPList(obj){
 				</tr>
 			</table>
 
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
+			<table id="telnetd_sshd_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
 				<thead>
 					<tr>
 					  <td colspan="2"><#qis_service#></td>
 					</tr>
 				</thead>
-				<tr id="telnet_tr">
+				<tr id="telnet_tr" style="display:none;">
 					<th><#Enable_Telnet#></th>
 					<td>
 						<input type="radio" name="telnetd_enable" value="1" onchange="telnet_enable(this.value);" <% nvram_match_x("LANHostConfig", "telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>

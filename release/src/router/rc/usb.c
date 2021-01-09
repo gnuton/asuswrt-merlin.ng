@@ -435,10 +435,10 @@ void add_usb_modem_modules(void)
 
 void remove_usb_modem_modules(void)
 {
-#ifdef RTCONFIG_USB_BECEEM
-	modprobe_r("drxvi314");
-#endif
 #ifdef RTCONFIG_INTERNAL_GOBI
+	if(get_wans_dualwan()&WANSCAP_USB)
+		return;
+
 	killall_tk("gobi");
 	modprobe_r("gobi");
 #endif
@@ -747,7 +747,14 @@ void start_usb(int mode)
 #endif
 			modprobe(SD_MOD);
 			modprobe(SG_MOD);
+#if defined(RTCONFIG_HND_ROUTER_AX)
+			static char storage_quirks[] = "0bc2:231a:u";
+
+			snprintf(param, sizeof(param), "quirks=%s", storage_quirks);
+			eval("insmod", USBSTORAGE_MOD, param);
+#else
 			modprobe(USBSTORAGE_MOD);
+#endif
 			MODPROBE__UAS;
 
 			if (nvram_get_int("usb_fs_ext3")) {
@@ -1030,11 +1037,13 @@ void remove_usb_module(void)
 #endif
 }
 
-// mode 0: stop all USB programs, mode 1: stop the programs from USB hotplug.
-void stop_usb_program(int mode)
-{
 #ifdef RTCONFIG_USB_MODEM
+void stop_modem_program()
+{
 #ifdef RTCONFIG_INTERNAL_GOBI
+	if(get_wans_dualwan()&WANSCAP_USB)
+		return;
+
 	killall_tk("gobi_api");
 	if(!g_reboot)
 		sleep(1);
@@ -1045,8 +1054,15 @@ void stop_usb_program(int mode)
 	if(!g_reboot)
 		sleep(1);
 #endif
+}
 #endif
 
+// mode 0: stop all USB programs, mode 1: stop the programs from USB hotplug.
+void stop_usb_program(int mode)
+{
+#ifdef RTCONFIG_USB_MODEM
+	stop_modem_program();
+#endif
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 	if(pids("inotify") || pids("asuswebstorage") || pids("webdav_client") || pids("dropbox_client") || pids("ftpclient") || pids("sambaclient") || pids("usbclient") || pids("google_client")){
@@ -3434,8 +3450,11 @@ start_samba(void)
 
 #if defined(SMP) && !defined(HND_ROUTER)
 #if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ8074)
-#if defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710)
+#if defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710) && !defined(DSL_AX82U)
 	taskset_ret = -1;
+#elif defined(DSL_AX82U)
+	char *smbd_argv[] = { "/usr/sbin/smbd", "-D", "-s", "/etc/smb.conf", NULL };
+	taskset_ret = _cpu_mask_eval(smbd_argv, NULL, 0, NULL, 7);
 #else
 	if(!nvram_match("stop_taskset", "1")){
 		if(cpu_num > 1)

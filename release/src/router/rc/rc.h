@@ -466,7 +466,7 @@ extern int setAllLedOn(void);
 extern int setAllOrangeLedOn(void);
 #endif
 extern int setAllLedOff(void);
-#if defined(RTCONFIG_WPS_ALLLED_BTN) || defined(RTCONFIG_SW_CTRL_ALLLED) || defined(RTAX82U) || defined(DSL_AX82U)
+#if defined(RTCONFIG_WPS_ALLLED_BTN) || defined(RTCONFIG_SW_CTRL_ALLLED) || defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 extern void setAllLedNormal(void);
 #endif
 #ifdef RTCONFIG_SW_CTRL_ALLLED
@@ -907,7 +907,7 @@ extern void fc_fini();
 extern void hnd_nat_ac_init(int bootup);
 extern void setLANLedOn(void);
 extern void setLANLedOff(void);
-#if defined(RTAX82U) || defined(DSL_AX82U)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 extern void setLEDGroupOn(void);
 extern void setLEDGroupOff(void);
 extern void cled_set(int gpio, uint32_t config0, uint32_t config1, uint32_t config2, uint32_t config3);
@@ -1142,8 +1142,14 @@ typedef struct {
 	char rate_up[16];
 	char max_rate_down[16]; //Attainable data rate
 	char max_rate_up[16];
+	unsigned int fec_down;
+	unsigned int fec_up;
 	unsigned int crc_down;
 	unsigned int crc_up;
+	unsigned int es_down;
+	unsigned int es_up;
+	unsigned int ses_down;
+	unsigned int ses_up;
 	char inp_down[16]; // INP
 	char inp_up[16];
 	char inp_rein_down[16]; //INP REIN (Repetitive Electrical Impulse Noise)
@@ -1648,7 +1654,7 @@ extern int send_arpreq(void);
 extern int psta_monitor_main(int argc, char *argv[]);
 #endif
 // ledg.c
-#if defined(RTAX82U) || defined(DSL_AX82U)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 extern int ledg_main(int argc, char *argv[]);
 extern int ledbtn_main(int argc, char *argv[]);
 #endif
@@ -1777,7 +1783,8 @@ extern void add_usb_modem_modules(void);
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS)
 extern int modem_data_main(int argc, char *argv[]);
 #endif
-#endif
+extern void stop_modem_program();
+#endif // RTCONFIG_USB_MODEM
 extern void start_usb(int orig);
 extern void remove_usb_module(void);
 extern void stop_usb_program(int mode);
@@ -1867,7 +1874,7 @@ extern int mount_cifs_main(int argc, char *argv[]);
 static inline void start_cifs(void) {};
 static inline void stop_cifs(void) {};
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 extern int start_ledg(void);
 extern int stop_ledg(void);
 #endif
@@ -1966,6 +1973,12 @@ extern int init_3g_param(const char *port_path, const unsigned int vid, const un
 extern int write_3g_ppp_conf(int modem_unit);
 #endif
 #endif
+
+// dsl_fb.c
+extern unsigned long readFileSize( char *filepath );
+#ifdef RTCONFIG_AHS
+#define AHS_HWSW_ST_JFFS_FILE "ahs_hwsw_status.txt"
+#endif /* RTCONFIG_AHS */
 
 #ifdef RTCONFIG_DSL
 //dsl.c
@@ -2970,6 +2983,16 @@ extern void package_restore_defaults();
 // dsl_fb.c
 #ifdef RTCONFIG_FRS_FEEDBACK
 extern int do_feedback(const char* feedback_file, char* attach_cmd);
+#endif
+
+// frs_service.c
+#ifdef RTCONFIG_AHS
+typedef struct hwsw_state_s {
+	char content[256];
+	int ctl_envram;
+	int ctl_frs;
+	int ctl_eula;
+} hwsw_state_t;
 #endif
 
 #if defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER)

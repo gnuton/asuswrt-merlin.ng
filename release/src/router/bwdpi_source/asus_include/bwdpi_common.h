@@ -97,9 +97,8 @@
 	Now, new module only uses /dev/idp. Old platforms / models use old node /dev/detector.
 	Add compile flag to make these platform use old node, others are considered as new models to make sure module could untar and load signature.
 */
-#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RTCONFIG_QCA956X) || defined(RTCONFIG_RALINK) \
-        || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_BCM7) || defined(RTCONFIG_BCM_7114) \
-        || ((defined(RTCONFIG_BCMSMP) || defined(RTCONFIG_HND_ROUTER)) && !defined(RTCONFIG_HND_ROUTER_AX))
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_QCA956X) || (defined(RTCONFIG_RALINK) && !defined(RTCONFIG_RALINK_MT7622)) \
+	|| defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_BCM7)
 #define DEVNODE         "/dev/detector" // old node
 #else
 #define DEVNODE         "/dev/idp"      // new node

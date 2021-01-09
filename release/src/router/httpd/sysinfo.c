@@ -278,7 +278,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			struct statvfs fiData;
 
 			if (statvfs("/jffs",&fiData) == 0 ) {
-				sprintf(result,"%d",(fiData.f_bfree * fiData.f_frsize / MBYTES));
+				sprintf(result,"%ld",(fiData.f_bfree * fiData.f_frsize / MBYTES));
 			} else {
 				strcpy(result,"-1");
 			}
@@ -509,6 +509,30 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 #else	// HND lacks robocfg support
 			strcpy(result, "[]");
 #endif
+		} else if(strlen(type) > 8 && strncmp(type,"hwaccel", 7) == 0 ) {
+			if (!strcmp(&type[8], "runner"))	// Also query Archer on 675x
+#if defined(RTAC86U) || defined(GTAC2900)
+				system("cat /proc/modules | grep -m 1 -c pktrunner | sed -e \"s/0/Disabled/\" -e \"s/1/Enabled/\" >/tmp/output.txt");
+#else
+				system("/bin/fc status | grep \"HW Acceleration\" >/tmp/output.txt");
+#endif
+			else if (!strcmp(&type[8], "fc"))
+				system("/bin/fc status | grep \"Flow Learning\" >/tmp/output.txt");
+
+			char *buffer = read_whole_file("/tmp/output.txt");
+			if (buffer) {
+				if (strstr(buffer, "Enabled"))
+					strcpy(result,"Enabled");
+				else if (strstr(buffer, "Disabled"))
+					strcpy(result, "Disabled");
+				else
+					strcpy(result, "&lt;unknown&gt;");
+				free(buffer);
+			} else {
+				strcpy(result, "&lt;unknown&gt;");
+			}
+			unlink("/tmp/output.txt");
+
 		} else {
 			strcpy(result,"Not implemented");
 		}

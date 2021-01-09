@@ -1897,11 +1897,8 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 			/* MTU */
 			if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
 				mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
-				if (mtu < 576)
-					mtu = 576;
-
-				if (mtu > 9000)
-					mtu = 9000;	// Limit to a sane value
+				if ((mtu < 576) || (mtu > 9000))
+					mtu = 1500;	// Set a sane default value
 
 				ifr.ifr_mtu = mtu;
 				strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
@@ -1969,11 +1966,8 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 			/* MTU */
 			if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
 				mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
-				if (mtu < 576)
-					mtu = 576;
-
-				if (mtu > 9000)
-					mtu = 9000;     // Limit to a sane value
+				if ((mtu < 576) || (mtu > 9000))
+					mtu = 1500;	// Set a sane default value
 
 				ifr.ifr_mtu = mtu;
 				strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
@@ -4132,6 +4126,7 @@ int detect_plc_main(int argc, char *argv[]){
 	int i;
 	struct remote_plc *rplc;
 	int tx, rx;
+	int tx_mimo, rx_mimo;
 	int failed_cnt;
 	int reset_cnt;
 	int retry = 0;
@@ -4167,15 +4162,37 @@ int detect_plc_main(int argc, char *argv[]){
 
 	    if (num > 0 || failed_cnt++ >= PLC_FAILED_CNT) {
 		tx = rx = 0;
+		tx_mimo = rx_mimo = 0;
 		if (num > 0) {
-		    {
+			int cnt = num;
+#ifdef RTCONFIG_AMAS
+			char *amas_cap_addr = NULL;
+			if(aimesh_re_node()) {
+				amas_cap_addr = nvram_get("amas_cap_addr");
+				if (amas_cap_addr && amas_cap_addr[0] == '\0')
+					amas_cap_addr = NULL;
+			}
+#endif	/* RTCONFIG_AMAS */
+
 			for(i = 0; i < num; i++) {
+#ifdef RTCONFIG_AMAS
+				if (amas_cap_addr && compare_mac_skip3(amas_cap_addr, rplc[i].mac)) {
+					tx = rplc[i].tx;
+					rx = rplc[i].rx;
+					tx_mimo = rplc[i].tx_mimo;
+					rx_mimo = rplc[i].rx_mimo;
+					cnt = 1;
+					break;
+				}
+#endif	/* RTCONFIG_AMAS */
 				tx += rplc[i].tx;
 				rx += rplc[i].rx;
+				tx_mimo += rplc[i].tx_mimo;
+				rx_mimo += rplc[i].rx_mimo;
 			}
-			tx = tx/num;
-			rx = rx/num;
-		    }
+			tx = tx/cnt;
+			rx = rx/cnt;
+
 			free(rplc);
 			rplc = NULL;
 			failed_cnt = 0;
@@ -4189,6 +4206,8 @@ int detect_plc_main(int argc, char *argv[]){
 		}
 		nvram_set_int("autodet_plc_tx", tx);
 		nvram_set_int("autodet_plc_rx", rx);
+		nvram_set_int("autodet_plc_tx_mimo", tx_mimo);
+		nvram_set_int("autodet_plc_rx_mimo", rx_mimo);
 		if (num > 0 && (tx < 10 || rx < 10)) {
 			void run_plcrate(int duration);
 			run_plcrate(1);

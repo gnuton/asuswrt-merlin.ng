@@ -284,6 +284,11 @@ time_t turn_off_auth_timestamp = 0;
 int temp_turn_off_auth = 0;	// for QISxxx.htm pages
 
 int amas_support = 0;
+int HTS = 0;	//HTTP Transport Security
+
+struct timeval alarm_tv;
+time_t alarm_timestamp = 0;
+int check_alive_flag = 0;
 
 /* Const vars */
 const int int_1 = 1;
@@ -1146,6 +1151,12 @@ handle_request(void)
 		return;
 	}
 
+	if(HTS == 1){
+		snprintf(inviteCode, sizeof(inviteCode), "<meta http-equiv=\"refresh\" content=\"0; https://%s:%d\">\r\n", gethost(), nvram_get_int("https_lanport"));
+		send_page( 307, "Temporary Redirect", (char*) 0, inviteCode, 0);
+		return;
+	}
+
 //2008.08 magic{
 	if (file[0] == '\0' || (index(file, '?') == NULL && file[len-1] == '/')){
 		if (is_firsttime()
@@ -1310,7 +1321,7 @@ handle_request(void)
 				}
 			}
 			if (handler->auth) {
-#if defined(RTAX82U) || defined(DSL_AX82U)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 				switch_ledg(LEDG_QIS_FINISH);
 #endif
 				if ((mime_exception&MIME_EXCEPTION_NOAUTH_FIRST)&&!x_Setting) {
@@ -1442,8 +1453,12 @@ handle_request(void)
 					&& !strstr(file, "renew_ikev2_cert_mobile.pem") && !strstr(file, "ikev2_cert_mobile.pem")
 					&& !strstr(file, "renew_ikev2_cert_windows.der") && !strstr(file, "ikev2_cert_windows.der")
 #endif
-#if defined(RTCONFIG_TR069) && defined(DSL_AX82U)
-					|| (strstr(file, "Advanced_TR069_Content.asp") && is_ax5400_i1())
+#if defined(DSL_AX82U)
+					|| (is_ax5400_i1() &&
+						(strstr(file, "Advanced_TR069_Content.asp")
+						 || strstr(file, "Advanced_OAM_Content.asp")
+						 || strstr(file, "Advanced_ADSL_Content.asp")
+						))
 #endif
 					){
 				send_error( 404, "Not Found", (char*) 0, "File not found." );
@@ -2036,6 +2051,42 @@ search_desc (pkw_t pkw, char *name)
 #endif
 #endif //TRANSLATE_ON_FLY
 
+void check_alive()
+{
+	check_alive_flag = 1;
+	static int check_alive_count = 0;
+
+	if(alarm_timestamp != alarm_tv.tv_sec){
+		alarm_timestamp = alarm_tv.tv_sec;
+		check_alive_count = 0;
+	}
+	else if(check_alive_count > 20){
+		logmessage("HTTPD", "waitting 10 minitues and restart\n");
+		notify_rc("restart_httpd");
+	}
+	else{
+		check_alive_count++;
+	}
+
+	alarm(30);
+}
+
+int enabled_http_ifname()
+{
+#ifdef DSL_AX82U
+	if (nvram_get_int("http_enable") == 1 && http_port == SERVER_PORT && is_ax5400_i1()){
+		HTS = 1; //HTTP Transport Security
+		return 1;
+	}
+#endif
+#ifdef RTCONFIG_AIHOME_TUNNEL
+	if (nvram_get_int("http_enable") == 1 && http_port == SERVER_PORT)
+		return 0;
+#endif
+
+	return 1;
+}
+
 int main(int argc, char **argv)
 {
 	usockaddr usa;
@@ -2106,6 +2157,9 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGCHLD, chld_reap);
 	signal(SIGUSR1, update_wlan_log);
+	signal(SIGALRM, check_alive);
+
+	alarm(30);
 
 #ifdef RTCONFIG_HTTPS
 	//if (do_ssl)
@@ -2115,12 +2169,7 @@ int main(int argc, char **argv)
 	/* Initialize listen socket */
 	for (i = 0; i < ARRAY_SIZE(listen_fd); i++)
 		listen_fd[i] = -1;
-#ifdef RTCONFIG_AIHOME_TUNNEL
-	if (nvram_get_int("http_enable") == 1 && http_port == SERVER_PORT) {
-		//httpd listen lo 80 port for tunnel but unused ifname in https only
-	} else
-#endif
-	if ((listen_fd[0] = initialize_listen_socket(&usa, http_ifname)) < 0) {
+	if (enabled_http_ifname() && (listen_fd[0] = initialize_listen_socket(&usa, http_ifname)) < 0) {
 		fprintf(stderr, "can't bind to %s address\n", http_ifname ? : "any");
 		return errno;
 	}
@@ -2161,6 +2210,12 @@ int main(int argc, char **argv)
 		fd_set rfds;
 		conn_item_t *item, *next;
 		int max_fd, count;
+
+		/* record alive flag */
+		if(check_alive_flag == 1){
+			alarm_tv.tv_sec = uptime();
+			check_alive_flag = 0;
+		}
 
 		memcpy(&rfds, &active_rfds, sizeof(rfds));
 		max_fd = -1;
@@ -2210,10 +2265,6 @@ int main(int argc, char **argv)
 				free(item);
 				continue;
 			}
-
-			/* Set receive/send timeouts */
-			setsockopt(item->fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-			setsockopt(item->fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 
 			/* Set receive/send timeouts */
 			setsockopt(item->fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
@@ -2314,6 +2365,7 @@ void erase_cert(void)
 {
 	unlink("/etc/cert.pem");
 	unlink("/etc/key.pem");
+	unlink(HTTPS_CA_JFFS);
 	nvram_set("https_crt_gen", "0");
 }
 

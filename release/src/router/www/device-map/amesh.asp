@@ -356,6 +356,7 @@ function gen_ready_onboardinglist(_onboardingList) {
 			var onboarding_device_id = newReMac.replace(/:/g, "");
 			var source = newReMacArray[newReMac].source;
 			var tcode = newReMacArray[newReMac].tcode;
+			var type = newReMacArray[newReMac].type;
 			if($('#ready_onBoarding_block').find('#' + onboarding_device_id + '').length == 0) {
 				if(checkCloudIconExist[model_name] == undefined)
 					checkCloudIconExist[model_name] = false;
@@ -395,8 +396,12 @@ function gen_ready_onboardinglist(_onboardingList) {
 							code += labelMac;
 							code += "</div>";
 							code += "<div class='amesh_interface_icon'>";
-							if(source == 2)
+							if(source == 2){
+								if(type != undefined && type == "65536")
+									code += "<div class='radioIcon radio_plc'></div>";
+								else
 								code += "<div class='radioIcon radio_wired'></div>";
+							}
 							else
 								code += "<div class='radioIcon radio_" + client_convRSSI(rssi) + "'></div>";
 							code += '</div>';
@@ -428,8 +433,12 @@ function gen_ready_onboardinglist(_onboardingList) {
 					}
 				);
 				if(newReMac != aimesh_select_new_re_mac){
-					if(source == 2)
+					if(source == 2){
+						if(type != undefined && type == "65536")
+							$('#ready_onBoarding_block').find('#' + onboarding_device_id + '').children().find('.radioIcon').removeClass().addClass('radioIcon radio_plc');
+						else
 						$('#ready_onBoarding_block').find('#' + onboarding_device_id + '').children().find('.radioIcon').removeClass().addClass('radioIcon radio_wired');
+					}
 					else
 						$('#ready_onBoarding_block').find('#' + onboarding_device_id + '').children().find('.radioIcon').removeClass().addClass('radioIcon radio_' + client_convRSSI(rssi) + '');
 				}
@@ -466,11 +475,12 @@ function gen_current_onboardinglist(_onboardingList, _wclientlist, _wiredclientl
 				var pap5g = _onboardingList[idx].pap5g;
 				var rssi2g = _onboardingList[idx].rssi2g;
 				var rssi5g = _onboardingList[idx].rssi5g;
+				var rssi6g = _onboardingList[idx].rssi6g;
 				var online = _onboardingList[idx].online;
 				var connect_type = _onboardingList[idx].re_path;
 				var tcode = _onboardingList[idx].tcode;
 				var wireless_band = 0;
-				var wireless_band_array = ["2.4G", "5G"];
+				var wireless_band_array = ["2.4G", "5G", "6G"];
 				var wireless_rssi = 4;
 				var alias = "Home";
 				if("config" in _onboardingList[idx]) {
@@ -503,11 +513,20 @@ function gen_current_onboardinglist(_onboardingList, _wclientlist, _wiredclientl
 						addNewScript("../switcherplugin/jquery.iphone-switch.js");
 				}
 
-				if(connect_type == "1" || connect_type == "16" || connect_type == "32" || connect_type == "64")
-					wireless_rssi = "wired";
+				if(connect_type == "1" || connect_type == "16" || connect_type == "32" || connect_type == "64"){
+					var real_port_type = gen_real_port_type(_onboardingList[idx]);
+					if(real_port_type.type == "eth")
+						wireless_rssi = "wired";
+					else if(real_port_type.type == "plc")
+						wireless_rssi = "plc";
+				}
 				else if(connect_type == "2") {
 					wireless_band = 0;
 					wireless_rssi = client_convRSSI(rssi2g);
+				}
+				else if(connect_type == "128") {
+					wireless_band = 2;
+					wireless_rssi = client_convRSSI(rssi6g);
 				}
 				else {
 					wireless_band = 1;
@@ -1021,13 +1040,15 @@ function show_connect_msg(_reMac, _newReMac, _model_name, _ui_model_name, _rssi,
 				$amesh_action_bg.append($amesh_apply);
 				$amesh_apply.click(
 					function() {
-						var authMode = httpApi.nvramGet(["wl0_auth_mode_x", "wl1_auth_mode_x", "wl2_auth_mode_x"], true);
 						var postData = {};
-
-						Object.keys(authMode).map(function(item, idx){ 
-							if(authMode[item] == "sae"){
-								postData[item] = "psk2sae";
-								postData["wl" + idx + "_mfp"] = 1;
+						var band6g = 4;
+						$.each(wl_nband_array, function(index, value){
+							var authMode = httpApi.nvramGet(["wl" + index + "_auth_mode_x"], true)["wl" + index + "_auth_mode_x"];
+							if(value == band6g)
+								return true;
+							if(authMode == "sae"){
+								postData["wl" + index + "_auth_mode_x"] = "psk2sae";
+								postData["wl" + index + "_mfp"] = 1;
 							}
 						});
 
@@ -1723,9 +1744,8 @@ function popAMeshClientListEditTable(event) {
 		$popupBgHtml.find("#aimesh_node_location_input").attr("disabled", false);
 	}
 
-	var connect_info = {"re_path" : node_info.re_path, "rssi2g" : node_info.rssi2g, "rssi5g" : node_info.rssi5g, "online" : node_info.online};
-	$popupBgHtml.find("#aimesh_node_connection_type").html(get_connect_type(connect_info).text);
-	$popupBgHtml.find(".amesh_interface_icon.static_info").html(get_connect_type(connect_info).icon);
+	$popupBgHtml.find("#aimesh_node_connection_type").html(get_connect_type(node_info).text);
+	$popupBgHtml.find(".amesh_interface_icon.static_info").html(get_connect_type(node_info).icon);
 
 	var backhalctrl_amas_ethernet = "3";
 	var $conn_priority_select_obj = $popupBgHtml.find("#aimesh_node_connection_priority");
@@ -2240,42 +2260,35 @@ function ajax_AiMesh_node_clients(_nodeMac){
 				if(parent.$("#edit_amesh_client_block").children().find(".aimesh_node_client_tr").length > 0)
 					parent.$("#edit_amesh_client_block").children().find(".aimesh_node_client_tr").remove();
 
-				var getNodeStatus = function(_jsonArray, _idxArray, item) {
-					var status = 0;
+				var getNodeInfo = function(_jsonArray, _idxArray) {
+					var result = "";
 					for (var idx in _jsonArray) {
 						if (_jsonArray[idx].hasOwnProperty(_idxArray[0])) {
 							if(_jsonArray[idx][_idxArray[0]] == _idxArray[1]) {
-								if (_jsonArray[idx].hasOwnProperty(item)) {
-									status = _jsonArray[idx][item];
+									result = _jsonArray[idx];
 									break;
-								}
 							}
 						}
 					}
-					return status;
+					return result;
 				};
-				var node_online = getNodeStatus(get_cfg_clientlist, ["mac", _nodeMac], "online");
-				var node_model_name = getNodeStatus(get_cfg_clientlist, ["mac", _nodeMac], "model_name");
-				var node_re_path = getNodeStatus(get_cfg_clientlist, ["mac", _nodeMac], "re_path");
-				var node_rssi2g = getNodeStatus(get_cfg_clientlist, ["mac", _nodeMac], "rssi2g");
-				var node_rssi5g = getNodeStatus(get_cfg_clientlist, ["mac", _nodeMac], "rssi5g");
+				var node_info = getNodeInfo(get_cfg_clientlist, ["mac", _nodeMac]);
 				var wired_client = get_wiredclientlist[_nodeMac];
 				var wl_client = get_wclientlist[_nodeMac];
 				aimesh_node_client_list = [];
-				if(node_online == "1")
+				if(node_info.online == "1")
 					aimesh_node_client_list = get_aimesh_node_client_list(wired_client, wl_client, _nodeMac);
 				aimesh_node_client_list = sorterApi.sortJson(aimesh_node_client_list, sorterApi.key, sorterApi.type);
 				parent.$("#edit_amesh_client_block").children().find("#aimesh_node_client_header_tr").after(gen_AiMesh_node_client(aimesh_node_client_list));
 
-				if(checkCloudIconExist[node_model_name]) {
-					parent.$("#edit_amesh_client_block .amesh_router_icon.card").css('background-image', 'url(' + checkCloudIconExist[node_model_name] + ')');
+				if(checkCloudIconExist[node_info.model_name]) {
+					parent.$("#edit_amesh_client_block .amesh_router_icon.card").css('background-image', 'url(' + checkCloudIconExist[node_info.model_name] + ')');
 					parent.$("#edit_amesh_client_block .amesh_router_icon.card").addClass('amesh_router_image_web');
 					parent.$("#edit_amesh_client_block .amesh_router_icon.card").removeClass('amesh_router_icon');
 				}
 
-				var connect_info = {"re_path" : node_re_path, "rssi2g" : node_rssi2g, "rssi5g" : node_rssi5g, "online" : node_online};
-				parent.$("#edit_amesh_client_block #aimesh_node_connection_type").html(get_connect_type(connect_info).text);
-				parent.$("#edit_amesh_client_block .amesh_interface_icon.static_info").html(get_connect_type(connect_info).icon);
+				parent.$("#edit_amesh_client_block #aimesh_node_connection_type").html(get_connect_type(node_info).text);
+				parent.$("#edit_amesh_client_block .amesh_interface_icon.static_info").html(get_connect_type(node_info).icon);
 			}
 			else {
 				if(interval_ajax_AiMesh_node_clients_status) {
@@ -2359,9 +2372,8 @@ function gen_AiMesh_node_client(_nodeClient_array) {
 			nodeClientHtml += "<td width='" + aimesh_node_client_info_width[3] + "' align='center'>";
 			nodeClientHtml += "<div style='margin: auto;' class='radioIcon radio_" + rssi + "'></div>";
 			if(nodeClientObj.isWL != "0") {
-				var wireless_band_array = ["", "2.4G", "5G", "5G-2"];
 				var bandClass = (navigator.userAgent.toUpperCase().match(/CHROME\/([\d.]+)/)) ? "band_txt_chrome" : "band_txt";
-				nodeClientHtml += "<div class='band_block' style='margin: auto;'><span class=" + bandClass + " style='color: #000000;'>" + wireless_band_array[nodeClientObj.isWL] + "</span></div>";
+				nodeClientHtml += "<div class='band_block' style='margin: auto;'><span class=" + bandClass + " style='color: #000000;'>" + isWL_map[nodeClientObj.isWL]["text"] + "</span></div>";
 			}
 			nodeClientHtml += "</td>";
 			nodeClientHtml += "</tr>";
@@ -2410,18 +2422,29 @@ function get_connect_type(_node_info) {
 	var component = {"text":"", "icon":""};
 	if(_node_info.online == "1"){
 		if(_node_info.re_path == "1" || _node_info.re_path == "16" || _node_info.re_path == "32" || _node_info.re_path == "64") {
-			component.text = "<#tm_wired#>";
-			component.icon = "<div class='radioIcon radio_wired'></div>";
+			var real_port_type = gen_real_port_type(_node_info);
+			if(real_port_type.type == "eth"){
+				component.text = "<#tm_wired#>";
+				component.icon = "<div class='radioIcon radio_wired'></div>";
+			}
+			else if(real_port_type.type == "plc"){
+				component.text = "Powerline";/* untranslated */
+				component.icon = "<div class='radioIcon radio_plc'></div>";
+			}
 		}
 		else {
 			component.text = "<#tm_wireless#>";
 			var bandClass = (navigator.userAgent.toUpperCase().match(/CHROME\/([\d.]+)/)) ? "band_txt_chrome" : "band_txt";
 			var wireless_band = 0;
-			var wireless_band_array = ["2.4G", "5G"];
+			var wireless_band_array = ["2.4G", "5G", "6G"];
 			var wireless_rssi = 4;
 			if(_node_info.re_path == "2") {
 				wireless_band = 0;
 				wireless_rssi = client_convRSSI(_node_info.rssi2g);
+			}
+			if(_node_info.re_path == "128") {
+				wireless_band = 2;
+				wireless_rssi = client_convRSSI(_node_info.rssi6g);
 			}
 			else {
 				wireless_band = 1;
@@ -2436,6 +2459,56 @@ function get_connect_type(_node_info) {
 		component.icon = "";
 	}
 	return component;
+}
+function gen_real_port_type(_node_info){
+	var result = {type:"eth", speed:"G"};
+	var interface_mapping = [{value:"1", type:"eth"}, {value:"2", type:"wifi"}, {value:"3", type:"plc"}];//Type
+	var eth_rate_mapping = [{value:"1", type:"M"}, {value:"2", type:"M"}, {value:"3", type:"G"}, {value:"4", type:"F"}, {value:"5", type:"Q"},
+		{value:"6", type:"T"}, {value:"7", type:"T"}];//SubType
+	var eth_re_path_sequence = {"1":1, "16":2, "32":3, "64":4};
+	var eth_mapping_idx = ((eth_re_path_sequence[_node_info.re_path] == undefined) ? 0 : (eth_re_path_sequence[_node_info.re_path]));
+	var eth_current_idx = 1;
+	if(_node_info.re_path == "1" || _node_info.re_path == "16" || _node_info.re_path == "32" || _node_info.re_path == "64"){
+		if("capability" in _node_info){
+			if("21" in _node_info.capability) {
+				var multiple_uplink_port = _node_info.capability["21"];
+				if(multiple_uplink_port["Ports"] != undefined) {
+					$.each(multiple_uplink_port["Ports"], function( index, value ){
+						var conn_type = "";
+						var port_obj = value;
+						var if_type = interface_mapping.filter(function(item, index, _array){
+							return (item.value == port_obj.Type);
+						})[0];
+						if(if_type != undefined){
+							var rate_type = "";
+							switch(if_type.value){
+								case "1":
+									if(eth_current_idx == eth_mapping_idx){
+										result.type = "eth";
+										rate_type =  eth_rate_mapping.filter(function(item, index, _array){
+											return (item.value == port_obj.SubType);
+										})[0];
+										if(rate_type != undefined && rate_type != "")
+											result.speed = rate_type.type;
+										return false;
+									}
+									eth_current_idx++;
+									break;
+								case "3":
+									if(eth_current_idx == eth_mapping_idx){
+										result.type = "plc";
+										return false;
+									}
+									eth_current_idx++;
+									break;
+							}
+						}
+					});
+				}
+			}
+		}
+	}
+	return result;
 }
 function handle_ui_model_name(_model_name, _ui_model_name){
 	var result = "";

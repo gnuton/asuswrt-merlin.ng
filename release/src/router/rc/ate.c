@@ -22,8 +22,8 @@
 #define MULTICAST_BIT  0x0001
 #define UNIQUE_OUI_BIT 0x0002
 
-#if defined(RTAX82U) || defined(DSL_AX82U)
-extern int cled_gpio[12];
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
+extern int cled_gpio[];
 #endif
 
 static int setAllSpecificColorLedOn(enum ate_led_color color)
@@ -350,9 +350,10 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 		}
 		break;
 #endif
-#if defined(RTAX95Q) || defined(RTAX56_XD4)
+#if defined(RTAX95Q) || defined(RTAX56_XD4) || defined(CTAX56_XD4)
 	case MODEL_RTAX95Q:
 	case MODEL_RTAX56_XD4:
+	case MODEL_CTAX56_XD4:
 		{
 			if(color == LED_COLOR_RED) {
 				setAllRedLedOn();
@@ -364,7 +365,7 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 		}
 		break;
 #endif
-#if defined(RTAX58U) || defined(TUFAX3000) || defined(RTAX82U) || defined(RTAX82_XD6)
+#ifdef BCM6750
 	case MODEL_RTAX58U:
 		{
 #ifdef RTAX82_XD6
@@ -387,20 +388,26 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 			};
 			static enum led_id red_led[] = {
 				LED_WAN,
-#ifdef RTAX82U
+#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400)
 				LED_GROUP1_RED,
 				LED_GROUP2_RED,
 				LED_GROUP3_RED,
 				LED_GROUP4_RED,
+#if defined(GSAX3000) || defined(GSAX5400)
+				LED_GROUP5_RED,
+#endif
 #endif
 				LED_ID_MAX
 			};
-#ifdef RTAX82U
+#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400)
 			static enum led_id green_led[] = {
 				LED_GROUP1_GREEN,
 				LED_GROUP2_GREEN,
 				LED_GROUP3_GREEN,
 				LED_GROUP4_GREEN,
+#if defined(GSAX3000) || defined(GSAX5400)
+				LED_GROUP5_GREEN,
+#endif
 				LED_ID_MAX
 			};
 			static enum led_id blue_led[] = {
@@ -408,12 +415,15 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 				LED_GROUP2_BLUE,
 				LED_GROUP3_BLUE,
 				LED_GROUP4_BLUE,
+#if defined(GSAX3000) || defined(GSAX5400)
+				LED_GROUP5_BLUE,
+#endif
 				LED_ID_MAX
 			};
 #endif
 			all_led[LED_COLOR_WHITE] = white_led;
 			all_led[LED_COLOR_RED] = red_led;
-#ifdef RTAX82U
+#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400)
 			all_led[LED_COLOR_GREEN] = green_led;
 			all_led[LED_COLOR_BLUE] = blue_led;
 			LEDGroupReset(LED_ON);
@@ -575,11 +585,16 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 		}
 		break;
 #endif
-#if defined(RTAX86U) || defined(RTAX5700) || defined(RTAX68U)
+#if defined(RTAX86U) || defined(RTAX5700) || defined(RTAX68U) || defined(RTAC68U_V4)
 	case MODEL_RTAX86U:
 	case MODEL_RTAX68U:
+	case MODEL_RTAC68U_V4:
 		{
+#ifdef RTAC68U_V4
+			static enum led_id blue_led[] = {
+#else
 			static enum led_id white_led[] = {
+#endif
 					LED_POWER, LED_WAN_NORMAL,
 #ifdef RTCONFIG_LAN4WAN_LED
 					LED_LAN1, LED_LAN2, LED_LAN3, LED_LAN4,
@@ -588,6 +603,9 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 #endif
 #if defined(RTAX86U) || defined(RTAX5700)
 					LED_WPS,
+#endif
+#ifdef RTAC68U_V4
+					LED_USB, LED_USB3,
 #endif
 					LED_ID_MAX
 					};
@@ -602,12 +620,25 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 			int ext_phy_model = nvram_get_int("ext_phy_model"); // 0: BCM54991, 1: RTL8226
 #endif
 
+#ifdef RTAC68U_V4
+			all_led[LED_COLOR_BLUE] = blue_led;
+#else
 			all_led[LED_COLOR_WHITE] = white_led;
+#endif
 			all_led[LED_COLOR_RED] = red_led;
 
+#ifdef RTAC68U_V4
+			if(color == LED_COLOR_BLUE) {
+#else
 			if(color == LED_COLOR_WHITE) {
+#endif
+#ifdef RTAC68U_V4
+				eval("wl", "-i", "eth5", "ledbh", "10", "1"); // wl 5G
+				eval("wl", "-i", "eth6", "ledbh", "10", "1"); // wl 2.4G
+#else
 				eval("wl", "-i", "eth6", "ledbh", "7", "1"); // wl 2.4G
 				eval("wl", "-i", "eth7", "ledbh", "15", "1"); // wl 5G
+#endif
 #ifdef RTCONFIG_EXTPHY_BCM84880
 				if(ext_phy_model == 0){
 					eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a832", "0x0");	// CTL LED3 MASK LOW
@@ -619,8 +650,13 @@ static int setAllSpecificColorLedOn(enum ate_led_color color)
 #endif
 			}
 			else {
+#ifdef RTAC68U_V4
+				eval("wl", "-i", "eth5", "ledbh", "10", "0"); // wl 5G
+				eval("wl", "-i", "eth6", "ledbh", "10", "0"); // wl 2.4G
+#else
 				eval("wl", "-i", "eth6", "ledbh", "7", "0"); // wl 2.4G
 				eval("wl", "-i", "eth7", "ledbh", "15", "0"); // wl 5G
+#endif
 #ifdef RTCONFIG_EXTPHY_BCM84880
 				if(ext_phy_model == 0)
 					eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a835", "0x0");
@@ -1366,7 +1402,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	else if (!strcmp(command, "Set_AllOrangeLedOn")) {
 		return setAllSpecificColorLedOn(LED_COLOR_ORANGE);
 	}
-#if defined(RTAX82U) || defined(DSL_AX82U)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 	else if (!strcmp(command, "Set_Red1LedOn")) {
 		setAllLedOff();
 		cled_set(cled_gpio[0], 0xa000, 0x0, 0x0, 0x0);
@@ -1391,6 +1427,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		led_control(LED_GROUP4_RED, LED_ON);
 		puts("1");
 		return 0;
+#if defined(GSAX3000) || defined(GSAX5400)
+	} else if (!strcmp(command, "Set_Red5LedOn")) {
+		setAllLedOff();
+		cled_set(cled_gpio[12], 0xa000, 0x0, 0x0, 0x0);
+		led_control(LED_GROUP5_RED, LED_ON);
+		puts("1");
+		return 0;
+#endif
 	} else if (!strcmp(command, "Set_Green1LedOn")) {
 		setAllLedOff();
 		cled_set(cled_gpio[1], 0xa000, 0x0, 0x0, 0x0);
@@ -1415,6 +1459,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		led_control(LED_GROUP4_GREEN, LED_ON);
 		puts("1");
 		return 0;
+#if defined(GSAX3000) || defined(GSAX5400)
+	} else if (!strcmp(command, "Set_Green5LedOn")) {
+		setAllLedOff();
+		cled_set(cled_gpio[13], 0xa000, 0x0, 0x0, 0x0);
+		led_control(LED_GROUP5_GREEN, LED_ON);
+		puts("1");
+		return 0;
+#endif
 	} else if (!strcmp(command, "Set_Blue1LedOn")) {
 		setAllLedOff();
 		cled_set(cled_gpio[2], 0xa000, 0x0, 0x0, 0x0);
@@ -1439,6 +1491,14 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		led_control(LED_GROUP4_BLUE, LED_ON);
 		puts("1");
 		return 0;
+#if defined(GSAX3000) || defined(GSAX5400)
+	} else if (!strcmp(command, "Set_Blue5LedOn")) {
+		setAllLedOff();
+		cled_set(cled_gpio[14], 0xa000, 0x0, 0x0, 0x0);
+		led_control(LED_GROUP5_BLUE, LED_ON);
+		puts("1");
+		return 0;
+#endif
 	}
 #endif
 #ifdef RTCONFIG_BCMARM
@@ -3396,10 +3456,13 @@ int chk_envrams_proc(void)
 }
 
 void start_envrams(void) {
-
+	if (!pids("envrams"))
 	system("/usr/sbin/envrams >/dev/null");
 }
 
+void stop_envrams(void) {
+	killall_tk("envrams");
+}
 #endif
 
 int ate_run_arpstrom(void) {

@@ -130,6 +130,10 @@ ifeq ($(RTCONFIG_RGBLED),y)
 CFLAGS += -I$(TOP)/i2c-tools-3.1.2/include/linux
 endif
 
+ifneq ($(findstring CONFIG_BCM_KF_NETFILTER=, $(shell cat $(LINUXDIR)/.config)),)
+CFLAGS         += -DBCM_KF_NETFILTER
+endif
+
 OBJS = shutils.o defaults.o model.o rtstate.o boardapi.o
 OBJS += network_utility.o
 OBJS += misc.o version.o files.o strings.o process.o
@@ -496,6 +500,36 @@ prebuild/%.o:
 
 .depend: $(OBJS:%.o=%.c)
 	@$(CC) $(CFLAGS) -M $^ > .depend
+
+ifeq ($(RTCONFIG_HND_ROUTER_AX),y)
+ifneq ($(wildcard prebuild/bcmutils.o),)
+bcmutils.o: prebuild/bcmutils.o
+	cp prebuild/$@ .
+else
+.bcmutils.depend: bcmutils.c
+	@$(CC) $(CFLAGS) -M $< > $@
+endif
+endif
+
+ifeq ($(RTCONFIG_HND_ROUTER_AX),y)
+ifneq ($(wildcard prebuild/bcmwifi_channels.o),)
+bcmwifi_channels.o: prebuild/bcmwifi_channels.o
+	cp prebuild/$@ .
+else
+.bcmwifi_channels.depend: bcmwifi_channels.c
+	@$(CC) $(CFLAGS) -M $< > $@
+endif
+endif
+
+ifeq ($(RTCONFIG_HND_ROUTER_AX),y)
+ifneq ($(wildcard prebuild/bcmxtlv.o),)
+bcmxtlv.o: prebuild/bcmxtlv.o
+	cp prebuild/$@ .
+else
+.bcmxtlv.depend: bcmxtlv.c
+	@$(CC) $(CFLAGS) -M $< > $@
+endif
+endif
 
 .%.depend: %.c
 	@$(CC) $(CFLAGS) -M $< > $@

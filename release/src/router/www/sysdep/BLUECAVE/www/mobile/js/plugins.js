@@ -205,6 +205,7 @@ function getAiMeshOnboardinglist(_onboardingList){
 		this.pap_mac = "";
 		this.id = "";
 		this.tcode = "";
+		this.type = "";
 	};
 	var convRSSI = function(val) {
 		var result = 1;
@@ -233,6 +234,7 @@ function getAiMeshOnboardinglist(_onboardingList){
 			node_info.pap_mac = papMac;
 			node_info.id = newReMac.replace(/:/g, "");
 			node_info.tcode = newReMacArray[newReMac].tcode;
+			node_info.type = newReMacArray[newReMac].type;
 			jsonArray.push(node_info);
 		});
 	});
@@ -306,6 +308,19 @@ function rangeCheck(objArray, min, max, reserveHints){//1: reserve previous hint
 function hadPlugged(deviceType){
 	var usbDeviceList = httpApi.hookGet("show_usb_path") || [];
 	return (usbDeviceList.join().search(deviceType) != -1)
+}
+
+function showDiableDHCPclientID(clientid_enable){
+	if(clientid_enable.checked) {
+		$('#wan_clientid').val("")
+						  .attr('disabled', true)
+						  .hide();
+	}
+	else {
+		$('#wan_clientid').val("")
+		                  .attr('disabled', false)
+		                  .show();
+	}
 }
 
 var Get_Component_Header = function(){
@@ -425,8 +440,12 @@ var Get_Component_AiMeshOnboarding_List = function(nodeInfo) {
 	var band_icon_container = $("<div>").addClass("ap_icon_container middle");
 	nodeDiv.append(band_icon_container);
 	var band_icon = $("<div>");
-	if(nodeInfo.source == "2")
+	if(nodeInfo.source == "2"){
+		if(nodeInfo.type != undefined && nodeInfo.type == "65536")
+			band_icon.addClass("aimesh_band_icon icon_plc");
+		else
 		band_icon.addClass("aimesh_band_icon icon_wired");
+	}
 	else
 		band_icon.addClass("icon_wifi_" + nodeInfo.signal + " aimesh_band_icon");
 	band_icon.appendTo(band_icon_container);
@@ -614,7 +633,7 @@ function installPages(flag){
 }
 
 function handleSysDep(){
-	var isNoWAN = (httpApi.detwanGetRet().wanType == 'NOWAN');
+	var isNoWAN = (isSupport("dsl"))?(httpApi.detDSLwanGetRet().wanType == 'NOWAN'):(httpApi.detwanGetRet().wanType == 'NOWAN');
 	var amas_bdl_num = parseInt(httpApi.nvramGet(["amas_bdl"]).amas_bdl);
 
 	$(".amasSupport").toggle(isSupport("AMAS"));
@@ -636,7 +655,7 @@ function handleSysDep(){
 		systemVariable.forceChangePwInTheEnd = true;
 	}
 
-	if(!isNoWAN) $(".amasNoWAN").remove();
+	if(!isNoWAN || !isSupport("amasNode")) $(".amasNoWAN").remove();
 	if(!isSupport("amas")) $(".amasSupport").remove();
 	if(isSupport("amas") && isSupport("amas_bdl")){
 		$("#amassearch_page").load("/mobile/pages/amassearch_page.html");
@@ -910,7 +929,7 @@ var getRestartService = function(){
 	var original_switch_wantag = httpApi.nvramGet(["switch_wantag"]).switch_wantag;
 
 	if(isWANChanged()){
-		actionScript.push("restart_wan_if 0");
+		actionScript.push("restart_wan_if " + systemVariable.ethWanIf);
 	}
 
 	if(systemVariable.detwanResult.isIPConflict){

@@ -715,7 +715,7 @@ get_uplinkports_linkrate(char *ifname)
 	int lret=0;
 	int len;
 #if defined(RTCONFIG_HND_ROUTER_AX_6710)
-	// MODEL_RTAX86U, MODEL_RTAX68U
+	// MODEL_RTAX86U, MODEL_RTAX68U, MODEL_RTAC68U_V4
 #if defined(RTCONFIG_EXTPHY_BCM84880)
 	// L5(2.5G) W0 L1 L2 L3 L4 <--LAYOUT
 	// eth5 eth0 eth4 eth3 eth2 eth1
@@ -750,6 +750,7 @@ get_uplinkports_linkrate(char *ifname)
 
 		break;
 	case MODEL_RTAX68U:
+	case MODEL_RTAC68U_V4:
 		sprintf(pif[0], "%s", "eth0");
 		sprintf(pif[1], "%s", "eth4");
 		sprintf(pif[2], "%s", "eth3");
@@ -840,7 +841,7 @@ get_uplinkports_linkrate(char *ifname)
 #ifdef RTCONFIG_EXT_BCM53134
 #if defined(RTAX95Q)
 	int lan_ports=3;
-#elif defined(RTAX56_XD4)
+#elif defined(RTAX56_XD4) || defined(CTAX56_XD4)
 	int lan_ports=1;
 #elif defined(RTAX56U) || defined(RTAX55) || defined(RTAX1800)
 	int lan_ports=4;
@@ -1098,6 +1099,14 @@ get_uplinkports_linkrate(char *ifname)
 			ports[0]=0;;
 		}
 		sprintf(pif[0], "%s", "eth0");
+		break;
+	case MODEL_CTAX56_XD4:
+		/*
+			0 1 W0 L1
+		 */
+		ports[0]=0; ports[1]=1;
+		sprintf(pif[0], "%s", "eth0");
+		sprintf(pif[1], "%s", "eth1");
 		break;
 	case MODEL_DSLAX82U:
 		/* WAN L4 L3 L2 L1 */
@@ -1714,20 +1723,17 @@ phy_port_mapping get_phy_port_mapping(void)
 #elif defined(RTAX56_XD4)
 		.count = 1,
 		.port[0] = { .phy_port_id = 0, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
-#elif defined(DSLAX82U) || defined(RTAX82U)
-		.count = 5,
-		.port[0] = { .phy_port_id = 4, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 1000, .ifname = "eth4" },
-		.port[1] = { .phy_port_id = 3, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
-		.port[2] = { .phy_port_id = 2, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
-		.port[3] = { .phy_port_id = 1, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
-		.port[4] = { .phy_port_id = 0, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth0" }
+#elif defined(CTAX56_XD4)
+		.count = 2,
+		.port[0] = { .phy_port_id = 0, .label_name = "W0", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth0" },
+		.port[1] = { .phy_port_id = 0, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
 #elif defined(RTAX82_XD6)
 		.count = 4,
 		.port[0] = { .phy_port_id = 4, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 1000, .ifname = "eth4" },
 		.port[1] = { .phy_port_id = 2, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
 		.port[2] = { .phy_port_id = 1, .label_name = "L2", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
 		.port[3] = { .phy_port_id = 0, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
-#elif defined(RTAX58U) || defined(TUFAX3000)
+#elif defined(BCM6750) || defined(BCM63178)
 		.count = 5,
 		.port[0] = { .phy_port_id = 4, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 1000, .ifname = "eth4" },
 		.port[1] = { .phy_port_id = 3, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },

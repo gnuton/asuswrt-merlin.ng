@@ -12,12 +12,21 @@ Asuswrt-Merlin 386/NG Changelog
           once again back on the master branch, with
           both mainline and ax being reunified again.
 
+  - NOTE: Some users upgrading might have to go through some
+          database maintenance on first boot, which means the
+          router might be slower or have a non-responsive webui
+          for a while.
+          This can take anywhere from 5 minutes up to an hour,
+          depending on your model, just give it time to complete
+          the process.
+
   - NEW: Added support for the RT-AX86U.
   - NEW: Added support for the GT-AC2900, with a few restrictions:
            - Non-ROG UI is used
            - VPN Fusion is not supported
            - A few other ROG-specific features are not supported
          This is an experiment done in collaboration with Asus.
+  - NEW: Added support for the RT-AC68U V3.
   - NEW: Added stub and stub-v2 compression options to OpenVPN
          clients.  Not added to server, since compression is
          considered deprecated, and will be removed most likely
@@ -25,8 +34,8 @@ Asuswrt-Merlin 386/NG Changelog
   - NEW: Added tls-crypt-v2 support to OpenVPN clients.
   - NEW: Added option to select an OpenVPN client when
          running Oookla Speedtest.
-  - UPDATED: Merged GPL 386_41035 (beta GPL from Asus).
-  - UPDATED: Openssl to 1.1.1h.
+  - UPDATED: Merged GPL 386_41535
+  - UPDATED: Openssl to 1.1.1i.
   - UPDATED: Updated to OpenVPN 2.5.0.  Note that OpenVPN
              2.4.0 or newer is now required by the exported
              client config file.  You can still manually
@@ -38,6 +47,7 @@ Asuswrt-Merlin 386/NG Changelog
   - UPDATED: lz4 to 1.9.2.
   - UPDATED: e2fsprogs to 1.45.6.
   - UPDATED: dropbear to 2020.81.
+  - UPDATED: miniupnpd to 2.2 (git snapshot from 20201129)
   - UPDATED: Switched userspace ipset from 6.32 to 7.6 (to match
              with upstream)
   - CHANGED: firmware update checks are no longer using the
@@ -59,14 +69,26 @@ Asuswrt-Merlin 386/NG Changelog
              webpages to 20.
   - CHANGED: Multiple routes can now be defined per client on the
              OpenVPN client-specific configuration.
+  - CHANGED: Improved NAT acceleration report for newer models on
+             the sysinfo page.  Now query the hardware for the
+             current state instead of reporting the nvram values.
+  - CHANGED: When logging allowed connections is enabled, also log
+             outbound LAN connections (reverts to the behaviour from
+             a few years ago)
   - FIXED: DHCP could fail to renew its lease with some ISPs when
            Trend Micro engine was enabled (workaround provided
            by Asus)
+  - FIXED: OpenVPN client remote IP wasn't updated on client
+           stop/restart.
+  - FIXED: Couldn't force generating a new SSL certificate for the
+           webui.
   - REMOVED: Option to disable NCP.  The NCP cipher list is
              now used both for NCP and non-NCP endpoints.
   - REMOVED: fq_codel support for Adaptive QoS.  Due to a change
              in how Trend Micro configures QoS, it is no longer
              possible to intercept these to inject fq_codel.
+  - REMOVED: Option to select sfq as a queue scheduler for t.QoS
+             or Bandwidth Limiter, and always use fq_codel.
   - REMOVED: Support for the Cloudcheck mobile app.
 
 

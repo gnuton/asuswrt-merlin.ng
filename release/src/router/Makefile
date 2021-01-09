@@ -342,7 +342,7 @@ export CONFIG_MBO_AP=y
 ifeq ($(RTCONFIG_WIFI6E),y)
 export BUILD_43684C0 := y
 endif
-ifeq ($(BUILD_NAME), GT-AX11000)
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AX11000 GT-AXE11000))
 export BUILD_43684_COMBO := y
 endif
 #only if 4908 platform
@@ -3232,6 +3232,9 @@ endif
 dhd-install :
 ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
 	install -d $(INSTALLDIR)/dhd/usr/sbin
+ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe/prebuilt/dhd),)
+	cp -f $(SRCBASE_DHD)/dhd/exe/prebuilt/dhd $(SRCBASE_DHD)/dhd/exe/dhd
+endif
 	install $(SRCBASE_DHD)/dhd/exe/dhd $(INSTALLDIR)/dhd/usr/sbin
 	$(STRIP) $(INSTALLDIR)/dhd/usr/sbin/dhd
 endif
@@ -3565,23 +3568,23 @@ iptables-1.4.x-clean:
 
 miniupnpd/config.h: shared/version.h
 ifeq ($(RTCONFIG_IGD2),y)
-	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2 --portinuse $(if $(RTCONFIG_AURASYNC),--aurasync,) $(if $(RTCONFIG_GEFORCENOW),--nvgfn)
+	cd miniupnpd && ./configure --vendorcfg --leasefile $(if $(RTCONFIG_IPV6),--ipv6,) --igd2 --portinuse $(if $(RTCONFIG_AURASYNC),--aurasync,) $(if $(RTCONFIG_GEFORCENOW),--nvgfn) --iptablespath=$(TOP)/$(IPTABLES)
 else
-	cd miniupnpd && ./genconfig.sh --vendorcfg --leasefile --portinuse $(if $(RTCONFIG_AURASYNC),--aurasync,) $(if $(RTCONFIG_GEFORCENOW),--nvgfn)
+	cd miniupnpd && ./configure --vendorcfg --leasefile --portinuse $(if $(RTCONFIG_AURASYNC),--aurasync,) $(if $(RTCONFIG_GEFORCENOW),--nvgfn) --iptablespath=$(TOP)/$(IPTABLES)
 endif
 
 miniupnpd: $(IPTABLES) e2fsprogs miniupnpd/config.h
 	@$(SEP)
 	cp -f ./shared/version.h miniupnpd$(MUVER)/.
 	PKG_CONFIG=false ARCH=$(PLATFORM) \
-	$(MAKE) -C $@ -f Makefile.merlin $(PARALLEL_BUILD) \
+	$(MAKE) -C $@ -f Makefile $(PARALLEL_BUILD) \
 	    IPTABLESPATH=$(TOP)/$(IPTABLES) \
 	    EXTRACFLAGS="-Os $(EXTRACFLAGS) -idirafter$(KERNEL_HEADER_DIR) $(if $(or $(RTCONFIG_AURASYNC), $(RTCONFIG_GEFORCENOW)), -I$(TOP)/shared) -ffunction-sections -fdata-sections -I$(TOP)/e2fsprogs/lib" \
 	    LDFLAGS="$(EXTRALDFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(IPTC_LIBDIR) -L$(TOP)/e2fsprogs/lib" \
 		LDLIBS="-Wl,--as-needed $(if $(or $(RTCONFIG_AURASYNC), $(RTCONFIG_GEFORCENOW)),-L$(TOP)/shared -lshared -L$(TOP_PLATFORM)/nvram$(BCMEX)$(EX7) -lnvram,) -luuid -lrt $(IPTC_LIBS) $(if $(RTCONFIG_HND_ROUTER),-L$(TOP_PLATFORM)/wlcsm -lwlcsm,)"
 
 miniupnpd-clean:
-	-@$(MAKE) -C miniupnpd -f Makefile.merlin clean
+	-@$(MAKE) -C miniupnpd -f Makefile clean
 	-@rm miniupnpd/config.h
 
 miniupnpd_1.4: $(IPTABLES) shared/version.h
@@ -4206,7 +4209,9 @@ pppd/stamp-h1: kernel_header
 pppd: pppd/stamp-h1
 	@$(SEP)
 	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) \
-	EXTRACFLAGS="$(EXTRACFLAGS) -idirafter $(KDIR)/include"'
+	EXTRACFLAGS="$(EXTRACFLAGS) -idirafter $(KDIR)/include \
+		$(if $(RTCONFIG_DSL_BCM),-DRTCONFIG_DSL_BCM,) \
+	"'
 
 pppd-clean:
 	-@$(MAKE) -C pppd clean
@@ -4217,6 +4222,10 @@ pppd-install: pppd
 	$(STRIP) $(INSTALLDIR)/pppd/usr/sbin/pppd
 	install -D pppd/chat/chat $(INSTALLDIR)/pppd/usr/sbin/chat
 	$(STRIP) $(INSTALLDIR)/pppd/usr/sbin/chat
+ifeq ($(RTCONFIG_DSL_HOST),y)
+	install -D pppd/pppd/plugins/pppoatm/pppoatm.so $(INSTALLDIR)/pppd/usr/lib/pppd/pppoatm.so
+	$(STRIP) $(INSTALLDIR)/pppd/usr/lib/pppd/pppoatm.so
+endif
 ifeq ($(RTCONFIG_L2TP),y)
 	install -D pppd/pppd/plugins/pppol2tp/pppol2tp.so $(INSTALLDIR)/pppd/usr/lib/pppd/pppol2tp.so
 	$(STRIP) $(INSTALLDIR)/pppd/usr/lib/pppd/*.so
@@ -4255,7 +4264,7 @@ inadyn/Makefile: inadyn/configure
 		confuse_LIBS="-L$(STAGEDIR)/usr/lib -lconfuse" \
 		OpenSSL_CFLAGS="-I$(STAGEDIR)/usr/include" \
 		OpenSSL_LIBS="-L$(STAGEDIR)/usr/lib -lcrypto -lssl $(if $(RTCONFIG_OPENSSL11),-lpthread,)" \
-		CFLAGS="-Wall -Os -I$(TOP)/shared -I$(SRCBASE)/include -DASUSWRT $(if $(RTCONFIG_LETSENCRYPT),-DASUSWRT_LE,) \
+		CFLAGS="-Wall -Os -I$(TOP)/shared -I$(SRCBASE)/include -DASUSWRT $(if $(RTCONFIG_IPV6),-DUSE_IPV6,) $(if $(RTCONFIG_LETSENCRYPT),-DASUSWRT_LE,) \
 			-I$(STAGEDIR)/usr/include  -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
 		LDFLAGS="-L$(TOP_PLATFORM)/nvram$(BCMEX)$(EX7) -L$(TOP)/shared $(EXTRA_NV_LDFLAGS) \
 			 -L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(LDFLAGS) $(EXTRALDFLAGS)" \
@@ -5475,7 +5484,9 @@ ifneq ($(wildcard $(SRC_PRE_WLEXE)/prebuilt/$(BUILD_NAME)/wl),)
 else
 	install $(SRC_PRE_WLEXE)/prebuilt/wl wlexe
 endif
-
+ifeq ($(HND_ROUTER_AX_675X),y)
+	install $(SRCBASE)/router-sysdep/hnd_extra/prebuilt/wl_server_socket wlexe
+endif
 endif
 endif
 	@true
@@ -5797,11 +5808,13 @@ openvpn/Makefile:
 			-Wl,--gc-sections \
 			-lpthread -ldl \
 			-L$(TOP)/zlib -lz" \
+		IPROUTE="/usr/sbin/ip" \
 		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
 			--disable-debug --enable-management --disable-small \
 			--disable-selinux \
 			--enable-plugin-auth-pam \
 			ac_cv_lib_resolv_gethostbyname=no \
+			--enable-iproute2 \
         )
 
 openvpn-clean:
@@ -8146,6 +8159,10 @@ ifeq ($(HND_ROUTER_AX),y)
 acsdv2:
 	+$(MAKE) -C $(ACSDV2_DIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) all
 acsdv2-install: acsdv2
+ifneq ($(wildcard $(ACSDV2_DIR)/prebuilt/acsd2),)
+	cp -f $(ACSDV2_DIR)/prebuilt/acsd2 $(ACSDV2_DIR)/acsd2
+	cp -f $(ACSDV2_DIR)/prebuilt/acs_cli2 $(ACSDV2_DIR)/acs_cli2
+endif
 	+$(MAKE) -C $(ACSDV2_DIR) INSTALLDIR=$(INSTALLDIR)/acsdv2 install
 acsdv2-clean:
 	+$(MAKE) -C $(ACSDV2_DIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) clean
