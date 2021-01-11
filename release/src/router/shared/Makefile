@@ -422,9 +422,7 @@ OBJS += common_utils.o
 endif
 
 ifeq ($(or $(RTCONFIG_JFFS_NVRAM),$(RTCONFIG_VAR_NVRAM)),y)
-ifneq ($(BUILD_NAME),DSL-AC68U)
 OBJS += nvpriv.o
-endif
 endif
 
 all: libshared.so libshared.a
