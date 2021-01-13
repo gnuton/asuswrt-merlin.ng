@@ -14285,10 +14285,12 @@ check_ddr_done:
 	{
 		start_wrs_wbl_service();
 	}
+#ifndef DSL_AC68U
 	else if (strcmp(script, "mobile_game") == 0)
 	{
 		MobileDevMode_restart();
 	}
+#endif
 #endif
 #ifdef RTCONFIG_TRAFFIC_LIMITER
 	else if (strcmp(script, "reset_traffic_limiter") == 0)

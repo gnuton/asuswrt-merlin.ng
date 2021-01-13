@@ -3275,8 +3275,10 @@ define RouterOptions
 		fi; \
 		sed -i "/RTCONFIG_AMAS_SYNC_2G_BW/d" $(1); \
 		echo "RTCONFIG_AMAS_SYNC_2G_BW=y" >>$(1); \
-		sed -i "/RTCONFIG_ACCOUNT_BINDING/d" $(1); \
-                echo "RTCONFIG_ACCOUNT_BINDING=y" >>$(1); \
+		if [ "$(BUILD_NAME)" != "DSL-AC68U" ]; then \
+			sed -i "/RTCONFIG_ACCOUNT_BINDING/d" $(1); \
+			echo "RTCONFIG_ACCOUNT_BINDING=y" >>$(1); \
+		fi; \
 		sed -i "/RTCONFIG_NOTIFICATION_CENTER/d" $(1); \
                 echo "RTCONFIG_NOTIFICATION_CENTER=y" >>$(1); \
 		sed -i "/RTCONFIG_BHSWITCH_RE_SELFOPT/d" $(1); \
