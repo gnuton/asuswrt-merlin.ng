@@ -116,7 +116,7 @@ if(cfg_sync_support){
 }
 var download_srv = '<% nvram_get("firmware_server"); %>';
 if (download_srv == "") {
-	download_url = "https://www.asuswrt-merlin.net/download";
+	download_url = "https://gnuton.github.io/asuswrt-merlin.ng/updates";
 } else {
 	download_url = download_srv + "/" + based_modelid;
 }
