@@ -155,6 +155,7 @@ then
 	cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
 	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
 	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-BCM7.x-6.x $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
+	cp -a release/src-rt-6.x.4708/tc_fw/* $REPO/release/src-rt-6.x.4708/tc_fw/
 elif [ "$BUILD_NAME" == "RT-AX86U" ]
 then
 	SDK="_axhnd"
