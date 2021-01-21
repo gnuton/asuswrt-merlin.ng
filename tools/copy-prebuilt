@@ -266,10 +266,7 @@ fi
 if [ "$SDK" != "" ]
 then
 	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
-	if [ "$BUILD_NAME" != "DSL-AX82U" ]
-        then
-		cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
-	fi
+	cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
 fi
 
 # Cleanup
