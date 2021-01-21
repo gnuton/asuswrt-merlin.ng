@@ -60,8 +60,9 @@ jobs:
             if [[ ${MODEL} == "dsl-ac68u" ]]; then
               echo $BWDPI_KEYS_DSLAC68U | base64 -d > /tmp/keys.tgz
               tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/DSL-AC68U
-            elif [[ ${MODEL} == "rt-ax58u" ]]; then
-              echo "NO KEYS FOR ${MODEL} yet"
+            elif [[ ${MODEL} == "dsl-ax82u" ]]; then
+              echo $BWDPI_KEYS_DSLAX82U | base64 -d > /tmp/keys.tgz
+              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/DSL-AX82U
             fi
             echo "----- BUILD -----"
             make ${MODEL} | tee "/tmp/build.log"
