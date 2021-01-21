@@ -85,8 +85,6 @@ typedef struct {
 } phyState;
 #endif
 
-extern int dev_nvram_getall(char *buf, int count);
-
 unsigned int get_phy_temperature(int radio);
 unsigned int get_wifi_clients(int unit, int querytype);
 
@@ -252,7 +250,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			buf = malloc(MAX_NVRAM_SPACE);
 			if (buf) {
+#ifdef HND_ROUTER
+				nvram_getall(buf, MAX_NVRAM_SPACE);
+#else
 				dev_nvram_getall(buf, MAX_NVRAM_SPACE);
+#endif
 				tmp = buf;
 				while (*tmp) tmp += strlen(tmp) +1;
 
