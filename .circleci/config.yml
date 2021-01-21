@@ -68,22 +68,15 @@ jobs:
             echo "------ DONE -----"
             ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
       - run:
-          name: Remove image without firmware
-          command: |
-            cd ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
-            rm $(ls DSL-* | grep -v ".*DSL.*DSL.*") -f
-            ls
-      - run:
           name: Prepare workspace
           command: |
             mkdir -p workspace/release/
             if [[ ${MODEL} == "dsl-ac68u" ]]; then
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.trx workspace/release/
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*.md5 workspace/release/ || :
+              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.trx workspace/release/
+              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.md5 workspace/release/ || :
             elif [[ ${MODEL} == "dsl-ax82u" ]]; then
-              echo "Skip ${MODEL} for the time being"
-              #cp ${PROJECT_DIR}/release/${RELEASE_DIR}/targets/96750GW/*_cferom_pureubi.w workspace/release
-              #cp ${PROJECT_DIR}/release/${RELEASE_DIR}/targets/96750GW/*_cferom_pureubi.md5 workspace/release || :
+              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.w workspace/release
+              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.md5 workspace/release || :
             fi
             cp /tmp/build.log workspace/release/${MODEL}-build.log
             if [ -z "${CIRCLE_TAG}" ]; then
