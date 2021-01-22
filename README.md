@@ -5,11 +5,11 @@
 <h3 align="center">
     <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">AsusWrt Merlin</a> 
     for 
-    DSL-AC68U
+    DSL Asus Routers
 </h3>
 
 <p align="center">
-  A powerful third party alternative firmware for DSL Asus routers.
+  A powerful third party alternative firmware.
   <br>
   <a href="https://github.com/RMerl/asuswrt-merlin/wiki"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
