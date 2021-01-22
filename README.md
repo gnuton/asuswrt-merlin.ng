@@ -9,7 +9,7 @@
 </h3>
 
 <p align="center">
-  A powerful third party alternative firmware for DSL-AC68U Asus routers.
+  A powerful third party alternative firmware for DSL Asus routers.
   <br>
   <a href="https://github.com/RMerl/asuswrt-merlin/wiki"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
@@ -39,6 +39,10 @@ All releases:
 Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/tag/RMerl/asuswrt-merlin.ng.svg)
 
 Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-master.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-master)
+
+### Supported Models
+* DSL-AC68U
+* DSL-AX82U
 
 ### Experimental branches
 * [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
