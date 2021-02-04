@@ -45,19 +45,28 @@ Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/
 
 Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-master.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/dsl-master)
 
+---------------------
+
 ### Supported Models
 * DSL-AC68U
 * DSL-AX82U
 
+---------------------
+
+
 ### Experimental branches
 * [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
+
+---------------------
 
 ### Contributing
 Most of the help I need is in testing. You can test BETA releases when available and report bugs here.
 Beta releases are safe to be tested and they get promoted to stable once ready.
 
 If you are intested instead in building the firmware by yourself or in helping to code, please have a look [here](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/CONTRIBUTE.md).
+
+---------------------
 
 ### Thanks to
 - Asus for the GPL releases
