@@ -5,7 +5,7 @@ set -e
 # Run this script after having reviewed the merge
 
 BUILD_NAME=$1
-
+REPO=.
 echo "*** Adding files to GIT after a GPL Merge..."
 if [ "$BUILD_NAME" == "DSL-AC68U" ]
 then
@@ -87,7 +87,7 @@ then
     git add -f $REPO/release/src/router/eventd/prebuilt/$BUILD_NAME/
 
     git add -f $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
-    git add -f $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
+    #git add -f $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
 else
     echo "Unrecognized BUILD_NAME!"
     exit
