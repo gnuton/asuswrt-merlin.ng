@@ -65,6 +65,7 @@ Most of the help I need is in testing. You can test BETA releases when available
 Beta releases are safe to be tested and they get promoted to stable once ready.
 
 If you are intested instead in building the firmware by yourself or in helping to code, feel free to ping me via forum PMs or gitter.
+
 ---------------------
 
 ### Thanks to
