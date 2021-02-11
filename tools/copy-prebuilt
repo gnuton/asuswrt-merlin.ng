@@ -273,6 +273,13 @@ then
 	cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
 fi
 
+if [ "$BUILD_NAME" == "DSL-AX82U" ]
+then
+	echo $PWD
+        cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
+	cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
+fi
+
 # Cleanup
 rm $REPO/release/src/router/rc/prebuild/$BUILD_NAME/init-broadcom.o
 rm $REPO/release/src/router/bwdpi_source/prebuild/$BUILD_NAME/*.pem

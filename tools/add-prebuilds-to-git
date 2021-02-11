@@ -88,6 +88,8 @@ then
 
     git add -f $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
     #git add -f $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
+    git add -f $REPO/release/src/router/dsl_autodet/
+    git add -f $REPO/release/src/router/dsl_diag/
 else
     echo "Unrecognized BUILD_NAME!"
     exit
