@@ -40,6 +40,7 @@ then
     git add -f $REPO/release/src/router/acsd_arm/prebuilt/*
     git add -f $REPO/release/src/router/aaews/prebuild/*
     git add -f $REPO/release/src/router/dsl_drv_tool/*
+    git add -f $REPO/release/src/router/spectrum/*
 elif [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
     git add -f $REPO/release/src-rt-5.02axhnd.675x/wl/exe/prebuilt/*
