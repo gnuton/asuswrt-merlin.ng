@@ -159,6 +159,7 @@ then
 	# DSL specific files
 	cp -a release/src-rt-6.x.4708/tc_fw/* $REPO/release/src-rt-6.x.4708/tc_fw/
 	cp -a release/src/router/dsl_drv_tool/* $REPO/release/src/router/dsl_drv_tool
+	cp -a release/src/router/spectrum/* $REPO/release/src/router/spectrum
 
 elif [ "$BUILD_NAME" == "RT-AX86U" ]
 then
