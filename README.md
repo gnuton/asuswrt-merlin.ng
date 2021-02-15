@@ -1,5 +1,6 @@
 <p align="center">
-    <img src="logo.png" alt="logo" width="220" height="220">
+    <img src="http://nw-dlcdnet.asus.com/plugin/productIcons/DSL-AC68U.png" alt="logo" width="220" height="220">
+    <img src="http://nw-dlcdnet.asus.com/plugin/productIcons/DSL-AX82U.png" alt="logo" width="220" height="220">
 </p>
 
 <h3 align="center">
