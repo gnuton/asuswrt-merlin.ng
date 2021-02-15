@@ -22918,9 +22918,7 @@ int ej_webdavInfo(int eid, webs_t wp, int argc, char **argv) {
 	websWrite(wp, "'%s',", nvram_safe_get("odmpid"));
 	websWrite(wp, "'%s',", nvram_safe_get("productid"));
 	websWrite(wp, "'%s',", nvram_safe_get("extendno"));
-#ifndef DSL_AC68U
 	websWrite(wp, "'%d',", get_rtinfo());
-#endif
 	websWrite(wp, "''];\n");
 
 	return 0;
