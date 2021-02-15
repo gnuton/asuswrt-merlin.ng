@@ -1,6 +1,6 @@
 <p align="center">
-    <img src="http://nw-dlcdnet.asus.com/plugin/productIcons/DSL-AC68U.png" alt="logo" width="150" height="150">
-    <img src="http://nw-dlcdnet.asus.com/plugin/productIcons/DSL-AX82U.png" alt="logo" width="150" height="150">
+    <img src="http://nw-dlcdnet.asus.com/plugin/productIcons/DSL-AC68U.png" alt="logo" width="125" height="150">
+    <img src="http://nw-dlcdnet.asus.com/plugin/productIcons/DSL-AX82U.png" alt="logo" width="200" height="150">
 </p>
 
 <h3 align="center">
