@@ -137,11 +137,6 @@ function display_basic_dsl_information(){
 		document.getElementById("th_AdslType").innerHTML = "<#dslsetting_disc2#>";
 		document.getElementById("tr_VDSL_CurrentProfile").style.display = "none";
 	}
-
-	if(based_modelid == "DSL-AX82U")
-	{
-		document.getElementById("tr_dsl_fwver").style.display = "none";
-	}
 }
 
 function display_line_stats(){
@@ -152,11 +147,6 @@ function display_line_stats(){
 	else
 	{
 		document.getElementById("line_stats").style.display = "none";
-	}
-
-	if(based_modelid == "DSL-AX82U")
-	{
-		document.getElementById("tr_inp_shine").style.display = "none";
 	}
 }
 
