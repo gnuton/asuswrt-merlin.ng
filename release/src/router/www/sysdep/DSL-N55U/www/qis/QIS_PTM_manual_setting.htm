@@ -450,15 +450,6 @@ function btnNext() {
 	else {
 		document.form.dslx_ginp_try_enable_disp.value = "0";
 	}
-	if( document.form.country.value == 'Australia'
-		&& (document.form.dsltmp_cfg_ispname.value=='MyRepublic'
-			|| document.form.dsltmp_cfg_ispname.value=='Telstra (Automatic IP)'
-			|| document.form.dsltmp_cfg_ispname.value=='Aussie Broadband')
-	) {
-		document.form.dslx_vd1q0.value = "0";
-		document.form.dsltmp_cfg_dot1q.value = 1;
-		document.form.dsltmp_cfg_vid.value = 0;
-	}
 
 	if(document.form.dsltmp_cfg_country.value=='Turkey'){
 		if(document.form.dslx_vdsl_bitswap.value != "0"){

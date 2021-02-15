@@ -16,6 +16,7 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
 <style>
 .FormTable{
 	margin-top:10px;
@@ -249,6 +250,9 @@ function del_pvc_sub(pvc_to_del) {
 }
 
 function showDSLWANList(){
+	if(isSupport("is_ax5400_i1")){
+		document.getElementById('DSL_WAN_add_del').style.display = "none";
+	}
 	var addRow;
 	var cell = new Array(8);
 	var config_num = 0;
@@ -267,9 +271,11 @@ function showDSLWANList(){
 					cell[i].innerHTML = "&nbsp";
 			cell[i].style.color = "white";
 		}
-		cell[7] = addRow.insertCell(7);
-		cell[7].innerHTML = '<center><input class="add_btn" onclick="add_pvc_0();" value=""/></center>';
-		cell[7].style.color = "white";
+		if(!isSupport("is_ax5400_i1")){
+			cell[7] = addRow.insertCell(7);
+			cell[7].innerHTML = '<center><input class="add_btn" onclick="add_pvc_0();" value=""/></center>';
+			cell[7].style.color = "white";
+		}
 	}
 	else{
 		var row_count=0;
@@ -319,28 +325,32 @@ function showDSLWANList(){
 				cell[6].innerHTML = '<center><span style="cursor:pointer;" onclick="chg_pvc_unit('+i.toString()+');"><input class="edit_btn"></span></center>';
 				cell[6].style.color = "white";
 
-				cell[7] = addRow.insertCell(7);
-				cell[7].innerHTML = '<center><input class="remove_btn" onclick="del_pvc_sub('+i.toString()+');" value=""/></center>';
-				cell[7].style.color = "white";
+				if(!isSupport("is_ax5400_i1")){
+					cell[7] = addRow.insertCell(7);
+					cell[7].innerHTML = '<center><input class="remove_btn" onclick="del_pvc_sub('+i.toString()+');" value=""/></center>';
+					cell[7].style.color = "white";
+				}
 			}
 		}
 
 		if (row_count < 8) {
-			addRow = document.getElementById('DSL_WAN_table').insertRow(row_count+2);
-			for (var i = 0; i < 7; i++) {
-				cell[i] = addRow.insertCell(i);
-				cell[i].innerHTML = "&nbsp";
-				cell[i].style.color = "white";
+			if(!isSupport("is_ax5400_i1")){
+				addRow = document.getElementById('DSL_WAN_table').insertRow(row_count+2);
+				for (var i = 0; i < 7; i++) {
+					cell[i] = addRow.insertCell(i);
+					cell[i].innerHTML = "&nbsp";
+					cell[i].style.color = "white";
+				}
+			
+				cell[7] = addRow.insertCell(7);
+				cell[7].style.color = "white";
+				if(DSLWANList[0][0] != "0"){
+					cell[7].innerHTML = '<center><input class="add_btn" onclick="add_pvc();" value=""/></center>';
+				}
+				else{
+					cell[7].innerHTML = '<center><input class="add_btn" onclick="add_pvc_0();" value=""/></center>';
+				}
 			}
-			cell[7] = addRow.insertCell(7);
-			cell[7].style.color = "white";
-			if(DSLWANList[0][0] != "0"){
-				cell[7].innerHTML = '<center><input class="add_btn" onclick="add_pvc();" value=""/></center>';
-			}
-			else{
-				cell[7].innerHTML = '<center><input class="add_btn" onclick="add_pvc_0();" value=""/></center>';
-			}
-
 		}
 	}
 }
@@ -363,6 +373,60 @@ function initial(){
 		showDSLWANList();
 		disable_all_ctrl();
 	}
+
+	$.getJSON("http://nw-dlcdnet.asus.com/plugin/js/dns_db.json",
+		function(data){
+			var dns_db_translation_mapping = [
+				{tag:"#ADGUARD_1",text:"<#IPConnection_x_DNS_DB_ADGUARD_1#>"},
+				{tag:"#ADGUARD_2",text:"<#IPConnection_x_DNS_DB_ADGUARD_2#>"},
+				{tag:"#CLOUDFLARE_1",text:"<#IPConnection_x_DNS_DB_CLOUDFLARE_1#>"},
+				{tag:"#CLOUDFLARE_2",text:"<#IPConnection_x_DNS_DB_CLOUDFLARE_2#>"},
+				{tag:"#CLOUDFLARE_3",text:"<#IPConnection_x_DNS_DB_CLOUDFLARE_3#>"}
+			];
+			Object.keys(data).forEach(function(dns_item) {
+				var dns_name = data[dns_item].name;
+				var dns_list = data[dns_item].server;
+				var dns_desc = data[dns_item].desc;
+				var dns_translation = data[dns_item].translation;
+				Object.keys(dns_list).forEach(function(idx) {
+					var dns_ip = dns_list[idx];
+					var $dns_item_bg = $("<a>");
+					$dns_item_bg.appendTo($("#dns_server_list1"));
+					if(dns_desc != "")
+						$dns_item_bg.attr("title", dns_desc);
+					if(dns_translation != "") {
+						var specific_translation = dns_db_translation_mapping.filter(function(item, index, _array){
+							return (item.tag == dns_translation);
+						})[0];
+						if(specific_translation != undefined)
+							$dns_item_bg.attr("title",  specific_translation.text);
+					}
+					var $dns_item = $("<div>");
+					$dns_item.appendTo($dns_item_bg);
+					$dns_item.unbind("click");
+					$dns_item.click(function(e) {
+						e = e || event;
+						e.stopPropagation();
+						var click_dns_ip = $(this).children("strong").attr("dns_ip");
+						var idx = $(this).closest(".dns_server_list_dropdown").attr("id").replace("dns_server_list", "");
+						$("input[name='dsl_dns" + idx + "']").val(click_dns_ip);
+						$(".dns_pull_arrow").attr("src","/images/arrow-down.gif");
+						$(".dns_server_list_dropdown").hide();
+					});
+					var $dns_text = $("<strong>");
+					$dns_text.appendTo($dns_item);
+					$dns_text.html("" + dns_name + " ( " + dns_ip +  " )");
+					$dns_text.attr("dns_ip", dns_ip);
+				});
+			});
+			$("#dns_server_list1").children().clone(true).appendTo($("#dns_server_list2"));
+			$(".dns_pull_arrow").show();
+		}
+	);
+	$("body").click(function() {
+		$(".dns_pull_arrow").attr("src","/images/arrow-down.gif");
+		$(".dns_server_list_dropdown").hide();
+	});
 }
 
 function change_wan_unit(obj){
@@ -487,12 +551,18 @@ function applyRule(){
 */
 		if (document.form.dsl_proto.value == "static"){
 			document.form.dsl_DHCPClient.value = 0;
+			document.form.dsl_dnsenable[1].disabled = false;
+			document.form.dsl_dnsenable[1].checked = true;
 		}
 		else if(document.form.dsl_DHCPClient_x){
-			if(document.form.dsl_DHCPClient_x[0].checked == 1)
+			if(document.form.dsl_DHCPClient_x[0].checked == 1){
 				document.form.dsl_DHCPClient.value = 1;
-			else
+			}
+			else{
 				document.form.dsl_DHCPClient.value = 0;
+				document.form.dsl_dnsenable[1].disabled = false;
+				document.form.dsl_dnsenable[1].checked = true;	
+			}
 		}
 
 		document.form.wan_enable.value = document.form.dsl_link_enable.value;
@@ -694,8 +764,8 @@ function change_dsl_type(dsl_type){
 	change_dsl_dns_enable();
 
 	if(dsl_type == "pppoe" || dsl_type == "pppoa"){
-		inputCtrl(document.form.dsl_dnsenable[0], 1);
-		inputCtrl(document.form.dsl_dnsenable[1], 1);
+		//inputCtrl(document.form.dsl_dnsenable[0], 1);
+		//inputCtrl(document.form.dsl_dnsenable[1], 1);
 
 		inputCtrl(document.form.dsl_pppoe_username, 1);
 		inputCtrl(document.form.dsl_pppoe_passwd, 1);
@@ -712,11 +782,11 @@ function change_dsl_type(dsl_type){
 		showhide("PPPsetting",1);
 		inputCtrl(document.form.wan_ppp_echo, 1);
 		ppp_echo_control();
-		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.dsl_dhcp_qry, 0);
 	}
 	else if(dsl_type == "static"){
-		inputCtrl(document.form.dsl_dnsenable[0], 0);
-		inputCtrl(document.form.dsl_dnsenable[1], 0);
+		//inputCtrl(document.form.dsl_dnsenable[0], 0);
+		//inputCtrl(document.form.dsl_dnsenable[1], 0);
 
 		inputCtrl(document.form.dsl_pppoe_username, 0);
 		inputCtrl(document.form.dsl_pppoe_passwd, 0);
@@ -732,11 +802,11 @@ function change_dsl_type(dsl_type){
 		showhide("PPPsetting",0);
 		inputCtrl(document.form.wan_ppp_echo, 0);
 		ppp_echo_control(0);
-		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.dsl_dhcp_qry, 0);
 	}
 	else if(dsl_type == "dhcp"){
-		inputCtrl(document.form.dsl_dnsenable[0], 1);
-		inputCtrl(document.form.dsl_dnsenable[1], 1);
+		//inputCtrl(document.form.dsl_dnsenable[0], 1);
+		//inputCtrl(document.form.dsl_dnsenable[1], 1);
 
 		inputCtrl(document.form.dsl_pppoe_username, 0);
 		inputCtrl(document.form.dsl_pppoe_passwd, 0);
@@ -753,11 +823,12 @@ function change_dsl_type(dsl_type){
 		showhide("PPPsetting",0);
 		inputCtrl(document.form.wan_ppp_echo, 0);
 		ppp_echo_control(0);
-		inputCtrl(document.form.dhcpc_mode, 1);
+		inputCtrl(document.form.dsl_dhcp_qry, 1);
 	}
 	else if(dsl_type == "bridge") {
-		inputCtrl(document.form.dsl_dnsenable[0], 0);
-		inputCtrl(document.form.dsl_dnsenable[1], 0);
+		//inputCtrl(document.form.dsl_dnsenable[0], 0);
+		//inputCtrl(document.form.dsl_dnsenable[1], 0);
+
 		inputCtrl(document.form.dsl_pppoe_username, 0);
 		inputCtrl(document.form.dsl_pppoe_passwd, 0);
 		inputCtrl(document.form.dsl_pppoe_auth, 0);
@@ -773,7 +844,7 @@ function change_dsl_type(dsl_type){
 		showhide("PPPsetting",0);
 		inputCtrl(document.form.wan_ppp_echo, 0);
 		ppp_echo_control(0);
-		inputCtrl(document.form.dhcpc_mode, 0);
+		inputCtrl(document.form.dsl_dhcp_qry, 0);
 	}
 	else {
 		alert("error");
@@ -878,8 +949,6 @@ function change_dsl_dns_enable(){
 		inputCtrl(document.form.dsl_dnsenable[1], 1);
 
 		var wan_dnsenable = document.form.dsl_dnsenable[0].checked;
-		//var wan_dnsenable = true;
-		//var wan_dnsenable = false;
 
 		inputCtrl(document.form.dsl_dns1, !wan_dnsenable);
 		inputCtrl(document.form.dsl_dns2, !wan_dnsenable);
@@ -900,8 +969,7 @@ function change_dsl_dns_enable(){
 		inputCtrl(document.form.dsl_dns2, 0);
 	}
 
-/*
-	if(document.form.dsl_DHCPClient[0].checked){
+	if(document.form.dsl_DHCPClient_x[0].checked){
 		inputCtrl(document.form.dsl_dnsenable[0], 1);
 		inputCtrl(document.form.dsl_dnsenable[1], 1);
 	}
@@ -913,7 +981,7 @@ function change_dsl_dns_enable(){
 		inputCtrl(document.form.dsl_dnsenable[0], 1);
 		inputCtrl(document.form.dsl_dnsenable[1], 1);
 	}
-*/
+
 }
 
 function change_dsl_dhcp_enable(){
@@ -1027,6 +1095,22 @@ function ppp_echo_control(flag){
 	inputCtrl(document.form.dns_delay_round, enable);
 }
 
+function pullDNSList(_this) {
+	event.stopPropagation();
+	var idx = $(_this).attr("id").replace("dns_pull_arrow", "");
+	$(".dns_pull_arrow:not(#dns_pull_arrow" + idx + ")").attr("src","/images/arrow-down.gif");
+	$(".dns_server_list_dropdown:not(#dns_server_list" + idx + ")").hide();
+	var $element = $("#dns_server_list" + idx + "");
+	var isMenuopen = $element[0].offsetWidth > 0 || $element[0].offsetHeight > 0;
+	if(isMenuopen == 0) {
+		$(_this).attr("src","/images/arrow-top.gif");
+		$element.show();
+	}
+	else {
+		$(_this).attr("src","/images/arrow-down.gif");
+		$element.hide();
+	}
+}
 </script>
 </head>
 
@@ -1051,7 +1135,7 @@ function ppp_echo_control(flag){
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_dslwan_if 0">
+<input type="hidden" name="action_script" value="restart_dslwan_if">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -1125,7 +1209,7 @@ function ppp_echo_control(flag){
 												<th style="width:10%;"><center><#Internet#></center></th>
 												<th style="width:10%;"><center><#menu_dsl_iptv#></center></th>
 												<th style="width:10%;"><center><#PVC_edit#></center></th>
-												<th style="width:10%;"><center><#list_add_delete#></center></th>
+												<th style="width:10%;" id="DSL_WAN_add_del"><center><#list_add_delete#></center></th>
 											</tr>
 									</table>
 
@@ -1264,6 +1348,8 @@ function ppp_echo_control(flag){
 											</th>
 											<td>
 												<input type="text" maxlength="15" class="input_15_table" name="dsl_dns1" value="<% nvram_get("dsl_dns1"); %>" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off"/>
+												<img id="dns_pull_arrow1" class="dns_pull_arrow" src="/images/arrow-down.gif" onclick="pullDNSList(this);">
+												<div id="dns_server_list1" class="dns_server_list_dropdown"></div>
 											</td>
 										</tr>
 										<tr>
@@ -1272,6 +1358,8 @@ function ppp_echo_control(flag){
 											</th>
 											<td>
 												<input type="text" maxlength="15" class="input_15_table" name="dsl_dns2" value="<% nvram_get("dsl_dns2"); %>" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off"/>
+												<img id="dns_pull_arrow2" class="dns_pull_arrow" src="/images/arrow-down.gif" onclick="pullDNSList(this);">
+												<div id="dns_server_list2" class="dns_server_list_dropdown"></div>
 											</td>
 										</tr>
 									</table>
@@ -1415,10 +1503,10 @@ function ppp_echo_control(flag){
 												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,30);"><#DHCP_query_freq#></a>
 											</th>
 											<td>
-												<select name="dhcpc_mode" class="input_option">
-													<option value="0" <% nvram_match(" dhcpc_mode", "0","selected"); %>><#DHCPnormal#></option>
-													<option value="1" <% nvram_match(" dhcpc_mode", "1","selected"); %>><#DHCPaggressive#></option>
-													<option value="2" <% nvram_match(" dhcpc_mode", "2","selected"); %>><#Continuous_Mode#></option>
+												<select name="dsl_dhcp_qry" class="input_option">
+													<option value="0" <% nvram_match(" dsl_dhcp_qry", "0","selected"); %>><#DHCPnormal#></option>
+													<option value="1" <% nvram_match(" dsl_dhcp_qry", "1","selected"); %>><#DHCPaggressive#></option>
+													<option value="2" <% nvram_match(" dsl_dhcp_qry", "2","selected"); %>><#Continuous_Mode#></option>
 												</select>
 											</td>
 										</tr>
@@ -1454,7 +1542,7 @@ function ppp_echo_control(flag){
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="flag" value="chg_pvc">
 <input type="hidden" name="action_script" value="">
-<input type="hidden" name="action_wait" value="2">
+<input type="hidden" name="action_wait" value="">
 <input type="hidden" name="current_page" value="Advanced_VDSL_Content.asp">
 <input type="hidden" name="dsl_unit" value="8">
 <input type="hidden" name="dsl_subunit" value="">

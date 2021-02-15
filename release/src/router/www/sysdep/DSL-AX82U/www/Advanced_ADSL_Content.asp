@@ -155,7 +155,6 @@ function valid_form(){
 					</select>
 				</td>
 			</tr>
-
 			<tr>
 				<th>
 					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,12);">G.INP (G.998.4)</a>
@@ -167,7 +166,6 @@ function valid_form(){
 					</select>
 				</td>
 			</tr>
-
 			<tr>
 				<th>
 					<#dslsetting_Stability_Adj#>
@@ -175,20 +173,29 @@ function valid_form(){
 				<td>
 					<select id="dslx_snrm_offset" class="input_option" name="dslx_snrm_offset">
 						<option value="0" <% nvram_match("dslx_snrm_offset", "0", "selected"); %>><#btn_Disabled#></option>
-						<option value="1" <% nvram_match("dslx_snrm_offset", "1", "selected"); %>>1 dB</option>
-						<option value="2" <% nvram_match("dslx_snrm_offset", "2", "selected"); %>>2 dB</option>
-						<option value="3" <% nvram_match("dslx_snrm_offset", "3", "selected"); %>>3 dB</option>
-						<option value="4" <% nvram_match("dslx_snrm_offset", "4", "selected"); %>>4 dB</option>
-						<option value="5" <% nvram_match("dslx_snrm_offset", "5", "selected"); %>>5 dB</option>
-						<option value="6" <% nvram_match("dslx_snrm_offset", "6", "selected"); %>>6 dB</option>
-						<option value="7" <% nvram_match("dslx_snrm_offset", "7", "selected"); %>>7 dB</option>
-						<option value="8" <% nvram_match("dslx_snrm_offset", "8", "selected"); %>>8 dB</option>
-						<option value="9" <% nvram_match("dslx_snrm_offset", "9", "selected"); %>>9 dB</option>
-						<option value="10" <% nvram_match("dslx_snrm_offset", "10", "selected"); %>>10 dB</option>
+						<option value="16" <% nvram_match("dslx_snrm_offset", "32", "selected"); %>>1 dB</option>
+						<option value="32" <% nvram_match("dslx_snrm_offset", "32", "selected"); %>>2 dB</option>
+						<option value="48" <% nvram_match("dslx_snrm_offset", "48", "selected"); %>>3 dB</option>
+						<option value="64" <% nvram_match("dslx_snrm_offset", "64", "selected"); %>>4 dB</option>
+						<option value="80" <% nvram_match("dslx_snrm_offset", "80", "selected"); %>>5 dB</option>
+						<option value="96" <% nvram_match("dslx_snrm_offset", "96", "selected"); %>>6 dB</option>
+						<option value="112" <% nvram_match("dslx_snrm_offset", "112", "selected"); %>>7 dB</option>
+						<option value="128" <% nvram_match("dslx_snrm_offset", "128", "selected"); %>>8 dB</option>
+						<option value="144" <% nvram_match("dslx_snrm_offset", "144", "selected"); %>>9 dB</option>
+						<option value="160" <% nvram_match("dslx_snrm_offset", "160", "selected"); %>>10 dB</option>
+						<option value="176" <% nvram_match("dslx_snrm_offset", "176", "selected"); %>>11 dB</option>
+						<option value="192" <% nvram_match("dslx_snrm_offset", "192", "selected"); %>>12 dB</option>
+						<option value="208" <% nvram_match("dslx_snrm_offset", "208", "selected"); %>>13 dB</option>
+						<option value="224" <% nvram_match("dslx_snrm_offset", "224", "selected"); %>>14 dB</option>
+						<option value="240" <% nvram_match("dslx_snrm_offset", "240", "selected"); %>>15 dB</option>
+						<option value="256" <% nvram_match("dslx_snrm_offset", "256", "selected"); %>>16 dB</option>
+						<option value="272" <% nvram_match("dslx_snrm_offset", "272", "selected"); %>>17 dB</option>
+						<option value="288" <% nvram_match("dslx_snrm_offset", "288", "selected"); %>>18 dB</option>
+						<option value="304" <% nvram_match("dslx_snrm_offset", "304", "selected"); %>>19 dB</option>
+						<option value="320" <% nvram_match("dslx_snrm_offset", "320", "selected"); %>>20 dB</option>
 					</select>
 				</td>
 			</tr>
-
 		</table>
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="margin-top:10px;">
