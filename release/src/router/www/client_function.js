@@ -2045,12 +2045,12 @@ var sorter = {
 		}
 		else if(clienlistViewMode == "ByInterface") {
 			if(_arrayName == "wired_list")
-					eval(""+_arrayName+".sort(sorter."+_Method+"_"+sorter.sortingMethod_wired+");");
+				eval(""+_arrayName+".sort(sorter."+_Method+"_"+sorter.sortingMethod_wired+");");
 			else if(_arrayName.substr(0,2) == "wl")
 				eval("wl_list['"+_arrayName.substr(0,3)+"'].sort(sorter."+_Method+"_"+sorter["sortingMethod_"+_arrayName.substr(0,3)+""]+");");
 			else if(isSupport("amas") && _arrayName.substr(0,2) == "gn")
 				eval("gn_list['"+_arrayName.substr(0,3)+"'].sort(sorter."+_Method+"_"+sorter["sortingMethod_"+_arrayName.substr(0,3)+""]+");");
-			}
+		}
 		drawClientListBlock(_arrayName);
 		sorter.drawBorder(_arrayName);
 	}
@@ -2217,7 +2217,7 @@ function exportClientListLog() {
 		case "ByInterface" :
 			$.each(isWL_map, function(index, value){
 				if(index == "0")
-			setArray(wired_list);
+					setArray(wired_list);
 				else
 					setArray(wl_list["wl"+index+""]);
 			});
@@ -2275,7 +2275,7 @@ function sorterClientList() {
 		case "ByInterface" :
 			$.each(isWL_map, function(index, value){
 				if(index == "0")
-			sorter.doSorter(sorter.wired_index, indexMapType[sorter.wired_index], 'wired_list');
+					sorter.doSorter(sorter.wired_index, indexMapType[sorter.wired_index], 'wired_list');
 				else{
 					if($("#clientlist_wl" + index + "_list_Block").length > 0)
 						sorter.doSorter(sorter["wl" + index + "_index"], indexMapType[sorter["wl" + index + "_index"]], "wl" + index + "_list");
@@ -2293,7 +2293,7 @@ function create_clientlist_listview() {
 	all_list = [];
 	$.each(isWL_map, function(index, value){
 		if(index == "0")
-	wired_list = [];
+			wired_list = [];
 		else
 			wl_list["wl"+index+""] = [];
 	});
@@ -2487,7 +2487,7 @@ function create_clientlist_listview() {
 					if(isSupport("amas") && clientList[clientList[i]].isWL != 0 && clientList[clientList[i]].isGN != "")
 						gn_list["gn"+clientList[clientList[i]].isGN+""].push(tempArray);
 					else if(clientList[clientList[i]].isWL == 0)
-								wired_list.push(tempArray);
+						wired_list.push(tempArray);
 					else
 						wl_list["wl"+clientList[clientList[i]].isWL+""].push(tempArray);
 					break;
@@ -2505,10 +2505,10 @@ function create_clientlist_listview() {
 		$.each(isWL_map, function(index, value){
 			if(index == "0"){
 				if(!sorter.wired_display){
-			document.getElementById("clientlist_wired_list_Block").style.display = "none";
-			document.getElementById("wired_expander").innerHTML = "[ <#Clientlist_Show#> ]";
-		}
-		}
+					document.getElementById("clientlist_wired_list_Block").style.display = "none";
+					document.getElementById("wired_expander").innerHTML = "[ <#Clientlist_Show#> ]";
+				}
+			}
 			else{
 				if(!sorter["wl"+index+"_display"]){
 					document.getElementById("clientlist_wl"+index+"_list_Block").style.display = "none";
@@ -2722,7 +2722,7 @@ function showHideContent(objnmae, thisObj) {
 				sorter.all_display = true;
 			else {
 				if(clickItem == "wired")
-						sorter.wired_display = true;
+					sorter.wired_display = true;
 				else
 					sorter["" + clickItem + "_display"] = true;
 			}
@@ -2735,7 +2735,7 @@ function showHideContent(objnmae, thisObj) {
 				sorter.all_display = false;
 			else {
 				if(clickItem == "wired")
-						sorter.wired_display = false;
+					sorter.wired_display = false;
 				else
 					sorter["" + clickItem + "_display"] = false;
 			}

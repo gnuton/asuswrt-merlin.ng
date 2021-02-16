@@ -789,7 +789,7 @@ function validForm(){
 					!validator.isLegal_ipv6(document.form.ipv6_prefix)){
 					return false;
 			}
-	}
+	}		
 
 	if(document.form.ipv6_service.value=="6rd" && document.form.ipv6_6rd_dhcp[1].checked){
 			if(!validator.ipRange(document.form.ipv6_6rd_router, "")) return false;  //6rd ip4 router
@@ -799,9 +799,8 @@ function validForm(){
 					126 - (32 - document.form.ipv6_6rd_ip4size.value))){
 					return false;
 			}
-
 	}
-
+	
 	return true;
 }
 
