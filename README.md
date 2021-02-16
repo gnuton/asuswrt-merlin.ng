@@ -55,7 +55,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 
 
 ### Experimental branches
-* [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
+* [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/ARCHIVED-dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
 ---------------------
