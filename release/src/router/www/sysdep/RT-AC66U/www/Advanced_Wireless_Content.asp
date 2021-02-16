@@ -1203,8 +1203,8 @@ function enableSmartCon(val){
 			}
 			else{
 				desc = ["Tri-Band Smart Connect (2.4 GHz, 5 GHz-1 and 5 GHz-2)", "5 GHz Smart Connect (5 GHz-1 and 5 GHz-2)"];
-			value = ["1", "2"];
-		}
+				value = ["1", "2"];
+			}
 		}
 		else if(wl_info.band2g_support && wl_info.band5g_support){
 			desc = ["Dual-Band Smart Connect (2.4 GHz and 5 GHz)"];

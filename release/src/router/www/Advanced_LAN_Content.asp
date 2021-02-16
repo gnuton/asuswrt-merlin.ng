@@ -459,7 +459,8 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 				<input type="radio" name="lan_proto_radio" class="input" onclick="change_ip_setting('static')" value="static" <% nvram_match("lan_proto", "static", "checked"); %>><#checkbox_No#>
 			</td>
 			</tr>
-                 <tr>
+			
+		  <tr>
 			<th width="30%">
 			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#IPConnection_ExternalIPAddress_itemname#></a>
 			</th>			

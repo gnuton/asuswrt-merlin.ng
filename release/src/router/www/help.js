@@ -31,7 +31,7 @@ function show_str_ssid(show_ssid)
 
 
 function isMobile_help(){
-	if (1) return false; //disable mobile QIS temporary, Jieming added at 2013.08.12
+	return false; //disable mobile QIS temporary, Jieming added at 2013.08.12
 	
 	if(screen.width < 640 || screen.height < 640){
 		return true;

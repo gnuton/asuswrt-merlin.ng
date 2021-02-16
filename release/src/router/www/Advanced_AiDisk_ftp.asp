@@ -677,7 +677,7 @@ function onEvent(){
 		document.getElementById("deleteFolderBtn").onclick = function(){};
 		document.getElementById("deleteFolderBtn").onmouseover = function(){};
 		document.getElementById("deleteFolderBtn").onmouseout = function(){};
- 		
+ 	
 		document.getElementById("modifyFolderBtn").onclick = function(){};
 		document.getElementById("modifyFolderBtn").onmouseover = function(){};
 		document.getElementById("modifyFolderBtn").onmouseout = function(){};
