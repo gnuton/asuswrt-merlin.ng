@@ -110,20 +110,20 @@
 					else{
 
 						systemVariable.originWanType = initWanNvram.wan_proto;
-					if(systemVariable.originWanType == "pppoe" || systemVariable.originWanType == "pptp" || systemVariable.originWanType == "l2tp"){
+						if(systemVariable.originWanType == "pppoe" || systemVariable.originWanType == "pptp" || systemVariable.originWanType == "l2tp"){
 							systemVariable.originPppAccount.username = initWanNvram.wan_pppoe_username;
 							systemVariable.originPppAccount.password = initWanNvram.wan_pppoe_passwd;
-					}
+						}
 						systemVariable.wanDnsenable = initWanNvram.wan_dnsenable_x;
-					systemVariable.originOpMode = (function(){
-						if(initNvram.sw_mode == "2" && (initNvram.wlc_psta == "0" || initNvram.wlc_psta == "") && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "RP";
-						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "2" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "RP";
-						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "2" && initNvram.wlc_dpsta == "1") return "RP";
-						else if(initNvram.sw_mode == "3" && (initNvram.wlc_psta == "0" || initNvram.wlc_psta == "") && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "AP";
-						else if(initNvram.sw_mode == "2" && initNvram.wlc_psta == "1" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "MB";
-						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "1" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "MB";
-						else return "RT";
-					})();
+						systemVariable.originOpMode = (function(){
+							if(initNvram.sw_mode == "2" && (initNvram.wlc_psta == "0" || initNvram.wlc_psta == "") && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "RP";
+							else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "2" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "RP";
+							else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "2" && initNvram.wlc_dpsta == "1") return "RP";
+							else if(initNvram.sw_mode == "3" && (initNvram.wlc_psta == "0" || initNvram.wlc_psta == "") && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "AP";
+							else if(initNvram.sw_mode == "2" && initNvram.wlc_psta == "1" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "MB";
+							else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "1" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "MB";
+							else return "RT";
+						})();
 					}
 					systemVariable.opMode = systemVariable.originOpMode;
 					systemVariable.wirelessBand = initNvram.wl_ifnames.split(" ").length;
@@ -2419,7 +2419,7 @@
 						<div class="descSteps">Step 2</div>
 						<div id="stepText2"><#qis_summary_description_step2#></div>
 					</div>
-						
+					
 					<div id="wifi6e_legacy_hint_summary" class="hint_yellow" style="display:none">*Note: If your devices have connection issues afterwards, please go to “Wireless Setting” in Web/App to change configurations via a hardwired device or a device supporting WiFi 6E.</div>
 					<div id="finishButton" style="display:none">
 						<div class="footer_desktop">
