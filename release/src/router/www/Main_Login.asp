@@ -10,15 +10,20 @@
 <link rel="icon" href="images/favicon.png">
 <title>ASUS Login</title>
 <style>
-body{
-	font-family: Arial, MS UI Gothic, MS P Gothic, Microsoft Yahei UI, sans-serif;
+html {
+	width: 100%;
+	height: 100%;
 }
-.wrapper{
-	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
-	background-size: 1280px 1076px;
-	background-position: center 0%;
-	margin: 0px; 
-	background:#283437\9;
+body{
+	font-family: Arial, MS UI Gothic, MS P Gothic, sans-serif;
+	height: 100%;
+	width: 100%
+}
+.wrapper {
+    background: linear-gradient(rgb(0 0 0 / 96%)30%,#00000000),url(images/New_ui/login_bg.gif) #000000fa no-repeat;
+    background-size: cover;
+    background-position: center bottom;
+    margin: 0px;
 }
 .title_name {
 	font-size: 30pt;
