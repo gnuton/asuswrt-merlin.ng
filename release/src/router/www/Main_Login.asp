@@ -13,12 +13,11 @@
 body{
 	font-family: Arial, MS UI Gothic, MS P Gothic, Microsoft Yahei UI, sans-serif;
 }
+html {
+	height:100%
+}
 .wrapper{
-	background:url(images/New_ui/login_bg.png) #283437 no-repeat;
-	background-size: 1280px 1076px;
-	background-position: center 0%;
-	margin: 0px; 
-	background:#283437\9;
+	background: radial-gradient(ellipse at bottom, #3c3c3eeb 0%, #090a0f 100%);
 }
 .title_name {
 	font-size: 30pt;

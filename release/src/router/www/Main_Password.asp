@@ -19,9 +19,11 @@ body{
 	height:526px;
 	background:rgba(40,52,55,0.1);
 }
+html {
+	height:100%
+}
 .wrapper{
-	background:#1F1F1F url(images/New_ui/login_bg.png) no-repeat center center fixed;
-	background-size: cover;
+	background: radial-gradient(ellipse at bottom, #3c3c3eeb 0%, #090a0f 100%);
 }
 .title_name {
 	font-size: 30pt;
