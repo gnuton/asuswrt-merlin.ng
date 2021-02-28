@@ -799,7 +799,7 @@ extern
 void wgn_check_avalible_brif(
 	void)
 {
-#define WGN_BRIF_INDEX_START    1
+#define WGN_BRIF_INDEX_START    2
 
 	size_t i = 0, j = 0, vlan_total = 0;	
 	char br_ifnames[32 * WGN_MAXINUM_VLAN_RULELIST];
