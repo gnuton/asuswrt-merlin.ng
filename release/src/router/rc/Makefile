@@ -475,9 +475,9 @@ OBJS += ic.o
 endif
 
 #ifeq ($(RTCONFIG_HTTPS),y)
-ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
+#ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix -  https://github.com/gnuton/asuswrt-merlin.ng/issues/86
 OBJS += dsl_fb.o
-endif
+#endif
 #endif
 
 ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
@@ -1360,10 +1360,10 @@ size: rc
 
 # handle prebuilt object here
 ifneq ($(wildcard ./prebuild/dsl_fb.o),)
-ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
+#ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix - see https://github.com/gnuton/asuswrt-merlin.ng/issues/86
 dsl_fb.o:
 	@-cp -f ./prebuild/dsl_fb.o .
-endif
+#endif
 ifeq ($(RTCONFIG_DSL),y)
 ifeq ($(RTCONFIG_DSL_TCLINUX),y)
 dsl_diag.o:
