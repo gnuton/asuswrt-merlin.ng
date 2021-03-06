@@ -126,8 +126,6 @@ MUSL_CFLAGS += -Dloff_t=off_t
 endif
 
 # New Broadcom/Ralink/MTK/QCA/RTK platform.
-KPATH_2636 = $(if $(findstring linux-2.6.36,$(LINUXDIR)),y)
-
 KPATH_2636_OR_3X = $(if $(or $(findstring linux-2.6.36,$(LINUXDIR)),$(findstring linux-3.x,$(LINUXDIR)),$(findstring linux-3.3.x,$(LINUXDIR)),$(findstring linux-3.3.8,$(LINUXDIR)),$(findstring linux-3.4.x,$(LINUXDIR)),$(findstring linux-4.1,$(LINUXDIR)),$(findstring linux-3.10,$(LINUXDIR)),$(findstring linux-3.14.x,$(LINUXDIR)),$(findstring linux-4.4.x,$(LINUXDIR))),y)
 
 # New Ralink/MTK/QCA platform.
@@ -204,7 +202,7 @@ export BCMEX :=
 export DHD_MONITOR := debug_monitor
 export LIBNL_PLT := arm
 export LIBNL_BUILD := i386-pc-linux-gnu
-ifeq (67,$(BCM_WLIMPL))
+ifeq ($(RTCONFIG_WIFI6E),y)
 export DONGLE_SRC := main
 else
 export DONGLE_SRC := 43684
@@ -1112,7 +1110,13 @@ obj-y += libdisk
 
 #obj-y += dosfstools
 #obj-$(RTCONFIG_FTP) += $(if $(RTCONFIG_QCA),vsftpd-3.x,vsftpd)
-obj-$(RTCONFIG_FTP) += vsftpd-3.x
+ifeq ($(RTCONFIG_FTP),y)
+ifeq ($(or $(RTCONFIG_FTP_SSL),$(RTCONFIG_QCA)),y)
+obj-y += vsftpd-3.x
+else
+obj-y += vsftpd
+endif
+endif
 
 ifeq ($(CONFIG_LINUX26),y)
 ifeq ($(RTCONFIG_SAMBASRV),y)
@@ -1421,14 +1425,6 @@ endif
 
 obj-$(RTCONFIG_QUICKSEC) += quicksec-7.0
 obj-$(RTCONFIG_STRONGSWAN) += strongswan
-# For Linux kernel 2.6.36, the GCC optimization option should not use '-O2', we should use '-O0' instead, for strongSwan 5.7.2 and 5.9.1.
-# If using -O2, there will be 'segmentation fault' when using 'pki' command to generate self-signed certificate.
-# So we use '-O0' for these models. It includes RT-AC3100 and RT-AC88U.
-ifeq ($(KPATH_2636),y)
-gcc_optimization_for_strongSwan := 0
-else
-gcc_optimization_for_strongSwan := 2
-endif
 
 ifneq ($(RTCONFIG_4M_SFP),y)
 obj-y += netstat-nat
@@ -1469,6 +1465,9 @@ obj-$(RTCONFIG_DNSSEC) += $(if $(RTCONFIG_DNSSEC_OPENSSL),openssl,) $(if $(RTCON
 obj-$(RTCONFIG_SAMBA36X) += libiconv-1.14
 obj-$(RTCONFIG_TELENET) += lanauth
 obj-y += wsdd2
+ifeq ($(HND_ROUTER),y)
+obj-y += jitterentropy-rngd
+endif
 #obj-$(RTCONFIG_BWDPI) += faketc
 
 ifneq ($(HND_ROUTER),y)
@@ -4764,15 +4763,15 @@ iproute2-3.15.0-clean:
 	-rm -f iproute2-3.15.0/Config
 
 iproute2-4.3:
-	touch iproute2-4.3/iproute2-4.3.0/configure
+	touch iproute2-4.3/iproute2/configure
 	$(MAKE) -C iproute2-4.3
 
 iproute2-4.3-install:
-	install -D iproute2-4.3/iproute2-4.3.0/tc/tc $(INSTALLDIR)/iproute2-4.3/usr/sbin/tc
-#	install -D iproute2-4.3/iproute2-4.3.0/tc/tc  $(INSTALL_DIR)/iproute2-4.3/usr/sbin/realtc
+	install -D iproute2-4.3/iproute2/tc/tc $(INSTALLDIR)/iproute2-4.3/usr/sbin/tc
+#	install -D iproute2-4.3/iproute2/tc/tc  $(INSTALL_DIR)/iproute2-4.3/usr/sbin/realtc
 	$(STRIP) $(INSTALLDIR)/iproute2-4.3/usr/sbin/tc
 #	$(STRIP) $(INSTALLDIR)/iproute2-4.3/usr/sbin/realtc
-	install -D iproute2-4.3/iproute2-4.3.0/ip/ip $(INSTALLDIR)/iproute2-4.3/usr/sbin/ip
+	install -D iproute2-4.3/iproute2/ip/ip $(INSTALLDIR)/iproute2-4.3/usr/sbin/ip
 	$(STRIP) $(INSTALLDIR)/iproute2-4.3/usr/sbin/ip
 
 iproute2-4.3-clean:
@@ -4780,7 +4779,7 @@ iproute2-4.3-clean:
 	-rm -f $(INSTALL_DIR)/usr/sbin/tc
 #	-rm -f $(INSTALL_DIR)/usr/sbin/realtc
 	-rm -f $(INSTALL_DIR)/usr/sbin/ip
-	-rm -f iproute2-4.3/iproute2-4.3.0/Config
+	-rm -f iproute2-4.3/iproute2/Config
 
 iproute2-4.4.0:
 	touch iproute2-4.4.0/src/configure
@@ -6184,7 +6183,7 @@ strongswan/Makefile: strongswan/configure
 	--with-ipsecdir=/usr/lib/ipsec \
 	--with-strongswan-conf=/etc/strongswan.conf \
 	--with-user=admin \
-	CFLAGS="-O$(gcc_optimization_for_strongSwan) -Wall -Wno-format -Wno-format-security -Wno-pointer-sign \
+	CFLAGS="-O0 -Wall -Wno-format -Wno-format-security -Wno-pointer-sign \
 		-I$(TOP)/openssl/include -I$(STAGEDIR)/usr/include $(EXTRACFLAGS) \
 		$(if $(RTCONFIG_HND_ROUTER),-DHND_ROUTER,)" \
 	LDFLAGS="-L$(TOP)/openssl -L$(STAGEDIR)/usr/lib $(EXTRALDFLAGS)" \
@@ -7741,6 +7740,14 @@ portmap-install:
 libovpn: shared nvram$(BCMEX)$(EX7)
 	@$(SEP)
 	$(MAKE) -C libovpn
+
+jitterentropy-rngd:
+	@$(SEP)
+	$(MAKE) CFLAGS+="-fPIC" -C $@
+
+jitterentropy-rngd-install:
+	install -D jitterentropy-rngd/jitterentropy-rngd $(INSTALLDIR)/jitterentropy-rngd/usr/sbin/jitterentropy-rngd
+	$(STRIP) $(INSTALLDIR)/jitterentropy-rngd/usr/sbin/jitterentropy-rngd
 
 wsdd2:
 	@$(SEP)

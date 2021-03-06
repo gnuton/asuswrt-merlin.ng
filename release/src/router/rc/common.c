@@ -766,6 +766,18 @@ void setup_conntrack(void)
 		if (atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
 #endif
+#ifdef LINUX26
+	if (f_exists("/proc/sys/net/netfilter/nf_conntrack_expect_max")) {
+		snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_expect_max"));
+		i = atoi(p);
+		if (i >= 1) {
+			f_write_string("/proc/sys/net/netfilter/nf_conntrack_expect_max", p, 0, 0);
+		}
+		else if (f_read_string("/proc/sys/net/netfilter/nf_conntrack_expect_max", buf, sizeof(buf)) > 0) {
+			if (atoi(buf) > 0) nvram_set("ct_expect_max", buf);
+		}
+	}
+#endif
 #if 0
 	if (!nvram_match("nf_rtsp", "0")) {
 		ct_modprobe("rtsp");
@@ -1351,15 +1363,20 @@ void time_zone_x_mapping(void)
 		nvram_set("time_zone", "UTC-7_3");
 	}
 
-	len = snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
+	snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
 	/* replace . with : */
 	while ((ptr=strchr(tmpstr, '.'))!=NULL) *ptr = ':';
-	/* remove *_? */
-	while ((ptr=strchr(tmpstr, '_'))!=NULL) *ptr = 0x0;
+	/* terminate string at first instance of '_', if there is one */
+	ptr = strchr(tmpstr, '_');
+	if(ptr) 
+        	*ptr = '\0';
 
 	/* check time_zone_dst for daylight saving */
-	if (nvram_get_int("time_zone_dst"))
-		len += sprintf(tmpstr + len, ",%s", nvram_safe_get("time_zone_dstoff"));
+	if (nvram_get_int("time_zone_dst")){
+		/* append time zone dst offset */
+		len = strnlen(tmpstr, sizeof(tmpstr));
+		snprintf(tmpstr + len, sizeof(tmpstr) - len, ",%s", nvram_safe_get("time_zone_dstoff"));
+	}
 #ifdef CONVERT_TZ_TO_GMT_DST
 	else	gettzoffset(tmpstr, tmpstr, sizeof(tmpstr));
 #endif
