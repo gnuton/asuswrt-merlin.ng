@@ -2,6 +2,36 @@ Asuswrt-Merlin 386/NG Changelog
 ===============================
 
 386.2 (xx-xxx-2021)
+  - NEW: Added support for the GT-AX11000.  Note that VPNFusion, as
+         well as the ROG-specific features such as the custom UI
+         are not supported.
+  - NEW: Added support for the RT-AX68U.
+  - NEW: Added jittertimer-rngd daemon to HND routers.  This will
+         ensure sufficient entropy is generated early on at
+         boot time, reducing boot stalls caused by insufficient
+         entropy for the kernel's random number generator,
+         and also generally improves security related to
+         crypto operations by the router.
+  - NEW: Added Cake QoS for HND routers.  Note that just like
+         Traditional QoS, this is not compatible with hardware
+         acceleration, and therefore might not be usable on
+         connections faster than around 350 Mbps (may vary based
+         on router models).
+  - UPDATED: Merged GPL 386_42095.
+  - UPDATED: Openssl to 1.1.1j.
+  - UPDATED: OpenVPN to 2.5.1.
+  - UPDATED: iproute2 to 5.11.0.
+  - FIXED: Router could get stuck at boot time after the user
+           migrated from stock firmware, or just erased his
+           JFFS partition, requiring a factory default reset.
+  - FIXED: ATM checkbox could not be enabled on QOS page.
+  - FIXED: DST not getting applied to some timezones (snauton)
+  - FIXED: Traditional QoS was broken in 386.1 (dave14305)
+  - REMOVED: SSH Brute Force Protection option (already handled
+             by Asuswrt's protect service daemon)
+
+
+386.1_2 (12-Feb-2021)
   - NEW: Added snmp support to the RT-AX86U.
   - UPDATED: inadyn to 2.8.1.
   - UPDATED: nano to 5.5.
@@ -27,6 +57,7 @@ Asuswrt-Merlin 386/NG Changelog
   - FIXED: Erasing the JFFS partition would often require a second
            reboot since the operation failed when encountering
            a bad block.  These are now properly skipped.
+  - FIXED: Parental Control's time scheduler not working properly.
 
 
 386.1 (30-Jan-2021)

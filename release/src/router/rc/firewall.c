@@ -1592,6 +1592,10 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	gst.s_addr = htonl(dip);
 	strcpy(g_lan_ip, inet_ntoa(gst));
 #endif
+#ifdef RTCONFIG_MULTISERVICE_WAN
+	wan_unit = wan_ifunit(wan_if);
+	if (wan_unit > WAN_UNIT_MULTISRV_BASE) return;
+#endif
 
 	sprintf(name, "%s_%s_%s", NAT_RULES, wan_if, wanx_if);
 	remove_slash(name + strlen(NAT_RULES));
@@ -3589,40 +3593,14 @@ TRACE_PT("writing Parental Control\n");
 		// Open ssh to WAN
 		if (nvram_get_int("sshd_enable") == 1)
 		{
-			if (nvram_match("sshd_bfp", "1"))
-			{
-				fprintf(fp, "-N SSHBFP\n");
-				fprintf(fp, "-A SSHBFP -m recent --set --name SSH --rsource\n");
-				fprintf(fp, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
-				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
-				fprintf(fp, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
-				        nvram_get_int("sshd_port") ? : 22);
+			fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n",
+			        nvram_get_int("sshd_port") ? : 22, logaccept);
 #ifdef RTCONFIG_IPV6
-				if (ipv6_enabled())
-				{
-					fprintf(fp_ipv6, "-N SSHBFP\n");
-					fprintf(fp_ipv6, "-A SSHBFP -m recent --set --name SSH --rsource\n");
-					fprintf(fp_ipv6, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
-					fprintf(fp_ipv6, "-A SSHBFP -j %s\n", logaccept);
-					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
-						nvram_get_int("sshd_port") ? : 22);
-				}
+			if (ipv6_enabled())
+				fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -j %s\n",
+					nvram_get_int("sshd_port") ? : 22, logaccept);
 #endif
-
-			}
-			else
-			{
-				fprintf(fp, "-A INPUT -p tcp --dport %d -j %s\n",
-				        nvram_get_int("sshd_port") ? : 22, logaccept);
-#ifdef RTCONFIG_IPV6
-				if (ipv6_enabled())
-					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -j %s\n",
-						nvram_get_int("sshd_port") ? : 22, logaccept);
-
-#endif
-
-			}
-	}
+		}
 #endif
 
 #ifdef RTCONFIG_FTP
@@ -3889,7 +3867,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 #ifdef RTCONFIG_AMAS_WGN
-	wgn_filter_forward(fp);
+	wgn_filter_forward(fp, wan_if);
 #endif
 
 	if(nvram_match("wifison_ready", "1"))
@@ -4003,6 +3981,7 @@ TRACE_PT("writing Parental Control\n");
 		fprintf(fp_ipv6, "-A FORWARD -p ipv6-nonxt -m length --length 40 -j ACCEPT\n");
 
 		// ICMPv6 rules
+		fprintf(fp_ipv6, "-A FORWARD -p ipv6-icmp --icmpv6-type %i -m limit --limit 1/s -j %s\n", 128, logdrop);
 		for (i = 0; i < sizeof(allowed_icmpv6)/sizeof(int); ++i) {
 			fprintf(fp_ipv6, "-A FORWARD -p ipv6-icmp --icmpv6-type %i -j %s\n", allowed_icmpv6[i], logaccept);
 		}
@@ -5006,36 +4985,13 @@ TRACE_PT("writing Parental Control\n");
 #ifdef RTCONFIG_SSH
 		if (nvram_get_int("sshd_enable") == 1)
 		{
-			if (nvram_match("sshd_bfp", "1"))
-			{
-				fprintf(fp, "-N SSHBFP\n");
-				fprintf(fp, "-A SSHBFP -m recent --set --name SSH --rsource\n");
-				fprintf(fp, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
-				fprintf(fp, "-A SSHBFP -j %s\n", logaccept);
-				fprintf(fp, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
-					nvram_get_int("sshd_port") ? : 22);
+			fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n",
+				nvram_get_int("sshd_port") ? : 22, logaccept);
 #ifdef RTCONFIG_IPV6
-				if (ipv6_enabled())
-				{
-					fprintf(fp_ipv6, "-N SSHBFP\n");
-					fprintf(fp_ipv6, "-A SSHBFP -m recent --set --name SSH --rsource\n");
-					fprintf(fp_ipv6, "-A SSHBFP -m recent --update --seconds 60 --hitcount 4 --name SSH --rsource -j %s\n", logdrop);
-					fprintf(fp_ipv6, "-A SSHBFP -j %s\n", logaccept);
-					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -m state --state NEW -j SSHBFP\n",
-						nvram_get_int("sshd_port") ? : 22);
-				}
-#endif
-			}
-                        else
-			{
-				fprintf(fp, "-A INPUT -p tcp -m tcp --dport %d -j %s\n",
+			if (ipv6_enabled())
+				fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -j %s\n",
 					nvram_get_int("sshd_port") ? : 22, logaccept);
-#ifdef RTCONFIG_IPV6
-				if (ipv6_enabled())
-					fprintf(fp_ipv6, "-A INPUT -p tcp --dport %d -j %s\n",
-						nvram_get_int("sshd_port") ? : 22, logaccept);
 #endif
-			}
 		}
 #endif
 
@@ -5285,7 +5241,7 @@ TRACE_PT("writing Parental Control\n");
 #endif
 
 #ifdef RTCONFIG_AMAS_WGN
-	wgn_filter_forward(fp);
+	wgn_filter_forward(fp, wan_if);
 #endif
 // ~ oleg patch
 		/* Filter out invalid WAN->WAN connections */
@@ -5362,6 +5318,7 @@ TRACE_PT("writing Parental Control\n");
 		fprintf(fp_ipv6, "-A FORWARD -p ipv6-nonxt -m length --length 40 -j ACCEPT\n");
 
 		// ICMPv6 rules
+		fprintf(fp_ipv6, "-A FORWARD -p ipv6-icmp --icmpv6-type %i -m limit --limit 1/s -j %s\n", 128, logdrop);
 		for (i = 0; i < sizeof(allowed_icmpv6)/sizeof(int); ++i) {
 			fprintf(fp_ipv6, "-A FORWARD -p ipv6-icmp --icmpv6-type %i -j %s\n", allowed_icmpv6[i], logaccept);
 		}
@@ -6563,6 +6520,8 @@ void add_mswan_rules(char *logaccept, char *logdrop)
 				eval("iptables", "-A", "INPUT_PING"
 					, "-i", wan_ifname, "-p", "icmp", "-j", logdrop);
 			}
+			eval("iptables", "-I", "FORWARD"
+					, "-o", wan_ifname, "-j", logaccept);
 
 			// nat
 			if (nvram_pf_get_int(wan_prefix, "nat_x"))
