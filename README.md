@@ -11,7 +11,7 @@
 <p align="center">
   A powerful third party alternative firmware.
   <br>
-  <a href="https://github.com/RMerl/asuswrt-merlin/wiki"><strong>Explore Asus Merlin docs»</strong></a>
+  <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
   <br>
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/releases/latest">Download latest firmware</a>
