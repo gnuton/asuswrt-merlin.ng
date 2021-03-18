@@ -420,7 +420,7 @@ function initial(){
 		document.getElementById("manu").checked = true;
 	}
 
-	if(codel_support || hnd_support) {
+	if(codel_support || cake_support) {
 		build_overhead_presets()
 	}
 
@@ -441,7 +441,7 @@ function initial(){
 		document.getElementById('settingSelection').style.display = "none";
 		show_up_down(0);
 		document.getElementById('qos_type_tr').style.display = "none";
-		if(hnd_support || adaptiveqos_support){
+		if(cake_support || adaptiveqos_support){
 			document.getElementById('bandwidth_setting_tr').style.display = "none";
 		}
 		if(adaptiveqos_support){
@@ -462,10 +462,10 @@ function initial(){
 				document.getElementById('settingSelection').style.display = "none";
 			}
 
-			if((hnd_support && (qos_type == 9)) || (codel_support && (qos_type != 1))){
+			if((cake_support && (qos_type == 9)) || (codel_support && (qos_type != 1))){
 				document.getElementById('qos_overhead_tr').style.display = "";
 			}
-			if((hnd_support) && (qos_type == 9)){
+			if((cake_support) && (qos_type == 9)){
 				document.getElementById('qos_mpu').style.display = "";
 				document.getElementById('qos_mpu_label').style.display = "";
 			}
@@ -519,7 +519,10 @@ function initial(){
 		$('label[for="trad_type"]').html('<#EzQoS_type_QoS#>')
 		$('#bandwidth_setting_tr').hide();
 	}
-	if(!hnd_support){
+	if(cake_support){
+		document.getElementById('cake_type').style.display = "";
+		document.getElementById('cake_type_link').style.display = "";
+	} else {
 		$('#cake_desc').hide();
 		$('#bandwidth_setting_tr').hide();
 	}
@@ -671,7 +674,7 @@ function validForm(){
 				error_obw++;
 
 			}
-			else if( ((qos_type == 1 && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3 || qos_type == 9) && !validator.rangeFloat(document.form.obw, 0, 9999999999, "")){
+			else if( (((qos_type == 1 || qos_type == 9) && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3) && !validator.rangeFloat(document.form.obw, 0, 9999999999, "")){
 				error_obw++;
 			}
 
@@ -705,7 +708,7 @@ function validForm(){
 				document.form.ibw.select();
 				error_ibw++;
 			}
-			else if( ((qos_type == 1 && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3 || qos_type == 9) && !validator.rangeFloat(document.form.ibw, 0, 9999999999, "")){
+			else if( (((qos_type == 1 || qos_type == 9) && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3) && !validator.rangeFloat(document.form.ibw, 0, 9999999999, "")){
 				error_ibw++;
 			}
 
@@ -759,7 +762,7 @@ function validForm(){
 					error_obw1++;
 
 				}
-				else if( ((qos_type == 1 && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3 || qos_type == 9) && !validator.rangeFloat(document.form.obw1, 0, 9999999999, "")){
+				else if( (((qos_type == 1 || qos_type == 9) && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3) && !validator.rangeFloat(document.form.obw1, 0, 9999999999, "")){
 					error_obw1++;
 				}
 
@@ -793,7 +796,7 @@ function validForm(){
 					document.form.ibw1.select();
 					error_ibw1++;
 				}
-				else if( ((qos_type == 1 && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3 || qos_type == 9) && !validator.rangeFloat(document.form.ibw1, 0, 9999999999, "")){
+				else if( (((qos_type == 1 || qos_type == 9) && document.form.bw_setting_name[1].checked == true ) || qos_type == 0 || qos_type == 3) && !validator.rangeFloat(document.form.ibw1, 0, 9999999999, "")){
 					error_ibw1++;
 				}
 
@@ -986,7 +989,7 @@ function change_qos_type(value){
 		if (codel_support) {
 			document.getElementById('qos_overhead_tr').style.display = "";
 		}
-		if (hnd_support) {
+		if (cake_support) {
 			document.getElementById('qos_mpu').style.display = "none";
 			document.getElementById('qos_mpu_label').style.display = "none";
 		}
@@ -1009,10 +1012,10 @@ function change_qos_type(value){
 		if(geforceNow_support)
 			document.getElementById('GeForce_type').checked = false;
 		document.getElementById('list_table').style.display = "none";
-		if (codel_support || hnd_support) {
+		if (codel_support || cake_support) {
 			document.getElementById('qos_overhead_tr').style.display = "none";
 		}
-		if (hnd_support) {
+		if (cake_support) {
 			document.getElementById('qos_mpu').style.display = "none";
 			document.getElementById('qos_mpu_label').style.display = "none";
 		}
@@ -1042,10 +1045,10 @@ function change_qos_type(value){
 		document.getElementById('bandwidth_setting_tr').style.display = "none";
 		show_up_down(0);
 		document.getElementById('list_table').style.display = "block";
-		if (codel_support || hnd_support) {
+		if (codel_support || cake_support) {
 			document.getElementById('qos_overhead_tr').style.display = "";
 		}
-		if (hnd_support) {
+		if (cake_support) {
 			document.getElementById('qos_mpu').style.display = "none";
 			document.getElementById('qos_mpu_label').style.display = "none";
 		}
@@ -1072,7 +1075,7 @@ function change_qos_type(value){
 		if (codel_support) {
 			document.getElementById('qos_overhead_tr').style.display = "";
 		}
-		if (hnd_support) {
+		if (cake_support) {
 			document.getElementById('qos_mpu').style.display = "none";
 			document.getElementById('qos_mpu_label').style.display = "none";
 		}
@@ -1094,7 +1097,7 @@ function change_qos_type(value){
 		document.getElementById('bandwidth_setting_tr').style.display = "";
 		show_up_down(1);
 		document.getElementById('list_table').style.display = "none";
-		if (hnd_support) {
+		if (cake_support) {
 			document.getElementById('qos_overhead_tr').style.display = "";
 			document.getElementById('qos_mpu').style.display = "";
 			document.getElementById('qos_mpu_label').style.display = "";
@@ -1939,7 +1942,7 @@ function set_overhead(entry) {
 															<li id="function_int_desc"><#EzQoS_desc_Adaptive#></li>
 															<li id="qos_desc"><#EzQoS_desc_Traditional#></li>
 															<li><#EzQoS_desc_Bandwidth_Limiter#></li>
-															<li id="cake_desc">Cake is an automatic queue management algorithm that takes care of ensuring fairness in traffic queueing without requiring manual configuration.</li>
+															<li id="cake_desc"><span style="font-weight:bolder;font-size:14px;">Cake</span> is an automatic queue management algorithm that takes care of ensuring fairness in traffic queueing without requiring manual configuration.</li>
 														</ul>
 														<#EzQoS_desc_note#>
 													</div>
@@ -2008,10 +2011,10 @@ function set_overhead(entry) {
 																if(alert_hint != "")
 																	alert(alert_hint);
 
-																if(codel_support || hnd_support) {
+																if(codel_support || cake_support) {
 																	document.getElementById('qos_overhead_tr').style.display = "none";
 																}
-																if(hnd_support) {
+																if(cake_support) {
 																	document.getElementById('qos_mpu').style.display = "none";
 																}
 																if(adaptiveqos_support){
@@ -2031,7 +2034,7 @@ function set_overhead(entry) {
 												<input id="trad_type" name="qos_type_radio" value="0" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "0","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 6);"><label for="trad_type"><#EzQoS_type_traditional#></label></a>
 												<input id="bw_limit_type" name="qos_type_radio" value="2" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "2","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(20, 7)"><label for="bw_limit_type"><#Bandwidth_Limiter#></label></a>
 												<span id="GeForceNow_item" style="white-space: nowrap;display: none;"><input id="GeForce_type" name="qos_type_radio" value="3" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "3","checked"); %>><a class="hintstyle" href="javascript:void(0);"><label for="GeForce_type">GeForce NOW QoS</label></a></span>
-												<input id="cake_type" name="qos_type_radio" value="9" onClick="change_qos_type(this.value);" type="radio" <% nvram_match("qos_type", "9","checked"); %>><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 0);"><label for="cake_type">Cake</label></a>
+												<input id="cake_type" name="qos_type_radio" value="9" onClick="change_qos_type(this.value);" style="display:none;" type="radio" <% nvram_match("qos_type", "9","checked"); %>><a id="cake_type_link" style="display:none;" class="hintstyle" href="javascript:void(0);" onClick="openHint(50, 32);"><label for="cake_type">Cake</label></a>
 											</td>
 										</tr>
 										<tr id="qos_overhead_tr" style="display:none">
@@ -2043,7 +2046,7 @@ function set_overhead(entry) {
 												<label id="qos_mpu_label" style="display:none;float:left;margin-left:25px;margin-right:5px;">MPU:</label>
 												<input type="text" maxlength="4" class="input_6_table" name="qos_mpu" id="qos_mpu" onKeyPress="return validator.isNumber(this,event);" onblur="validator.numberRange(this, 0, 256);" value="<% nvram_get("qos_mpu"); %>" style="display:none;float:left;">
 												<label id="qos_atm_label" style="float:left;margin-left:25px;margin-right:5px;">Mode:</label>
-												<select id="qos_atm" class="input_option">
+												<select name="qos_atm" id="qos_atm" class="input_option">
 													<option <% nvram_match("qos_atm","0","selected"); %> value="0">Normal</option>
 													<option <% nvram_match("qos_atm","1","selected"); %> value="1">ATM</option>
 													<option <% nvram_match("qos_atm","2","selected"); %> value="2">PTM</option>

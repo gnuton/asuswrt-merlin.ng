@@ -12,6 +12,8 @@ CURR_DIR := $(shell pwd)
 BUILD_DIR:=$(HND_SRC)
 
 include $(BUILD_DIR)/make.common
+#PKG_CONFIG:=$(CROSS_COMPILE)/pkg-config
+PKG_CONFIG_PATH:=$(TOP)/iptables-1.4.x/iptables/
 
 APP = iproute2
 
@@ -50,7 +52,7 @@ check_config: $(APP)/Makefile
 
 # Depend on check_config so that make progress can continue where it is stopped before
 $(APP): check_config
-	$(MAKE) -C $(APP) ;
+	$(MAKE) -C $(APP) $(PARALLEL_BUILD) ;
 	#install -m 755 $(APP)/ip/ip  $(INSTALL_DIR)/bin/ip
 	#install -m 755 $(APP)/tc/tc  $(INSTALL_DIR)/bin/tc
 	#$(STRIP) $(INSTALL_DIR)/bin/tc

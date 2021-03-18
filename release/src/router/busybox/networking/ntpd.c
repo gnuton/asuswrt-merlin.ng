@@ -131,7 +131,7 @@
 #define RETRY_INTERVAL    32    /* on send/recv error, retry in N secs (need to be power of 2) */
 #define NOREPLY_INTERVAL 512    /* sent, but got no reply: cap next query by this many seconds */
 #define RESPONSE_INTERVAL 16    /* wait for reply up to N secs */
-#define HOSTNAME_INTERVAL  4    /* hostname lookup failed. Wait N * peer->dns_errors secs for next try */
+#define HOSTNAME_INTERVAL  2    /* hostname lookup failed. Wait N * peer->dns_errors secs for next try */
 #define DNS_ERRORS_CAP  0x3f    /* peer->dns_errors is in [0..63] */
 
 /* Step threshold (sec). std ntpd uses 0.128.
@@ -1879,6 +1879,15 @@ recv_and_process_peer_pkt(peer_t *p)
 	peer_t      *q;
 
 	offset = 0;
+
+	/* The below can happen as follows:
+	 * = we receive two peer rsponses at once.
+	 * = recv_and_process_peer_pkt(PEER1) -> update_local_clock()
+	 *   -> step_time() and it closes all other fds, sets all ->fd to -1.
+	 * = recv_and_process_peer_pkt(PEER2) sees PEER2->fd == -1
+	 */
+	if (p->p_fd < 0)
+		return;
 
 	/* We can recvfrom here and check from.IP, but some multihomed
 	 * ntp servers reply from their *other IP*.
