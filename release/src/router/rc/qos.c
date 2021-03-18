@@ -1395,7 +1395,7 @@ static int start_tqos(void)
 
 	fclose(f);
 	chmod(qosfn, 0700);
-	run_custom_script("qos-start", 0, "init", NULL);
+	run_custom_script("qos-start", 120, "init", NULL);
 	eval((char *)qosfn, "start");
 	QOSDBG("[qos] tc done!\n");
 
@@ -2738,7 +2738,11 @@ int start_cake(void)
 		"ULBW='%s'\n"
 		"DLBW='%s'\n"
 		"OVERHEAD='%s'\n"
-		"FRAMING='%s'\n",
+		"FRAMING='%s'\n"
+		"ULPRIOQUEUE='diffserv3'\n"
+		"DLPRIOQUEUE='besteffort'\n"
+		"ULOPTIONS='%s dual-srchost'\n"
+		"DLOPTIONS='%s wash dual-dsthost ingress'\n",
 
 		wan_ifname,
 		wan_ifname,
@@ -2746,8 +2750,12 @@ int start_cake(void)
 		obwstr,
 		ibwstr,
 		overheadstr,
-		mode);
+		mode,
+		(nat ? "nat" : ""),
+		(nat ? "nat" : "")
+	);
 
+	append_custom_config("cake-qos.conf",f);
 	fclose(f);
 
 
@@ -2761,12 +2769,12 @@ int start_cake(void)
 		"case \"$1\" in\n"
 		"start)\n"
 		"# Upload\n"
-		"\ttc qdisc add dev $ULIF root cake %s diffserv3 $ULBW $OVERHEAD $FRAMING 2>/dev/null\n\n"
+		"\ttc qdisc add dev $ULIF root cake $ULPRIOQUEUE $ULOPTIONS $ULBW $OVERHEAD $FRAMING 2>/dev/null\n\n"
 
 		"# Download\n"
 		"\tip link add name $MIF type ifb 2>/dev/null\n"
 		"\ttc qdisc add dev $DLIF handle ffff: ingress 2>/dev/null\n"
-		"\ttc qdisc add dev $MIF root cake %s wash $DLBW besteffort $OVERHEAD $FRAMING 2>/dev/null\n"
+		"\ttc qdisc add dev $MIF root cake $DLPRIOQUEUE $DLOPTIONS $DLBW $OVERHEAD $FRAMING 2>/dev/null\n"
 		"\tip link set $MIF up 2>/dev/null\n"
 		"\ttc filter add dev $DLIF parent ffff: prio 10 matchall action mirred egress redirect dev $MIF 2>/dev/null\n\n"
 
@@ -2779,15 +2787,12 @@ int start_cake(void)
 		"\tip link del dev $MIF 2>/dev/null\n"
 		"\t;;\n"
 		"*)\n"
-		"esac\n",
-
-		(nat ? "nat" : ""),
-		(nat ? "nat" : ""));
+		"esac\n");
 
 	fclose(f);
-	chmod("/etc/cake-qos.conf", 0700);
-	chmod(qosfn, 0700);
-	run_custom_script("qos-start", 0, "init", NULL);
+	chmod("/etc/cake-qos.conf", 0755);
+	chmod(qosfn, 0755);
+	run_custom_script("qos-start", 120, "init", NULL);
 	eval((char *)qosfn, "start");
 
 	return 0;
