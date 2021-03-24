@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<node name='Device' rw='0' type='node' arg='1.3'>
+<node name='Device' rw='0' type='node' arg='1.4'>
 	<node name='DeviceInfo' rw='0' type='node'>
 		<node acl='' getc='0' name='Manufacturer' noc='0' nocc='' rw='0' type='string'>ASUSTeK Computer Inc.</node>
 		<node acl='' getc='0' name='ManufacturerOUI' noc='0' nocc='' rw='0' type='string' cmd='oui'></node>
@@ -643,6 +643,7 @@
 				<node acl='' getc='0' name='TimeBasedTestMeasurementOffset' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
 				<node acl='' getc='0' name='NumberOfConnections' noc='0' nocc='' rw='1' type='unsignedInt'>1</node>
 				<node acl='' getc='0' name='IPAddressUsed' noc='0' nocc='' rw='1' type='string'></node>
+				<node acl='' getc='0' name='ProtocolVersion' noc='0' nocc='' rw='0' type='string'>IPv4</node>
 				<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='EOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
@@ -658,7 +659,7 @@
 				<node acl='' getc='0' name='PerConnectionResultNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
 				<node acl='' getc='0' name='EnablePerConnectionResults' noc='0' nocc='' rw='1' type='boolean'>false</node>
 				<node acl='' getc='0' name='IncrementalResultNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>	
-				<node il='5' name='PerConnectionResult' nin='1' rw='1' type='node'>
+				<node il='10' name='PerConnectionResult' nin='1' rw='1' type='node'>
 					<node name='template' rw='1' type='node'>
 						<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 						<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
@@ -695,6 +696,7 @@
 				<node acl='' getc='0' name='TimeBasedTestMeasurementOffset' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
 				<node acl='' getc='0' name='NumberOfConnections' noc='0' nocc='' rw='1' type='unsignedInt'>1</node>
 				<node acl='' getc='0' name='IPAddressUsed' noc='0' nocc='' rw='1' type='string'></node>
+				<node acl='' getc='0' name='ProtocolVersion' noc='0' nocc='' rw='0' type='string'>IPv4</node>
 				<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='EOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
