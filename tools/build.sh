@@ -2,7 +2,7 @@
 MAKEFLAGS="-j 1"
 PROJECT_DIR="."
 CHANGELOG_FILE="/tmp/CHANGELOG"
-MODEL="rt-ac68u"
+MODEL="dsl-ac68u"
 SDK_PLATFORM="sdk"
 RELEASE_DIR="src-rt-6.x.4708"
 

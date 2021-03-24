@@ -707,7 +707,8 @@ define(function(){
 				else{					
 					retArray.push("Advanced_WAN_Content.asp");
 					retArray.push("Advanced_VDSL_Content.asp");
-					retArray.push("Advanced_OperationMode_Content.asp");					
+					if(based_modelid != "DSL-AC68U")
+						retArray.push("Advanced_OperationMode_Content.asp");					
 					if(!spectrum_support)
 						retArray.push("Main_Spectrum_Content.asp");
 				}
