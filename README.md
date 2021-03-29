@@ -52,9 +52,15 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [DSL-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 
 ---------------------
+## Branching
+### Master branch
+* [dsl-master](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-master) is the MASTER BRANCH. All stable and pre-releases are built from here.
 
+### DEV branch
+* They are temporary feature dev branches. They can come and go any time. Eventually they may get merged to dsl-master.
 
-### Experimental branches
+### Archived DEV branches -
+These branches are and won't be actively maintained anymore. 
 * [REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/ARCHIVED-dsl-feature-repeater) - [Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
