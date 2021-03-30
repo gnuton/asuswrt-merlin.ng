@@ -1422,6 +1422,15 @@ function showMenuTree(menuList, menuExclude){
 						menu_code += firstEntry;
 						menu_code += ', this);" title="';
 						menu_code += curMenu.tab[firstEntry].url;
+						if(isSwMode("re")){
+							menu_code += '\?flag=sitesurvey_rep';
+						}
+						if(isSwMode("ap")){
+                                                        menu_code += '\?flag=lanip';
+                                                }
+						if(isSwMode("mb")){
+                                                        menu_code += '\?flag=sitesurvey_mb';
+                                                }
 						menu_code += '" id="';
 						menu_code += curMenu.tab[firstEntry].url.split(".")[0];
 						menu_code += '_menu"><table><tr><td><div class="menu_Icon ';
