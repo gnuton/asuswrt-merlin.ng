@@ -241,7 +241,7 @@ then
 fi
 
 # On AX these are in router-sysdep
-if [ "$BUILD_NAME" != "RT-AX88U" ] && [ "$BUILD_NAME" != "RT-AX92U" ] && [ "$BUILD_NAME" != "RT-AX56U" ] && [ "$BUILD_NAME" != "RT-AX58U" ] && [ "$BUILD_NAME" != "RT-AX86U" ] && [ "$BUILD_NAME" != "DSL-AX82U" || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
+if [ "$BUILD_NAME" != "RT-AX88U" ] && [ "$BUILD_NAME" != "RT-AX92U" ] && [ "$BUILD_NAME" != "RT-AX56U" ] && [ "$BUILD_NAME" != "RT-AX58U" ] && [ "$BUILD_NAME" != "RT-AX86U" ] && [ "$BUILD_NAME" != "DSL-AX82U" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
 then
 	cp release/src/router/acsd$ARCH$SDK/prebuilt/* $REPO/release/src/router/acsd$ARCH$SDK/prebuilt/
 	cp -a release/src/router/libupnp$ARCH$SDK/* $REPO/release/src/router/libupnp$ARCH$SDK/

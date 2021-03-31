@@ -3360,7 +3360,10 @@ int nvram_check(char *name, char *value, struct nvram_tuple *t, char *output)
 	if(!strcmp(name, "vpn_serverx_clientlist") || !strcmp(name, "pptpd_clientlist"))
 	{
 		char *str1 = NULL, *str2 = NULL;
-		str1 = strtok(value, "<");
+		char *accounts;
+
+		accounts = strdup(value);
+		str1 = strtok(accounts, "<");
 		while (str1 != NULL) {
 			str2 = strchr(str1, '>');
 			if(str2-str1 > 64 || strlen(str2)-1 > 110){
@@ -3370,6 +3373,7 @@ int nvram_check(char *name, char *value, struct nvram_tuple *t, char *output)
 			}
 			str1 = strtok(NULL, "<");
 		}
+		free(accounts);
 	}
 	//_dprintf("nvram_check: t->name = %s, t->len = %d, t->type = %d, value = %s, strlen(value) = %d\n", t->name, t->len, t->type, value, strlen(value));
 	else if(strlen(value) > t->len)
@@ -19812,7 +19816,7 @@ struct mime_handler mime_handlers[] = {
 	{ "ureip.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "remote.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
 	{ "js/jquery.js", "text/javascript", cache_object, NULL, do_file, NULL },
-	{ "js/ouiDB.json", "text/javascript", cache_object, NULL, do_file, NULL },
+	{ "ajax/ouiDB.json", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "js/chart.min.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "require/require.min.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "calendar/jquery-ui.js", "text/javascript", cache_object, NULL, do_file, NULL },
