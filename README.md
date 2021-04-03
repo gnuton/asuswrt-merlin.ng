@@ -56,14 +56,14 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 ### Master branch
 * [dsl-master](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-master) is the MASTER BRANCH. All stable and pre-releases are built from here.
 
-### DEV branch
+### DEV_* branches
 DEV prefixed branches are temporary feature branches. They can come and go any time. Eventually they may get merged to dsl-master.
 Currently these are the most important ones:
 * REPEATER MODE - Adds all operational wireless modes available to RT corrispective routers but not losing the ability to work as DSL router too. [Download Image](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
 
-### Archived DEV branches -
-These branches are and won't be actively maintained anymore. 
-* [REPEATER MODE - OLD based on 384 firmware](https://github.com/gnuton/asuswrt-merlin.ng/tree/ARCHIVED-dsl-feature-repeater) 
+### ARCHIVED_* branches -
+These branches are and won't be actively maintained anymore, they are mostly based on old 384 firmware. 
+* [OLD REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/ARCHIVED-dsl-feature-repeater) 
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
 ---------------------
