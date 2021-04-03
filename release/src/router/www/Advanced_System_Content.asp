@@ -918,11 +918,14 @@ function corrected_timezone(){
 	var today = new Date();
 	var StrIndex;
 	var timezone = uptimeStr_update.substring(26,31);
+	var startPos = today.toString().indexOf("(");
+	if ( startPos < 0 )
+		startPos = today.toString().length;
 
-	if(today.toString().lastIndexOf("-") > 0)
-		StrIndex = today.toString().lastIndexOf("-");
-	else if(today.toString().lastIndexOf("+") > 0)
-		StrIndex = today.toString().lastIndexOf("+");
+	if(today.toString().lastIndexOf("-", startPos) > 0)
+		StrIndex = today.toString().lastIndexOf("-", startPos);
+	else if(today.toString().lastIndexOf("+", startPos) > 0)
+		StrIndex = today.toString().lastIndexOf("+", startPos);
 
 	if(StrIndex > 0){
 		//alert('dstoffset='+dstoffset+', 設定時區='+timezone+' , 當地時區='+today.toString().substring(StrIndex, StrIndex+5))
@@ -1184,7 +1187,7 @@ function hide_https_lanport(_value){
 		return false;
 	}
 
-	if(sw_mode == '1' || sw_mode == '2'){
+	if(sw_mode == '1' || sw_mode == '2' || sw_mode == '3'){
 		var https_lanport_num = "<% nvram_get("https_lanport"); %>";
 		document.getElementById("https_lanport").style.display = (_value == "0") ? "none" : "";
 		document.form.https_lanport.disabled = (_value == "0") ? true : false;
