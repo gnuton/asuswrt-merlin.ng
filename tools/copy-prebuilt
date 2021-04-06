@@ -159,7 +159,7 @@ then
 	# DSL specific files
 	cp -a release/src-rt-6.x.4708/tc_fw/* $REPO/release/src-rt-6.x.4708/tc_fw/
 	cp -a release/src/router/dsl_drv_tool/* $REPO/release/src/router/dsl_drv_tool
-	cp -a release/src/router/spectrum/* $REPO/release/src/router/spectrum
+	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
 
 elif [ "$BUILD_NAME" == "RT-AX86U" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
 then
@@ -278,6 +278,7 @@ then
         cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
 	cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
 	cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
+	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
 fi
 
 # Cleanup

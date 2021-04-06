@@ -92,6 +92,7 @@ then
     git add -f $REPO/release/src/router/dsl_autodet/
     git add -f $REPO/release/src/router/dsl_diag/
     git add -f $REPO/release/src/router/tr069/
+    git add -f $REPO/release/src/router/spectrum/*
 else
     echo "Unrecognized BUILD_NAME!"
     exit
