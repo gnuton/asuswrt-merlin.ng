@@ -401,6 +401,8 @@ function showMSWANList(){
 function initial(){
 	show_menu();
 
+	document.form.wan_clientid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wan_clientid"); %>');
+
 	// WAN port
 	genWANSoption();
 	change_wan_unit(document.form.wan_unit_x);
@@ -769,6 +771,7 @@ function disable_all_ctrl() {
 	document.getElementById("DNSsetting").style.display = "none";
 	document.getElementById("dot1q_setting").style.display = "none";
 	document.getElementById("IPsetting").style.display = "none";
+	document.getElementById("wan_DHCP_opt").style.display = "none";
 	document.getElementById("vpn_server").style.display = "none";
 	document.getElementById("btn_apply").style.display = "none";
 }
@@ -781,6 +784,7 @@ function enable_all_ctrl() {
 	document.getElementById("DNSsetting").style.display = "";
 	document.getElementById("dot1q_setting").style.display = "";
 	document.getElementById("IPsetting").style.display = "";
+	document.getElementById("wan_DHCP_opt").style.display = "";
 	document.getElementById("vpn_server").style.display = "";
 	document.getElementById("btn_apply").style.display = "";
 
@@ -802,6 +806,10 @@ function change_wan_proto_type(proto_type){
 	if(proto_type == "pppoe" || proto_type == "pppoa"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		showhide("wan_DHCP_opt",0);
+		inputCtrl(document.form.wan_vendorid, 0);
+		inputCtrl(document.form.wan_clientid, 0);
+		document.form.wan_clientid_type.disabled = true;
 
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 1);
@@ -825,6 +833,10 @@ function change_wan_proto_type(proto_type){
 	else if(proto_type == "pptp"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		showhide("wan_DHCP_opt",0);
+		inputCtrl(document.form.wan_vendorid, 0);
+		inputCtrl(document.form.wan_clientid, 0);
+		document.form.wan_clientid_type.disabled = true;
 		
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 1);
@@ -850,6 +862,10 @@ function change_wan_proto_type(proto_type){
 	else if(proto_type == "l2tp"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		showhide("wan_DHCP_opt",0);
+		inputCtrl(document.form.wan_vendorid, 0);
+		inputCtrl(document.form.wan_clientid, 0);
+		document.form.wan_clientid_type.disabled = true;
 		
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 1);
@@ -875,6 +891,10 @@ function change_wan_proto_type(proto_type){
 	else if(proto_type == "static"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 0);
 		inputCtrl(document.form.wan_dnsenable_x[1], 0);
+		showhide("wan_DHCP_opt",0);
+		inputCtrl(document.form.wan_vendorid, 0);
+		inputCtrl(document.form.wan_clientid, 0);
+		document.form.wan_clientid_type.disabled = true;
 
 		inputCtrl(document.form.wan_auth_x, 1);
 		inputCtrl(document.form.wan_pppoe_username, (document.form.wan_auth_x.value != ""));
@@ -897,6 +917,11 @@ function change_wan_proto_type(proto_type){
 	else if(proto_type == "dhcp"){
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+		showhide("wan_DHCP_opt",1);
+		inputCtrl(document.form.wan_vendorid, 1);
+		inputCtrl(document.form.wan_clientid, 1);
+		document.form.wan_clientid_type.disabled = false;
+		showDiableDHCPclientID(document.form.tmp_dhcp_clientid_type);
 
 		inputCtrl(document.form.wan_auth_x, 1);
 		inputCtrl(document.form.wan_pppoe_username, (document.form.wan_auth_x.value != ""));
@@ -920,6 +945,10 @@ function change_wan_proto_type(proto_type){
 	else if(proto_type == "bridge") {
 		inputCtrl(document.form.wan_dnsenable_x[0], 0);
 		inputCtrl(document.form.wan_dnsenable_x[1], 0);
+		showhide("wan_DHCP_opt",0);
+		inputCtrl(document.form.wan_vendorid, 0);
+		inputCtrl(document.form.wan_clientid, 0);
+		document.form.wan_clientid_type.disabled = true;
 		inputCtrl(document.form.wan_auth_x, 0);
 		inputCtrl(document.form.wan_pppoe_username, 0);
 		inputCtrl(document.form.wan_pppoe_passwd, 0);
@@ -1326,6 +1355,19 @@ function pullDNSList(_this) {
 		$element.hide();
 	}
 }
+
+function showDiableDHCPclientID(clientid_enable){
+	if(clientid_enable.checked) {
+		document.form.wan_clientid_type.value = "1";
+		document.form.wan_clientid.value = "";
+		document.form.wan_clientid.style.display = "none";
+	}
+	else {
+		document.form.wan_clientid_type.value = "0";
+		document.form.wan_clientid.style.display = "";
+	}
+}
+
 </script>
 </head>
 
@@ -1356,6 +1398,7 @@ function pullDNSList(_this) {
 <input type="hidden" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" />
 <input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" />
 <input type="hidden" name="wan_unit" value="<% nvram_get("wan_unit"); %>">
+<input type="hidden" name="wan_clientid_type" value="">
 <!--input type="hidden" name="wan_dhcpenable_x" value="<% nvram_get("wan_dhcpenable_x"); %>"-->
 <span id="bridgePPPoE_relay"></span>
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -1605,6 +1648,24 @@ function pullDNSList(_this) {
 									<!-- server block -->
 									<div id="dnspriv_rulelist_Block"></div>
 
+									<table id="wan_DHCP_opt" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+											<tr><td colspan="2"><#ipv6_6rd_dhcp_option#></td></tr>
+										</thead>
+										<tr>
+											<th width="40%">Class-identifier (option 60):</th>
+											<td>
+												<input type="text" name="wan_vendorid" class="input_25_table" value="<% nvram_get("wan_vendorid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
+											</td>
+										</tr>
+										<tr>
+											<th width="40%">Client-identifier (option 61):</th>
+											<td>
+												<input type="checkbox" id="tmp_dhcp_clientid_type" name="tmp_dhcp_clientid_type" onclick="showDiableDHCPclientID(this);" <% nvram_match("wan_clientid_type", "1", "checked"); %>>IAID/DUID<br>
+												<input type="text" name="wan_clientid" class="input_25_table" value="<% nvram_get("wan_clientid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
+											</td>
+										</tr>
+									</table>
 
 									<table id="PPPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 										<thead>

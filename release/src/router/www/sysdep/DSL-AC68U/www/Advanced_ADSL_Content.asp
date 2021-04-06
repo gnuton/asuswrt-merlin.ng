@@ -556,6 +556,18 @@ function check_ginp_try(obj){
 			</td>
 		</tr>
 
+		<tr>
+			<th>
+				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,17);">G.INP Stability Adjustment</a>
+			</th>
+			<td>
+				<select class="input_option" name="dslx_vdsl_ginp">
+					<option value="1" <% nvram_match("dslx_vdsl_ginp", "1", "selected"); %>><#btn_Enabled#></option>
+					<option value="0" <% nvram_match("dslx_vdsl_ginp", "0", "selected"); %>><#btn_Disabled#></option>
+				</select>
+			</td>
+		</tr>
+
 		<!--dslx_vdsl_tx_gain_off-->
 		<tr id="id_vdtxpwrtestmode">
 			<th>

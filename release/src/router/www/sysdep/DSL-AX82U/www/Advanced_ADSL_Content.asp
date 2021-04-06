@@ -173,7 +173,7 @@ function valid_form(){
 				<td>
 					<select id="dslx_snrm_offset" class="input_option" name="dslx_snrm_offset">
 						<option value="0" <% nvram_match("dslx_snrm_offset", "0", "selected"); %>><#btn_Disabled#></option>
-						<option value="16" <% nvram_match("dslx_snrm_offset", "32", "selected"); %>>1 dB</option>
+						<option value="16" <% nvram_match("dslx_snrm_offset", "16", "selected"); %>>1 dB</option>
 						<option value="32" <% nvram_match("dslx_snrm_offset", "32", "selected"); %>>2 dB</option>
 						<option value="48" <% nvram_match("dslx_snrm_offset", "48", "selected"); %>>3 dB</option>
 						<option value="64" <% nvram_match("dslx_snrm_offset", "64", "selected"); %>>4 dB</option>

@@ -358,6 +358,8 @@ function showDSLWANList(){
 function initial(){
 	show_menu();
 
+	document.form.dsl_dhcp_clientid.value = decodeURIComponent('<% nvram_char_to_ascii("", "dsl_dhcp_clientid"); %>');
+
 	// WAN port
 	genWANSoption();
 	change_wan_unit(document.form.wan_unit);
@@ -743,6 +745,7 @@ function disable_all_ctrl() {
 	document.getElementById("DNSsetting").style.display = "none";
 	document.getElementById("dot1q_setting").style.display = "none";
 	document.getElementById("IPsetting").style.display = "none";
+	document.getElementById("DHCP_option").style.display = "none";
 	document.getElementById("vpn_server").style.display = "none";
 	document.getElementById("btn_apply").style.display = "none";
 }
@@ -755,6 +758,7 @@ function enable_all_ctrl() {
 	document.getElementById("DNSsetting").style.display = "";
 	document.getElementById("dot1q_setting").style.display = "";
 	document.getElementById("IPsetting").style.display = "";
+	document.getElementById("DHCP_option").style.display = "";
 	document.getElementById("vpn_server").style.display = "";
 	document.getElementById("btn_apply").style.display = "";
 }
@@ -766,6 +770,10 @@ function change_dsl_type(dsl_type){
 	if(dsl_type == "pppoe" || dsl_type == "pppoa"){
 		//inputCtrl(document.form.dsl_dnsenable[0], 1);
 		//inputCtrl(document.form.dsl_dnsenable[1], 1);
+		showhide("DHCP_option",0);
+		inputCtrl(document.form.dsl_dhcp_vendorid, 0);
+		inputCtrl(document.form.dsl_dhcp_clientid, 0);
+		document.form.dsl_dhcp_clientid_type.disabled = true;
 
 		inputCtrl(document.form.dsl_pppoe_username, 1);
 		inputCtrl(document.form.dsl_pppoe_passwd, 1);
@@ -787,6 +795,10 @@ function change_dsl_type(dsl_type){
 	else if(dsl_type == "static"){
 		//inputCtrl(document.form.dsl_dnsenable[0], 0);
 		//inputCtrl(document.form.dsl_dnsenable[1], 0);
+		showhide("DHCP_option",0);
+		inputCtrl(document.form.dsl_dhcp_vendorid, 0);
+		inputCtrl(document.form.dsl_dhcp_clientid, 0);
+		document.form.dsl_dhcp_clientid_type.disabled = true;
 
 		inputCtrl(document.form.dsl_pppoe_username, 0);
 		inputCtrl(document.form.dsl_pppoe_passwd, 0);
@@ -807,6 +819,11 @@ function change_dsl_type(dsl_type){
 	else if(dsl_type == "dhcp"){
 		//inputCtrl(document.form.dsl_dnsenable[0], 1);
 		//inputCtrl(document.form.dsl_dnsenable[1], 1);
+		showhide("DHCP_option",1);
+		inputCtrl(document.form.dsl_dhcp_vendorid, 1);
+		inputCtrl(document.form.dsl_dhcp_clientid, 1);
+		document.form.dsl_dhcp_clientid_type.disabled = false;
+		showDiableDHCPclientID(document.form.tmp_dhcp_clientid_type);
 
 		inputCtrl(document.form.dsl_pppoe_username, 0);
 		inputCtrl(document.form.dsl_pppoe_passwd, 0);
@@ -828,7 +845,10 @@ function change_dsl_type(dsl_type){
 	else if(dsl_type == "bridge") {
 		//inputCtrl(document.form.dsl_dnsenable[0], 0);
 		//inputCtrl(document.form.dsl_dnsenable[1], 0);
-
+		showhide("DHCP_option",0);
+		inputCtrl(document.form.dsl_dhcp_vendorid, 0);
+		inputCtrl(document.form.dsl_dhcp_clientid, 0);
+		document.form.dsl_dhcp_clientid_type.disabled = true;
 		inputCtrl(document.form.dsl_pppoe_username, 0);
 		inputCtrl(document.form.dsl_pppoe_passwd, 0);
 		inputCtrl(document.form.dsl_pppoe_auth, 0);
@@ -1111,6 +1131,19 @@ function pullDNSList(_this) {
 		$element.hide();
 	}
 }
+
+function showDiableDHCPclientID(clientid_enable){
+	if(clientid_enable.checked) {
+		document.form.dsl_dhcp_clientid_type.value = "1";
+		document.form.dsl_dhcp_clientid.value = "";
+		document.form.dsl_dhcp_clientid.style.display = "none";
+	}
+	else {
+		document.form.dsl_dhcp_clientid_type.value = "0";
+		document.form.dsl_dhcp_clientid.style.display = "";
+	}
+}
+
 </script>
 </head>
 
@@ -1150,6 +1183,7 @@ function pullDNSList(_this) {
 <input type="hidden" name="dslx_rmvlan" value="<% nvram_get("dslx_rmvlan"); %>">
 <input type="hidden" name="wan_enable" value="" disabled>
 <input type="hidden" name="add_pvc_flag" value="0">
+<input type="hidden" name="dsl_dhcp_clientid_type" value="">
 <span id="bridgePPPoE_relay"></span>
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -1360,6 +1394,25 @@ function pullDNSList(_this) {
 												<input type="text" maxlength="15" class="input_15_table" name="dsl_dns2" value="<% nvram_get("dsl_dns2"); %>" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off"/>
 												<img id="dns_pull_arrow2" class="dns_pull_arrow" src="/images/arrow-down.gif" onclick="pullDNSList(this);">
 												<div id="dns_server_list2" class="dns_server_list_dropdown"></div>
+											</td>
+										</tr>
+									</table>
+
+									<table id="DHCP_option" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+										<thead>
+											<tr><td colspan="2"><#ipv6_6rd_dhcp_option#></td></tr>
+										</thead>
+										<tr>
+											<th width="40%">Class-identifier (option 60):</th>
+											<td>
+												<input type="text" name="dsl_dhcp_vendorid" class="input_25_table" value="<% nvram_get("dsl_dhcp_vendorid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
+											</td>
+										</tr>
+										<tr>
+											<th width="40%">Client-identifier (option 61):</th>
+											<td>
+												<input type="checkbox" id="tmp_dhcp_clientid_type" name="tmp_dhcp_clientid_type" onclick="showDiableDHCPclientID(this);" <% nvram_match("dsl_dhcp_clientid_type", "1", "checked"); %>>IAID/DUID<br>
+												<input type="text" name="dsl_dhcp_clientid" class="input_25_table" value="<% nvram_get("dsl_dhcp_clientid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
 											</td>
 										</tr>
 									</table>
