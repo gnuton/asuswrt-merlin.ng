@@ -176,6 +176,11 @@ workflows:
               ignore:
                 - master
                 - mainline
+      - request-testing:
+          type: approval
+          requires:
+            - build_dsl-ax82u
+            - build_dsl-ac68u
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -185,6 +190,7 @@ workflows:
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
+            - request-testing
       - publish-github-release:
           filters:
             tags:
@@ -194,6 +200,7 @@ workflows:
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
+            - request-testing
             - publish-manifest-and-notes
       - publish-github-ci-pre-release:
           filters:
