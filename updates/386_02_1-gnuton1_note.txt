@@ -1,0 +1,122 @@
+Changes from the latest stable gnuton build (386.01_2-gnuton1):
+* Moved RT-AX88U router-sysdep to model-specific directory
+* Add GT-AX11000 build profile
+* Merge GT-AX11000 binary blobs from 386_41700
+* Add GT-AX11000 SDK components
+* libbcmcrypto: re-sync with 386_41700
+* webui: added GT-AX11000 content
+* SDK 4908: removed unused dongle firmware copies
+* httpd: add GT-AX11000 support to sysinfo temperatures
+* rc: add LED control support for GT-AX11000
+* Disable cloudcheck on GT-AX11000 profile
+* rc: move start of sshd near the end of the boot process
+* Updated documentation
+* openssl: update to 1.1.1j
+* www: fix QoS ATM checkbox state not being saved
+* Add jitterentropy-rngd daemon to HND models
+* Updated documentation
+* Use interval for clock & boot time
+* rc: remove SSH brute force protection option, as it is redundant
+* Merge pull request #706 from jackyaz/patch-1
+* rc: time_zone_x_mapping bug fix (#701)
+* openvpn: updated to 2.5.1
+* Add cake scheduler to all HND kernels
+* iproute2-4.3: backported tc cake support from 14d2df887481dd2130c6ae5d023325262429ce3c
+* kernel: backport matchall classifier filter to all 4.1 kernels
+* iproute2-4.3: backported tc matchall filter from upstream
+* rc: fix bad merge in qos.c from GPL_41700
+* Merge pull request #709 from dave14305/patch-1
+* rc: implement Cake QoS mode for HND routers
+* www: implement Cake UI
+* Updated documentation
+* www: cleaned up QoS overhead presets, added conservative default profile
+* Fix NetEase UU Game Accelerator model type
+* iproute2-4.3: fix display of negative deficit and drop_next values (#710)
+* Implement entware support for GT-AX11000
+* iproute2: add v5.11.0 to the tree
+* iproute2: reapply cake negative value output fixes to 5.11.0
+* iproute2: re-apply BCM/Asus patches from iproute2-4.3.0 on top of 5.11.0; disable building unused components
+* iproute2: build 5.11.0 instead of 4.3.0
+* SDK 4908: remove shared blobs that are leftovers from a previous compile
+* kernel41: Added skbedit and connmark support to tc
+* rc: split Cake parameters and script into two separate files
+* iproute2: re-re-apply negative values patch, overwritten by 2311706f04
+* rc: fix cake qos script generation
+* Merge with GPL 386_42095
+* Merge 5.02p1 SDK and RT-AX86U router-sysdep from 386_42095
+* Merge RT-AX86U binary blobs from 386_42095
+* Add RT-AX68U binary blobs from 386_41947, and web pages
+* Add RT-AX68U build profile
+* rc: Add LED control support to RT-AX68U
+* Add GT-AX11000 and RT-AX68U to copy-prebuilt and build-all scripts
+* Add router-sysdep from 386_41947 for RT-AX68U
+* Updated documentation
+* Merge RT-AC68U binary blobs from 42095
+* Merge RT-AC88U/RT-AC3100/RT-AC5300 binary blobs from 42095
+* Merge RT-AC86U/GT-AC2900 binary blobs + SDK from 42095
+* Merge RT-AX88U/GT-AX11000 binary blobs + SDK from 42095
+* Merge RT-AX68U binary blobs from 42095
+* Merge RT-AX56U/RT-AX58U binary blobs + SDK from 42095
+* build: fix platform.mak for building HND models following 42095 merge
+* webui: hide Cake on non-HND models; add popup help; fix storing of atm/ptm value
+* build: remove FTP_SSL setting from build targets since it's alreaedy globally enabled in config_base
+* Merge upstream code  into dsl-master
+* webui: fix hiding WPA/WEP key by default (regression from 42095 merge)
+* iproute2: fix confdir location in iproute2-5.11.0
+* iproute2: fix building with xtables+ipset support
+* kernel41: enable tc ematch and related matches
+* iproute2: enable parallel building of iproute2-4.3/5.11
+* webui: fix enabling cake while bandwidth set to Auto
+* webui: remove Yandex status from router status page as we don't support it
+* SDK 5.02p1: SDK5.02.675x: fix kernel modules dependencies
+* Merge pull request #712 from VersusClyne/master
+* webui: Reformat Cake description to match the other QoS description styles
+* Revert "Fix NetEase UU Game Accelerator model type"
+* Merge pull request #715 from paldier/revert-712-master
+* qos: move all variables parameters into cake-qos.conf; add cake-qos.conf.add support; tweak file permissions
+* bb: Be more aggressive on retries if ntp servers name resolution fail
+* ntpd: fix the case where two replies received at once and first one
+* rc: rename FLOWPRIO variables in cake config
+* rc: always mount jffs2 partition regardless of jffs2_on setting
+* webui: add qis files for GT-AC2900 and GT-AX11000
+* rom: updated CA bundle to 20210309
+* rc: webui: add cake rc_support attribute
+* Updated documentation
+* add .dummy file for wlcsm to make sure GT-AX11000 passing fw build
+* Merge pull request #718 from sadoneli/master
+* rc: fix pointer corruption in filter_setting()
+* rc: rewritten dnsfilter server table management
+* webui: QoS Classification page: add warning in Cake mode; harmonise qos type handling with nvram value
+* rc: revert static DNS routes added with GPL 42095
+* rc: make qos-start run in blocking mode
+* httpd: fix openvpn/pptpd account list getting truncated after one entry
+* webui: store local copies of online json files; add code to refresh them
+* webui: remove OpenVPN server Windows FAQ as it's missing from the Asus website
+* Merge remote-tracking branch 'upstream/master' into dsl-master
+* shared: match with rx/tx var types for backup_rx/backup_tx in netdev_calc()
+* tools: exclude web files that cause the optimizing tool to crash and leave temp files in the /www directory
+* httpd: fix ouiDB.json location for browser caching
+* Updated documentation
+* rc: Rearrange Cake variable positions
+* rc: do not use dnsfilter_custom when querying the server table for an IPv6
+* Merge pull request #725 from dave14305/patch-1
+* Merge remote-tracking branch 'upstream/master' into DSL_upstream_merge
+* webui: fix display of connected IPSEC clients on VPNStatus page; added display of IKEv2 clients
+* Fix tools/copy-prebuilt
+* dsl-ac68u: Merged prebuilds from GPL 42095
+* dsl-ax82u: Merged prebuilds from GPL 42095
+* rc: make entries in passwd and shadow be in the same order
+* openssl: update to 1.1.1k
+* kernel: proper fix for wlan accumulating stats issue
+* build: no longer explicitely disable NFCM
+* webui: allow changing https LAN port while in AP mode
+* webui: move main content down on index page when the disabled wifi warning banner is shown
+* webui: Fix timezone detection (#729)
+* webui: fix duplicate variable introduced with 73e5ec95e2
+* Updated documentation
+* Updated documentation
+* Merge tag '386.2' into dsl-master
+* Implement entware support for DSL-AX82U
+* dsl-ax82u: Added missing bwdpi certificate from GPL 42095
+* dsl: Use different spectrum binary for different builds
+* dsl: Merged www from GPL 42095
