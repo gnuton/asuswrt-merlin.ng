@@ -179,6 +179,11 @@ workflows:
                 - mainline
       - request-testing:
           type: approval
+          filters:
+            tags:
+              only: /[0-9]+.*gnuton[0-9]+/
+            branches:
+              ignore: /.*/
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
