@@ -67,22 +67,13 @@ These branches are and won't be actively maintained anymore, they are mostly bas
 * [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
 
 ---------------------
-
-### How can I help?
-All kinds of contributions are welcome raised_hands! The most basic way to show your support is to ⭐️ star the project, raise 🐞 issues and/or with 💰 or hardware donations.
-
-<p align="center">
-    <a href="https://www.paypal.me/gnuton">
-        <img src="donate.png" alt="donate" width="220" height="220"/>
-    </a>
-</p>
-
----------------------
-
 ### Thanks to
 - Asus for the GPL releases
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
 
+---------------------
+### How can I help?
+All kinds of contributions are welcome raised_hands! The most basic way to show your support is to ⭐️ star the project, raise 🐞 issues and/or with 💰 or hardware donations.
 
 <p align="center">
     <a href="https://www.paypal.me/gnuton">
