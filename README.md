@@ -73,7 +73,7 @@ These branches are and won't be actively maintained anymore, they are mostly bas
 
 ---------------------
 ### How can I help?
-All kinds of contributions are welcome raised_hands! The most basic way to show your support is to ⭐️ star the project, raise 🐞 issues and/or with 💰 or hardware donations.
+All kinds of contributions are welcome 🙌! The most basic way to show your support is to ⭐️ star the project, raise 🐞 issues and/or with 💰 or hardware donations.
 
 <p align="center">
     <a href="https://www.paypal.me/gnuton">
