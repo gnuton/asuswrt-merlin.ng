@@ -68,17 +68,21 @@ These branches are and won't be actively maintained anymore, they are mostly bas
 
 ---------------------
 
-### Contributing
-Most of the help I need is in testing. You can test BETA releases when available and report bugs here.
-Beta releases are safe to be tested and they get promoted to stable once ready.
+### How can I help?
+All kinds of contributions are welcome raised_hands! The most basic way to show your support is to ⭐️ star the project, raise 🐞 issues and/or with 💰 or hardware donations.
 
-If you are intested instead in building the firmware by yourself or in helping to code, feel free to ping me via forum PMs or gitter.
+<p align="center">
+    <a href="https://www.paypal.me/gnuton">
+        <img src="donate.png" alt="donate" width="220" height="220"/>
+    </a>
+</p>
 
 ---------------------
 
 ### Thanks to
 - Asus for the GPL releases
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
+
 
 <p align="center">
     <a href="https://www.paypal.me/gnuton">
