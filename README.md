@@ -61,7 +61,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 Do you love this project? All kinds of contributions are welcome 🙌!
  * ⭐️ star the project
  * raise 🐞 issues 
- * contributing with 🙇 [code/testing](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/DEV.md) 
+ * send 🙇 [code](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/DEV.md) 
  * 💰 donations.
 
 <p align="center">
