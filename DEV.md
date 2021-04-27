@@ -27,7 +27,8 @@
 
 ---------------------
 
-### DEV 
+## I am a Dev or a Tester!!!
+
 If you are a dev o a tester you are welcome!
 In this page you will find all info needed to build the firmware in your local machine or on the cloud and more
 
