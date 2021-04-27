@@ -62,7 +62,7 @@ Do you love this project? All kinds of contributions are welcome 🙌!
  * ⭐️ star the project
  * raise 🐞 issues 
  * contributing with 🙇 [code/testing](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/DEV.md) 
- * 💰 or hardware donations.
+ * 💰 donations.
 
 <p align="center">
     <a href="https://www.paypal.me/gnuton">
