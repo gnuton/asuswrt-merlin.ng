@@ -52,28 +52,17 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [DSL-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 
 ---------------------
-## Branching
-### Master branch
-* [dsl-master](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-master) is the MASTER BRANCH. All stable and pre-releases are built from here.
-
-### DEV_* branches
-DEV prefixed branches are temporary feature branches. They can come and go any time. Eventually they may get merged to dsl-master.
-Currently these are the most important ones:
-* REPEATER MODE - Adds all operational wireless modes available to RT corrispective routers but not losing the ability to work as DSL router too. [Download Image](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater)
-
-### ARCHIVED_* branches -
-These branches are and won't be actively maintained anymore, they are mostly based on old 384 firmware. 
-* [OLD REPEATER MODE](https://github.com/gnuton/asuswrt-merlin.ng/tree/ARCHIVED-dsl-feature-repeater) 
-* [IP SEC](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-feature-ipsec)
-
----------------------
 ### Thanks to
 - Asus for the GPL releases
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
 
 ---------------------
 ### How can I help?
-All kinds of contributions are welcome 🙌! The most basic way to show your support is to ⭐️ star the project, raise 🐞 issues and/or with 💰 or hardware donations.
+Do you love this project? All kinds of contributions are welcome 🙌!
+ * ⭐️ star the project
+ * raise 🐞 issues 
+ * contributing with 🙇 [code/testing](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/DEV.md) 
+ * 💰 or hardware donations.
 
 <p align="center">
     <a href="https://www.paypal.me/gnuton">
