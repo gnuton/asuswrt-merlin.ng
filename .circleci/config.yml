@@ -194,8 +194,6 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build_dsl-ax82u
-            - build_dsl-ac68u
             - request-testing
       - publish-github-release:
           filters:
@@ -204,9 +202,6 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build_dsl-ax82u
-            - build_dsl-ac68u
-            - request-testing
             - publish-manifest-and-notes
       - publish-github-ci-pre-release:
           filters:
