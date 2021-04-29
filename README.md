@@ -52,6 +52,11 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [DSL-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 
 ---------------------
+
+### Experimental builds:
+* [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/) available in the RT-AC68U. 
+  
+---------------------
 ### Thanks to
 - Asus for the GPL releases
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
