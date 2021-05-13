@@ -4,7 +4,7 @@ include ../common.mak
 UPNPLIB_NAME = libupnp.so
 
 all:
-	echo use prebuilt
+	echo use prebuilt 
 	cp -f ./prebuilt/$(UPNPLIB_NAME) .
 
 install: all
@@ -13,6 +13,6 @@ install: all
 	$(STRIP) $(INSTALLDIR)/usr/lib/$(UPNPLIB_NAME)
 
 clean:
-	rm -f $(UPNPLIB_NAME) $(OBJFILES)
+	rm -f $(UPNPLIB_NAME)
 
 .PHONY: clean

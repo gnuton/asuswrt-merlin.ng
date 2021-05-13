@@ -21,6 +21,7 @@
 
 WLCMD=wl
 DHDCMD=dhd
+CEVENTCCMD=ceventc
 IFNAME=$1
 DUMPPATH=/tmp
 DUMPDIR=${DUMPPATH}/$(date +"%d:%m:%Y_%H:%M")
@@ -140,7 +141,9 @@ driver_info () {
 
     display_cmd_op "WLVERSION: wl -i $IFNAME ver" "$WLCMD -i $IFNAME ver"
     display_cmd_op "REVINFO: wl -i $IFNAME revinfo" "$WLCMD -i $IFNAME revinfo"
-    display_cmd_op "DHDVERSION: dhd -i $IFNAME version" "$DHDCMD -i $IFNAME version"
+	if [[ $MODE == "dhd" ]]; then
+		display_cmd_op "DHDVERSION: dhd -i $IFNAME version" "$DHDCMD -i $IFNAME version"
+	fi
     display_cmd_op "WLCAP: wl -i $IFNAME cap" "$WLCMD -i $IFNAME cap"
     display_cmd_op "UPTIME (sec): [System uptime] [sum of how much time each core spent idle] " "cat /proc/uptime"
 }
@@ -172,10 +175,7 @@ wl_stats () {
     display_cmd_op "NRATE: wl -i $IFNAME nrate" "$WLCMD -i $IFNAME nrate"
     display_cmd_op "RATE: wl -i $IFNAME rate" "$WLCMD -i $IFNAME rate"
     display_cmd_op "11H SPECT: wl -i $IFNAME spect" "$WLCMD -i $IFNAME spect"
-<<<<<<< HEAD
-=======
     display_cmd_op "PHY_ED_THRESH: wl -i $IFNAME phy_ed_thresh" "$WLCMD -i $IFNAME phy_ed_thresh"
->>>>>>> upstream/master
     display_cmd_op "CHANIMSTATS: wl -i $IFNAME chanim_stats" "$WLCMD -i $IFNAME chanim_stats"
     display_cmd_op "INTERFERENCE: wl -i $IFNAME interference" "$WLCMD -i $IFNAME interference"
     display_cmd_op "INTERFERENCE_OVR: wl -i $IFNAME interference_override" "$WLCMD -i $IFNAME interference_override"
@@ -206,16 +206,20 @@ wl_stats () {
     display_cmd_op "TEMPERATURE SENSOR: wl -i $IFNAME phy_tempsense" "$WLCMD -i $IFNAME phy_tempsense"
     display_cmd_op "BAND: wl -i $IFNAME band" "$WLCMD -i $IFNAME band"
     display_cmd_op "SCAN RESULTS: wl -i $IFNAME scanresults" "$WLCMD -i $IFNAME scanresults"
-<<<<<<< HEAD
-=======
+    display_cmd_op "RATELINKMEM: wl -i $IFNAME dump ratelinkmem" "$WLCMD -i $IFNAME dump ratelinkmem"
+    display_cmd_op "BSS DUMP: wl -i $IFNAME dump bsscfg" "$WLCMD -i $IFNAME dump bsscfg"
+    display_cmd_op "SCB DUMP: wl -i $IFNAME dump scb" "$WLCMD -i $IFNAME dump scb"
+    display_cmd_op "SMF DUMP: wl -i $IFNAME dump smfstats" "$WLCMD -i $IFNAME dump smfstats"
+    display_cmd_op "WME DUMP: wl -i $IFNAME dump wme" "$WLCMD -i $IFNAME dump wme"
+    display_cmd_op "DMA DUMP: wl -i $IFNAME dump dma [-t tx -f all]" "$WLCMD -i $IFNAME dump dma [-t tx -f all]"
+    display_cmd_op "AQM DUMP: wl -i $IFNAME dump dma [-t aqm -f all]" "$WLCMD -i $IFNAME dump dma [-t aqm -f all]"
+    display_cmd_op "RSSI DUMP: wl -i $IFNAME dump rssi" "$WLCMD -i $IFNAME dump rssi"
+    display_cmd_op "MACFLTR DUMP: wl -i $IFNAME dump macfltr" "$WLCMD -i $IFNAME dump macfltr"
+    display_cmd_op "RATELINK DUMP: wl -i $IFNAME dump ratelinkmem" "$WLCMD -i $IFNAME dump ratelinkmem"
+    display_cmd_op "PHYACI DUMP: wl -i $IFNAME dump phyaci" "$WLCMD -i $IFNAME dump phyaci"
     display_cmd_op "MACMODE DUMP: wl -i $IFNAME macmode" "$WLCMD -i $IFNAME macmode"
     display_cmd_op "MAC DUMP: wl -i $IFNAME mac" "$WLCMD -i $IFNAME mac"
->>>>>>> upstream/master
-    display_cmd_op "RATELINKMEM: wl -i $IFNAME dump ratelinkmem" "$WLCMD -i $IFNAME dump ratelinkmem"
     display_cmd_op "LAST ADJ EST POWER: wl -i $IFNAME txpwr_adj_est" "$WLCMD -i $IFNAME txpwr_adj_est"
-    display_cmd_op "CEVENT: ceventc -i $IFNAME dump" "ceventc -i $IFNAME dump"
-    ## Flush ceventc log
-    ceventc -i $IFNAME flush > /dev/NULL 2>&1
 }
 
 dhd_stats () {
@@ -281,7 +285,7 @@ loop_commands () {
     fi
 
     host_side_dump
-    dmesg -c
+    ceventc_dump
 }
 
 if [ $MODE == "dhd" ]; then
@@ -295,9 +299,22 @@ fi
 
 $WLCMD -i $IFNAME ver > /dev/NULL 2>&1
 if [ $? -ne 0 ] ; then
+if [[ $MODE == "dhd" ]]; then
 	echo "########### Dongle trap detected on $IFNAME ################"
+else
+	echo -e "Bad Interface $IFNAME $?"
+fi
 	exit 0
 fi
+
+ceventc_dump() {
+	echo "================================="
+	echo "CEVENT DUMP for $IFNAME"
+	echo "================================="
+	display_cmd_op "CEVENTCDUMP: ceventc -i $IFNAME dump" "$CEVENTCCMD -i $IFNAME dump"
+	## Flush ceventc log
+	ceventc -i $IFNAME flush > /dev/NULL 2>&1
+}
 
 #driver_init
 driver_info
@@ -313,6 +330,7 @@ if [[ $MODE == "dhd" ]]; then
     dhd_stats "${SOCRAMDUMPFILE}_${NR_RUNS}"
     dmesg -c
 fi
+ceventc_dump
 
 if [[ $NR_REPEATS -eq 0 ]]; then
 	while true; do

@@ -1,16 +1,8 @@
-# NAS
-
+# nas
 include ../../.config
 
-ifeq ($(wildcard ../*.c), )
 all:
 	-cp ./prebuilt/nas .
-else
-all: nas
-endif
-
-nas: $(NASOBJS) $(UTLOBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
 
 # install to target
 install: all
