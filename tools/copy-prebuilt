@@ -8,7 +8,7 @@
 #        REPO will contain the location of your local repository
 
 BUILD_NAME=$1
-REPO=/home/merlin/amng
+REPO=${REPO:-/home/merlin/amng}
 
 echo "*** Copying platform-specific files..."
 if [ "$BUILD_NAME" == "RT-AC88U" ] || [ "$BUILD_NAME" == "RT-AC3100" ] || [ "$BUILD_NAME" == "RT-AC5300" ]
@@ -129,7 +129,7 @@ then
 		cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-AXHND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 	fi
 
-elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ]
+elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
 	SDK="_6750hnd"
 	ARCH="_arm"
@@ -144,6 +144,22 @@ then
 	else
 		cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-AXHND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 	fi
+elif [ "$BUILD_NAME" == "DSL-AC68U" ]
+then
+	SDK=""
+	ARCH="_arm"
+	HND=""
+
+	cp release/src/router/ctf_arm/bcm6/* $REPO/release/src/router/ctf_arm/bcm6/
+	cp release/src/router/wl_arm/prebuilt/* $REPO/release/src/router/wl_arm/prebuilt/$BUILD_NAME/
+	cp release/src-rt-6.x.4708/wl/exe/prebuilt/* $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/
+	cp -a release/src/router/tuxera/broadcom$ARCH$SDK/* $REPO/release/src/router/tuxera/broadcom$ARCH$SDK/
+	cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-BCM7.x-6.x $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
+	
+	# DSL specific files
+	cp -a release/src-rt-6.x.4708/tc_fw/* $REPO/release/src-rt-6.x.4708/tc_fw/
+	cp -a release/src/router/dsl_drv_tool/* $REPO/release/src/router/dsl_drv_tool
+	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
 
 elif [ "$BUILD_NAME" == "RT-AX86U" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
 then
@@ -165,7 +181,6 @@ else
 	echo "Unrecognized BUILD_NAME!"
 	exit
 fi
-
 
 # Common to all
 
@@ -216,6 +231,10 @@ cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt
 echo "*** Copying exceptions and special cases..."
 
 # HND exceptions
+<<<<<<< HEAD
+# DSL-AC68 - FIXME - This overwrites RT-AC68U and other prebuilds
+=======
+>>>>>>> upstream/master
 if [ "$HND" == "" ]
 then
 	cp release/src/router/et$ARCH$SDK/prebuilt/* $REPO/release/src/router/et$ARCH$SDK/prebuilt/
@@ -225,18 +244,21 @@ then
 fi
 
 # On AX these are in router-sysdep
-if [ "$BUILD_NAME" != "RT-AX88U" ] && [ "$BUILD_NAME" != "RT-AX92U" ] && [ "$BUILD_NAME" != "RT-AX56U" ] && [ "$BUILD_NAME" != "RT-AX58U" ] && [ "$BUILD_NAME" != "RT-AX86U" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
+if [ "$BUILD_NAME" != "RT-AX88U" ] && [ "$BUILD_NAME" != "RT-AX92U" ] && [ "$BUILD_NAME" != "RT-AX56U" ] && [ "$BUILD_NAME" != "RT-AX58U" ] && [ "$BUILD_NAME" != "RT-AX86U" ] && [ "$BUILD_NAME" != "DSL-AX82U" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
 then
 	cp release/src/router/acsd$ARCH$SDK/prebuilt/* $REPO/release/src/router/acsd$ARCH$SDK/prebuilt/
-	cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
+	#cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
 	cp -a release/src/router/libupnp$ARCH$SDK/* $REPO/release/src/router/libupnp$ARCH$SDK/
 	cp release/src/router/nas$ARCH$SDK/nas/prebuilt/* $REPO/release/src/router/nas$ARCH$SDK/nas/prebuilt/
 	cp release/src/router/wlconf$ARCH$SDK/prebuilt/* $REPO/release/src/router/wlconf$ARCH$SDK/prebuilt/
 	cp release/src/router/wps$ARCH$SDK/prebuilt/* $REPO/release/src/router/wps$ARCH$SDK/prebuilt/
 	cp release/src/router/wlceventd/prebuilt/* $REPO/release/src/router/wlceventd/prebuilt/$BUILD_NAME/
-	cp release/src/router/dhd_monitor/prebuilt/* $REPO/release/src/router/dhd_monitor/prebuilt/$BUILD_NAME/
+	if [ "$BUILD_NAME" != "DSL-AC68U" ] 
+	then
+		cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
+		cp release/src/router/dhd_monitor/prebuilt/* $REPO/release/src/router/dhd_monitor/prebuilt/$BUILD_NAME/
+	fi
 fi
-
 
 # Model-specific
 if [ "$BUILD_NAME" == "RT-AC88U" ]
@@ -251,8 +273,16 @@ fi
 # Anything newer than SDK6
 if [ "$SDK" != "" ]
 then
-		cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
-		cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
+	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
+	cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
+fi
+
+if [ "$BUILD_NAME" == "DSL-AX82U" ]
+then
+    cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
+	cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
+	cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
+	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
 fi
 
 # Cleanup

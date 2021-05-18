@@ -340,7 +340,8 @@ var notification = {
 		//Higher priority: DLA intervened case dsltmp_dla_modified 0: default / 1:need to feedback / 2:Feedback submitted 
 		//Lower priority: dsl_loss_sync  0: default / 1:need to feedback / 2:Feedback submitted
 		// Only DSL-AC68U for now
-		if(dsl_loss_sync == 1){         //case9(case10 act) + case6
+		// GNUoton: Disabled this since there is no Advanced_Feedback support
+		if(false && dsl_loss_sync == 1){         //case9(case10 act) + case6
 			
 			notification.loss_sync = 1;
 			if(dla_modified == 1){
@@ -362,7 +363,7 @@ var notification = {
 			notification.loss_sync = 0;
 			
 		//experiencing DSL issue experience_fb=0: notif, 1:no display again.
-		if(experience_fb == 0){		//case7
+		if(false && experience_fb == 0){		//case7
 				notification.array[7] = 'noti_experience_FB';
 				notification.array[18] = 'noti_experience_FB_cancel';
 				notification.experience_FB = 1;
@@ -385,7 +386,7 @@ var notification = {
 			notification.notif_hint = 0;
 
 		//DLA send debug log  -- 4: send by manual, else: nothing to show
-		if(wan_diag_state == "4"){               //case11
+		if(false && wan_diag_state == "4"){               //case11
 			notification.array[11] = 'noti_send_debug_log';
 			notification.send_debug_log = 1;
 			notification.desc[11] = "-	The debug log of diagnostic DSL captured.";

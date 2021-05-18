@@ -234,7 +234,6 @@ function setClientIP(ipaddr){
 	hideClients_Block();
 }
 
-
 function hideClients_Block(){
 	document.getElementById("pull_arrow").src = "/images/arrow-down.gif";
 	document.getElementById('ClientList_Block_PC').style.display='none';
