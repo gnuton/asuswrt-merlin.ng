@@ -114,8 +114,9 @@ if(cfg_sync_support){
 	var cfg_check = '<% nvram_get("cfg_check"); %>';
 	var cfg_upgrade = '<% nvram_get("cfg_upgrade"); %>';
 }
-download_url_redir = "https://fwupdate.asuswrt-merlin.net/" + based_modelid;
-download_url = "https://www.asuswrt-merlin.net/download";
+
+download_url_redir = "https://gnuton.github.io/asuswrt-merlin.ng/updates/" + based_modelid;
+download_url = "https://github.com/gnuton/asuswrt-merlin.ng/releases/latest";
 
 if(pipefw_support || urlfw_support){
 	var hndwr_status = '<% nvram_get("hndwr"); %>';

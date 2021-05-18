@@ -29,7 +29,7 @@ GZIP  := /bin/gzip
 MKDEPOPT := -MM
 DEBUG_ON := -g
 
-ALL_CFLAGS = -W -Wall -Werror --pedantic $(CFLAGS)
+ALL_CFLAGS = -W -Wall --pedantic $(CFLAGS)
 
 SYSTEM=$(shell uname 2>/dev/null)
 ifneq (,$(filter $(SYSTEM),FreeBSD Darwin))
