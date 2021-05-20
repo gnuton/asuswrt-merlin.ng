@@ -231,7 +231,6 @@ cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt
 echo "*** Copying exceptions and special cases..."
 
 # HND exceptions
-# DSL-AC68 - FIXME - This overwrites RT-AC68U and other prebuilds
 if [ "$HND" == "" ]
 then
 	cp release/src/router/et$ARCH$SDK/prebuilt/* $REPO/release/src/router/et$ARCH$SDK/prebuilt/
@@ -275,7 +274,7 @@ fi
 
 if [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
-        cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
+    cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
 	cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
 	cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
 	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
