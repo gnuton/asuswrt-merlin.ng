@@ -95,6 +95,8 @@ jobs:
             else
               cp "${CHANGELOG_FILE}" workspace/release
             fi
+      - store_artifacts:
+          path: workspace/release
       - persist_to_workspace:
           root: workspace
           paths:
@@ -111,6 +113,8 @@ jobs:
       - run:
           name: "Publish manifest and release note for the current build"
           command: |
+            echo "Skip this for now"
+            exit 0
             ssh-keyscan github.com >> ~/.ssh/known_hosts
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
@@ -139,6 +143,8 @@ jobs:
           name: "Publish Release on Github"
           command: |
             echo "Uploading release..."
+            echo "Skip this for now, since CircleCI should be configured for it to work"
+            exit 0
             RELEASE_TITLE="Stable: ${CIRCLE_TAG}"
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" ${CIRCLE_TAG} workspace/release/
   publish-github-ci-pre-release:
@@ -152,6 +158,8 @@ jobs:
           name: "Publish CI pre-release on Github"
           command: |
             echo "Uploading CI pre-release..."
+            echo "Skipping this step since it requires some config on CirclCI side"
+            exit 0
             RELEASE_TITLE="Unstable: ${CIRCLE_TAG}"
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
  
@@ -195,7 +203,3 @@ workflows:
               ignore: /.*/
           requires:
             - build
-notify:
-  webhooks:
-    - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
-
