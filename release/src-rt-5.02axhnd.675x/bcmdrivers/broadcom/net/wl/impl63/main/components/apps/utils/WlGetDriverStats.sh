@@ -172,6 +172,13 @@ wl_stats () {
     display_cmd_op "NRATE: wl -i $IFNAME nrate" "$WLCMD -i $IFNAME nrate"
     display_cmd_op "RATE: wl -i $IFNAME rate" "$WLCMD -i $IFNAME rate"
     display_cmd_op "11H SPECT: wl -i $IFNAME spect" "$WLCMD -i $IFNAME spect"
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+    display_cmd_op "PHY_ED_THRESH: wl -i $IFNAME phy_ed_thresh" "$WLCMD -i $IFNAME phy_ed_thresh"
+>>>>>>> upstream/master
+>>>>>>> dsl-master
     display_cmd_op "CHANIMSTATS: wl -i $IFNAME chanim_stats" "$WLCMD -i $IFNAME chanim_stats"
     display_cmd_op "INTERFERENCE: wl -i $IFNAME interference" "$WLCMD -i $IFNAME interference"
     display_cmd_op "INTERFERENCE_OVR: wl -i $IFNAME interference_override" "$WLCMD -i $IFNAME interference_override"
@@ -202,6 +209,14 @@ wl_stats () {
     display_cmd_op "TEMPERATURE SENSOR: wl -i $IFNAME phy_tempsense" "$WLCMD -i $IFNAME phy_tempsense"
     display_cmd_op "BAND: wl -i $IFNAME band" "$WLCMD -i $IFNAME band"
     display_cmd_op "SCAN RESULTS: wl -i $IFNAME scanresults" "$WLCMD -i $IFNAME scanresults"
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+    display_cmd_op "MACMODE DUMP: wl -i $IFNAME macmode" "$WLCMD -i $IFNAME macmode"
+    display_cmd_op "MAC DUMP: wl -i $IFNAME mac" "$WLCMD -i $IFNAME mac"
+>>>>>>> upstream/master
+>>>>>>> dsl-master
     display_cmd_op "RATELINKMEM: wl -i $IFNAME dump ratelinkmem" "$WLCMD -i $IFNAME dump ratelinkmem"
     display_cmd_op "LAST ADJ EST POWER: wl -i $IFNAME txpwr_adj_est" "$WLCMD -i $IFNAME txpwr_adj_est"
     display_cmd_op "CEVENT: ceventc -i $IFNAME dump" "ceventc -i $IFNAME dump"

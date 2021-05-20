@@ -231,7 +231,6 @@ cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt
 echo "*** Copying exceptions and special cases..."
 
 # HND exceptions
-# DSL-AC68 - FIXME - This overwrites RT-AC68U and other prebuilds
 if [ "$HND" == "" ]
 then
 	cp release/src/router/et$ARCH$SDK/prebuilt/* $REPO/release/src/router/et$ARCH$SDK/prebuilt/
@@ -244,6 +243,7 @@ fi
 if [ "$BUILD_NAME" != "RT-AX88U" ] && [ "$BUILD_NAME" != "RT-AX92U" ] && [ "$BUILD_NAME" != "RT-AX56U" ] && [ "$BUILD_NAME" != "RT-AX58U" ] && [ "$BUILD_NAME" != "RT-AX86U" ] && [ "$BUILD_NAME" != "DSL-AX82U" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "RT-AX68U" ]
 then
 	cp release/src/router/acsd$ARCH$SDK/prebuilt/* $REPO/release/src/router/acsd$ARCH$SDK/prebuilt/
+	#cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
 	cp -a release/src/router/libupnp$ARCH$SDK/* $REPO/release/src/router/libupnp$ARCH$SDK/
 	cp release/src/router/nas$ARCH$SDK/nas/prebuilt/* $REPO/release/src/router/nas$ARCH$SDK/nas/prebuilt/
 	cp release/src/router/wlconf$ARCH$SDK/prebuilt/* $REPO/release/src/router/wlconf$ARCH$SDK/prebuilt/
@@ -275,7 +275,7 @@ fi
 
 if [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
-        cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
+    cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
 	cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
 	cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
 	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
