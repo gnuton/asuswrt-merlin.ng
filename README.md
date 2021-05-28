@@ -5,7 +5,7 @@
 <h3 align="center">
     <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">AsusWrt Merlin</a> 
     for 
-    DSL Asus Routers
+    Asus DSL Routers
 </h3>
 
 <p align="center">
