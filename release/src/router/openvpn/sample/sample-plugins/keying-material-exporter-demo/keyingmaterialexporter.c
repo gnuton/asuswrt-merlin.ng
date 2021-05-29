@@ -27,8 +27,6 @@
  * See the README file for build instructions.
  */
 
-#define ENABLE_CRYPTO
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -93,6 +91,12 @@ openvpn_plugin_open_v3(const int version,
                        struct openvpn_plugin_args_open_return *rv)
 {
     struct plugin *plugin = calloc(1, sizeof(*plugin));
+
+    if (plugin == NULL)
+    {
+        printf("PLUGIN: allocating memory for context failed\n");
+        return OPENVPN_PLUGIN_FUNC_ERROR;
+    }
 
     plugin->type = get_env("remote_1", args->envp) ? CLIENT : SERVER;
     plugin->log  = args->callbacks->plugin_log;
@@ -232,7 +236,8 @@ tls_final(struct openvpn_plugin_args_func_in const *args,
     snprintf(sess->key, sizeof(sess->key) - 1, "%s", key);
     ovpn_note("app session key:  %s", sess->key);
 
-    switch (plugin->type) {
+    switch (plugin->type)
+    {
         case SERVER:
             server_store(args);
             break;
@@ -251,7 +256,8 @@ openvpn_plugin_func_v3(const int version,
                        struct openvpn_plugin_args_func_in const *args,
                        struct openvpn_plugin_args_func_return *rv)
 {
-    switch (args->type) {
+    switch (args->type)
+    {
         case OPENVPN_PLUGIN_TLS_VERIFY:
             return tls_verify(args);
 

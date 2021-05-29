@@ -5068,20 +5068,34 @@ openpam-clean:
 	[ ! -f openpam/Makefile ] || $(MAKE) -C openpam distclean
 	@rm -f openpam/Makefile
 
+
 openvpn: shared $(OPENSSLDIR) lzo openpam zlib openvpn/Makefile
 	$(MAKE) -C $@ $(PARALLEL_BUILD)
 
 openvpn/Makefile:
-	( cd openvpn ; ./autogen.sh && OPENSSL_CFLAGS="-I$(TOP)/$(OPENSSLDIR)/include" \
-		OPENSSL_LIBS="-L$(TOP)/$(OPENSSLDIR) -lcrypto -lssl" \
-		CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections $(if $(RTCONFIG_BCMARM),-I$(SRCBASE)/shared/bcmwifi/include)" \
-		LDFLAGS="$(EXTRALDFLAGS) -L$(TOP)/nvram$(BCMEX)${EX7} ${EXTRA_NV_LDFLAGS} -lnvram -L$(TOP)/shared -lshared $(if $(RTCONFIG_QTN),-L$(TOP)/libqcsapi_client -lqcsapi_client) -L$(TOP)/zlib -lz -lpthread -ldl -L$(TOP)/lzo/src/.libs -L$(TOP)/openpam/lib/libpam/.libs -ffunction-sections -fdata-sections -Wl,--gc-sections" \
-		CPPFLAGS="-I$(TOP)/lzo/include -I$(TOP)/$(OPENSSLDIR)/include  -I$(TOP)/openpam/include -I$(TOP)/shared -I$(SRCBASE)/include" \
-		IPROUTE="$(if $(RTCONFIG_HND_ROUTER),/bin/ip,/usr/sbin/ip)" IFCONFIG="/sbin/ifconfig" ROUTE="/sbin/route" \
+	( cd openvpn ; ./autogen.sh ; \
+		OPENSSL_CFLAGS="-I$(TOP)/$(OPENSSLDIR)/include" \
+		OPENSSL_LIBS="-L$(TOP)/$(OPENSSLDIR)/ -lcrypto -lssl" \
+		LIBPAM_CFLAGS="-I$(TOP)/openpam/include" \
+		LIBPAM_LIBS="-L$(TOP)/openpam/lib/libpam/.libs -lpam" \
+		LZO_CFLAGS="-I$(TOP)/lzo/include" \
+		LZO_LIBS="-L$(TOP)/lzo/src/.libs -llzo2" \
+		LZ4_CFLAGS="-I$(TOP)/lz4/lib" \
+		LZ4_LIBS="-L$(TOP)/lz4/lib -llz4" \
+		CFLAGS="-O3 -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections -std=gnu99 \
+			-DASUSWRT" \
+		LDFLAGS="$(EXTRALDFLAGS) -ffunction-sections -fdata-sections \
+			-Wl,--gc-sections \
+			-lpthread -ldl \
+			-L$(TOP)/zlib -lz" \
+		IPROUTE="/usr/sbin/ip" \
 		$(CONFIGURE) --prefix=/usr --bindir=/usr/sbin --libdir=/usr/lib \
-			--disable-debug --enable-management --enable-plugin-auth-pam --enable-iproute2 \
+			--disable-debug --enable-management --disable-small \
+			--disable-selinux \
+			--enable-plugin-auth-pam \
 			ac_cv_lib_resolv_gethostbyname=no \
-	)
+			--enable-iproute2 \
+        )
 
 openvpn-clean:
 	[ ! -f openvpn/Makefile ] || $(MAKE) -C openvpn clean

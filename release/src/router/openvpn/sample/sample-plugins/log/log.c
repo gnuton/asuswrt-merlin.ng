@@ -78,6 +78,11 @@ openvpn_plugin_open_v1(unsigned int *type_mask, const char *argv[], const char *
      * Allocate our context
      */
     context = (struct plugin_context *) calloc(1, sizeof(struct plugin_context));
+    if (context == NULL)
+    {
+        printf("PLUGIN: allocating memory for context failed\n");
+        return NULL;
+    }
 
     /*
      * Set the username/password we will require.
@@ -156,11 +161,15 @@ show(const int type, const char *argv[], const char *envp[])
 
     printf("ARGV\n");
     for (i = 0; argv[i] != NULL; ++i)
+    {
         printf("%d '%s'\n", (int)i, argv[i]);
+    }
 
     printf("ENVP\n");
     for (i = 0; envp[i] != NULL; ++i)
+    {
         printf("%d '%s'\n", (int)i, envp[i]);
+    }
 }
 
 OPENVPN_EXPORT int
