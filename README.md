@@ -54,7 +54,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 ---------------------
 
 ### Experimental builds:
-* [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/) available in the RT-AC68U. 
+* [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/) available only to RT Asus Router. 
   
 ---------------------
 ### Thanks to
