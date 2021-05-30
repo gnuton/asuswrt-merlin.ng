@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2020, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -59,6 +59,7 @@ size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
   struct HdrCbData *hdrcbdata = &per->hdrcbdata;
   struct OutStruct *outs = &per->outs;
   struct OutStruct *heads = &per->heads;
+  struct OutStruct *etag_save = &per->etag_save;
   const char *str = ptr;
   const size_t cb = size * nmemb;
   const char *end = (char *)ptr + cb;
@@ -72,12 +73,12 @@ size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
    */
   size_t failure = (size && nmemb) ? 0 : 1;
 
-  if(!heads->config)
+  if(!per->config)
     return failure;
 
 #ifdef DEBUGBUILD
   if(size * nmemb > (size_t)CURL_MAX_HTTP_HEADER) {
-    warnf(heads->config->global, "Header data exceeds single call write "
+    warnf(per->config->global, "Header data exceeds single call write "
           "limit!\n");
     return failure;
   }
@@ -87,12 +88,63 @@ size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
    * Write header data when curl option --dump-header (-D) is given.
    */
 
-  if(heads->config->headerfile && heads->stream) {
+  if(per->config->headerfile && heads->stream) {
     size_t rc = fwrite(ptr, size, nmemb, heads->stream);
     if(rc != cb)
       return rc;
     /* flush the stream to send off what we got earlier */
     (void)fflush(heads->stream);
+  }
+
+  /*
+   * Write etag to file when --etag-save option is given.
+   * etag string that we want is enveloped in double quotes
+   */
+  if(per->config->etag_save_file && etag_save->stream) {
+    /* match only header that start with etag (case insensitive) */
+    if(curl_strnequal(str, "etag:", 5)) {
+      char *etag_h = NULL;
+      char *first = NULL;
+      char *last = NULL;
+      size_t etag_length = 0;
+
+      etag_h = ptr;
+      /* point to first occurrence of double quote */
+      first = memchr(etag_h, '\"', cb);
+
+      /*
+       * if server side messed with the etag header and doesn't include
+       * double quotes around the etag, kindly exit with a warning
+       */
+
+      if(!first) {
+        warnf(per->config->global,
+              "Received header etag is missing double quote/s\n");
+        return failure;
+      }
+      else {
+        /* discard first double quote */
+        first++;
+      }
+
+      /* point to last occurrence of double quote */
+      last = memchr(first, '\"', cb);
+
+      if(!last) {
+        warnf(per->config->global,
+              "Received header etag is missing double quote/s\n");
+        return failure;
+      }
+
+      /* get length of desired etag */
+      etag_length = (size_t)last - (size_t)first;
+
+      fwrite(first, size, etag_length, etag_save->stream);
+      /* terminate with new line */
+      fputc('\n', etag_save->stream);
+    }
+
+    (void)fflush(etag_save->stream);
   }
 
   /*
@@ -134,37 +186,23 @@ size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
       filename = parse_filename(p, len);
       if(filename) {
         if(outs->stream) {
-          int rc;
-          /* already opened and possibly written to */
-          if(outs->fopened)
-            fclose(outs->stream);
-          outs->stream = NULL;
-
-          /* rename the initial file name to the new file name */
-          rc = rename(outs->filename, filename);
-          if(rc != 0) {
-            warnf(outs->config->global, "Failed to rename %s -> %s: %s\n",
-                  outs->filename, filename, strerror(errno));
-          }
-          if(outs->alloc_filename)
-            Curl_safefree(outs->filename);
-          if(rc != 0) {
-            free(filename);
-            return failure;
-          }
+          /* indication of problem, get out! */
+          free(filename);
+          return failure;
         }
+
         outs->is_cd_filename = TRUE;
         outs->s_isreg = TRUE;
         outs->fopened = FALSE;
         outs->filename = filename;
         outs->alloc_filename = TRUE;
         hdrcbdata->honor_cd_filename = FALSE; /* done now! */
-        if(!tool_create_output_file(outs))
+        if(!tool_create_output_file(outs, per->config))
           return failure;
       }
       break;
     }
-    if(!outs->stream && !tool_create_output_file(outs))
+    if(!outs->stream && !tool_create_output_file(outs, per->config))
       return failure;
   }
 
@@ -174,7 +212,7 @@ size_t tool_header_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
     /* bold headers only for selected protocols */
     char *value = NULL;
 
-    if(!outs->stream && !tool_create_output_file(outs))
+    if(!outs->stream && !tool_create_output_file(outs, per->config))
       return failure;
 
     if(hdrcbdata->global->isatty && hdrcbdata->global->styled_output)

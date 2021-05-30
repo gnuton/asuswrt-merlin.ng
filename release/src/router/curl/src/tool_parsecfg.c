@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2020, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -76,7 +76,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
   FILE *file = NULL;
   bool usedarg = FALSE;
   int rc = 0;
-  struct OperationConfig *operation = global->first;
+  struct OperationConfig *operation = global->last;
   char *pathalloc = NULL;
 
   if(!filename || !*filename) {
@@ -97,6 +97,8 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
       int i = 0;
       char prefix = '.';
       do {
+        /* if it was allocated in a previous attempt */
+        curl_free(pathalloc);
         /* check for .curlrc then _curlrc in the home dir */
         pathalloc = curl_maprintf("%s%s%ccurlrc", home, DIR_CHAR, prefix);
         if(!pathalloc) {
@@ -171,7 +173,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
       /* ... and has ended here */
 
       if(*line)
-        *line++ = '\0'; /* zero terminate, we have a local copy of the data */
+        *line++ = '\0'; /* null-terminate, we have a local copy of the data */
 
 #ifdef DEBUG_CONFIG
       fprintf(stderr, "GOT: %s\n", option);
@@ -201,7 +203,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
           line++;
 
         if(*line) {
-          *line = '\0'; /* zero terminate */
+          *line = '\0'; /* null-terminate */
 
           /* to detect mistakes better, see if there's data following */
           line++;
@@ -231,6 +233,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
       fprintf(stderr, "PARAM: \"%s\"\n",(param ? param : "(null)"));
 #endif
       res = getparameter(option, param, &usedarg, global, operation);
+      operation = global->last;
 
       if(!res && param && *param && !usedarg)
         /* we passed in a parameter that wasn't used! */
@@ -285,7 +288,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
   else
     rc = 1; /* couldn't open the file */
 
-  free(pathalloc);
+  curl_free(pathalloc);
   return rc;
 }
 
@@ -326,7 +329,7 @@ static const char *unslashquote(const char *line, char *param)
     else
       *param++ = *line++;
   }
-  *param = '\0'; /* always zero terminate */
+  *param = '\0'; /* always null-terminate */
   return line;
 }
 

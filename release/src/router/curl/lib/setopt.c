@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2020, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -72,6 +72,37 @@ CURLcode Curl_setstropt(char **charp, const char *s)
       return CURLE_OUT_OF_MEMORY;
 
     *charp = str;
+  }
+
+  return CURLE_OK;
+}
+
+CURLcode Curl_setblobopt(struct curl_blob **blobp,
+                         const struct curl_blob *blob)
+{
+  /* free the previous storage at `blobp' and replace by a dynamic storage
+     copy of blob. If CURL_BLOB_COPY is set, the data is copied. */
+
+  Curl_safefree(*blobp);
+
+  if(blob) {
+    struct curl_blob *nblob;
+    if(blob->len > CURL_MAX_INPUT_LENGTH)
+      return CURLE_BAD_FUNCTION_ARGUMENT;
+    nblob = (struct curl_blob *)
+      malloc(sizeof(struct curl_blob) +
+             ((blob->flags & CURL_BLOB_COPY) ? blob->len : 0));
+    if(!nblob)
+      return CURLE_OUT_OF_MEMORY;
+    *nblob = *blob;
+    if(blob->flags & CURL_BLOB_COPY) {
+      /* put the data after the blob struct in memory */
+      nblob->data = (char *)nblob + sizeof(struct curl_blob);
+      memcpy(nblob->data, blob->data, blob->len);
+    }
+
+    *blobp = nblob;
+    return CURLE_OK;
   }
 
   return CURLE_OK;
@@ -240,6 +271,11 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
      * Do not include the body part in the output data stream.
      */
     data->set.opt_no_body = (0 != va_arg(param, long)) ? TRUE : FALSE;
+    if(data->set.opt_no_body)
+      /* in HTTP lingo, no body means using the HEAD request... */
+      data->set.method = HTTPREQ_HEAD;
+    else if(data->set.method == HTTPREQ_HEAD)
+      data->set.method = HTTPREQ_GET;
     break;
   case CURLOPT_FAILONERROR:
     /*
@@ -261,13 +297,13 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     data->set.upload = (0 != va_arg(param, long)) ? TRUE : FALSE;
     if(data->set.upload) {
       /* If this is HTTP, PUT is what's needed to "upload" */
-      data->set.httpreq = HTTPREQ_PUT;
+      data->set.method = HTTPREQ_PUT;
       data->set.opt_no_body = FALSE; /* this is implied */
     }
     else
       /* In HTTP, the opposite of upload is GET (unless NOBODY is true as
          then this can be changed to HEAD later on) */
-      data->set.httpreq = HTTPREQ_GET;
+      data->set.method = HTTPREQ_GET;
     break;
   case CURLOPT_REQUEST_TARGET:
     result = Curl_setstropt(&data->set.str[STRING_TARGET],
@@ -363,7 +399,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     break;
 
   case CURLOPT_SSLVERSION:
+#ifndef CURL_DISABLE_PROXY
   case CURLOPT_PROXY_SSLVERSION:
+#endif
     /*
      * Set explicit SSL version to try to connect with, as some SSL
      * implementations are lame.
@@ -371,9 +409,11 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 #ifdef USE_SSL
     {
       long version, version_max;
-      struct ssl_primary_config *primary = (option == CURLOPT_SSLVERSION ?
-                                            &data->set.ssl.primary :
-                                            &data->set.proxy_ssl.primary);
+      struct ssl_primary_config *primary = &data->set.ssl.primary;
+#ifndef CURL_DISABLE_PROXY
+      if(option != CURLOPT_SSLVERSION)
+        primary = &data->set.proxy_ssl.primary;
+#endif
 
       arg = va_arg(param, long);
 
@@ -481,11 +521,11 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
        CURLOPT_POSTFIELDS isn't used and the POST data is read off the
        callback! */
     if(va_arg(param, long)) {
-      data->set.httpreq = HTTPREQ_POST;
+      data->set.method = HTTPREQ_POST;
       data->set.opt_no_body = FALSE; /* this is implied */
     }
     else
-      data->set.httpreq = HTTPREQ_GET;
+      data->set.method = HTTPREQ_GET;
     break;
 
   case CURLOPT_COPYPOSTFIELDS:
@@ -532,7 +572,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     }
 
     data->set.postfields = data->set.str[STRING_COPYPOSTFIELDS];
-    data->set.httpreq = HTTPREQ_POST;
+    data->set.method = HTTPREQ_POST;
     break;
 
   case CURLOPT_POSTFIELDS:
@@ -542,7 +582,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     data->set.postfields = va_arg(param, void *);
     /* Release old copied data. */
     (void) Curl_setstropt(&data->set.str[STRING_COPYPOSTFIELDS], NULL);
-    data->set.httpreq = HTTPREQ_POST;
+    data->set.method = HTTPREQ_POST;
     break;
 
   case CURLOPT_POSTFIELDSIZE:
@@ -588,7 +628,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
      * Set to make us do HTTP POST
      */
     data->set.httppost = va_arg(param, struct curl_httppost *);
-    data->set.httpreq = HTTPREQ_POST_FORM;
+    data->set.method = HTTPREQ_POST_FORM;
     data->set.opt_no_body = FALSE; /* this is implied */
     break;
 #endif   /* CURL_DISABLE_HTTP */
@@ -600,7 +640,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = Curl_mime_set_subparts(&data->set.mimepost,
                                     va_arg(param, curl_mime *), FALSE);
     if(!result) {
-      data->set.httpreq = HTTPREQ_POST_MIME;
+      data->set.method = HTTPREQ_POST_MIME;
       data->set.opt_no_body = FALSE; /* this is implied */
     }
     break;
@@ -795,7 +835,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
      * Set to force us do HTTP GET
      */
     if(va_arg(param, long)) {
-      data->set.httpreq = HTTPREQ_GET;
+      data->set.method = HTTPREQ_GET;
       data->set.upload = FALSE; /* switch off upload */
       data->set.opt_no_body = FALSE; /* this is implied */
     }
@@ -905,7 +945,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
                             va_arg(param, char *));
 
     /* we don't set
-       data->set.httpreq = HTTPREQ_CUSTOM;
+       data->set.method = HTTPREQ_CUSTOM;
        here, we continue as if we were using the already set type
        and this just changes the actual request keyword */
     break;
@@ -1606,6 +1646,13 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = Curl_setstropt(&data->set.str[STRING_CERT_ORIG],
                             va_arg(param, char *));
     break;
+  case CURLOPT_SSLCERT_BLOB:
+    /*
+     * Blob that holds file name of the SSL certificate to use
+     */
+    result = Curl_setblobopt(&data->set.blobs[BLOB_CERT_ORIG],
+                             va_arg(param, struct curl_blob *));
+    break;
 #ifndef CURL_DISABLE_PROXY
   case CURLOPT_PROXY_SSLCERT:
     /*
@@ -1613,6 +1660,13 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
      */
     result = Curl_setstropt(&data->set.str[STRING_CERT_PROXY],
                             va_arg(param, char *));
+    break;
+  case CURLOPT_PROXY_SSLCERT_BLOB:
+    /*
+     * Blob that holds file name of the SSL certificate to use for proxy
+     */
+    result = Curl_setblobopt(&data->set.blobs[BLOB_CERT_PROXY],
+                             va_arg(param, struct curl_blob *));
     break;
 #endif
   case CURLOPT_SSLCERTTYPE:
@@ -1638,6 +1692,13 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = Curl_setstropt(&data->set.str[STRING_KEY_ORIG],
                             va_arg(param, char *));
     break;
+  case CURLOPT_SSLKEY_BLOB:
+    /*
+     * Blob that holds file name of the SSL key to use
+     */
+    result = Curl_setblobopt(&data->set.blobs[BLOB_KEY_ORIG],
+                             va_arg(param, struct curl_blob *));
+    break;
 #ifndef CURL_DISABLE_PROXY
   case CURLOPT_PROXY_SSLKEY:
     /*
@@ -1645,6 +1706,13 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
      */
     result = Curl_setstropt(&data->set.str[STRING_KEY_PROXY],
                             va_arg(param, char *));
+    break;
+  case CURLOPT_PROXY_SSLKEY_BLOB:
+    /*
+     * Blob that holds file name of the SSL key to use for proxy
+     */
+    result = Curl_setblobopt(&data->set.blobs[BLOB_KEY_PROXY],
+                             va_arg(param, struct curl_blob *));
     break;
 #endif
   case CURLOPT_SSLKEYTYPE:
@@ -1970,6 +2038,30 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = Curl_setstropt(&data->set.str[STRING_SSL_ISSUERCERT_ORIG],
                             va_arg(param, char *));
     break;
+  case CURLOPT_ISSUERCERT_BLOB:
+    /*
+     * Blob that holds Issuer certificate to check certificates issuer
+     */
+    result = Curl_setblobopt(&data->set.blobs[BLOB_SSL_ISSUERCERT_ORIG],
+                             va_arg(param, struct curl_blob *));
+    break;
+#ifndef CURL_DISABLE_PROXY
+  case CURLOPT_PROXY_ISSUERCERT:
+    /*
+     * Set Issuer certificate file
+     * to check certificates issuer
+     */
+    result = Curl_setstropt(&data->set.str[STRING_SSL_ISSUERCERT_PROXY],
+                            va_arg(param, char *));
+    break;
+  case CURLOPT_PROXY_ISSUERCERT_BLOB:
+    /*
+     * Blob that holds Issuer certificate to check certificates issuer
+     */
+    result = Curl_setblobopt(&data->set.blobs[BLOB_SSL_ISSUERCERT_PROXY],
+                             va_arg(param, struct curl_blob *));
+    break;
+#endif
 #ifndef CURL_DISABLE_TELNET
   case CURLOPT_TELNETOPTIONS:
     /*
@@ -1993,7 +2085,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
       arg = READBUFFER_MIN;
 
     /* Resize if new size */
-    if(arg != data->set.buffer_size) {
+    if((arg != data->set.buffer_size) && data->state.buffer) {
       char *newbuff = realloc(data->state.buffer, arg + 1);
       if(!newbuff) {
         DEBUGF(fprintf(stderr, "Error: realloc of buffer failed\n"));
@@ -2133,6 +2225,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     data->set.ssl.enable_beast =
       (bool)((arg&CURLSSLOPT_ALLOW_BEAST) ? TRUE : FALSE);
     data->set.ssl.no_revoke = !!(arg & CURLSSLOPT_NO_REVOKE);
+    data->set.ssl.no_partialchain = !!(arg & CURLSSLOPT_NO_PARTIALCHAIN);
+    data->set.ssl.revoke_best_effort = !!(arg & CURLSSLOPT_REVOKE_BEST_EFFORT);
+    data->set.ssl.native_ca_store = !!(arg & CURLSSLOPT_NATIVE_CA);
     break;
 
 #ifndef CURL_DISABLE_PROXY
@@ -2141,6 +2236,10 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     data->set.proxy_ssl.enable_beast =
       (bool)((arg&CURLSSLOPT_ALLOW_BEAST) ? TRUE : FALSE);
     data->set.proxy_ssl.no_revoke = !!(arg & CURLSSLOPT_NO_REVOKE);
+    data->set.proxy_ssl.no_partialchain = !!(arg & CURLSSLOPT_NO_PARTIALCHAIN);
+    data->set.proxy_ssl.native_ca_store = !!(arg & CURLSSLOPT_NATIVE_CA);
+    data->set.proxy_ssl.revoke_best_effort =
+      !!(arg & CURLSSLOPT_REVOKE_BEST_EFFORT);
     break;
 #endif
 
@@ -2243,7 +2342,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_SSL_SESSIONID_CACHE:
     data->set.ssl.primary.sessionid = (0 != va_arg(param, long)) ?
       TRUE : FALSE;
+#ifndef CURL_DISABLE_PROXY
     data->set.proxy_ssl.primary.sessionid = data->set.ssl.primary.sessionid;
+#endif
     break;
 
 #ifdef USE_SSH
@@ -2286,7 +2387,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 
   case CURLOPT_SSH_KEYFUNCTION:
     /* setting to NULL is fine since the ssh.c functions themselves will
-       then rever to use the internal default */
+       then revert to use the internal default */
     data->set.ssh_keyfunc = va_arg(param, curl_sshkeycallback);
     break;
 
@@ -2388,6 +2489,10 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_MAIL_RCPT:
     /* Set the list of mail recipients */
     data->set.mail_rcpt = va_arg(param, struct curl_slist *);
+    break;
+  case CURLOPT_MAIL_RCPT_ALLLOWFAILS:
+    /* allow RCPT TO command to fail for some recipients */
+    data->set.mail_rcpt_allowfails = (0 != va_arg(param, long)) ? TRUE : FALSE;
     break;
 #endif
 
@@ -2541,9 +2646,11 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_PROXY_TLSAUTH_USERNAME:
     result = Curl_setstropt(&data->set.str[STRING_TLSAUTH_USERNAME_PROXY],
                             va_arg(param, char *));
+#ifndef CURL_DISABLE_PROXY
     if(data->set.str[STRING_TLSAUTH_USERNAME_PROXY] &&
        !data->set.proxy_ssl.authtype)
       data->set.proxy_ssl.authtype = CURL_TLSAUTH_SRP; /* default to SRP */
+#endif
     break;
   case CURLOPT_TLSAUTH_PASSWORD:
     result = Curl_setstropt(&data->set.str[STRING_TLSAUTH_PASSWORD_ORIG],
@@ -2554,9 +2661,11 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_PROXY_TLSAUTH_PASSWORD:
     result = Curl_setstropt(&data->set.str[STRING_TLSAUTH_PASSWORD_PROXY],
                             va_arg(param, char *));
+#ifndef CURL_DISABLE_PROXY
     if(data->set.str[STRING_TLSAUTH_USERNAME_PROXY] &&
        !data->set.proxy_ssl.authtype)
       data->set.proxy_ssl.authtype = CURL_TLSAUTH_SRP; /* default to SRP */
+#endif
     break;
   case CURLOPT_TLSAUTH_TYPE:
     argptr = va_arg(param, char *);
@@ -2566,6 +2675,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     else
       data->set.ssl.authtype = CURL_TLSAUTH_NONE;
     break;
+#ifndef CURL_DISABLE_PROXY
   case CURLOPT_PROXY_TLSAUTH_TYPE:
     argptr = va_arg(param, char *);
     if(!argptr ||
@@ -2575,18 +2685,35 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
       data->set.proxy_ssl.authtype = CURL_TLSAUTH_NONE;
     break;
 #endif
+#endif
 #ifdef USE_ARES
   case CURLOPT_DNS_SERVERS:
-    result = Curl_set_dns_servers(data, va_arg(param, char *));
+    result = Curl_setstropt(&data->set.str[STRING_DNS_SERVERS],
+                            va_arg(param, char *));
+    if(result)
+      return result;
+    result = Curl_set_dns_servers(data, data->set.str[STRING_DNS_SERVERS]);
     break;
   case CURLOPT_DNS_INTERFACE:
-    result = Curl_set_dns_interface(data, va_arg(param, char *));
+    result = Curl_setstropt(&data->set.str[STRING_DNS_INTERFACE],
+                            va_arg(param, char *));
+    if(result)
+      return result;
+    result = Curl_set_dns_interface(data, data->set.str[STRING_DNS_INTERFACE]);
     break;
   case CURLOPT_DNS_LOCAL_IP4:
-    result = Curl_set_dns_local_ip4(data, va_arg(param, char *));
+    result = Curl_setstropt(&data->set.str[STRING_DNS_LOCAL_IP4],
+                            va_arg(param, char *));
+    if(result)
+      return result;
+    result = Curl_set_dns_local_ip4(data, data->set.str[STRING_DNS_LOCAL_IP4]);
     break;
   case CURLOPT_DNS_LOCAL_IP6:
-    result = Curl_set_dns_local_ip6(data, va_arg(param, char *));
+    result = Curl_setstropt(&data->set.str[STRING_DNS_LOCAL_IP6],
+                            va_arg(param, char *));
+    if(result)
+      return result;
+    result = Curl_set_dns_local_ip6(data, data->set.str[STRING_DNS_LOCAL_IP6]);
     break;
 #endif
   case CURLOPT_TCP_KEEPALIVE:
@@ -2612,14 +2739,12 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = CURLE_NOT_BUILT_IN;
 #endif
     break;
-#ifdef USE_NGHTTP2
   case CURLOPT_SSL_ENABLE_NPN:
     data->set.ssl_enable_npn = (0 != va_arg(param, long)) ? TRUE : FALSE;
     break;
   case CURLOPT_SSL_ENABLE_ALPN:
     data->set.ssl_enable_alpn = (0 != va_arg(param, long)) ? TRUE : FALSE;
     break;
-#endif
 #ifdef USE_UNIX_SOCKETS
   case CURLOPT_UNIX_SOCKET_PATH:
     data->set.abstract_unix_socket = FALSE;

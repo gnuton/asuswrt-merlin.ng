@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2019, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2020, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -587,6 +587,30 @@ time_t curl_getdate(const char *p, const time_t *now)
   return -1;
 }
 
+/* Curl_getdate_capped() differs from curl_getdate() in that this will return
+   TIME_T_MAX in case the parsed time value was too big, instead of an
+   error. */
+
+time_t Curl_getdate_capped(const char *p)
+{
+  time_t parsed = -1;
+  int rc = parsedate(p, &parsed);
+
+  switch(rc) {
+  case PARSEDATE_OK:
+    if(parsed == -1)
+      /* avoid returning -1 for a working scenario */
+      parsed++;
+    return parsed;
+  case PARSEDATE_LATER:
+    /* this returns the maximum time value */
+    return parsed;
+  default:
+    return -1; /* everything else is fail */
+  }
+  /* UNREACHABLE */
+}
+
 /*
  * Curl_gmtime() is a gmtime() replacement for portability. Do not use the
  * gmtime_r() or gmtime() functions anywhere else but here.
@@ -600,6 +624,7 @@ CURLcode Curl_gmtime(time_t intime, struct tm *store)
   /* thread-safe version */
   tm = (struct tm *)gmtime_r(&intime, store);
 #else
+  /* !checksrc! disable BANNEDFUNC 1 */
   tm = gmtime(&intime);
   if(tm)
     *store = *tm; /* copy the pointed struct to the local copy */
