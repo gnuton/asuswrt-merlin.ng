@@ -1,25 +1,14 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
-386.3 (xx-xxx-xxxx)
+386.2_6 (6-June-2021)
   - NOTE: The IRC channel, #asuswrt, has moved to the
           Libera IRC network (https://libera.chat/).
 
-  - NOTE: First time you boot into this version, you need to
-          either shift-reload the main index page, or clear
-          your browser cache.
-
-  - NEW: Added QR codes to the networkmap as well as the Guest
-         Network page, to allow easily connecting a mobile
-         device just by scanning the QR code.
-         The generated QR code can also be saved as a file
-         if you'd like to print it.
   - UPDATED: chart.js to 2.9.4.
   - UPDATED: tor to 0.4.5.8.
-  - UPDATED: nano to 5.7.
-  - UPDATED: curl to 7.76.1.
-  - UPDATED: dnsmasq to 2.85-openssl.
-  - FIXED: Fragattack security issues.
+  - UPDATED: root certificate bundle to June 5th 2021.
+  - FIXED: Fragattack security issues
 
 
 386.2_4 (30-Apr-2021)
