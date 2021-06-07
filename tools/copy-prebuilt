@@ -8,7 +8,7 @@
 #        REPO will contain the location of your local repository
 
 MODEL=$1
-REPO=/home/merlin/amng
+REPO=${REPO:-/home/merlin/amng}
 
 if [ "$MODEL" == "RT-AC88U" ] || [ "$MODEL" == "RT-AC3100" ] || [ "$MODEL" == "RT-AC5300" ]
 then
