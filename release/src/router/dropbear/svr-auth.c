@@ -112,13 +112,17 @@ void recv_msg_userauth_request() {
 	}
 
 #ifdef SECURITY_NOTIFY
+	/*
+	 * This code has been disabled since RT-AC87U comes with old protect_srv a prebuilt
+	 * and IS_PTCSRV_LOCKED is missing.
+	 *
 	if (IS_PTCSRV_LOCKED(PROTECTION_SERVICE_SSH, svr_ses.hoststring)) {
 		SEND_PTCSRV_EVENT(PROTECTION_SERVICE_SSH,
 				RPT_FAIL, svr_ses.hoststring,
 				"From dropbear , LOGIN FAIL(already locked)");
 		send_msg_userauth_failure(0, 1);
 		goto out;
-	}
+	}*/
 #endif
 
 	/* check username is good before continuing. 
