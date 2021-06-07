@@ -136,7 +136,7 @@ jobs:
           command: |
             echo "Uploading release..."
             RELEASE_TITLE="Stable: ${CIRCLE_TAG}"
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" ${CIRCLE_TAG} workspace/release/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG | head -n 50)" ${CIRCLE_TAG} workspace/release/
   publish-github-ci-pre-release:
     docker:
       - image: cibuilds/github:latest
@@ -149,7 +149,7 @@ jobs:
           command: |
             echo "Uploading CI pre-release..."
             RELEASE_TITLE="Unstable: ${CIRCLE_TAG}"
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG | head -n 50)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
 
 workflows:
   version: 2.1
