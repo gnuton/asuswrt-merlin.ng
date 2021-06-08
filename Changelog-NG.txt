@@ -9,7 +9,7 @@ Asuswrt-Merlin 386/NG Changelog
   - UPDATED: tor to 0.4.5.8.
   - UPDATED: root certificate bundle to June 5th 2021.
   - FIXED: Fragattack security issues
-
+  - FIXED: DSL-AX82U: CPU frequency is now visible in tools page
 
 386.2_4 (30-Apr-2021)
   - NEW: Added jitterentropy-rngd to non-HND models, in addition
@@ -22,7 +22,7 @@ Asuswrt-Merlin 386/NG Changelog
   - FIXED: OpenVPN server would flip into an error state (being
            shown as "initializing" on the webui) whenever an
            inbound client failed to connect to it.
-
+  - FIXED: DSL-AX82U: CPU frequency is now visible in tools page
 
 386.2_2 (13-Apr-2021)
   - FIXED: IPv6 pings were blocked if sent below the rate limit
