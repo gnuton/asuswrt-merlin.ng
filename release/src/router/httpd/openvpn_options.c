@@ -337,7 +337,7 @@ check_inline_file_via_fp (FILE *fp, char *p[])
 void
 add_custom(int unit, char *p[])
 {
-	char custom[2048];
+	char custom[4096];
 	char *param = NULL;
 	char *final_custom = NULL;
 	int i = 0, size = 0, sizeParam = 0;
@@ -565,7 +565,7 @@ add_option (char *p[], int line, int unit)
 		else
 		{
 			if(p[2]) {
-				nvram_pf_set(prefix, "hmac", 4);
+				nvram_pf_set(prefix, "hmac", "4");
 			}
 			return VPN_UPLOAD_NEED_STATIC;
 		}

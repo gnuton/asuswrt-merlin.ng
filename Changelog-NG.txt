@@ -1,6 +1,46 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.3 (xx-xxx-xxxx)
+  - NOTE: First time you boot into this version, you need to
+          either shift-reload the main index page, or clear
+          your browser cache.
+
+  - NEW: Introducing VPN Director, which replaces the original
+         policy routing management interface for OpenVPN clients.
+         A bit similar to Asus's own VPN Fusion, OpenVPN routing
+         rules are now managed through a central web interface,
+         and they are stored in JFFS instead of nvram, to allow
+         creating more rules, and free up some nvram for
+         nvram-limited devices such as the RT-AC68U.
+         See the Wiki for more information.
+
+  - NEW: Added QR codes to the networkmap as well as the Guest
+         Network page, to allow easily connecting a mobile
+         device just by scanning the QR code.
+         The generated QR code can also be saved as a file
+         if you'd like to print it.
+
+  - CHANGED: Rewrote OpenVPN routing handling.  Asuswrt-Merlin
+             will now handle route creation rather than letting
+             the openvpn client create/remove routes itself.
+             The new implementation brings a few changes:
+
+             - "Force Internet traffic through tunnel" can now
+               be set to "No", "Yes" or "Policy Rules".
+             - This setting will now override whatever setting
+               pushed by the server regarding gateway redirection.
+             - The kill switch can now be used in both "Yes" and
+               "Policy Rule" modes
+             - Manually stopping a client will remove the kill switch.
+               It will now only be applied at boot time (if client
+               was set to start at boot), or if the tunnel is
+               disconnected through a non-user event
+  - UPDATED: nano to 5.7.
+  - UPDATED: curl to 7.76.1.
+  - UPDATED: dnsmasq to 2.85-openssl.
+
+
 386.2_6 (6-June-2021)
   - NOTE: The IRC channel, #asuswrt, has moved to the
           Libera IRC network (https://libera.chat/).
@@ -10,6 +50,7 @@ Asuswrt-Merlin 386/NG Changelog
   - UPDATED: root certificate bundle to June 5th 2021.
   - FIXED: Fragattack security issues
   - FIXED: DSL-AX82U: CPU frequency is now visible in tools page
+
 
 386.2_4 (30-Apr-2021)
   - NEW: Added jitterentropy-rngd to non-HND models, in addition
