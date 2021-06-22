@@ -10,6 +10,8 @@ Asuswrt-Merlin 386/NG Changelog
   - UPDATED: root certificate bundle to June 5th 2021.
   - FIXED: Fragattack security issues
   - FIXED: DSL-AX82U: CPU frequency is now visible in tools page
+  - FIXED: DSL-AX82U: Kernel supports cake QoS
+  - NEW: DSL-AX82U: Added IFTT support
 
 386.2_4 (30-Apr-2021)
   - NEW: Added jitterentropy-rngd to non-HND models, in addition
