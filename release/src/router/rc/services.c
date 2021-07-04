@@ -14808,12 +14808,13 @@ retry_wps_enr:
 		if (action & RC_SERVICE_START) start_ovpn_server(atoi(&script[9]));
 	}
 	else if (strncmp(script, "vpnrouting" ,10) == 0) {
-		int unit;
+		int unit, lock;
 
 		if (action & RC_SERVICE_START) {
 			unit = atoi(&script[10]);
+			lock = file_lock(VPNROUTING_LOCK);
 			if (unit == 0) {
-				for (i = 1; i < OVPN_CLIENT_MAX; i++) {
+				for (i = OVPN_CLIENT_MAX; i > 0; i--) {
 					ovpn_set_routing_rules(i);
 					ovpn_clear_exclusive_dns(i);
 					ovpn_set_exclusive_dns(i);
@@ -14822,7 +14823,10 @@ retry_wps_enr:
 				ovpn_set_routing_rules(unit);
 				ovpn_clear_exclusive_dns(unit);
 				ovpn_set_exclusive_dns(unit);
+				// Refresh prerouting rules to ensure correct order
+				ovpn_update_exclusive_dns_rules();
 			}
+			file_unlock(lock);
 		}
 	}
 #endif

@@ -40,30 +40,44 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-// Determine how to handle dnsmasq server list based on
-// highest active dnsmode
-int ovpn_max_dnsmode() {
-	int unit, maxlevel = 0, level;
-	char filename[40];
-	char varname[32];
 
-	for( unit = 1; unit <= OVPN_CLIENT_MAX; unit++ ) {
+int ovpn_skip_dnsmasq() {
+	int unit;
+	char filename[40], varname[32];
+
+	for (unit = 1; unit <= OVPN_CLIENT_MAX; unit++ ) {
 		sprintf(filename, "/etc/openvpn/client%d/client.resolv", unit);
 		if (f_exists(filename)) {
 			sprintf(varname, "vpn_client%d_", unit);
-			level = nvram_pf_get_int(varname, "adns");
 
-			// Ignore exclusive mode if policy mode is also enabled
-			if ((nvram_pf_get_int(varname, "rgw") >= OVPN_RGW_POLICY ) && (level == OVPN_DNSMODE_EXCLUSIVE))
-				continue;
-
-			// Only return the highest active level, so one exclusive client
-			// will override a relaxed client.
-			if (level > maxlevel) maxlevel = level;
+			// Skip DNS setup if we have a running client that uses exclusive mode and not VPN Director
+			if ((nvram_pf_get_int(varname, "rgw") == OVPN_RGW_ALL) &&
+			    (nvram_pf_get_int(varname, "adns") == OVPN_DNSMODE_EXCLUSIVE) &&
+			    (nvram_pf_get_int(varname, "state") > OVPN_STS_STOP))	// Include OVPN_STS_INIT/STOPPING
+				return 1;
 		}
 	}
-	return maxlevel;
+	return 0;
 }
+
+
+// Any running client using strict mode (which requires restarting dnsmasq)?
+int ovpn_need_dnsmasq_restart() {
+	int unit;
+	char filename[40], varname[32];
+
+	for (unit = 1; unit <= OVPN_CLIENT_MAX; unit++ ) {
+		sprintf(filename, "/etc/openvpn/client%d/client.resolv", unit);
+		if (f_exists(filename)) {
+			sprintf(varname, "vpn_client%d_", unit);
+			if ((nvram_pf_get_int(varname, "adns") == OVPN_DNSMODE_STRICT) &&
+			    (nvram_pf_get_int(varname, "state") > OVPN_STS_STOP))
+				return 1;
+		}
+	}
+	return 0;
+}
+
 
 int _check_ovpn_enabled(int unit, ovpn_type_t type){
 	char tmp[2];
@@ -136,7 +150,8 @@ void ovpn_run_fw_scripts(){
 			eval(buffer);
 	}
 
-	for (unit = 1; unit <= OVPN_CLIENT_MAX; unit++) {
+	// Reverse order because of DNSVPN rules
+	for (unit = OVPN_CLIENT_MAX; unit > 0; unit--) {
 		snprintf(buffer, sizeof(buffer), "/etc/openvpn/client%d/fw.sh", unit);
 		if (f_exists(buffer))
 			eval(buffer);
@@ -194,6 +209,17 @@ void ovpn_server_down_handler(int unit)
 	_ovpn_run_event_script();
 }
 
+void ovpn_client_route_up_handler()
+{
+        _ovpn_run_event_script();
+}
+
+void ovpn_client_route_pre_down_handler()
+{
+        _ovpn_run_event_script();
+}
+
+
 void ovpn_client_down_handler(int unit)
 {
 	char buffer[64];
@@ -223,8 +249,6 @@ void ovpn_client_down_handler(int unit)
 	sprintf(buffer, "%s/client.conf", dirname);
 	if (f_exists(buffer))
 		unlink(buffer);
-
-	_ovpn_run_event_script();
 }
 
 
@@ -244,13 +268,35 @@ void ovpn_clear_exclusive_dns(int unit)
 }
 
 
+// Recreate the port 53 PREROUTING rules to ensure they are in the correct order (OVPN1 first, OVPN5 last)
+void ovpn_update_exclusive_dns_rules()
+{
+	int unit;
+	char buffer[100];
+
+	for (unit = OVPN_CLIENT_MAX; unit > 0; unit--) {
+		snprintf(buffer, sizeof (buffer), "/etc/openvpn/client%d/dns.sh", unit);
+		if (f_exists(buffer)) {
+			// Remove and re-add to ensure proper order
+			snprintf(buffer, sizeof (buffer), "DNSVPN%d", unit);
+
+			eval("/usr/sbin/iptables", "-t", "nat", "-D", "PREROUTING", "-p", "udp", "-m", "udp", "--dport", "53", "-j", buffer);
+			eval("/usr/sbin/iptables", "-t", "nat", "-D", "PREROUTING", "-p", "tcp", "-m", "tcp", "--dport", "53", "-j", buffer);
+
+			eval("/usr/sbin/iptables", "-t", "nat", "-I", "PREROUTING", "-p", "udp", "-m", "udp", "--dport", "53", "-j", buffer);
+			eval("/usr/sbin/iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-m", "tcp", "--dport", "53", "-j", buffer);
+		}
+	}
+}
+
+
 void ovpn_client_up_handler(int unit)
 {
 	char buffer[128], buffer2[128], buffer3[128];
 	char dirname[64];
 	char prefix[32];
 	FILE *fp_resolv = NULL, *fp_conf = NULL, *fp_qos = NULL, *fp_route = NULL;;
-	int i, j, verb, rgw;
+	int i, j, verb, rgw, lock;
 	char *option, *option2;
 	char *network_env, *netmask_env, *gateway_env, *metric_env, *remotegw_env, *dev_env;
 	char *remote_env, *localgw;
@@ -338,21 +384,17 @@ void ovpn_client_up_handler(int unit)
 
 		if (rgw != OVPN_RGW_NONE) {
 			// Force traffic to remote VPN server to go through local GW
-			i = 1;
-			while (1) {
-				sprintf(buffer, "remote_%d", i++);
-				remote_env = getenv(buffer);
-				localgw = getenv("route_net_gateway");
+			remote_env = getenv("trusted_ip");
+			localgw = getenv("route_net_gateway");
 
-				if (!remote_env || !localgw)
-					break;
-
-				snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route add %s via %s table ovpnc%d",
-				         remote_env, localgw, unit);
-
+			if (remote_env && localgw) {
+				snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route add %s/32 via %s table ovpnc%d",
+					remote_env, localgw, unit);
 				if (verb >= 6)
 					logmessage("openvpn-routing", "Add route to remote endpoint: %s", buffer);
 				system(buffer);
+			} else {
+				logmessage("openvpn-routing", "Missing remote IP or local gateway - cannot configure route");
 			}
 
 			// Use VPN as default gateway
@@ -425,14 +467,17 @@ exit:
 		fclose(fp_resolv);
 
 		// Set exclusive DNS iptables
-		if ((nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_POLICY) && (nvram_pf_get_int(prefix, "adns") == OVPN_DNSMODE_EXCLUSIVE))
+		if ((nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_POLICY) && (nvram_pf_get_int(prefix, "adns") == OVPN_DNSMODE_EXCLUSIVE)) {
+			lock = file_lock(VPNROUTING_LOCK);
 			ovpn_set_exclusive_dns(unit);
+			// Refresh prerouting rules to ensure correct order
+			ovpn_update_exclusive_dns_rules();
+			file_unlock(lock);
+		}
 	}
 
 	if (fp_conf)
 		fclose(fp_conf);
-
-	_ovpn_run_event_script();
 }
 
 
@@ -588,7 +633,7 @@ void _write_routing_rules(int unit, char *rules) {
 				                                   srcstr, dststr, table, ruleprio);
 
 		if (verb >= 3)
-			logmessage("openvpn-routing","Routing %s from \"%s\" to \"%s\" through %s", desc, src, dst, table);
+			logmessage("openvpn-routing","Routing %s from %s to %s through %s", desc, (*src ? src : "any"), (*dst ? dst : "any"), table);
 
 		system(buffer);
 	}
@@ -604,7 +649,7 @@ void ovpn_set_killswitch(int unit) {
 		snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route del default table ovpnc%d", unit);
 		system(buffer);
 		snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route add prohibit default table ovpnc%d", unit);
-		logmessage("openvpn-routing", "Configured killswitch on instance %d", unit);
+		logmessage("openvpn-routing", "Configured killswitch on VPN client %d", unit);
 		system(buffer);
 	}
 }
@@ -668,7 +713,7 @@ void ovpn_set_exclusive_dns(int unit) {
 			    (inet_aton(buffer, &addr))) {
 				if (!strcmp(iface, iface_match)) {
 
-					// Interate through servers, we could set just the first one though
+					// Iterate through servers
 					rewind(fp_resolv);
 					while (fgets(buffer2, sizeof(buffer2), fp_resolv) != NULL) {
 						if (sscanf(buffer2, "server=%16s", server) != 1)
@@ -679,6 +724,8 @@ void ovpn_set_exclusive_dns(int unit) {
 
 		                                fprintf(fp_dns, "/usr/sbin/iptables -t nat -A DNSVPN%d -s %s -j DNAT --to-destination %s\n", unit, src, server);
 		                                logmessage("openvpn", "Forcing %s to use DNS server %s", src, server);
+						// Only configure first server found, as others would never get used
+						break;
 					}
 	                        } else if (!strcmp(iface, "WAN")) {
 	                                fprintf(fp_dns, "/usr/sbin/iptables -t nat -I DNSVPN%d -s %s -j RETURN\n", unit, src);
@@ -868,27 +915,26 @@ void ovpn_stop_client(int unit) {
 
 	sprintf(buffer, "vpnclient%d", unit);
 
-	// Are we running?
-	if (pidof(buffer) == -1)
-		return;
-
-	// Stop the VPN client
-	killall_tk_period_wait(buffer, 10);
+	// Stop running client
+	if (pidof(buffer) != -1)
+		killall_tk_period_wait(buffer, 10);
 
 	// Manual stop, so remove rules
 	_clear_routing_rules(unit);
 
 	// Clear routing table, also freeing from killswitch set by down handler
 	snprintf(buffer, sizeof (buffer),"/usr/sbin/ip route flush table ovpnc%d", unit);
-	logmessage("openvpn-routing", "Clearing routing table");
+	logmessage("openvpn-routing", "Clearing routing table for VPN client %d", unit);
 	system(buffer);
 
 	ovpn_remove_iface(OVPN_TYPE_CLIENT, unit);
 
 	// Remove firewall rules after VPN exit
 	sprintf(buffer, "/etc/openvpn/client%d/fw.sh", unit);
-	if (!eval("sed", "-i", "s/-A/-D/g;s/-I/-D/g", buffer))
-		eval(buffer);
+	if (f_exists(buffer)) {
+		if (!eval("sed", "-i", "s/-A/-D/g;s/-I/-D/g", buffer))
+			eval(buffer);
+	}
 
 	// Delete all files for this client
 	sprintf(buffer, "/etc/openvpn/client%d",unit);

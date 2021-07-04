@@ -70,7 +70,7 @@ void reset_ovpn_setting(ovpn_type_t type, int unit, int full){
 	else
 		return;
 
-	logmessage("openvpn","Resetting %s (unit %d) to default settings", service, unit);
+	logmessage("openvpn","Resetting VPN %s %d to default settings", service, unit);
 
 	snprintf(remove, sizeof(remove), "%d", unit);
 	tmp[0] = '\0';
@@ -101,6 +101,9 @@ void reset_ovpn_setting(ovpn_type_t type, int unit, int full){
 			nvram_set(t->name, t->value);
 		}
 	}
+
+	// Clear custom settings
+	set_ovpn_custom(type, unit, "");
 
         if (type == OVPN_TYPE_SERVER)  // server-only files
         {

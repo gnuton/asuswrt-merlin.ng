@@ -1928,7 +1928,7 @@ extern int vpnc_set_dev_policy_rule();
 #endif
 
 // ovpn.c
-extern int ovpn_route_up_main(int argc, char **argv);
+//extern int ovpn_route_up_main(int argc, char **argv);
 #ifdef RTCONFIG_OPENVPN
 extern void create_ovpn_passwd();
 #endif
@@ -1937,6 +1937,8 @@ extern void create_ovpn_passwd();
 // openvpn.c
 extern int ovpn_up_main(int argc, char **argv);
 extern int ovpn_down_main(int argc, char **argv);
+extern int ovpn_route_up_main(int argc, char **argv);
+extern int ovpn_route_pre_down_main(int argc, char **argv);
 extern void start_ovpn_eas();
 extern void stop_ovpn_eas();
 extern void stop_ovpn_client(int unit);
@@ -2310,11 +2312,11 @@ int ddns_custom_updated_main(int argc, char *argv[]);
 
 // dnsfilter.c
 #ifdef RTCONFIG_DNSFILTER
-extern void dnsfilter_settings(FILE *fp, char *lan_ip);
-extern void dnsfilter6_settings(FILE *fp, char *lan_if, char *lan_ip);
+extern void dnsfilter_settings(FILE *fp);
+extern void dnsfilter6_settings(FILE *fp);
 extern void dnsfilter_setup_dnsmasq(FILE *fp);
 #endif
-extern void dnsfilter_dot_rules(FILE *fp, char *lan_if);
+extern void dnsfilter_dot_rules(FILE *fp);
 
 // ntpd.c
 #ifdef RTCONFIG_NTPD
