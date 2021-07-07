@@ -26,7 +26,9 @@ void adjust_merlin_config(void)
 #ifdef RTCONFIG_OPENVPN
 	int unit;
 	char varname_ori[32], varname_ori2[32], varname_new[32];
-	int rgw, plan;
+	int rgw, plan, converted;
+	char buffer[8000];
+	char *desc, *source, *dest, *iface, newiface[8];
 #endif
 	char *newstr, *hostnames;
 	char *nv, *nvp, *entry;
@@ -36,75 +38,149 @@ void adjust_merlin_config(void)
 	int globalmode;
 #endif
 	int count;
-#if 0
-	struct in_addr ipaddr_obj;
-#endif
+	int need_commit=0;
 
 #ifdef RTCONFIG_OPENVPN
-	if(!nvram_is_empty("vpn_server_clientlist")) {
-		nvram_set("vpn_serverx_clientlist", nvram_safe_get("vpn_server_clientlist"));
-		nvram_unset("vpn_server_clientlist");
+/* Migrate OVPN RGW + clientlist rules to VPN Director (386.3) */
+	*buffer = '\0';
+
+	for (unit = 1; unit <= OVPN_CLIENT_MAX; unit++) {
+		sprintf(varname_ori, "vpn_client%d_rgw", unit);
+		if (nvram_get_int(varname_ori) == OVPN_RGW_POLICY_STRICT) {
+			nvram_set_int(varname_ori, OVPN_RGW_POLICY);
+			need_commit = 1;
+		}
+
+		sprintf(varname_ori, "vpn_client%d_clientlist", unit);
+		if (!nvram_is_empty(varname_ori)) {
+			need_commit = 1;
+#ifdef HND_ROUTER
+			nv = nvp = malloc(255 * 6 + 1);
+			if (nv) nvram_split_get(varname_ori, nv, 255 * 6 + 1, 5);
+#else
+			nv = nvp = strdup(nvram_safe_get(varname_ori));
+#endif
+			while (nv && (entry = strsep(&nvp, "<")) != NULL) {
+				if (vstrsep(entry, ">", &desc, &source, &dest, &iface) != 4)
+					continue;
+
+				if (!strcmp(iface, "WAN"))
+					strcpy(newiface, "WAN");
+				else if (!strcmp(iface, "VPN"))
+					sprintf(newiface, "OVPN%d", unit);
+				else
+					continue;	// invalid rule
+
+				snprintf(tmp, sizeof(tmp), "<1>%s>%s>%s>%s", desc, source, dest, newiface);
+				strlcat(buffer, tmp, 8000);
+			}
+
+			nvram_unset(varname_ori);
+#ifdef HND_ROUTER
+			sprintf(varname_ori, "vpn_client%d_clientlist1", unit);
+			nvram_unset(varname_ori);
+			sprintf(varname_ori, "vpn_client%d_clientlist2", unit);
+			nvram_unset(varname_ori);
+			sprintf(varname_ori, "vpn_client%d_clientlist3", unit);
+			nvram_unset(varname_ori);
+			sprintf(varname_ori, "vpn_client%d_clientlist4", unit);
+			nvram_unset(varname_ori);
+			sprintf(varname_ori, "vpn_client%d_clientlist5", unit);
+			nvram_unset(varname_ori);
+#endif
+			free(nv);
+		}
 	}
 
-/* Migrate OVPN custom settings, either from stock _custom or previous AM _custom2* */
+	if (*buffer)
+		ovpn_set_policy_rules(buffer);
+
+
+/* Migrate OVPN custom settings, either from stock _custom, or previous AM _custom2 and _cust2 (386.3) */
 	for (unit = 1; unit <= OVPN_SERVER_MAX; unit++) {
+
+/* Handle custom2 migration */
+		converted = 0;
 		sprintf(varname_ori, "vpn_server%d_custom2", unit);
 		if(!nvram_is_empty(varname_ori)) {
-			sprintf(varname_new, "vpn_server%d_cust2", unit);
-			nvram_set(varname_new, nvram_safe_get(varname_ori));
+			strlcpy(buffer, nvram_safe_get(varname_ori), sizeof (buffer));
 			nvram_unset(varname_ori);
 #ifdef HND_ROUTER
 			sprintf(varname_ori, "vpn_server%d_custom21", unit);
-			sprintf(varname_new, "vpn_server%d_cust21", unit);
-			nvram_set(varname_new, nvram_safe_get(varname_ori));
+			strlcat(buffer, nvram_safe_get(varname_ori), sizeof (buffer));
 			nvram_unset(varname_ori);
 
 			sprintf(varname_ori, "vpn_server%d_custom22", unit);
-			sprintf(varname_new, "vpn_server%d_cust22", unit);
-			nvram_set(varname_new, nvram_safe_get(varname_ori));
+			strlcat(buffer, nvram_safe_get(varname_ori), sizeof (buffer));
 			nvram_unset(varname_ori);
 #endif
-		} else {	// Check if need to migrate from stock or older Asuswrt-Merlin
-			sprintf(varname_ori,"vpn_server%d_custom", unit);
-			if(!nvram_is_empty(varname_ori)) {
-				set_ovpn_custom(OVPN_TYPE_SERVER, unit, nvram_safe_get(varname_ori));
-				nvram_unset(varname_ori);
-			}
+			set_ovpn_custom(OVPN_TYPE_SERVER, unit, buffer);
+			converted = 1;
+		}
+
+/* Handle cust2 base64 migration */
+		sprintf(varname_ori, "vpn_server%d_cust2", unit);
+		if(!converted && !nvram_is_empty(varname_ori)) {
+			get_ovpn_custom_old(OVPN_TYPE_SERVER, unit, buffer, sizeof (buffer));
+			set_ovpn_custom(OVPN_TYPE_SERVER, unit, buffer);
+			nvram_unset(varname_ori);
+			converted = 1;
+		}
+
+/* Handle stock or very old migration */
+		sprintf(varname_ori, "vpn_server%d_custom", unit);
+		if(!converted && !nvram_is_empty(varname_ori)) {
+			set_ovpn_custom(OVPN_TYPE_SERVER, unit, nvram_safe_get(varname_ori));
+			nvram_unset(varname_ori);
 		}
 	}
+	need_commit |= converted;
 
 	for (unit = 1; unit <= OVPN_CLIENT_MAX; unit++) {
+
+/* Handle custom2 migration */
+		converted = 0;
 		sprintf(varname_ori, "vpn_client%d_custom2", unit);
 		if(!nvram_is_empty(varname_ori)) {
-			sprintf(varname_new, "vpn_client%d_cust2", unit);
-			nvram_set(varname_new, nvram_safe_get(varname_ori));
+			strlcpy(buffer, nvram_safe_get(varname_ori), sizeof (buffer));
 			nvram_unset(varname_ori);
-
 #ifdef HND_ROUTER
 			sprintf(varname_ori, "vpn_client%d_custom21", unit);
-			sprintf(varname_new, "vpn_client%d_cust21", unit);
-			nvram_set(varname_new, nvram_safe_get(varname_ori));
+			strlcat(buffer, nvram_safe_get(varname_ori), sizeof (buffer));
 			nvram_unset(varname_ori);
 
 			sprintf(varname_ori, "vpn_client%d_custom22", unit);
-			sprintf(varname_new, "vpn_client%d_cust22", unit);
-			nvram_set(varname_new, nvram_safe_get(varname_ori));
+			strlcat(buffer, nvram_safe_get(varname_ori), sizeof (buffer));
 			nvram_unset(varname_ori);
 #endif
-		} else {	// Check if need to migrate from stock or older Asuswrt-Merlin
-			sprintf(varname_ori,"vpn_client%d_custom", unit);
-			if(!nvram_is_empty(varname_ori)) {
-				set_ovpn_custom(OVPN_TYPE_CLIENT, unit, nvram_safe_get(varname_ori));
-				nvram_unset(varname_ori);
-			}
+			set_ovpn_custom(OVPN_TYPE_CLIENT, unit, buffer);
+			converted = 1;
+		}
+
+/* Handle cust2 base64 migration */
+		sprintf(varname_ori, "vpn_client%d_cust2", unit);
+		if(!converted && !nvram_is_empty(varname_ori)) {
+			get_ovpn_custom_old(OVPN_TYPE_CLIENT, unit, buffer, sizeof (buffer));
+			set_ovpn_custom(OVPN_TYPE_CLIENT, unit, buffer);
+			nvram_unset(varname_ori);
+			converted = 1;
+		}
+
+/* Handle stock or very old migration */
+		sprintf(varname_ori, "vpn_client%d_custom", unit);
+		if(!converted && !nvram_is_empty(varname_ori)) {
+			set_ovpn_custom(OVPN_TYPE_CLIENT, unit, nvram_safe_get(varname_ori));
+			nvram_unset(varname_ori);
 		}
 	}
+	need_commit |= converted;
 
 /* Migrate "remote gateway" and "push lan" to "client_access" (384.5) */
 	for (unit = 1; unit <= OVPN_SERVER_MAX; unit++) {
 		sprintf(varname_ori, "vpn_server%d_rgw", unit);
 
 		if(!nvram_is_empty(varname_ori)) {
+			need_commit = 1;
 			sprintf(varname_new, "vpn_server%d_client_access", unit);
 			sprintf(varname_ori2, "vpn_server%d_plan", unit);
 
@@ -129,12 +205,14 @@ void adjust_merlin_config(void)
 /* migrate dhcpc_options to wanxxx_clientid */
 	char *oldclientid = nvram_safe_get("wan0_dhcpc_options");
 	if (*oldclientid) {
+		need_commit = 1;
 		nvram_set("wan0_clientid", oldclientid);
 		nvram_unset("wan0_dhcpc_options");
 	}
 
 	oldclientid = nvram_safe_get("wan1_dhcpc_options");
 	if (*oldclientid) {
+		need_commit = 1;
 		nvram_set("wan1_clientid", oldclientid);
 		nvram_unset("wan1_dhcpc_options");
 	}
@@ -177,8 +255,10 @@ void adjust_merlin_config(void)
 			if (!*mac || !*mode )
 				continue;
 
-			if (atoi(mode) == DNSF_SRV_NORTON1 || atoi(mode) == DNSF_SRV_NORTON2 || atoi(mode) == DNSF_SRV_NORTON3)
+			if (atoi(mode) == DNSF_SRV_NORTON1 || atoi(mode) == DNSF_SRV_NORTON2 || atoi(mode) == DNSF_SRV_NORTON3) {
+				need_commit = 1;
 				snprintf(tmp, sizeof(tmp), "<%s>%s>%d", name, mac, DNSF_SRV_OPENDNS_FAMILY);
+			}
 			else
 				snprintf(tmp, sizeof(tmp), "<%s>%s>%s", name, mac, mode);
 			strcat(newstr, tmp);
@@ -196,6 +276,7 @@ void adjust_merlin_config(void)
 
 /* Migrate lan_dns_fwd_local (384.11) */
 	if (nvram_get_int("lan_dns_fwd_local")) {
+		need_commit = 1;
 		nvram_set("dns_fwd_local", "1");
 		nvram_unset("lan_dns_fwd_local");
 	}
@@ -225,23 +306,11 @@ void adjust_merlin_config(void)
 					strlcpy(tmp, entry, sizeof(tmp));
 					break;
 				case 3:
-#if 0
-					if (!inet_aton(name, &ipaddr_obj)) {	// Unconverted
-						if (*name) {
-							snprintf(tmp, sizeof(tmp), "<%s>%s", mac, name);
-							strcat(hostnames, tmp);
-						}
-						snprintf(tmp, sizeof(tmp), "<%s>%s", mac, ipaddr);
-					} else {
-						strlcpy(tmp, entry, sizeof(tmp));
-					}
-#else
 					if (*name) {
 						snprintf(tmp, sizeof(tmp), "<%s>%s", mac, name);
 						strcat(hostnames, tmp);
 					}
 					snprintf(tmp, sizeof(tmp), "<%s>%s", mac, ipaddr);
-#endif
 					break;
 				default:	// Unknown, just leave it as-is
 					strlcpy(tmp, entry, sizeof(tmp));
@@ -251,6 +320,7 @@ void adjust_merlin_config(void)
 			}
 
 			if (*hostnames) {
+				need_commit = 1;
 				nvram_set("dhcp_staticlist", newstr);
 #ifdef HND_ROUTER
 				jffs_nvram_set("dhcp_hostnames", hostnames);
@@ -267,6 +337,7 @@ void adjust_merlin_config(void)
 
 /* Migrade DDNS external IP check (386.1) */
 	if(!nvram_is_empty("ddns_ipcheck")) {
+		need_commit = 1;
 		nvram_set("ddns_realip_x", nvram_get("ddns_ipcheck"));
 		nvram_unset("ddns_ipcheck");
 	}
@@ -274,6 +345,7 @@ void adjust_merlin_config(void)
 #ifdef RTCONFIG_SSH
 /* Migrate SSH keys from nvram (386.1) */
 	if (!d_exists("/jffs/.ssh")) {
+		need_commit = 1;
 		mkdir("/jffs/.ssh", 0700);
 		if (nvram_get_file("sshd_hostkey", "/jffs/.ssh/dropbear_rsa_host_key", 2048))
 			nvram_unset("sshd_hostkey");
@@ -283,6 +355,9 @@ void adjust_merlin_config(void)
 			nvram_unset("sshd_ecdsakey");
 	}
 #endif
+
+	if (need_commit)
+		nvram_commit();
 }
 
 void adjust_url_urlelist(void)

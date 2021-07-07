@@ -67,7 +67,7 @@ void write_ovpn_resolv_dnsmasq(FILE* dnsmasq_conf) {
 
 			// Don't add servers if policy routing is enabled and dns mode set to "Exclusive"
 			// Handled by iptables on a case-by-case basis
-			if ((nvram_pf_get_int(prefix, "rgw") >= OVPN_RGW_POLICY ) && (nvram_pf_get_int(prefix, "adns") == OVPN_DNSMODE_EXCLUSIVE))
+			if ((nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_POLICY) && (nvram_pf_get_int(prefix, "adns") == OVPN_DNSMODE_EXCLUSIVE))
 				continue;
 
 			buffer = read_whole_file(filename);
@@ -257,11 +257,6 @@ void ovpn_setup_dirs(ovpn_type_t type, int unit) {
 	sprintf(buffer, "/etc/openvpn/vpn%s%d", (type == OVPN_TYPE_SERVER ? "server" : "client"), unit);
 	unlink(buffer);
 	symlink("/usr/sbin/openvpn", buffer);
-
-	if (type == OVPN_TYPE_CLIENT) {
-	        sprintf(buffer, "/etc/openvpn/client%d/vpnrouting.sh", unit);
-	        symlink("/usr/sbin/vpnrouting.sh", buffer);
-	}
 }
 
 void ovpn_cleanup_dirs(ovpn_type_t type, int unit) {
@@ -617,9 +612,10 @@ int ovpn_write_client_config(ovpn_cconf_t *cconf, int unit) {
 		if ((cconf->if_type == OVPN_IF_TAP) && *cconf->gateway )
 			fprintf(fp, "route-gateway %s\n", cconf->gateway);
 		fprintf(fp, "redirect-gateway def1\n");
-	} else if (cconf->redirect_gateway == OVPN_RGW_POLICY_STRICT) {
-		fprintf(fp, "route-noexec\n");
 	}
+
+	if (cconf->if_type == OVPN_IF_TUN)
+		fprintf(fp, "route-noexec\n");
 
 	if (cconf->auth_mode == OVPN_AUTH_TLS) {
 		if (cconf->reneg >= 0)
@@ -684,14 +680,19 @@ int ovpn_write_client_config(ovpn_cconf_t *cconf, int unit) {
 	sprintf(buffer, "/etc/openvpn/client%d/ovpn-down", unit);
 	symlink("/sbin/rc", buffer);
 
+	sprintf(buffer, "/etc/openvpn/client%d/ovpn-route-up", unit);
+	symlink("/sbin/rc", buffer);
+	sprintf(buffer, "/etc/openvpn/client%d/ovpn-route-pre-down", unit);
+	symlink("/sbin/rc", buffer);
+
 	fprintf(fp, "up 'ovpn-up %d client'\n", unit);
 	fprintf(fp, "down 'ovpn-down %d client'\n", unit);
 
-	// For selective routing
-	fprintf(fp, "script-security 2\n");     // also for up/down scripts
+	fprintf(fp, "route-up 'ovpn-route-up'\n");
+	fprintf(fp, "route-pre-down 'ovpn-route-pre-down'\n");
+
+	fprintf(fp, "script-security 2\n");
 	fprintf(fp, "route-delay 2\n");
-	fprintf(fp, "route-up vpnrouting.sh\n");
-	fprintf(fp, "route-pre-down vpnrouting.sh\n");
 
 	fprintf(fp, "verb %d\n", cconf->verb);
 	fprintf(fp, "status-version 2\n");
@@ -885,7 +886,6 @@ void ovpn_write_server_keys(ovpn_sconf_t *sconf, int unit) {
 void ovpn_setup_client_fw(ovpn_cconf_t *cconf, int unit) {
 	char filename[64];
 	FILE *fp;
-	struct in_addr netaddr;
 
 	sprintf(filename, "/etc/openvpn/client%d/fw.sh", unit);
 
@@ -905,7 +905,6 @@ void ovpn_setup_client_fw(ovpn_cconf_t *cconf, int unit) {
 	}
 #endif
 	if (cconf->nat) {
-		netaddr.s_addr = inet_addr_(nvram_safe_get("lan_ipaddr")) & inet_addr_(nvram_safe_get("lan_netmask"));
 		fprintf(fp, "iptables -t nat -I POSTROUTING -o %s -j MASQUERADE\n", cconf->if_name);
 	}
 	// Disable rp_filter when in policy mode - firewall restart would re-enable it
