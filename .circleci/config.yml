@@ -31,19 +31,10 @@ jobs:
               sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
             fi
       - run:
-          name: Generate changelog (only for tags)
+          name: Generate changelog
           command: |
-            REGXP_TO_MATCH=.*gnuton.*
-            if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
-              CURRENT_TAG=${CIRCLE_TAG}
-              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha|${CIRCLE_TAG}" | grep ${REGXP_TO_MATCH} | head -n 1)
-              echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
-              echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
-              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|ci:|Bump' >> "${CHANGELOG_FILE}" || echo "WARNING: The Changelog is empty!!"
-              cat "${CHANGELOG_FILE}"
-            else
-              echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
-            fi;
+            python tools/get-last-notes.py > "${CHANGELOG_FILE}"
+            cat "${CHANGELOG_FILE}"
       - run:
           name: Build firmware
           shell: /bin/bash
