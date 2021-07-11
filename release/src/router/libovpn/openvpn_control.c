@@ -549,20 +549,21 @@ void _clear_routing_rules(int unit) {
 
 void ovpn_set_routing_rules(int unit) {
 	char prefix[32], buffer[8000];
-	int rgw, state;
+	int rgw, state, verb;
 
 	if (unit < 1 || unit > OVPN_CLIENT_MAX)
 		return;
+
+	snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
+	verb = nvram_pf_get_int(prefix, "verb");
+	rgw = nvram_pf_get_int(prefix, "rgw");
 
 	_clear_routing_rules(unit);
 
 	/* Refresh WAN rules */
 	_clear_routing_rules(0);
 	ovpn_get_policy_rules(0, buffer, sizeof (buffer));
-	_write_routing_rules(0, buffer);
-
-	snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
-	rgw = nvram_pf_get_int(prefix, "rgw");
+	_write_routing_rules(0, buffer, verb);
 
 	switch (rgw) {
 		case OVPN_RGW_NONE:
@@ -577,21 +578,18 @@ void ovpn_set_routing_rules(int unit) {
 
 		case OVPN_RGW_POLICY:
 			ovpn_get_policy_rules(unit, buffer, sizeof (buffer));
-			_write_routing_rules(unit, buffer);
+			_write_routing_rules(unit, buffer, verb);
 			break;
 	}
 }
 
 
-void _write_routing_rules(int unit, char *rules) {
+void _write_routing_rules(int unit, char *rules, int verb) {
 	char *buffer_tmp, *buffer_tmp2, *rule;
-	char buffer[128], prefix[32], table[16];
-	int ruleprio, vpnprio, wanprio, verb;
+	char buffer[128], table[16];
+	int ruleprio, vpnprio, wanprio;
 	char *enable, *desc, *target, *src, *dst;
 	char srcstr[64], dststr[64];
-
-	snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
-	verb = nvram_pf_get_int(prefix, "verb");
 
 	wanprio = 10010;
 	vpnprio = 10010 + (200 * unit);
@@ -661,7 +659,7 @@ inline void _flush_routing_cache() {
 
 
 void ovpn_set_exclusive_dns(int unit) {
-	char rules[8000], buffer[64], buffer2[64], server[20], iface_match[8];
+	char rules[8000], wanrules[8000], buffer[64], buffer2[64], server[20], iface_match[8];
 	char *nvp, *entry;
 	char *src, *dst, *iface, *desc, *enable, *netptr;
 	struct in_addr addr;
@@ -687,6 +685,9 @@ void ovpn_set_exclusive_dns(int unit) {
 	                 unit);
 
 	ovpn_get_policy_rules(unit, rules, sizeof (rules));
+	ovpn_get_policy_rules(0, wanrules, sizeof (wanrules));
+	strlcat(rules, wanrules, sizeof (rules));
+
 	nvp = rules;
 
 	snprintf(iface_match, sizeof (iface_match), "OVPN%d", unit);
