@@ -66,7 +66,7 @@ jobs:
             if [[ ${MODEL} == "dsl-ac68u" ]]; then
               cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.trx workspace/release/
               cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.md5 workspace/release/ || :
-            elif [[ ${MODEL} == "dsl-ax82u" ]]; then
+            elif [[ ${MODEL} == "dsl-ax82u" ]] || [[ ${MODEL} == "rt-ax82u" ]]; then
               cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.w workspace/release
               cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.md5 workspace/release || :
             fi
@@ -168,6 +168,17 @@ workflows:
               ignore:
                 - master
                 - mainline
+      - build:
+          name: "build_rt-ax82u"
+          model: "rt-ax82u"
+          release_dir: "src-rt-5.02axhnd.675x"
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
       - request-testing:
           type: approval
           filters:
@@ -178,6 +189,7 @@ workflows:
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
+            - build_rt-ax82u
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -206,6 +218,7 @@ workflows:
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
+            - build_rt-ax82u
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
