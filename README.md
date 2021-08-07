@@ -33,7 +33,7 @@ Latest release:
 ![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg)
 ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg)
 ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg)
-](https://github.com/gnuton/asuswrt-merlin.ng/releases)
+](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest)
 
 Latest pre-release:
 [
