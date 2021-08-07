@@ -37,7 +37,7 @@ Latest release:
 
 Latest pre-release:
 [
-![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/gnuton/asuswrt-merlin.ng?include_prereleases&label=pre-release)
+![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/release/gnuton/asuswrt-merlin.ng?include_prereleases&label=pre-release)
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total)
 ](https://github.com/gnuton/asuswrt-merlin.ng/releases/)
