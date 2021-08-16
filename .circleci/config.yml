@@ -61,14 +61,17 @@ jobs:
             ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
       - run:
           name: Prepare workspace
+          shell: /bin/bash
           command: |
+            export IMAGE_PATH=${PROJECT_DIR}/release/${RELEASE_DIR}/image/
             mkdir -p workspace/release/
             if [[ ${MODEL} == "dsl-ac68u" ]]; then
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.trx workspace/release/
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.md5 workspace/release/ || :
+              mv "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}.trx" "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}_NO-DSL-FIRMWARE.trx"
+              cp ${IMAGE_PATH}/*.trx workspace/release/
+              cp ${IMAGE_PATH}/DSL*DSL*.md5 workspace/release/ || :
             elif [[ ${MODEL} == "dsl-ax82u" ]]; then
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.w workspace/release
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.md5 workspace/release || :
+              cp ${IMAGE_PATH}/*_cferom_pureubi.w workspace/release
+              cp ${IMAGE_PATH}/*_cferom_pureubi.md5 workspace/release || :
             fi
             cp /tmp/build.log workspace/release/${MODEL}-build.log
             if [ -z "${CIRCLE_TAG}" ]; then
