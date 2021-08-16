@@ -682,6 +682,8 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	int qos_type;
 #ifdef RTAX58U
 	char *wan_ifname = "eth4";
+#elif DSL_AX82U
+	char *wan_ifname = "ptm0";
 #else
 	char *wan_ifname = "eth0";
 #endif
