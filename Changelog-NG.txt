@@ -33,7 +33,8 @@ Asuswrt-Merlin 386/NG Changelog
            properly configured in dnsmasq.
   - FIXED: DNSFilter client rules may get corrupted after a
            reboot.
-  - FIXED: Fixed Cake QoS for DSL-AX82U
+  - FIXED: Cake QoS for DSL-AX82U now works
+  - FIXED: QoS upload classification page now shows upload plot
 
 
 386.3 (23-July-2021)
