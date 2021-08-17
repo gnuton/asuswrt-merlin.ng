@@ -35,7 +35,7 @@ Asuswrt-Merlin 386/NG Changelog
            reboot.
   - FIXED: Cake QoS for DSL-AX82U now works
   - FIXED: QoS upload classification page now shows upload plot
-
+  - FIXED: WiFi Insight page under wireless tab has been enabled
 
 386.3 (23-July-2021)
   - NOTE: First time you boot into this version, you need to
