@@ -209,7 +209,7 @@ cp release/src/router/asuswebstorage/prebuild/* $REPO/release/src/router/asusweb
 cp release/src/router/inotify/prebuild/* $REPO/release/src/router/inotify/prebuild/$BUILD_NAME/
 cp release/src/router/libletsencrypt/prebuild/* $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME/
 cp release/src/router/libbcm/prebuilt/* $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME/
-exit 0
+
 # Common to most
 echo "*** Copying optional files - ignore errors"
 cp release/src/router/dblog/daemon/prebuild/* $REPO/release/src/router/dblog/daemon/prebuild/$BUILD_NAME/
@@ -226,7 +226,7 @@ cp release/src/router/sysstate/log_daemon/prebuild/* $REPO/release/src/router/sy
 cp release/src/router/sysstate/commands/prebuild/* $REPO/release/src/router/sysstate/commands/prebuild/$BUILD_NAME/
 cp release/src/router/wb/prebuild/* $REPO/release/src/router/wb/prebuild/$BUILD_NAME/
 cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt/$BUILD_NAME/
-
+exit 0
 echo "*** Copying exceptions and special cases..."
 
 # HND exceptions
