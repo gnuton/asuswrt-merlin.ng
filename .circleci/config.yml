@@ -157,6 +157,7 @@ workflows:
               ignore:
                 - master
                 - mainline
+                - DEV_RT-AX82U
       - build:
           name: "build_dsl-ax82u"
           model: "dsl-ax82u"
@@ -168,6 +169,7 @@ workflows:
               ignore:
                 - master
                 - mainline
+                - DEV_RT-AX82U
       - build:
           name: "build_rt-ax82u"
           model: "rt-ax82u"
