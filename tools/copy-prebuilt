@@ -129,7 +129,7 @@ then
 		cp release/src/router/ookla_speedtest/OOKLA-36521/ookla-AXHND $REPO/release/src/router/ookla_speedtest/OOKLA-36521/
 	fi
 
-elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ]
+elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ] || [ "$BUILD_NAME" == "RT-AX82U" ]
 then
 	SDK="_6750hnd"
 	ARCH="_arm"
@@ -181,7 +181,6 @@ else
 	echo "Unrecognized BUILD_NAME!"
 	exit
 fi
-
 # Common to all
 
 echo "*** Copying common files..."
@@ -210,7 +209,7 @@ cp release/src/router/asuswebstorage/prebuild/* $REPO/release/src/router/asusweb
 cp release/src/router/inotify/prebuild/* $REPO/release/src/router/inotify/prebuild/$BUILD_NAME/
 cp release/src/router/libletsencrypt/prebuild/* $REPO/release/src/router/libletsencrypt/prebuild/$BUILD_NAME/
 cp release/src/router/libbcm/prebuilt/* $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME/
-
+exit 0
 # Common to most
 echo "*** Copying optional files - ignore errors"
 cp release/src/router/dblog/daemon/prebuild/* $REPO/release/src/router/dblog/daemon/prebuild/$BUILD_NAME/
@@ -231,10 +230,7 @@ cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt
 echo "*** Copying exceptions and special cases..."
 
 # HND exceptions
-<<<<<<< HEAD
 # DSL-AC68 - FIXME - This overwrites RT-AC68U and other prebuilds
-=======
->>>>>>> upstream/master
 if [ "$HND" == "" ]
 then
 	cp release/src/router/et$ARCH$SDK/prebuilt/* $REPO/release/src/router/et$ARCH$SDK/prebuilt/
