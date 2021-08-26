@@ -34,8 +34,8 @@ Asuswrt-Merlin 386/NG Changelog
   - FIXED: DNSFilter client rules may get corrupted after a
            reboot.
   - FIXED: Cake QoS for DSL-AX82U now works
-  - FIXED: QoS upload classification page now shows upload plot
-  - FIXED: WiFi Insight page under wireless tab has been enabled
+  - FIXED: QoS upload classification page now shows upload plot for DSL-AX82U
+  - FIXED: WiFi Insight page under wireless tab has been enabled for DSL-AX82U
   - FIXED: DNSFilter has been enabled for DSL-AX82U
 
 386.3 (23-July-2021)
