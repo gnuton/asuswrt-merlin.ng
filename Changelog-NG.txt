@@ -37,6 +37,7 @@ Asuswrt-Merlin 386/NG Changelog
   - FIXED: QoS upload classification page now shows upload plot for DSL-AX82U
   - FIXED: WiFi Insight page under wireless tab has been enabled for DSL-AX82U
   - FIXED: DNSFilter has been enabled for DSL-AX82U
+  - CHANGED: Enabled ROG and Open NAT for DSL-AC68U
 
 386.3 (23-July-2021)
   - NOTE: First time you boot into this version, you need to
