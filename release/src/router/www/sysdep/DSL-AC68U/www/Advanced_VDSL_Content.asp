@@ -396,6 +396,11 @@ function initial(){
 		change_dnspriv_enable(0);
 	}
 
+    if(dnssec_support){
+		document.getElementById("dnssec_tr").style.display = "";
+		showhide("dnssec_strict_tr", "<% nvram_get("dnssec_enable"); %>" == "1" ? 1 : 0);
+	}
+
 	if(!dualWAN_support && !vdsl_support) {
 		document.getElementById("WANscap").style.display = "none";
 	}
@@ -628,7 +633,6 @@ function applyRule(){
 			document.form.action_script.value += ";restart_stubby";
 		}
 
-		/* GNUTON - do I need this? 
 		if ((dnssec_support &&
 		      (getRadioValue(document.form.dnssec_enable) != '<% nvram_get("dnssec_enable"); %>') ||
 		      (getRadioValue(document.form.dnssec_check_unsigned_x) != '<% nvram_get("dnssec_check_unsigned_x"); %>')) ||
@@ -642,7 +646,7 @@ function applyRule(){
 		    (getRadioValue(document.form.dns_fwd_local) != '<% nvram_get("dns_fwd_local"); %>') )
 
 				document.form.action_script.value += ";restart_dnsmasq";
-		*/
+		
 		showLoading();
 		document.form.submit();
 	}
@@ -1671,6 +1675,34 @@ function change_wizard(o, id){
 												<input type="text" maxlength="15" class="input_15_table" name="dsl_dns2" value="<% nvram_get("dsl_dns2"); %>" onkeypress="return validator.isIPAddr(this,event)" autocorrect="off" autocapitalize="off"/>
 												<img id="dns_pull_arrow2" class="dns_pull_arrow" src="/images/arrow-down.gif" onclick="pullDNSList(this);">
 												<div id="dns_server_list2" class="dns_server_list_dropdown"></div>
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,5);">Forward local domain queries to upstream DNS</a></th>
+											<td>
+												<input type="radio" value="1" name="dns_fwd_local" <% nvram_match("dns_fwd_local", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dns_fwd_local" <% nvram_match("dns_fwd_local", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,9);">Enable DNS Rebind protection</a></th>
+											<td>
+												<input type="radio" value="1" name="dns_norebind" <% nvram_match("dns_norebind", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dns_norebind" <% nvram_match("dns_norebind", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="dnssec_tr" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,6);">Enable DNSSEC support</a></th>
+											<td>
+												<input type="radio" value="1" name="dnssec_enable" onclick="showhide('dnssec_strict_tr',1);" <% nvram_match("dnssec_enable", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dnssec_enable" onclick="showhide('dnssec_strict_tr',0);" <% nvram_match("dnssec_enable", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="dnssec_strict_tr" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,25);">Validate unsigned DNSSEC replies</a></th>
+											<td>
+												<input type="radio" value="1" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "0", "checked"); %> /><#checkbox_No#>
 											</td>
 										</tr>
 										<tr id="dns_priv_override_tr">
