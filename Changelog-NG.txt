@@ -1,6 +1,12 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.03_2-gnuton3 (??-??-????)
+  - ADDED: DNS over TLS support to VDSL WAN page
+
+386.03_2-gnuton2 (18-Set-2021)
+  - CHANGED: Enabled ROG and Open NAT for DSL-AC68U
+
 386.3_2 (6-Aug-2021)
   - NOTE: closed down the Issue tracker on Github, as 90%
           of it was people asking for technical support,
@@ -37,7 +43,6 @@ Asuswrt-Merlin 386/NG Changelog
   - FIXED: QoS upload classification page now shows upload plot for DSL-AX82U
   - FIXED: WiFi Insight page under wireless tab has been enabled for DSL-AX82U
   - FIXED: DNSFilter has been enabled for DSL-AX82U
-  - CHANGED: Enabled ROG and Open NAT for DSL-AC68U
 
 386.3 (23-July-2021)
   - NOTE: First time you boot into this version, you need to
