@@ -38,22 +38,22 @@ To build the firmware on your local machine please you need to follow these step
 ```bash
 git clone git@github.com:gnuton/asuswrt-merlin.ng.git
 cd asuswrt-merlin.ng
-git checkout -b dsl-master origin/dsl-master
+git checkout -b gnuton-master origin/gnuton-master
 
-docker run -it --rm -v "$PWD:/build" gnuton/asuswrt-merlin-toolchains-docker /bin/bash
+docker run -it --rm -v "$PWD:/build" gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04 /bin/bash
 
 #DSL-AX82U
-cd src-rt-5.02axhnd.675x
+cd release/src-rt-5.02axhnd.675x
 make dsl-ax82u
 
 #DSL-AC68U
-cd src-rt-6.x.4708
+cd release/src-rt-6.x.4708
 make dsl-ac68u
 ```
 
 ## Branching
 ### Master branch
-* [dsl-master](https://github.com/gnuton/asuswrt-merlin.ng/tree/dsl-master) is the MASTER BRANCH. All stable and pre-releases are built from here.
+* [gnuton-master](https://github.com/gnuton/asuswrt-merlin.ng/tree/gnuton-master) is the MASTER BRANCH. All stable and pre-releases are built from here.
 
 ### DEV_* branches
 DEV prefixed branches are temporary feature branches. They can come and go any time. Eventually they may get merged to dsl-master.
