@@ -1,7 +1,10 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
-386.03_2-gnuton3 (??-??-????)
+386.03_2-gnuton5 (??-??-????)
+  - FIXED: regression in PPPoA
+
+386.03_2-gnuton4 (30-Set-2021)
   - ADDED: DNS over TLS support to VDSL WAN page
 
 386.03_2-gnuton2 (18-Set-2021)
