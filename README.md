@@ -27,7 +27,7 @@
 
 ---------------------
 
-### Stats
+### [Stats](https://somsubhra.github.io/github-release-stats/?username=gnuton&repository=asuswrt-merlin.ng)
 Latest release:
 [
 ![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg)
