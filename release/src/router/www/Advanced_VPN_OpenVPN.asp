@@ -16,7 +16,6 @@
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script type="text/javascript" language="JavaScript" src="/base64.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
@@ -179,7 +178,7 @@ function initial(){
 
 	//set FAQ URL
 	//	https://www.asus.com/support/FAQ/1004469
-//	httpApi.faqURL("1004469", function(url){document.getElementById("faq_windows").href=url;});
+	httpApi.faqURL("1004469", function(url){document.getElementById("faq_windows").href=url;});
 	//	https://www.asus.com/support/FAQ/1004472
 	httpApi.faqURL("1004472", function(url){document.getElementById("faq_macOS").href=url;});
 	//	https://www.asus.com/support/FAQ/1004471
@@ -187,20 +186,6 @@ function initial(){
 	//	https://www.asus.com/support/FAQ/1004466
 	httpApi.faqURL("1004466", function(url){document.getElementById("faq_android").href=url;});
 
-	var cust2 = document.form.vpn_server_cust2.value;
-	if (isSupport("hnd")) {
-		document.getElementById("vpn_server_custom_x").maxLength = 170 * 3; // 255*3 - base64 overhead
-
-		cust2 += document.form.vpn_server_cust21.value +
-		           document.form.vpn_server_cust22.value;
-	}
-
-	// Models without encrypted passwords
-	if (based_modelid == "RT-AC68U") {
-		showhide("show_pass_div", 1);
-	}
-
-	document.getElementById("vpn_server_custom_x").value = Base64.decode(cust2);
 }
 
 var MAX_RETRY_NUM = 5;
@@ -348,11 +333,6 @@ function applyRule(){
 		var vpnSubnet = document.form.vpn_server_sn;
 		var pool_start = '<% nvram_get("dhcp_start"); %>';
 		var pool_subnet = pool_start.split(".")[0]+"."+pool_start.split(".")[1]+"."+pool_start.split(".")[2]+".";
-
-		if (isSupport("hnd"))
-			split_custom2(Base64.encode(document.getElementById("vpn_server_custom_x").value));
-		else
-			document.form.vpn_server_cust2.value = Base64.encode(document.getElementById("vpn_server_custom_x").value);
 
 		if(document.form.vpn_server_if.value == 'tun'){
 			if(vpnSubnet.value == ""){
@@ -588,14 +568,6 @@ function applyRule(){
 	}
 }
 
-function split_custom2(cust2){
-	var counter = 0;
-	document.form.vpn_server_cust2.value = cust2.substring(counter, (counter+=255));
-
-	document.form.vpn_server_cust21.value = cust2.substring(counter, (counter+=255));
-	document.form.vpn_server_cust22.value = cust2.substring(counter, (counter+=255));
-}
-
 function addRow(obj, head){
 	if(head == 1)
 		vpn_server_clientlist_array += "<" /*&#60*/
@@ -713,14 +685,7 @@ function showopenvpnd_clientlist(){
 				}
 				else if(j ==1){
 					overlib_str3[i] = vpn_server_clientlist_col[1];
-					if (document.getElementById('show_pass').checked == false) {
-						code +='<td width="35%">*****</td>';
-					}else if(vpn_server_clientlist_col[1].length >32){
-						vpn_server_clientlist_col[1] = vpn_server_clientlist_col[1].substring(0, 30)+"...";
-						code +='<td width="35%" title="'+overlib_str3[i]+'">'+ vpn_server_clientlist_col[1] +'</td>';
-					}else{
-						code +='<td width="35%">'+ vpn_server_clientlist_col[1] +'</td>';
-					}
+					code +='<td width="35%">*****</td>';
 				} 
 			}
 			
@@ -1321,9 +1286,6 @@ function callback_upload_cert(_flag) {
 <input type="hidden" name="vpn_serverx_start" value="<% nvram_get("vpn_serverx_start"); %>">
 <input type="hidden" name="vpn_server_ccd_val" value="">
 <input type="hidden" name="vpn_server_tls_keysize" value="<% nvram_get("vpn_server_tls_keysize"); %>">
-<input type="hidden" name="vpn_server_cust2" value="<% nvram_get("vpn_server_cust2"); %>">
-<input type="hidden" name="vpn_server_cust21" value="<% nvram_get("vpn_server_cust21"); %>">
-<input type="hidden" name="vpn_server_cust22" value="<% nvram_get("vpn_server_cust22"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>		
@@ -1452,14 +1414,12 @@ function callback_upload_cert(_flag) {
 											<#vpn_openvpn_desc1#>&nbsp;<#vpn_openvpn_desc3#>&nbsp;<#vpn_openvpn_desc2#> <#menu5#>
 											<br />
 											<ol>
-											<!--	<li><a id="faq_windows" href="https://www.asus.com/support/FAQ/1004469/" target="_blank" style="text-decoration:underline;">Windows</a></li> -->
+												<li><a id="faq_windows" href="https://www.asus.com/support/FAQ/1004469/" target="_blank" style="text-decoration:underline;">Windows</a></li>
 												<li><a id="faq_macOS" href="https://www.asus.com/support/FAQ/1004472/" target="_blank" style="text-decoration:underline;">Mac OS</a></li>
 												<li><a id="faq_iPhone" href="https://www.asus.com/support/FAQ/1004471/" target="_blank" style="text-decoration:underline;">iPhone/iPad</a></li>
 												<li><a id="faq_android" href="https://www.asus.com/support/FAQ/1004466/" target="_blank" style="text-decoration:underline;">Android</a></li>
 											<ol>
 										</div>
-
-										<div style="color:#FFCC00;display:none;" id="show_pass_div"><input type="checkbox" name="show_pass" id="show_pass" onclick="showopenvpnd_clientlist();update_vpn_client_state();openvpnd_connected_status();">Show passwords</div>
 
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 											<thead>
@@ -1711,7 +1671,7 @@ function callback_upload_cert(_flag) {
 											<tr>							
 												<div id="VPNClientList_Block_PC" class="VPNClientList_Block_PC"></div>
 												<td width="36%">
-													<input type="text" class="input_25_table" maxlength="25" name="vpn_clientlist_commonname_0" autocorrect="off" autocapitalize="off">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_clientlist_commonname_0" autocorrect="off" autocapitalize="off">
 												</td>
 												<td width="20%">
 													<input type="text" class="input_15_table" maxlength="15" name="vpn_clientlist_subnet_0"  onkeypress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off">
@@ -1743,7 +1703,7 @@ function callback_upload_cert(_flag) {
 
 											<tr>
 												<td>
-													<textarea rows="8" class="textarea_ssh_table" spellcheck="false" style="width:99%;" id="vpn_server_custom_x" cols="55" maxlength="2047"></textarea>
+													<textarea rows="8" class="textarea_ssh_table" spellcheck="false" style="width:99%;" name="vpn_server_custom3" cols="55" maxlength="4095"><% nvram_clean_get("vpn_server_custom3"); %></textarea>
 												</td>
 											</tr>
 										</table>

@@ -1022,6 +1022,7 @@ ej_nvram_get(int eid, webs_t wp, int argc, char_t **argv)
 //	char sid_dummy = "",
 	int from_app = 0;
 	char dec_passwd[4096];
+	char buffer[8000];
 
 	memset(dec_passwd, 0, sizeof(dec_passwd));
 
@@ -1076,18 +1077,32 @@ ej_nvram_clean_get(int eid, webs_t wp, int argc, char_t **argv)
 {
 	char *name, *c;
 	int ret = 0;
+	int unit;
+	char buffer[4096];
 
 	if (ejArgs(argc, argv, "%s", &name) < 1) {
 		websError(wp, 400, "Insufficient args\n");
 		return -1;
 	}
 
-	for (c = nvram_safe_get(name); *c; c++) {
+	if (!strcmp(name, "vpn_client_custom3")) {
+		unit = nvram_get_int("vpn_client_unit");
+		c = get_ovpn_custom(OVPN_TYPE_CLIENT, unit, buffer, sizeof (buffer));
+	}
+	else if (!strcmp(name, "vpn_server_custom3")) {
+		unit = nvram_get_int("vpn_server_unit");
+		c = get_ovpn_custom(OVPN_TYPE_SERVER, unit, buffer, sizeof (buffer));
+	}
+	else
+		c = nvram_safe_get(name);
+
+	while (*c) {
 		if (isprint(*c) &&
 			*c != '"' && *c != '&' && *c != '<' && *c != '>')
 				ret += websWrite(wp, "%c", *c);
 		else
 			ret += websWrite(wp, "&#%d;", *c);
+		c++;
 	}
 
 	return ret;
@@ -1512,13 +1527,17 @@ ej_nvram_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 	char tmp[MAX_LINE_SIZE];
 	char *buf = tmp, *str;
 	int ret;
+	char buffer[8000];
 
 	if (ejArgs(argc, argv, "%s %s", &sid, &name) < 2) {
 		websError(wp, 400, "Insufficient args\n");
 		return -1;
 	}
 
-	str = nvram_safe_get_x(sid, name);
+	if (!strcmp(name, "vpndirector_rulelist"))
+		str = ovpn_get_policy_rules(-1, buffer, sizeof (buffer));
+	else
+		str = nvram_safe_get_x(sid, name);
 
 	/* each char expands to %XX at max */
 	ret = strlen(str) * sizeof(char)*3 + sizeof(char);
@@ -3799,21 +3818,35 @@ int validate_apply(webs_t wp, json_object *root) {
 				snprintf(prefix, sizeof(prefix), "vpn_server%d_", unit);
 				(void)strcat_r(prefix, name+11, tmp);
 
-				if(strcmp(nvram_safe_get(tmp), value)) {
+				if (!strcmp(name, "vpn_server_custom3")) {
+					set_ovpn_custom(OVPN_TYPE_SERVER, unit, value);
+					nvram_modified = 1;
+					_dprintf("set %s=%s\n", tmp, value);
+				}
+				else if(strcmp(nvram_safe_get(tmp), value)) {
 					nvram_set(tmp, value);
 					nvram_modified = 1;
 					_dprintf("set %s=%s\n", tmp, value);
 				}
+
 			}
 			else if(!strncmp(name, "vpn_client_", 11) && unit!=-1) {
 				snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
 				(void)strcat_r(prefix, name+11, tmp);
 
-				if(strcmp(nvram_safe_get(tmp), value)) {
+				if (!strcmp(name, "vpn_client_custom3")) {
+					set_ovpn_custom(OVPN_TYPE_CLIENT, unit, value);
+					nvram_modified = 1;
+					_dprintf("set %s=%s\n", tmp, value);
+				}
+				else if(strcmp(nvram_safe_get(tmp), value)) {
 					nvram_set(tmp, value);
 					nvram_modified = 1;
 					_dprintf("set %s=%s\n", tmp, value);
 				}
+			}
+			else if (!strcmp(name, "vpndirector_rulelist")) {
+				ovpn_set_policy_rules(value);
 			}
 #endif
 			else if(!strncmp(name, "sshd_", 5)) {
@@ -19818,6 +19851,7 @@ struct mime_handler mime_handlers[] = {
 	{ "js/jquery.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "ajax/ouiDB.json", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "js/chart.min.js", "text/javascript", cache_object, NULL, do_file, NULL },
+	{ "js/qrcode.min.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "require/require.min.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "calendar/jquery-ui.js", "text/javascript", cache_object, NULL, do_file, NULL },
 	{ "httpd_check.xml", "text/xml", no_cache_IE7, do_html_post_and_get, do_ej, NULL },

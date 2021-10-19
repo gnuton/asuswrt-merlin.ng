@@ -31,19 +31,10 @@ jobs:
               sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
             fi
       - run:
-          name: Generate changelog (only for tags)
+          name: Generate changelog
           command: |
-            REGXP_TO_MATCH=.*gnuton.*
-            if [[ ${CIRCLE_TAG} =~ ${REGXP_TO_MATCH} ]]; then
-              CURRENT_TAG=${CIRCLE_TAG}
-              PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -vE "snapshot|beta|alpha|${CIRCLE_TAG}" | grep ${REGXP_TO_MATCH} | head -n 1)
-              echo "Generating logs between the tags ${PREVIOUS_TAG} and ${CURRENT_TAG}"
-              echo "Changes from the latest stable gnuton build (${PREVIOUS_TAG}):" > "${CHANGELOG_FILE}"
-              git log ${PREVIOUS_TAG}...${CURRENT_TAG} --pretty=format:'* %s' --reverse | grep -vE 'Merge branch|ci:|Bump' >> "${CHANGELOG_FILE}" || echo "WARNING: The Changelog is empty!!"
-              cat "${CHANGELOG_FILE}"
-            else
-              echo "No changelog to generate. Changelog is generated only for tags matching ${REGXP_TO_MATCH}";
-            fi;
+            python tools/get-last-notes.py > "${CHANGELOG_FILE}"
+            cat "${CHANGELOG_FILE}"
       - run:
           name: Build firmware
           shell: /bin/bash
@@ -70,14 +61,17 @@ jobs:
             ls ${PROJECT_DIR}/release/${RELEASE_DIR}/image/
       - run:
           name: Prepare workspace
+          shell: /bin/bash
           command: |
+            export IMAGE_PATH=${PROJECT_DIR}/release/${RELEASE_DIR}/image/
             mkdir -p workspace/release/
             if [[ ${MODEL} == "dsl-ac68u" ]]; then
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.trx workspace/release/
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/DSL*DSL*.md5 workspace/release/ || :
+              mv "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}.trx" "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}_NO-DSL-FIRMWARE.trx"
+              cp ${IMAGE_PATH}/*.trx workspace/release/
+              cp ${IMAGE_PATH}/DSL*DSL*.md5 workspace/release/ || :
             elif [[ ${MODEL} == "dsl-ax82u" ]]; then
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.w workspace/release
-              cp ${PROJECT_DIR}/release/${RELEASE_DIR}/image/*_cferom_pureubi.md5 workspace/release || :
+              cp ${IMAGE_PATH}/*_cferom_pureubi.w workspace/release
+              cp ${IMAGE_PATH}/*_cferom_pureubi.md5 workspace/release || :
             fi
             cp /tmp/build.log workspace/release/${MODEL}-build.log
             if [ -z "${CIRCLE_TAG}" ]; then
@@ -136,7 +130,7 @@ jobs:
           command: |
             echo "Uploading release..."
             RELEASE_TITLE="Stable: ${CIRCLE_TAG}"
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" ${CIRCLE_TAG} workspace/release/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG | head -n 50)" ${CIRCLE_TAG} workspace/release/
   publish-github-ci-pre-release:
     docker:
       - image: cibuilds/github:latest
@@ -149,7 +143,7 @@ jobs:
           command: |
             echo "Uploading CI pre-release..."
             RELEASE_TITLE="Unstable: ${CIRCLE_TAG}"
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "${RELEASE_TITLE}" -b "$(cat workspace/release/CHANGELOG | head -n 50)" -delete -prerelease ${CIRCLE_TAG} workspace/release/
 
 workflows:
   version: 2.1

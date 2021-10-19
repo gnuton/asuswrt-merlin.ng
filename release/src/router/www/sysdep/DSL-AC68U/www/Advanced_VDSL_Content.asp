@@ -31,6 +31,12 @@ var dsl_pvc_enabled = ["0", "0", "0", "0", "0", "0", "0", "0"];
 
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
 <% wan_get_parameter(); %>
+
+if(dnspriv_support){
+	var dot_servers_array = [<% get_dnsprivacy_presets("dot"); %>];
+	var dnspriv_rulelist_array = '<% nvram_get("dnspriv_rulelist"); %>';
+}
+
 var original_dnsenable = parseInt('<% nvram_get("dsl_dnsenable"); %>');
 var original_ppp_echo = parseInt('<% nvram_get("wan_ppp_echo"); %>');
 var default_ppp_echo = parseInt('<% nvram_default_get("wan_ppp_echo"); %>');
@@ -190,12 +196,14 @@ function add_pvc(){
 	if (document.form.dsl_proto.value != "bridge") {
 		document.getElementById("IPsetting").style.display = "";
 		document.getElementById("DNSsetting").style.display = "";
+		change_dnspriv_enable(1);
 		document.getElementById("PPPsetting").style.display = "";
 		document.getElementById("vpn_server").style.display = "";
 	}
 	else {
 		document.getElementById("IPsetting").style.display = "none";
 		document.getElementById("DNSsetting").style.display = "none";
+		change_dnspriv_enable(0);
 		document.getElementById("PPPsetting").style.display = "none";
 		document.getElementById("vpn_server").style.display = "none";
 	}
@@ -356,6 +364,15 @@ function showDSLWANList(){
 }
 
 function initial(){
+	if (dnspriv_support) {
+		if (dnsfilter_support)
+			var dnsfilter_enable = '<% nvram_get("dnsfilter_enable_x"); %>';
+
+		var dhcp_dns1 = '<% nvram_get("dhcp_dns1_x"); %>';
+		var dhcp_dns2 = '<% nvram_get("dhcp_dns2_x"); %>';
+		var lan_ipaddr = '<% nvram_get("lan_ipaddr"); %>';
+	}
+
 	show_menu();
 
 	document.form.dsl_dhcp_clientid.value = decodeURIComponent('<% nvram_char_to_ascii("", "dsl_dhcp_clientid"); %>');
@@ -363,6 +380,28 @@ function initial(){
 	// WAN port
 	genWANSoption();
 	change_wan_unit(document.form.wan_unit);
+
+	if(dnspriv_support){
+		build_dot_server_presets();
+		inputCtrl(document.form.dnspriv_enable, 1);
+		change_dnspriv_enable(document.form.dnspriv_enable.value);
+
+		if (dnsfilter_support && dnsfilter_enable == 1)
+			document.getElementById("dnsfilter_hint_dnspriv").style.display = "";
+
+		if ((dhcp_dns1 != "" && dhcp_dns1 != lan_ipaddr) ||
+		    (dhcp_dns2 != "" && dhcp_dns2 != lan_ipaddr))
+			document.getElementById("dhcpdns_hint_dnspriv").style.display = "";
+	}
+	else{
+		inputCtrl(document.form.dnspriv_enable, 0);
+		change_dnspriv_enable(0);
+	}
+
+    if(dnssec_support){
+		document.getElementById("dnssec_tr").style.display = "";
+		showhide("dnssec_strict_tr", "<% nvram_get("dnssec_enable"); %>" == "1" ? 1 : 0);
+	}
 
 	if(!dualWAN_support && !vdsl_support) {
 		document.getElementById("WANscap").style.display = "none";
@@ -513,12 +552,14 @@ function change_dsl_unit_idx(idx,iptv_row){
 	if (document.form.dsl_proto.value != "bridge") {
 		document.getElementById("IPsetting").style.display = "";
 		document.getElementById("DNSsetting").style.display = "";
+		change_dnspriv_enable(1);
 		document.getElementById("PPPsetting").style.display = "";
 		document.getElementById("vpn_server").style.display = "";
 	}
 	else {
 		document.getElementById("IPsetting").style.display = "none";
 		document.getElementById("DNSsetting").style.display = "none";
+		change_dnspriv_enable(0);
 		document.getElementById("PPPsetting").style.display = "none";
 		document.getElementById("vpn_server").style.display = "none";
 	}
@@ -574,6 +615,42 @@ function applyRule(){
 				document.form.action_script.value = "restart_dsl_setting;".concat(document.form.action_script.value);
 			document.form.dslx_transmode.value = document.form.dsltmp_transmode.value;
 		}
+
+		if(dnspriv_support){
+			if(document.form.dnspriv_enable.value == 1){
+				var dnspriv_rulelist_value = "";
+				for(k=0; k<document.getElementById('dnspriv_rulelist_table').rows.length; k++){
+					for(j=0; j<document.getElementById('dnspriv_rulelist_table').rows[k].cells.length-1; j++){
+						if(j == 0)
+							dnspriv_rulelist_value += "<";
+						else
+							dnspriv_rulelist_value += ">";
+						if (document.getElementById('dnspriv_rulelist_table').rows[k].cells[j].innerHTML.lastIndexOf("...") < 0)
+							dnspriv_rulelist_value += document.getElementById('dnspriv_rulelist_table').rows[k].cells[j].innerHTML;
+						else
+							dnspriv_rulelist_value += document.getElementById('dnspriv_rulelist_table').rows[k].cells[j].title;
+					}
+				}
+				document.form.dnspriv_rulelist.disabled = false;
+				document.form.dnspriv_rulelist.value = dnspriv_rulelist_value;
+			}
+			document.form.action_script.value += ";restart_stubby";
+		}
+
+		if ((dnssec_support &&
+		      (getRadioValue(document.form.dnssec_enable) != '<% nvram_get("dnssec_enable"); %>') ||
+		      (getRadioValue(document.form.dnssec_check_unsigned_x) != '<% nvram_get("dnssec_check_unsigned_x"); %>')) ||
+
+		    (dnspriv_support &&
+		      (document.form.dns_priv_override.value == 0) &&
+		      (document.form.dnspriv_enable.value != '<% nvram_get("dnspriv_enable"); %>')) ||
+
+		    (getRadioValue(document.form.dns_norebind) != '<% nvram_get("dns_norebind"); %>') ||
+		    (document.form.dns_priv_override.value != '<% nvram_get("dns_priv_override"); %>') ||
+		    (getRadioValue(document.form.dns_fwd_local) != '<% nvram_get("dns_fwd_local"); %>') )
+
+				document.form.action_script.value += ";restart_dnsmasq";
+		
 		showLoading();
 		document.form.submit();
 	}
@@ -743,6 +820,7 @@ function disable_all_ctrl() {
 	document.getElementById("dslSettings").style.display = "none";
 	document.getElementById("PPPsetting").style.display = "none";
 	document.getElementById("DNSsetting").style.display = "none";
+	change_dnspriv_enable(0);
 	document.getElementById("dot1q_setting").style.display = "none";
 	document.getElementById("IPsetting").style.display = "none";
 	document.getElementById("DHCP_option").style.display = "none";
@@ -756,6 +834,7 @@ function enable_all_ctrl() {
 	document.getElementById("dslSettings").style.display = "";
 	document.getElementById("PPPsetting").style.display = "";
 	document.getElementById("DNSsetting").style.display = "";
+	change_dnspriv_enable(1);
 	document.getElementById("dot1q_setting").style.display = "";
 	document.getElementById("IPsetting").style.display = "";
 	document.getElementById("DHCP_option").style.display = "";
@@ -897,6 +976,7 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dsl_upnp_enable[1], 1);
 		showhide("IPsetting",1);
 		showhide("DNSsetting",1);
+		change_dnspriv_enable(1);
 		showhide("vpn_server",1);
 		document.form.wan_ppp_echo.value = original_ppp_echo;
 		ppp_echo_control();
@@ -915,6 +995,7 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dsl_upnp_enable[1], 1);
 		showhide("IPsetting",1);
 		showhide("DNSsetting",1);
+		change_dnspriv_enable(1);
 		showhide("vpn_server",1);
 	}	
 	else if(dsl_type == "dhcp"){
@@ -929,6 +1010,7 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dsl_upnp_enable[0], 1);
 		inputCtrl(document.form.dsl_upnp_enable[1], 1);
 		showhide("DNSsetting",1);
+		change_dnspriv_enable(1);
 		showhide("vpn_server",1);
 	}
 	else if(dsl_type == "bridge"){
@@ -954,6 +1036,7 @@ function fixed_change_dsl_type(dsl_type){
 		inputCtrl(document.form.dsl_nat[0], 0);
 		inputCtrl(document.form.dsl_nat[1], 0);
 		showhide("DNSsetting",0);
+		change_dnspriv_enable(0);
 		showhide("vpn_server",0);
 	}
 	else {
@@ -1144,6 +1227,212 @@ function showDiableDHCPclientID(clientid_enable){
 	}
 }
 
+function change_dnspriv_enable(flag){
+	if(flag == 1){
+		inputCtrl(document.form.dnspriv_profile[0], 1);
+		inputCtrl(document.form.dnspriv_profile[1], 1);
+		document.getElementById("DNSPrivacy").style.display = "";
+		document.getElementById("dnspriv_rulelist_Block").style.display = "";
+		show_dnspriv_rulelist();
+	}
+	else{
+		inputCtrl(document.form.dnspriv_profile[0], 0);
+		inputCtrl(document.form.dnspriv_profile[1], 0);
+		document.getElementById("DNSPrivacy").style.display = "none";
+		document.getElementById("dnspriv_rulelist_Block").style.display = "none";
+	}
+}
+
+function addRow(obj, head){
+	if(head == 1)
+		dnspriv_rulelist_array += "&#60"
+	else
+		dnspriv_rulelist_array += "&#62"
+
+	dnspriv_rulelist_array += obj.value;
+	obj.value = "";
+}
+
+function addRow_Group(upper){
+	var rule_num = document.getElementById('dnspriv_rulelist_table').rows.length;
+	var item_num = document.getElementById('dnspriv_rulelist_table').rows[0].cells.length;
+
+	if(rule_num >= upper){
+		alert("<#JS_itemlimit1#> " + upper + " <#JS_itemlimit2#>");
+		return false;
+	}
+
+	if(document.form.dnspriv_server_0.value==""){
+		alert("<#JS_fieldblank#>");
+		document.form.dnspriv_server_0.focus();
+		document.form.dnspriv_server_0.select();
+		return false;
+	}
+
+	var is_ipv4 = (document.form.dnspriv_server_0.value.indexOf(".") != -1) ? true : false;
+	var is_ipv6 = (document.form.dnspriv_server_0.value.indexOf(":") != -1) ? true : false;
+	if(!is_ipv4 && !is_ipv6) {
+		alert(document.form.dnspriv_server_0.value + "<#JS_validip#>");
+		document.form.dnspriv_server_0.focus();
+		return false;
+	}
+	if ((is_ipv4 && !validator.isLegalIP(document.form.dnspriv_server_0)) ||
+	    (is_ipv6 && !validator.isLegal_ipv6(document.form.dnspriv_server_0)))
+		return false;
+
+	addRow(document.form.dnspriv_server_0, 1);
+	addRow(document.form.dnspriv_port_0, 0);
+	addRow(document.form.dnspriv_hostname_0, 0);
+	addRow(document.form.dnspriv_spkipin_0, 0);
+	show_dnspriv_rulelist();
+}
+
+function edit_Row(r){
+	var i=r.parentNode.parentNode.rowIndex;
+	document.form.dnspriv_server_0.value = document.getElementById('dnspriv_rulelist_table').rows[i].cells[0].innerHTML;
+	document.form.dnspriv_port_0.value = document.getElementById('dnspriv_rulelist_table').rows[i].cells[1].innerHTML; 
+	document.form.dnspriv_hostname_0.value = document.getElementById('dnspriv_rulelist_table').rows[i].cells[2].innerHTML; 
+	document.form.dnspriv_spkipin_0.value = document.getElementById('dnspriv_rulelist_table').rows[i].cells[3].innerHTML;
+
+	del_Row(r);	
+}
+
+function del_Row(r){
+	var i=r.parentNode.parentNode.rowIndex;
+	document.getElementById('dnspriv_rulelist_table').deleteRow(i);
+
+	var dnspriv_rulelist_value = "";
+	for(k=0; k<document.getElementById('dnspriv_rulelist_table').rows.length; k++){
+		for(j=0; j<document.getElementById('dnspriv_rulelist_table').rows[k].cells.length-1; j++){
+			if(j == 0)
+				dnspriv_rulelist_value += "&#60";
+			else
+				dnspriv_rulelist_value += "&#62";
+
+			if (document.getElementById('dnspriv_rulelist_table').rows[k].cells[j].innerHTML.lastIndexOf("...") < 0)
+				dnspriv_rulelist_value += document.getElementById('dnspriv_rulelist_table').rows[k].cells[j].innerHTML;
+			else
+				dnspriv_rulelist_value += document.getElementById('dnspriv_rulelist_table').rows[k].cells[j].title;
+		}
+	}
+
+	dnspriv_rulelist_array = dnspriv_rulelist_value;
+	if(dnspriv_rulelist_array == "")
+		show_dnspriv_rulelist();
+}
+
+function show_dnspriv_rulelist(){
+	var dnspriv_rulelist_row = dnspriv_rulelist_array.split('&#60');
+	var code = "";
+	var overlib_str;
+
+	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="dnspriv_rulelist_table">';
+	if(dnspriv_rulelist_row.length == 1)
+		code +='<tr><td style="color:#FFCC00;" colspan="5"><#IPConnection_VSList_Norule#></td></tr>';
+	else{
+		for(var i = 1; i < dnspriv_rulelist_row.length; i++){
+			code +='<tr id="row'+i+'">';
+			var dnspriv_rulelist_col = dnspriv_rulelist_row[i].split('&#62');
+			var wid=[27, 10, 27, 27];
+				for(var j = 0; j < dnspriv_rulelist_col.length; j++){
+
+					if (dnspriv_rulelist_col[j].length > 25) {
+						overlib_str = dnspriv_rulelist_col[j];
+						dnspriv_rulelist_col[j] = dnspriv_rulelist_col[j].substring(0, 22)+"...";
+						code +='<td width="'+wid[j]+'%" title="' + overlib_str + '">'+ dnspriv_rulelist_col[j] +'</td>';
+					} else {
+						code +='<td width="'+wid[j]+'%">'+ dnspriv_rulelist_col[j] +'</td>';
+					}
+				}
+				code +='<td width="9%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
+				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
+		}
+	}
+	code +='</table>';
+	document.getElementById("dnspriv_rulelist_Block").innerHTML = code;
+}
+
+function build_dot_server_presets(){
+	var code = "";
+
+	for(var i = 0; i < dot_servers_array.length; i++) {
+		if (dot_servers_array[i].length == 1) {
+			if (i != 0)
+				code += "<br>";
+			code += '<span style="font-weight:bold;">' + dot_servers_array[i][0] + '</span><br>';
+		} else {
+			code += '<a title="' + dot_servers_array[i][1] + '">';
+			code += '<div onclick="apply_dot_server_preset(' + i +');">' + dot_servers_array[i][0] + '</div></a>';
+		}
+	}
+	document.getElementById("dot_server_list").innerHTML += code;
+	$(".dot_pull_arrow").show();
+}
+
+function pullDOTList(_this) {
+	event.stopPropagation();
+	var $element = $("#dot_server_list");
+	var isMenuopen = $element[0].offsetWidth > 0 || $element[0].offsetHeight > 0;
+	if(isMenuopen == 0) {
+		$(_this).attr("src","/images/arrow-top.gif");
+		$element.show();
+	}
+	else {
+		$(_this).attr("src","/images/arrow-down.gif");
+		$element.hide();
+	}
+}
+
+function apply_dot_server_preset(i){
+	document.form.dnspriv_server_0.value = dot_servers_array[i][1];
+	document.form.dnspriv_port_0.value = dot_servers_array[i][2];
+	document.form.dnspriv_hostname_0.value = dot_servers_array[i][3];
+	document.form.dnspriv_spkipin_0.value = dot_servers_array[i][4];
+
+	document.getElementById("dot_pull_arrow").src = "/images/arrow-down.gif";
+	document.getElementById('dot_server_list').style.display='none';
+}
+
+var cur_bond_port = /LAN-*\D* 4/;
+function change_wanAggre_desc(){
+	var selectedIndex = document.getElementById("wanports_bond_menu").selectedIndex;
+	var selectedName = document.getElementById("wanports_bond_menu").options[selectedIndex].text;
+	var orig_desc = $("#wanAgg_desc").html();
+
+	$("#wanAgg_desc").html(orig_desc.replace(cur_bond_port, selectedName));
+	cur_bond_port = selectedName;
+}
+
+function pullDNSList(_this) {
+	event.stopPropagation();
+	var idx = $(_this).attr("id").replace("dns_pull_arrow", "");
+	$(".dns_pull_arrow:not(#dns_pull_arrow" + idx + ")").attr("src","/images/arrow-down.gif");
+	$(".dns_server_list_dropdown:not(#dns_server_list" + idx + ")").hide();
+	var $element = $("#dns_server_list" + idx + "");
+	var isMenuopen = $element[0].offsetWidth > 0 || $element[0].offsetHeight > 0;
+	if(isMenuopen == 0) {
+		$(_this).attr("src","/images/arrow-top.gif");
+		$element.show();
+	}
+	else {
+		$(_this).attr("src","/images/arrow-down.gif");
+		$element.hide();
+	}
+}
+
+function change_wizard(o, id){
+	if (id == "dotPresets") {
+		var i = o.value;
+		if (i == -1) return;
+		document.form.dnspriv_server_0.value = dot_servers_array[i].dnspriv_server;
+		document.form.dnspriv_port_0.value = dot_servers_array[i].dnspriv_port;
+		document.form.dnspriv_hostname_0.value = dot_servers_array[i].dnspriv_hostname;
+		document.form.dnspriv_spkipin_0.value = dot_servers_array[i].dnspriv_spkipin;
+
+		document.getElementById("dotPresets").selectedIndex = 0;
+	}
+}
+
 </script>
 </head>
 
@@ -1184,6 +1473,8 @@ function showDiableDHCPclientID(clientid_enable){
 <input type="hidden" name="wan_enable" value="" disabled>
 <input type="hidden" name="add_pvc_flag" value="0">
 <input type="hidden" name="dsl_dhcp_clientid_type" value="">
+<input type="hidden" name="dnspriv_rulelist" value="" disabled>
+
 <span id="bridgePPPoE_relay"></span>
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
@@ -1396,8 +1687,99 @@ function showDiableDHCPclientID(clientid_enable){
 												<div id="dns_server_list2" class="dns_server_list_dropdown"></div>
 											</td>
 										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,5);">Forward local domain queries to upstream DNS</a></th>
+											<td>
+												<input type="radio" value="1" name="dns_fwd_local" <% nvram_match("dns_fwd_local", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dns_fwd_local" <% nvram_match("dns_fwd_local", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,9);">Enable DNS Rebind protection</a></th>
+											<td>
+												<input type="radio" value="1" name="dns_norebind" <% nvram_match("dns_norebind", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dns_norebind" <% nvram_match("dns_norebind", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="dnssec_tr" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,6);">Enable DNSSEC support</a></th>
+											<td>
+												<input type="radio" value="1" name="dnssec_enable" onclick="showhide('dnssec_strict_tr',1);" <% nvram_match("dnssec_enable", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dnssec_enable" onclick="showhide('dnssec_strict_tr',0);" <% nvram_match("dnssec_enable", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="dnssec_strict_tr" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,25);">Validate unsigned DNSSEC replies</a></th>
+											<td>
+												<input type="radio" value="1" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "1", "checked"); %> /><#checkbox_Yes#>
+												<input type="radio" value="0" name="dnssec_check_unsigned_x" <% nvram_match("dnssec_check_unsigned_x", "0", "checked"); %> /><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="dns_priv_override_tr">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,31);">Prevent client auto DoH</a></th>
+											<td>
+												<select id="dns_priv_override" class="input_option" name="dns_priv_override">
+													<option value="0" <% nvram_match("dns_priv_override", "0", "selected"); %>>Auto</option>
+													<option value="1" <% nvram_match("dns_priv_override", "1", "selected"); %>>Yes</option>
+													<option value="2" <% nvram_match("dns_priv_override", "2", "selected"); %>>No</option>
+												</select>
+											</td>
+										</tr>
+										<tr style="display:none">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,35);">DNS Privacy Protocol</a></th>
+											<td align="left">
+												<select id="dnspriv_enable" class="input_option" name="dnspriv_enable" onChange="change_dnspriv_enable(this.value);">
+												<option value="0" <% nvram_match("dnspriv_enable", "0", "selected"); %>>None</option>
+												<option value="1" <% nvram_match("dnspriv_enable", "1", "selected"); %>>DNS-over-TLS (DoT)</option>
+												<!--option value="2" <% nvram_match("dnspriv_enable", "2", "selected"); %>>DNS-over-HTTPS (DoH)</option-->
+												<!--option value="3" <% nvram_match("dnspriv_enable", "3", "selected"); %>>DNS-over-TLS/HTTPS (DoT+DoH)</option-->
+												</select>
+												<div id="yadns_hint_dnspriv" style="display:none;"></div>
+												<div id="dhcpdns_hint_dnspriv" style="display:none;"><span>Your router's <a style="text-decoration:underline; color:#FFCC00;" href="Advanced_DHCP_Content.asp">DHCP server</a> is configured to provide a DNS server that's different from your router's IP address.  This will prevent clients from using the DNS Privacy servers.</span></div>
+												<div id="dnsfilter_hint_dnspriv" style="display:none;"><span><a style="text-decoration:underline; color:#FFCC00;" href="DNSFilter.asp">DNSFilter</a> is enabled - anything configured there to something other than No Filtering or Router will bypass DNS Privacy servers.</span></div>
+											</td>
+										</tr>
+										<tr style="display:none">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,36);">DNS-over-TLS Profile</a></th>
+											<td>
+												<input type="radio" name="dnspriv_profile" class="input" value="1" onclick="return change_common_radio(this, 'IPConnection', 'dnspriv_profile', 1)" <% nvram_match("dnspriv_profile", "1", "checked"); %> />Strict
+												<input type="radio" name="dnspriv_profile" class="input" value="0" onclick="return change_common_radio(this, 'IPConnection', 'dnspriv_profile', 0)" <% nvram_match("dnspriv_profile", "0", "checked"); %> />Opportunistic
+											</td>
+										</tr>
 									</table>
 
+									<table id="DNSPrivacy" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table" style="display:none">
+										<thead>
+											<tr>
+												<td colspan="5">DNS-over-TLS Server List (Max Limit : 8)</td>
+											</tr>
+										</thead>
+											<tr>
+												<th><a href="javascript:void(0);" onClick="openHint(7,37);"><div class="table_text">Address</div></a></th>
+												<th><a href="javascript:void(0);" onClick="openHint(7,38);"><div class="table_text">TLS Port</div></a></th>
+												<th><a href="javascript:void(0);" onClick="openHint(7,39);"><div class="table_text">TLS Hostname</div></a></th>
+												<th><a href="javascript:void(0);" onClick="openHint(7,40);"><div class="table_text">SPKI Fingerprint</div></a></th>
+												<th><#list_add_delete#></th>
+											</tr>
+											<!-- server info -->
+											<tr>
+												<td width="27%">
+													<input type="text" <input type="text" style="float:left;" class="input_18_table" maxlength="64" id="dnspriv_server_0" name="dnspriv_server_0" onKeyPress="" autocorrect="off" autocapitalize="off">
+													<img id="dot_pull_arrow" class="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullDOTList(this);">
+													<div id="dot_server_list" class="dns_server_list_dropdown"></div>
+												</td>
+												<td width="10%"><input type="text" class="input_6_table" maxlength="5" name="dnspriv_port_0" onKeyPress="return validator.isNumber(this,event)" autocorrect="off" autocapitalize="off"></td>
+												<td width="27%"><input type="text" class="input_20_table" maxlength="64" name="dnspriv_hostname_0" onKeyPress="" autocorrect="off" autocapitalize="off"></td>
+												<td width="27%"><input type="text" class="input_20_table" maxlength="64" name="dnspriv_spkipin_0" onKeyPress="" autocorrect="off" autocapitalize="off"></td>
+												<td width="9%">
+													<div> 
+														<input type="button" class="add_btn" onClick="addRow_Group(8);" value="">
+													</div>
+												</td>
+											</tr>
+									</table>
+									<div id="dnspriv_rulelist_Block"></div>
+									
 									<table id="DHCP_option" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 										<thead>
 											<tr><td colspan="2"><#ipv6_6rd_dhcp_option#></td></tr>

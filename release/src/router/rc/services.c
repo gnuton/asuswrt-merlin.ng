@@ -175,8 +175,10 @@ void start_cron(void);
 void start_wlcscan(void);
 void stop_wlcscan(void);
 
+#ifdef HND_ROUTER
 void start_jitterentropy(void);
 void stop_jitterentropy(void);
+#endif /* HND_ROUTER */
 
 #ifndef MS_MOVE
 #define MS_MOVE		8192
@@ -9333,7 +9335,9 @@ start_aura_rgb_sw(void)
 int
 start_services(void)
 {
+#ifdef HND_ROUTER
 	start_jitterentropy();
+#endif /* HND_ROUTER */
 #if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400)
 	start_ledg();
 	start_ledbtn();
@@ -9990,9 +9994,12 @@ stop_services(void)
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 	stop_envrams();
 #endif
+#ifdef HND_ROUTER
 	stop_jitterentropy();
+#endif /* HND_ROUTER */
 }
 
+#ifdef HND_ROUTER
 void start_jitterentropy()
 {
 	pid_t pid;
@@ -10008,6 +10015,7 @@ void stop_jitterentropy()
 	char *cmd_argv[] = { "killall", "jitterentropy-rngd", NULL};
 	_eval(cmd_argv, NULL, 0, &pid);
 }
+#endif /* HND_ROUTER */
 
 #ifdef RTCONFIG_QCA
 int stop_wifi_service(void)
@@ -14808,7 +14816,26 @@ retry_wps_enr:
 		if (action & RC_SERVICE_START) start_ovpn_server(atoi(&script[9]));
 	}
 	else if (strncmp(script, "vpnrouting" ,10) == 0) {
-		if (action & RC_SERVICE_START) ovpn_update_routing(atoi(&script[10]));
+		int unit, lock;
+
+		if (action & RC_SERVICE_START) {
+			unit = atoi(&script[10]);
+			lock = file_lock(VPNROUTING_LOCK);
+			if (unit == 0) {
+				for (i = OVPN_CLIENT_MAX; i > 0; i--) {
+					ovpn_set_routing_rules(i);
+					ovpn_clear_exclusive_dns(i);
+					ovpn_set_exclusive_dns(i);
+				}
+			} else {
+				ovpn_set_routing_rules(unit);
+				ovpn_clear_exclusive_dns(unit);
+				ovpn_set_exclusive_dns(unit);
+				// Refresh prerouting rules to ensure correct order
+				ovpn_update_exclusive_dns_rules();
+			}
+			file_unlock(lock);
+		}
 	}
 #endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)

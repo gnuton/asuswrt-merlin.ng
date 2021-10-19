@@ -47,7 +47,7 @@ int ovpn_up_main(int argc, char **argv)
 
 		sprintf(buffer, "/etc/openvpn/client%d/client.conf", unit);
 		// We got client.conf && update_resolvconf() won't restart it for us
-		if ((f_exists(buffer)) && (ovpn_max_dnsmode() != OVPN_DNSMODE_STRICT))
+		if ((f_exists(buffer)) && (ovpn_need_dnsmasq_restart()))
 			notify_rc("start_dnsmasq");
 
 	} else
@@ -72,7 +72,7 @@ int ovpn_down_main(int argc, char **argv)
 
 		sprintf(buffer, "/etc/openvpn/client%d/client.conf", unit);
 		// We got client.conf && update_resolvconf() won't restart it for us
-		if ((f_exists(buffer)) && (ovpn_max_dnsmode() != OVPN_DNSMODE_STRICT))
+		if ((f_exists(buffer)) && (ovpn_need_dnsmasq_restart()))
 			restart_dnsmasq = 1;
 
 		ovpn_client_down_handler(unit);
@@ -87,6 +87,20 @@ int ovpn_down_main(int argc, char **argv)
 
 	return 0;
 }
+
+
+int ovpn_route_up_main(int argc, char **argv)
+{
+	ovpn_client_route_up_handler();
+	return 0;
+}
+
+int ovpn_route_pre_down_main(int argc, char **argv)
+{
+	ovpn_client_route_pre_down_handler();
+	return 0;
+}
+
 
 /* Wrappers for library functions */
 void inline start_ovpn_eas() {

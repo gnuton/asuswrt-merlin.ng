@@ -1465,7 +1465,9 @@ obj-$(RTCONFIG_DNSSEC) += $(if $(RTCONFIG_DNSSEC_OPENSSL),openssl,) $(if $(RTCON
 obj-$(RTCONFIG_SAMBA36X) += libiconv-1.14
 obj-$(RTCONFIG_TELENET) += lanauth
 obj-y += wsdd2
+ifeq ($(HND_ROUTER),y)
 obj-y += jitterentropy-rngd
+endif
 #obj-$(RTCONFIG_BWDPI) += faketc
 
 ifneq ($(HND_ROUTER),y)
@@ -3226,7 +3228,9 @@ endif
 dhd:
 	@true
 ifneq ($(wildcard $(SRCBASE_DHD)/dhd/exe),)
+ifeq ($(wildcard $(SRCBASE_DHD)/dhd/exe/prebuilt/dhd),)
 	$(MAKE) TARGET_PREFIX=$(CROSS_COMPILE) -C $(SRCBASE_DHD)/dhd/exe
+endif
 endif
 
 dhd-clean :
@@ -6330,11 +6334,11 @@ curl: $(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),openssl,) $(if $(RTCONFIG_
 
 curl-install:
 	@$(SEP)
-	install -D curl/lib/.libs/libcurl.so.4.6.0 $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.6.0
-	$(STRIP) $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.6.0
+	install -D curl/lib/.libs/libcurl.so.4.7.0 $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.7.0
+	$(STRIP) $(INSTALLDIR)/curl/usr/lib/libcurl.so.4.7.0
 	cd $(INSTALLDIR)/curl/usr/lib && \
-		ln -sf libcurl.so.4.6.0 libcurl.so && \
-		ln -sf libcurl.so.4.6.0 libcurl.so.4
+		ln -sf libcurl.so.4.7.0 libcurl.so && \
+		ln -sf libcurl.so.4.7.0 libcurl.so.4
 #ifeq ($(or $(RTCONFIG_SPEEDTEST),$(RTCONFIG_LETSENCRYPT)),y)
 	# for speedtest
 	install -D curl/src/.libs/curl $(INSTALLDIR)/curl/usr/sbin/curl
@@ -8177,11 +8181,14 @@ endif
 
 ifeq ($(HND_ROUTER_AX),y)
 acsdv2:
+	@true
+ifeq ($(wildcard $(ACSDV2_DIR)/prebuilt/acsd2),)
 	+$(MAKE) -C $(ACSDV2_DIR) EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) all
+endif
 acsdv2-install: acsdv2
 ifneq ($(wildcard $(ACSDV2_DIR)/prebuilt/acsd2),)
-	cp -f $(ACSDV2_DIR)/prebuilt/acsd2 $(ACSDV2_DIR)/acsd2
-	cp -f $(ACSDV2_DIR)/prebuilt/acs_cli2 $(ACSDV2_DIR)/acs_cli2
+	cp -f $(ACSDV2_DIR)/prebuilt/acsd2 $(ACSDV2_DIR)/
+	cp -f $(ACSDV2_DIR)/prebuilt/acs_cli2 $(ACSDV2_DIR)/
 endif
 	+$(MAKE) -C $(ACSDV2_DIR) INSTALLDIR=$(INSTALLDIR)/acsdv2 install
 acsdv2-clean:
@@ -8189,8 +8196,15 @@ acsdv2-clean:
 
 ifeq ($(RTCONFIG_BCM_CEVENTD),y)
 cevent_app:
+	@true
+ifeq ($(wildcard $(CEVENT_APP_DIR)/prebuilt/ceventd),)
 	+$(MAKE) -C $(CEVENT_APP_DIR) all EXTRA_LDFLAGS=$(EXTRA_LDFLAGS)
+endif
 cevent_app-install: cevent_app
+ifneq ($(wildcard $(CEVENT_APP_DIR)/prebuilt/ceventd),)
+	cp -f $(CEVENT_APP_DIR)/prebuilt/ceventd $(CEVENT_APP_DIR)/
+	cp -f $(CEVENT_APP_DIR)/prebuilt/ceventc $(CEVENT_APP_DIR)/
+endif
 	+$(MAKE) -C $(CEVENT_APP_DIR) install EXTRA_LDFLAGS=$(EXTRA_LDFLAGS) INSTALLDIR=$(INSTALLDIR)/cevent_app
 cevent_app-clean:
 	+$(MAKE) -C $(CEVENT_APP_DIR) clean EXTRA_LDFLAGS=$(EXTRA_LDFLAGS)

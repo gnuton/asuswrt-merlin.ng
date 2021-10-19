@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2018 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2021 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -275,7 +275,10 @@ x_msg_va(const unsigned int flags, const char *format, va_list arglist)
     if (flags & M_OPTERR)
     {
         openvpn_snprintf(m2, ERR_BUF_SIZE, "Options error: %s", m1);
-        update_nvram_status(EVENT_CONF_ERROR);
+        if (flags & M_FATAL)
+        {
+            update_nvram_status(EVENT_CONF_ERROR);
+        }
         SWAP;
     }
 

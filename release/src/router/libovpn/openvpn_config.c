@@ -70,7 +70,7 @@ void reset_ovpn_setting(ovpn_type_t type, int unit, int full){
 	else
 		return;
 
-	logmessage("openvpn","Resetting %s (unit %d) to default settings", service, unit);
+	logmessage("openvpn","Resetting VPN %s %d to default settings", service, unit);
 
 	snprintf(remove, sizeof(remove), "%d", unit);
 	tmp[0] = '\0';
@@ -95,13 +95,15 @@ void reset_ovpn_setting(ovpn_type_t type, int unit, int full){
 		{
 			// Don't reset these settings unless asked to
 			if (!full && (!strcmp(t->name + 12, "desc") ||
-				      !strncmp(t->name + 12, "clientlist", 10) ||	/* handle clientlist1 through 5 */
 				      !strcmp(t->name + 12, "rgw") ||
 				      !strcmp(t->name + 12, "enforce")))
 				continue;
 			nvram_set(t->name, t->value);
 		}
 	}
+
+	// Clear custom settings
+	set_ovpn_custom(type, unit, "");
 
         if (type == OVPN_TYPE_SERVER)  // server-only files
         {
@@ -332,7 +334,7 @@ int ovpn_crt_is_empty(const char *name)
 }
 
 
-char *get_ovpn_custom(ovpn_type_t type, int unit, char* buffer, int bufferlen)
+char *get_ovpn_custom_old(ovpn_type_t type, int unit, char* buffer, int bufferlen)
 {
 	char varname[32];
 	char *nvcontent;
@@ -376,12 +378,40 @@ char *get_ovpn_custom(ovpn_type_t type, int unit, char* buffer, int bufferlen)
 }
 
 
+char *get_ovpn_custom(ovpn_type_t type, int unit, char* buffer, int bufferlen)
+{
+	char filename[128];
+	char *typeStr;
+	int datalen;
+
+	switch (type) {
+		case OVPN_TYPE_SERVER:
+			typeStr = "server";
+			break;
+		case OVPN_TYPE_CLIENT:
+			typeStr = "client";
+			break;
+                default:
+			return buffer;
+        }
+
+	snprintf(filename, sizeof(filename), "%s/vpn_%s%d_custom3", OVPN_FS_PATH, typeStr, unit);
+
+	datalen = f_read(filename, buffer, bufferlen-1);
+	if (datalen < 0) {
+		buffer[0] = '\0';
+	} else {
+		buffer[datalen] = '\0';
+	}
+
+	return buffer;
+}
+
+
 int set_ovpn_custom(ovpn_type_t type, int unit, char* buffer)
 {
-	char varname[32];
-	char *encbuffer;
 	char *typeStr;
-	int datalen, enclen;
+	char filename[128];
 
 	switch (type) {
 		case OVPN_TYPE_SERVER:
@@ -394,28 +424,14 @@ int set_ovpn_custom(ovpn_type_t type, int unit, char* buffer)
 			return -1;
         }
 
-	datalen = strlen(buffer);
+	if(!d_exists(OVPN_FS_PATH))
+		mkdir(OVPN_FS_PATH, S_IRWXU);
 
-	if (datalen) {
-		encbuffer = malloc(base64_encoded_len(datalen) + 1);
-		if (encbuffer) {
-			enclen = base64_encode((unsigned char*)buffer, encbuffer, datalen);
-			encbuffer[enclen] = '\0';
+	snprintf(filename, sizeof(filename), "%s/vpn_%s%d_custom3", OVPN_FS_PATH, typeStr, unit);
+	if (f_write(filename, buffer, strlen(buffer), 0,  S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) < 0)
+		return -1;
 
-			snprintf(varname, sizeof (varname), "vpn_%s%d_cust2", typeStr, unit);
-
-#ifdef HND_ROUTER
-			nvram_split_set(varname, encbuffer, 255, 2);
-#else
-			nvram_set(varname, encbuffer);
-#endif
-
-			free(encbuffer);
-			return 0;
-		}
-	}
-
-	return -1;
+	return 0;
 }
 
 
@@ -584,4 +600,64 @@ ovpn_sconf_t *ovpn_get_sconf(int unit){
 	strlcpy(sconf->custom, get_ovpn_custom(OVPN_TYPE_SERVER, unit, buffer, sizeof (buffer)), sizeof(sconf->custom));
 
 	return sconf;
+}
+
+
+// Unit -1 = all rules;  unit 0 = WAN rules,  unit 1-5: OVPN instance rules
+char *ovpn_get_policy_rules(int unit, char *buffer, int bufferlen)
+{
+	char filename[128];
+	int datalen;
+	char *buffer_tmp, *buffer_tmp2;
+	char *rule, *enable, *desc, *src, *dst, *target;
+	char entry[128];
+
+	snprintf(filename, sizeof(filename), "%s/vpndirector_rulelist", OVPN_FS_PATH);
+
+	datalen = f_read(filename, buffer, bufferlen-1);
+	if (datalen < 0) {
+		buffer[0] = '\0';
+	} else {
+		buffer[datalen] = '\0';
+	}
+
+	if (unit == -1 || unit > OVPN_CLIENT_MAX)
+		return buffer;
+
+	buffer_tmp = buffer_tmp2 = strdup(buffer);
+	buffer[0] = '\0';
+
+	while (buffer_tmp && (rule = strsep(&buffer_tmp2, "<")) != NULL) {
+		if((vstrsep(rule, ">", &enable, &desc, &src, &dst, &target)) != 5)
+			continue;
+
+		snprintf(entry, sizeof(entry),"<%s>%s>%s>%s>%s",enable, desc, src, dst, target);
+
+		if (unit == 0 && !strcmp(target, "WAN")) {
+			strlcat(buffer, entry, bufferlen);
+		}
+		else if (unit != 0 && !strncmp(target, "OVPN", 4) &&
+		    strlen(target) > 4 &&
+		    atoi(&target[4]) == unit) {
+			strlcat(buffer, entry, bufferlen);
+		}
+	}
+	free(buffer_tmp);
+
+	return buffer;
+}
+
+
+int ovpn_set_policy_rules(char* buffer)
+{
+	char filename[128];
+
+	if (!d_exists(OVPN_FS_PATH))
+		mkdir(OVPN_FS_PATH, S_IRWXU);
+
+	snprintf(filename, sizeof(filename), "%s/vpndirector_rulelist", OVPN_FS_PATH);
+	if (f_write(filename, buffer, strlen(buffer), 0, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) < 0)
+		return -1;
+
+	return 0;
 }

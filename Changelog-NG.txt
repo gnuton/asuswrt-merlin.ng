@@ -1,6 +1,132 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.03_2-gnuton5 (??-??-????)
+  - FIXED: regression in PPPoA for DSL-AX82U
+
+386.03_2-gnuton4 (30-Set-2021)
+  - ADDED: DNS over TLS support to VDSL WAN page
+
+386.03_2-gnuton2 (18-Set-2021)
+  - CHANGED: Enabled ROG and Open NAT for DSL-AC68U
+
+386.3_2 (6-Aug-2021)
+  - NOTE: closed down the Issue tracker on Github, as 90%
+          of it was people asking for technical support,
+          or failing to use the supplied submission form.
+  - NOTE: From now on DSL-AC68U trx images without DSL modem 
+          firmware will be provided at each release.
+	  Reason: Some ISPs may require older DSL modem fw.
+  - CHANGED: Re-disabled jitterentropy-rngd on non-HND
+             models.  It kept using CPU time every two
+             seconds and had a very marginal impact on
+             the entropy pool (which it never could push
+             above the target threshold of 1024).
+  - CHANGED: Moved the "Redirect Internet traffic" setting on
+             the OpenVPN Client page to the Network Settings
+             section to increase its visibility, as too many
+             users are forgetting to configure it.
+  - CHANGED: Display "Internet traffic not redirected" instead
+             of "Public IP Unknown" on the OpenVPN Client
+             status display when Redirect Internet traffic
+             is set to "No".
+  - FIXED: Only the first OpenVPN client would be used if
+           you had multiple clients connected and the first
+           one had a Redirect Internet set to "No".  Now,
+           setting this to "No" means that client's routing
+           table will no longer get a default gateway
+           configured, allowing traffic to be processed
+           by other RPDB tables if there wasn't a matching
+           route within that client's table.
+  - FIXED: IPV6-compatible DNSFilter servers weren't
+           properly configured in dnsmasq.
+  - FIXED: DNSFilter client rules may get corrupted after a
+           reboot.
+  - FIXED: Cake QoS for DSL-AX82U now works
+  - FIXED: QoS upload classification page now shows upload plot for DSL-AX82U
+  - FIXED: WiFi Insight page under wireless tab has been enabled for DSL-AX82U
+  - FIXED: DNSFilter has been enabled for DSL-AX82U
+
+386.3 (23-July-2021)
+  - NOTE: First time you boot into this version, you need to
+          either shift-reload the main index page, or clear
+          your browser cache.
+
+  - NEW: Introducing VPN Director, which replaces the original
+         policy routing management interface for OpenVPN clients.
+         A bit similar to Asus's own VPN Fusion, OpenVPN routing
+         rules are now managed through a central web interface,
+         and they are stored in JFFS instead of nvram, to allow
+         creating more rules, and free up some nvram for
+         nvram-limited devices such as the RT-AC68U.
+         See the Wiki for more information.
+
+  - NEW: Added QR codes to the networkmap as well as the Guest
+         Network page, to allow easily connecting a mobile
+         device just by scanning the QR code.
+         The generated QR code can also be saved as a file
+         if you'd like to print it.
+
+  - CHANGED: Rewrote OpenVPN routing handling.  The firmware will
+             now handle route creation itself rather than letting
+             the openvpn client create/remove routes.
+             The new implementation brings a few changes:
+
+             - "Force Internet traffic through tunnel" can now
+               be set to "No", "Yes (All)" or "VPN Director".
+             - This setting will now override whatever setting
+               pushed by the server regarding gateway redirection.
+             - The kill switch can now be used in both "Yes" and
+               "VPN Director" routing modes
+             - Manually stopping a client will remove the kill
+               switch.  It will now only be applied at boot time
+               (if client was set to start at boot), or if the
+               tunnel is disconnected through a non-user event
+
+  - CHANGED: Reworked OpenVPN's DNS Exclusive mode implementation
+             and interaction with dnsmasq.
+  - CHANGED: Moved OpenVPN Custom settings content to JFFS, and
+             increased max storage length from around 350 chars
+             to 4095 chars.
+  - CHANGED: Added support for BCM50991 used for the 2.5G
+             interface in newer RT-AX86U revisions.
+  - UPDATED: nano to 5.7.
+  - UPDATED: curl to 7.76.1.
+  - UPDATED: dnsmasq to 2.85-openssl.
+  - UPDATED: openvpn to 2.5.3.
+  - UPDATED: getdns to 1.7.0.
+  - UPDATED: stubby to 0.4.0.
+  - FIXED: Setting an OpenVPN client's DNS mode to Exclusive
+           could fail to work for certain configurations
+  - FIXED: DNS Exclusive redirections applied in Policy mode
+           could be executed in the wrong order if you had
+           overlapping policy rules in two separate clients.
+  - FIXED: Clients connected to Guest Network 1 couldn't be
+           routed through an OpenVPN tunnel.
+  - FIXED: Clients connected to Guest Network 1 would bypass
+           DNSFilter rules.
+  - FIXED: USB disks not properly unmounted on reboot
+           on some router models.
+  - FIXED: Missing error report on OpenVPN client connection
+           failure
+  - FIXED: profile.add getting used even if JFFS scripting
+           was disabled (dave14305)
+  - FIXED: Freedns authentication errors would not
+           properly be reported as errors.
+
+
+386.2_6 (6-June-2021)
+  - NOTE: The IRC channel, #asuswrt, has moved to the
+          Libera IRC network (https://libera.chat/).
+
+  - UPDATED: chart.js to 2.9.4.
+  - UPDATED: tor to 0.4.5.8.
+  - UPDATED: root certificate bundle to June 5th 2021.
+  - FIXED: Fragattack security issues
+  - FIXED: DSL-AX82U: CPU frequency is now visible in tools page
+  - FIXED: DSL-AX82U: Kernel supports cake QoS
+  - NEW: DSL-AX82U: Added IFTT support
+
 386.2_4 (30-Apr-2021)
   - NEW: Added jitterentropy-rngd to non-HND models, in addition
          to HND models.
@@ -12,7 +138,7 @@ Asuswrt-Merlin 386/NG Changelog
   - FIXED: OpenVPN server would flip into an error state (being
            shown as "initializing" on the webui) whenever an
            inbound client failed to connect to it.
-
+  - FIXED: DSL-AX82U: CPU frequency is now visible in tools page
 
 386.2_2 (13-Apr-2021)
   - FIXED: IPv6 pings were blocked if sent below the rate limit
