@@ -3,6 +3,7 @@ Asuswrt-Merlin 386/NG Changelog
 
 386.03_2-gnuton5 (??-??-????)
   - FIXED: regression in PPPoA for DSL-AX82U
+  - FIXED: DSL-AX82U added ip set kernel modules to make skynet working
 
 386.03_2-gnuton4 (30-Set-2021)
   - ADDED: DNS over TLS support to VDSL WAN page
