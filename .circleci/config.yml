@@ -160,9 +160,22 @@ workflows:
               ignore:
                 - master
                 - mainline
+                - DEV_45581_2
       - build:
           name: "build_dsl-ax82u"
           model: "dsl-ax82u"
+          release_dir: "src-rt-5.02axhnd.675x"
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
+                - DEV_45581_2
+      - build:
+          name: "build_rt-ax82u"
+          model: "rt-ax82u"
           release_dir: "src-rt-5.02axhnd.675x"
           filters:
             tags:
