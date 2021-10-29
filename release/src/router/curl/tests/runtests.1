@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH runtests.pl 1 "March 27, 2021" "Curl 7.76.1" "runtests"
+.TH runtests.pl 1 "June 02, 2021" "Curl 7.79.1" "runtests"
 
 .SH NAME
 runtests.pl \- run one or more test cases
@@ -73,6 +73,8 @@ The exclusion types are \fkeyword\fP, \ftest\fP, and \ftool\fP.
 Run the test event-based (if possible). This will make runtests invoke curl
 with --test-event option. This option only works if both curl and libcurl were
 built debug-enabled.
+.IP "-f"
+Force the test to run even if mentioned in DISABLED.
 .IP "-g"
 Run the given test(s) with gdb. This is best used on a single test case and
 curl built --disable-shared. This then fires up gdb with command line set to
@@ -146,6 +148,8 @@ to fail until all allocs have been tested. By setting \fInum\fP you can force
 the allocation with that number to be set to fail at once instead of looping
 through everyone, which is very handy when debugging and then often in
 combination with \fI-g\fP.
+.IP "-u"
+Error instead of warning on server unexpectedly alive.
 .IP "-v"
 Enable verbose output. Speaks more than default.
 .IP "-vc <curl>"

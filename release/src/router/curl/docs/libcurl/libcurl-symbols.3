@@ -19,7 +19,7 @@
 .\" * KIND, either express or implied.
 .\" *
 .\" **************************************************************************
-.TH libcurl-symbols 3 "Apr 14, 2021" "libcurl 7.41.0" "libcurl symbols"
+.TH libcurl-symbols 3 "Sep 15, 2021" "libcurl 7.41.0" "libcurl symbols"
 .SH NAME
 libcurl-symbols \- libcurl symbol version information
 .SH "libcurl symbols"
@@ -275,6 +275,8 @@ Introduced in 7.20.0
 Introduced in 7.10
 .IP CURLE_SEND_FAIL_REWIND
 Introduced in 7.12.3
+.IP CURLE_SETOPT_OPTION_SYNTAX
+Introduced in 7.78.0
 .IP CURLE_SHARE_IN_USE
 Introduced in 7.9.6
 Deprecated since 7.17.0
@@ -289,6 +291,8 @@ Introduced in 7.16.0
 Introduced in 7.10
 .IP CURLE_SSL_CIPHER
 Introduced in 7.10
+.IP CURLE_SSL_CLIENTCERT
+Introduced in 7.77.0
 .IP CURLE_SSL_CONNECT_ERROR
 Introduced in 7.1
 .IP CURLE_SSL_CRL_BADFILE
@@ -390,11 +394,11 @@ Deprecated since 7.56.0
 .IP CURLFORM_ARRAY_END
 Introduced in 7.9.1
 Deprecated since 7.9.5
-Last used in 7.9.5
+Last used in 7.9.6
 .IP CURLFORM_ARRAY_START
 Introduced in 7.9.1
 Deprecated since 7.9.5
-Last used in 7.9.5
+Last used in 7.9.6
 .IP CURLFORM_BUFFER
 Introduced in 7.9.8
 Deprecated since 7.56.0
@@ -817,6 +821,8 @@ Introduced in 7.1
 Introduced in 7.10
 .IP CURLOPT_CAINFO
 Introduced in 7.4.2
+.IP CURLOPT_CAINFO_BLOB
+Introduced in 7.77.0
 .IP CURLOPT_CAPATH
 Introduced in 7.9.8
 .IP CURLOPT_CERTINFO
@@ -830,7 +836,7 @@ Introduced in 7.21.0
 .IP CURLOPT_CLOSEFUNCTION
 Introduced in 7.7
 Deprecated since 7.11.1
-Last used in 7.11.1
+Last used in 7.15.5
 .IP CURLOPT_CLOSEPOLICY
 Introduced in 7.7
 Deprecated since 7.16.1
@@ -936,7 +942,7 @@ Deprecated since 7.16.4
 .IP CURLOPT_FTPASCII
 Introduced in 7.1
 Deprecated since 7.11.1
-Last used in 7.11.1
+Last used in 7.15.5
 .IP CURLOPT_FTPLISTONLY
 Introduced in 7.1
 Deprecated since 7.16.4
@@ -1087,7 +1093,7 @@ Introduced in 7.56.0
 .IP CURLOPT_MUTE
 Introduced in 7.1
 Deprecated since 7.8
-Last used in 7.8
+Last used in 7.15.5
 .IP CURLOPT_NETRC
 Introduced in 7.1
 .IP CURLOPT_NETRC_FILE
@@ -1107,7 +1113,7 @@ Introduced in 7.10
 .IP CURLOPT_NOTHING
 Introduced in 7.1.1
 Deprecated since 7.11.1
-Last used in 7.11.1
+Last used in 7.11.0
 .IP CURLOPT_OPENSOCKETDATA
 Introduced in 7.17.1
 .IP CURLOPT_OPENSOCKETFUNCTION
@@ -1115,17 +1121,17 @@ Introduced in 7.17.1
 .IP CURLOPT_PASSWDDATA
 Introduced in 7.4.2
 Deprecated since 7.11.1
-Last used in 7.11.1
+Last used in 7.15.5
 .IP CURLOPT_PASSWDFUNCTION
 Introduced in 7.4.2
 Deprecated since 7.11.1
-Last used in 7.11.1
+Last used in 7.15.5
 .IP CURLOPT_PASSWORD
 Introduced in 7.19.1
 .IP CURLOPT_PASV_HOST
 Introduced in 7.12.1
 Deprecated since 7.16.0
-Last used in 7.16.0
+Last used in 7.15.5
 .IP CURLOPT_PATH_AS_IS
 Introduced in 7.42.0
 .IP CURLOPT_PINNEDPUBLICKEY
@@ -1180,6 +1186,8 @@ Introduced in 7.19.1
 Introduced in 7.1
 .IP CURLOPT_PROXY_CAINFO
 Introduced in 7.52.0
+.IP CURLOPT_PROXY_CAINFO_BLOB
+Introduced in 7.77.0
 .IP CURLOPT_PROXY_CAPATH
 Introduced in 7.52.0
 .IP CURLOPT_PROXY_CRLFILE
@@ -1734,6 +1742,8 @@ Introduced in 7.64.1
 Introduced in 7.49.0
 .IP CURLSSLOPT_ALLOW_BEAST
 Introduced in 7.25.0
+.IP CURLSSLOPT_AUTO_CLIENT_CERT
+Introduced in 7.77.0
 .IP CURLSSLOPT_NATIVE_CA
 Introduced in 7.71.0
 .IP CURLSSLOPT_NO_PARTIALCHAIN
@@ -1822,6 +1832,8 @@ Introduced in 7.17.0
 Introduced in 7.17.0
 .IP CURLUSESSL_TRY
 Introduced in 7.17.0
+.IP CURLU_ALLOW_SPACE
+Introduced in 7.78.0
 .IP CURLU_APPENDQUERY
 Introduced in 7.62.0
 .IP CURLU_DEFAULT_PORT
@@ -1862,6 +1874,8 @@ Introduced in 7.11.1
 Introduced in 7.70.0
 .IP CURLVERSION_SIXTH
 Introduced in 7.66.0
+.IP CURLVERSION_TENTH
+Introduced in 7.77.0
 .IP CURLVERSION_THIRD
 Introduced in 7.12.0
 .IP CURL_CHUNK_BGN_FUNC_FAIL
@@ -2094,28 +2108,28 @@ Introduced in 7.9.2
 Introduced in 7.54.0
 .IP CURL_SSLVERSION_MAX_NONE
 Introduced in 7.54.0
-.IP CURL_SSLVERSION_MAX_TLS
-Introduced in 
-.IP CURL_SSLVERSION_MAX_TLS
-Introduced in 
-.IP CURL_SSLVERSION_MAX_TLS
-Introduced in 
-.IP CURL_SSLVERSION_MAX_TLS
-Introduced in 
-.IP CURL_SSLVERSION_SSL
-Introduced in 
-.IP CURL_SSLVERSION_SSL
-Introduced in 
-.IP CURL_SSLVERSION_TLS
-Introduced in 
-.IP CURL_SSLVERSION_TLS
-Introduced in 
-.IP CURL_SSLVERSION_TLS
-Introduced in 
-.IP CURL_SSLVERSION_TLS
-Introduced in 
-.IP CURL_SSLVERSION_TLS
-Introduced in 
+.IP CURL_SSLVERSION_MAX_TLSv1_0
+Introduced in 7.54.0
+.IP CURL_SSLVERSION_MAX_TLSv1_1
+Introduced in 7.54.0
+.IP CURL_SSLVERSION_MAX_TLSv1_2
+Introduced in 7.54.0
+.IP CURL_SSLVERSION_MAX_TLSv1_3
+Introduced in 7.54.0
+.IP CURL_SSLVERSION_SSLv2
+Introduced in 7.9.2
+.IP CURL_SSLVERSION_SSLv3
+Introduced in 7.9.2
+.IP CURL_SSLVERSION_TLSv1
+Introduced in 7.9.2
+.IP CURL_SSLVERSION_TLSv1_0
+Introduced in 7.34.0
+.IP CURL_SSLVERSION_TLSv1_1
+Introduced in 7.34.0
+.IP CURL_SSLVERSION_TLSv1_2
+Introduced in 7.34.0
+.IP CURL_SSLVERSION_TLSv1_3
+Introduced in 7.52.0
 .IP CURL_STRICTER
 Introduced in 7.50.2
 .IP CURL_TIMECOND_IFMODSINCE

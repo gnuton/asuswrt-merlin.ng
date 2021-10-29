@@ -88,7 +88,7 @@ Dependencies
  - GnuTLS       3.1.10
  - zlib         1.1.4
  - libssh2      1.0
- - c-ares       1.6.0
+ - c-ares       1.16.0
  - libidn2      2.0.0
  - wolfSSL      2.0.0
  - openldap     2.0
@@ -976,6 +976,8 @@ for older and later versions as things don't change drastically that often.
   from a single array which is scanned through when a URL is given to libcurl
   to work with.
 
+  The concrete function pointer prototypes can be found in `lib/urldata.h`.
+
   `->scheme` is the URL scheme name, usually spelled out in uppercase. That's
   "HTTP" or "FTP" etc. SSL versions of the protocol need their own
   `Curl_handler` setup so HTTPS separate from HTTP.
@@ -1017,12 +1019,14 @@ for older and later versions as things don't change drastically that often.
   `->domore_getsock`
   `->perform_getsock`
   Functions that return socket information. Which socket(s) to wait for which
-  action(s) during the particular multi state.
+  I/O action(s) during the particular multi state.
 
   `->disconnect` is called immediately before the TCP connection is shutdown.
 
   `->readwrite` gets called during transfer to allow the protocol to do extra
   reads/writes
+
+  `->attach` attaches a transfer to the connection.
 
   `->defport` is the default report TCP or UDP port this protocol uses
 
@@ -1088,7 +1092,7 @@ for older and later versions as things don't change drastically that often.
 
 [1]: https://curl.se/libcurl/c/curl_easy_setopt.html
 [2]: https://curl.se/libcurl/c/curl_easy_init.html
-[3]: https://c-ares.haxx.se/
+[3]: https://c-ares.org/
 [4]: https://tools.ietf.org/html/rfc7230 "RFC 7230"
 [5]: https://curl.se/libcurl/c/CURLOPT_ACCEPT_ENCODING.html
 [6]: https://curl.se/docs/manpage.html#--compressed

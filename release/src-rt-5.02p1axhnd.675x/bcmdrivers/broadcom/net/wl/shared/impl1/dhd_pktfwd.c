@@ -3,27 +3,21 @@
     All Rights Reserved
 
     <:label-BRCM:2017:DUAL/GPL:standard
-
-    Unless you and Broadcom execute a separate written software license
-    agreement governing use of this software, this software is licensed
-    to you under the terms of the GNU General Public License version 2
-    (the "GPL"), available at http://www.broadcom.com/licenses/GPLv2.php,
-    with the following added to such license:
-
-       As a special exception, the copyright holders of this software give
-       you permission to link this software with independent modules, and
-       to copy and distribute the resulting executable under terms of your
-       choice, provided that you also meet, for each linked independent
-       module, the terms and conditions of the license of that module.
-       An independent module is a module which is not derived from this
-       software.  The special exception does not apply to any modifications
-       of the software.
-
-    Not withstanding the above, under no circumstances may you combine
-    this software in any way with any other Broadcom software provided
-    under a license other than the GPL, without Broadcom's express prior
-    written consent.
-
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License, version 2, as published by
+    the Free Software Foundation (the "GPL").
+    
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    
+    A copy of the GPL is available at http://www.broadcom.com/licenses/GPLv2.php, or by
+    writing to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+    Boston, MA 02111-1307, USA.
+    
     :>
 */
 
@@ -1678,9 +1672,13 @@ _dhd_pktfwd_mcasthandler(uint32_t radio_idx, uint16_t ifidx, pNBuff_t * pNBuf)
     dhd_wmf_t * wmf;
 #endif /* DHD_WMF */
 
+#ifdef BCM_DHD_LOCK
     dhd_pub = g_dhd_info[radio_idx];
-
     DHD_LOCK(dhd_pub); //+++++++++++++++++++++++++
+#else
+    DHD_PERIM_LOCK_ALL(radio_idx % FWDER_MAX_UNIT); //+++++++++++++++++++++++++
+    dhd_pub = g_dhd_info[radio_idx];
+#endif
 
     if(dhd_idx2net(dhd_pub,ifidx)==NULL)
        goto dhd_pktfwd_mcasthandler_free;
@@ -1762,7 +1760,11 @@ dhd_pktfwd_mcasthandler_drop:
 
 dhd_pktfwd_mcasthandler_success:
 
+#ifdef BCM_DHD_LOCK
     DHD_UNLOCK(dhd_pub); //-----------------------
+#else
+    DHD_PERIM_UNLOCK_ALL(radio_idx % FWDER_MAX_UNIT); //-----------------------
+#endif
 
     return;
 }   /* _dhd_pktfwd_mcasthandler() */
@@ -2024,11 +2026,19 @@ dhd_pktfwd_pktlist_xmit(pktlist_context_t * dhd_pktlist_context,
     dhd_pub     = g_dhd_info[radio_idx];
     dhd_pktfwd_keymap = dhd_pktfwd->dhd_pktfwd_keymap[radio_idx];
 
+#ifdef BCM_DHD_LOCK
     DHD_LOCK(dhd_pub); //+++++++++++++++++++++++++
+#else
+    DHD_PERIM_LOCK_ALL(radio_idx % FWDER_MAX_UNIT); //+++++++++++++++++++++++++
+#endif
 
     flowid = dhd_pktfwd_keymap->pktfwdkey_flowid[pktlist->prio][dest];
 
+#ifdef BCM_DHD_LOCK
     DHD_UNLOCK(dhd_pub); //-----------------------
+#else
+    DHD_PERIM_UNLOCK_ALL(radio_idx % FWDER_MAX_UNIT); //-----------------------
+#endif
 
     d3lut_elem->ext.hit = 1;
 	
@@ -2061,8 +2071,11 @@ dhd_pktfwd_pktlist_xmit(pktlist_context_t * dhd_pktlist_context,
         return BCME_OK;
     }
 
+#ifdef BCM_DHD_LOCK
     DHD_LOCK(dhd_pub); //+++++++++++++++++++++++++
-
+#else
+    DHD_PERIM_LOCK_ALL(radio_idx % FWDER_MAX_UNIT); //+++++++++++++++++++++++++
+#endif
     flow_ring_node = DHD_FLOW_RING(dhd_pub, flowid);
     if ((flow_ring_node->status != FLOW_RING_STATUS_PENDING) &&
 	    (flow_ring_node->status != FLOW_RING_STATUS_OPEN)) {
@@ -2107,7 +2120,11 @@ dhd_pktfwd_pktlist_xmit(pktlist_context_t * dhd_pktlist_context,
 
 dhd_pktfwd_pktlist_xmit_done:
 
+#ifdef BCM_DHD_LOCK
     DHD_UNLOCK(dhd_pub); //-----------------------
+#else
+    DHD_PERIM_UNLOCK_ALL(radio_idx % FWDER_MAX_UNIT); //-----------------------
+#endif
 
     return ret;
 } /* dhd_pktfwd_pktlist_xmit */
