@@ -70,8 +70,11 @@ jobs:
               cp ${IMAGE_PATH}/*.trx workspace/release/
               cp ${IMAGE_PATH}/DSL*DSL*.md5 workspace/release/ || :
             elif [[ ${MODEL} == "dsl-ax82u" ]]; then
-              cp ${IMAGE_PATH}/*_cferom_pureubi.w workspace/release
+              cp ${IMAGE_PATH}/*_cferom_pureubi.w   workspace/release
               cp ${IMAGE_PATH}/*_cferom_pureubi.md5 workspace/release || :
+            elif [[ ${MODEL} == "rt-ax82u" ]]; then
+              cp ${IMAGE_PATH}/*_cferom_puresqubi.md5 workspace/release
+              cp ${IMAGE_PATH}/*_cferom_puresqubi.w   workspace/release || :
             fi
             cp /tmp/build.log workspace/release/${MODEL}-build.log
             if [ -z "${CIRCLE_TAG}" ]; then
@@ -111,8 +114,9 @@ jobs:
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
             echo "Generating manifest file..."
-            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" > ${UPDATE_DIR}/manifest.txt
+            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  > ${UPDATE_DIR}/manifest.txt
             echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
             cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
