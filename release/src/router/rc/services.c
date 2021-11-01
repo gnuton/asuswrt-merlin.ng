@@ -1982,6 +1982,7 @@ void start_dnsmasq(void)
 	) {
 
 		fprintf(fp, "address=/use-application-dns.net/\n");
+		fprintf(fp, "address=/_dns.resolver.arpa/\n");
 	}
 
 	/* Protect against VU#598349 */
@@ -1993,6 +1994,8 @@ void start_dnsmasq(void)
 #if defined(RTCONFIG_AMAS)
 	fprintf(fp, "script-arp\n");
 #endif
+
+	fprintf(fp, "edns-packet-max=1280\n");
 
 	/* close fp move to the last */
 	append_custom_config("dnsmasq.conf",fp);
@@ -6035,7 +6038,7 @@ void start_upnp(void)
 				if (is_nat_enabled() && nvram_match("vts_enable_x", "1")) {
 					nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
 					while (nv && (b = strsep(&nvp, "<")) != NULL) {
-						char *portv, *portp, *c;
+						char *portv, *portp, *c, *cptr;
 
 						if ((cnt = vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto, &srcip)) < 5)
 							continue;
@@ -6045,6 +6048,12 @@ void start_upnp(void)
 						// Handle port1,port2,port3 format
 						portp = portv = strdup(port);
 						while (portv && (c = strsep(&portp, ",")) != NULL) {
+							cptr = c;
+							while (*cptr) {
+							if (*cptr == ':')
+								*cptr = '-';
+								cptr++;
+							}
 							if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
 								fprintf(f, "deny %s 0.0.0.0/0 0-65535\n", c);
 							if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
@@ -6157,6 +6166,13 @@ void start_upnp(void)
 					   (max_lifetime > 0 ? max_lifetime : 86400));
 
 				fprintf(f, "\ndeny 0-65535 0.0.0.0/0 0-65535\n");
+
+				/* Provide real IP when in dual NAT situation */
+#ifdef RTCONFIG_GETREALIP
+				if (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2) {
+					fprintf(f, "ext_ip=%s\n", nvram_safe_get(strcat_r(prefix, "realip_ip", tmp)));
+				}
+#endif
 
 				fappend(f, "/etc/upnp/config.custom");
 				append_custom_config("upnp", f);

@@ -173,7 +173,7 @@ function initial(){
 	update_digest();
 	/*Advanced Setting end */
 
-	var vpn_server_array = { "PPTP" : ["PPTP", "Advanced_VPN_PPTP.asp"], "OpenVPN" : ["OpenVPN", "Advanced_VPN_OpenVPN.asp"], "IPSEC" : ["IPSec VPN", "Advanced_VPN_IPSec.asp"]};
+	var vpn_server_array = { "PPTP" : ["PPTP", "Advanced_VPN_PPTP.asp"], "OpenVPN" : ["OpenVPN", "Advanced_VPN_OpenVPN.asp"], "IPSEC" : ["IPSec VPN", "Advanced_VPN_IPSec.asp"], "Wireguard" : ["Wireguard VPN", "Advanced_WireguardServer_Content.asp"]};
 	if(!pptpd_support) {
 		delete vpn_server_array.PPTP;
 	}
@@ -183,6 +183,10 @@ function initial(){
 	if(!ipsec_srv_support) {
 		delete vpn_server_array.IPSEC;
 	}
+	if(!wireguard_support) {
+		delete vpn_server_array.Wireguard;
+	}
+
 	$('#divSwitchMenu').html(gen_switch_menu(vpn_server_array, "OpenVPN"));
 
 	//check DUT is belong to private IP.
@@ -1455,10 +1459,10 @@ function callback_upload_cert(_flag) {
 												<td width="15%" style="text-align:center;">-
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_username" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_username" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off" autocomplete="off">
 												</td>
 												<td width="35%">
-													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off">
+													<input type="text" class="input_25_table" maxlength="64" name="vpn_server_clientlist_password" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off" autocomplete="off">
 													<div id="client_pwd_strength"></div>
 												</td>
 												<td width="15%">
