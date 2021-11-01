@@ -4,7 +4,7 @@
 
 <h3 align="center">
     <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">AsusWrt Merlin</a> 
-    for 
+    for DSL & AX5400
     Asus Routers
 </h3>
 
