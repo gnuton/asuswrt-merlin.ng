@@ -56,8 +56,7 @@ jobs:
               tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/DSL-AX82U
             elif [[ ${MODEL} == "rt-ax82u" ]]; then
               echo $BWDPI_KEYS_RTAX82U | base64 -d > /tmp/keys.tgz
-              mkdir -p ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/RC_INDEP/RT-AX82U
-              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/RC_INDEP/RT-AX82U
+              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/RT-AX82U
             fi
             echo "----- BUILD -----"
             make ${MODEL} | tee "/tmp/build.log"
