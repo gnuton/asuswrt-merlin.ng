@@ -8,7 +8,7 @@
 </h3>
 
 <p align="center">
-  A powerful third party alternative firmware.
+  A powerful third party alternative firmware now running on DSL and new RT devices.
   <br>
   <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
