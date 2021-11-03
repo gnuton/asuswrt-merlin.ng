@@ -4,8 +4,7 @@
 
 <h3 align="center">
     <a href="https://github.com/RMerl/asuswrt-merlin/wiki/About-Asuswrt">AsusWrt Merlin</a> 
-    for
-    Asus Routers
+    GNUton's builds
 </h3>
 
 <p align="center">
