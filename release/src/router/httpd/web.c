@@ -27875,7 +27875,8 @@ ej_get_cfg_clientlist(int eid, webs_t wp, int argc, char **argv){
 	lock = file_lock(CFG_FILE_LOCK);
 	shm_client_tbl_id = shmget((key_t)KEY_SHM_CFG, sizeof(CM_CLIENT_TABLE), 0666|IPC_CREAT);
 	if (shm_client_tbl_id == -1){
-		fprintf(stderr, "shmget failed\n");
+		int error = errno;
+		fprintf(stderr, "shmget failed (%d)\n", error);
 		file_unlock(lock);
 		return 0;
 	}
