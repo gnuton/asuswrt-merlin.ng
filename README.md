@@ -62,7 +62,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
   
 ---------------------
 ### Thanks to
-- Asus for the GPL releases
+- Asus for the GPLs and hw samples.
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
 
 ---------------------
