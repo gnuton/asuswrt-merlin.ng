@@ -335,7 +335,11 @@ var SG_mode = ('<% nvram_get("SG_mode"); %>' == 1);
 
 var isGundam = in_territory_code("GD") || CoBrand_flag == 1;
 var isKimetsu = (CoBrand_flag == '2');
-if(isGundam){
+var customTheme = '<% nvram_get("custom_theme"); %>';
+if (customTheme){
+    document.write('<link rel="stylesheet" type="text/css" href="/themes/' + customTheme + '/css/style.css"></link>');
+}
+else if(isGundam){
 	document.write('<link rel="stylesheet" type="text/css" href="/css/gundam.css"></link>');
 }
 else if(isKimetsu){
