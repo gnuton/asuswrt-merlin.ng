@@ -56,7 +56,6 @@ install:
 	# INSTALLDIR is $(INSTALLDIR)/www here
 	mkdir -p $(INSTALLDIR)
 	cp ../www $(INSTALLDIR)/. -rf
-	ln -s /jffs/themes $(INSTALLDIR)/www/themes
 ifeq ($(and $(HND_ROUTER),$(RTCONFIG_VISUALIZATION)),y)
 	install -m 644 $(VISPAGES) $(INSTALLDIR)/www
 endif # CONFIG_VISUALIZATION
