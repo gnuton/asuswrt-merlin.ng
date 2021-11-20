@@ -49,6 +49,18 @@ make dsl-ax82u
 #DSL-AC68U
 cd release/src-rt-6.x.4708
 make dsl-ac68u
+
+# TROUBLESHOOTING
+# If you have cloned repository outside docker you may need to run the following commands
+# to avoid permission denied errors
+# 1. get your uid and gid for your user in the host
+host$ id
+uid=12345(antonio) gid=67890(users)
+
+# 2. Craete the users group in docker
+docker$ groupadd 678980 -g  users
+# 3. Create the user
+docker$ useradd myuser -u 12345 -g 67890 -m -s /bin/bash
 ```
 
 ## Branching
