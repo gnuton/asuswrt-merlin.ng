@@ -73,10 +73,7 @@ jobs:
               mv "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}.trx" "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}_NO-DSL-FIRMWARE.trx"
               cp ${IMAGE_PATH}/*.trx workspace/release/
               cp ${IMAGE_PATH}/DSL*DSL*.md5 workspace/release/ || :
-            elif [[ ${MODEL} == "dsl-ax82u" ]]; then
-              cp ${IMAGE_PATH}/*_cferom_pureubi.w   workspace/release
-              cp ${IMAGE_PATH}/*_cferom_pureubi.md5 workspace/release || :
-            elif [[ ${MODEL} == "rt-ax82u" ]]; then
+            elif [[ ${MODEL} == "rt-ax82u" ]] || [[ ${MODEL} == "dsl-ax82u" ]]; then
               cp ${IMAGE_PATH}/*_cferom_puresqubi.md5 workspace/release
               cp ${IMAGE_PATH}/*_cferom_puresqubi.w   workspace/release || :
             fi
