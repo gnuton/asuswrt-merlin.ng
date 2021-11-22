@@ -57,9 +57,13 @@ ALLOWED_INCLUDE_PATHS := -I.\
 # Implicit rule is $(CC) -c $(CPPFLAGS) $(CFLAGS)
 # See Section 10.2 of Gnu Make manual
 # 
+ifeq ($(wildcard *.c),)
+$(LIB):
+	cp prebuilt/libarcher.so libarcher.so
+else
 $(LIB): $(OBJS)
 	$(CC) -shared $(BCM_LD_FLAGS) -Wl,--whole-archive,-soname,$@ -o $@ $(OBJS) -Wl,--no-whole-archive
-
+endif
 
 
 #

@@ -159,6 +159,8 @@ then
     git add -f $REPO/release/src/router/dsl_diag/
     git add -f $REPO/release/src/router/tr069/
     git add -f $REPO/release/src/router/spectrum/*
+
+    git add -f $REPO/release/src-rt-5.02axhnd.675x/router-sysdep.dsl-ax82u/
 else
     echo "Unrecognized BUILD_NAME!"
     exit
