@@ -148,6 +148,7 @@ function QKfinish_load_body(){
 
 	if(transfer_mode == "atm"){
 		document.getElementById("atm_info").style.display = "";
+		document.form.prev_page.value = "/qis/QIS_manual_setting.htm";
 		//Brazil - GVT
 		if (country_str == "Brazil"){
 			if (prctl_val == "0" && vpi_val == "0" && vci_val == "35" && encap_val == "0" && ispname_str == "GVT"){
@@ -174,11 +175,15 @@ function QKfinish_load_body(){
 			document.getElementById("mac_addr1").style.display = "";
 			document.getElementById("mac_addr2").style.display = "";
 		}
-		document.form.prev_page.value = "/qis/QIS_manual_setting.htm";
 	
 	}else{	//transmode  "ptm"
 		document.getElementById("ptm_info").style.display = "";
 		document.form.prev_page.value = "/qis/QIS_PTM_manual_setting.htm";
+	}
+
+	if ((country_str == "United Kingdom" || country_str == "Ireland" || country_str == "Scotland") && ispname_str.search("BT") >= 0){
+		document.form.dsltmp_qis_pppoe_username.value = "bthomehub@btbroadband.com";
+		document.form.dsltmp_qis_pppoe_passwd.value = "bt";
 	}
 }
 

@@ -10,6 +10,8 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 var wl0_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>');
 var wl1_ssid_orig = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
@@ -91,12 +93,12 @@ function QKWireless_load_body(){
 	}
 
 	if (is_admin_pswd_set == "1") {
-		document.form.http_username.value="<% nvram_get("dsltmp_qis_admin_username"); %>";
-		document.form.http_passwd.value="<% nvram_get("dsltmp_qis_admin_passwd"); %>";
-	}
-	else {
-		document.form.http_username.disabled = true;
-		document.form.http_passwd.disabled = true;
+		var dsltmp_http_username="<% nvram_get("dsltmp_qis_admin_username"); %>";
+		var dsltmp_http_passwd="<% nvram_get("dsltmp_qis_admin_passwd"); %>";
+		var postData = {"restart_httpd": "0", "new_username":dsltmp_http_username, "new_passwd":dsltmp_http_passwd};
+		setTimeout(function(){
+			httpApi.chpass(postData);
+		}, 100);
 	}
 
 	if (is_dsl_pvc_set == "0") {
@@ -229,8 +231,6 @@ function gotoHome(){
 <input type="hidden" name="lan_dns2_x" value="" disabled>
 <input type="hidden" name="lan_ipaddr_rt" value="" disabled>
 <input type="hidden" name="lan_netmask_rt" value="" disabled>
-<input type="hidden" name="http_username" value="">
-<input type="hidden" name="http_passwd" value="<% nvram_get("password"); %>">
 <input type="hidden" name="dsl0_enable" value="0">
 <input type="hidden" name="dsl0_vpi" value="<% nvram_get("dsltmp_qis_vpi"); %>">
 <input type="hidden" name="dsl0_vci" value="<% nvram_get("dsltmp_qis_vci"); %>">

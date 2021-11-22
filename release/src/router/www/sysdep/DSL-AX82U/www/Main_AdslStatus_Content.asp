@@ -122,6 +122,8 @@ var log_CRCDown;
 var log_CRCUp;
 var log_FECDown;
 var log_FECUp;
+var log_HECDown;
+var log_HECUp;
 var log_ESDown;
 var log_ESUp;
 var log_SESDown;
@@ -239,6 +241,8 @@ function update_log(){
 				document.getElementById("div_INPREINUp").innerHTML = log_INPREINUp;
 				document.getElementById("div_FECDown").innerHTML = log_FECDown;
 				document.getElementById("div_FECUp").innerHTML = log_FECUp;
+				document.getElementById("div_HECDown").innerHTML = log_HECDown;
+				document.getElementById("div_HECUp").innerHTML = log_HECUp;
 				document.getElementById("div_CRCDown").innerHTML = log_CRCDown;
 				document.getElementById("div_CRCUp").innerHTML = log_CRCUp;
 				document.getElementById("div_ESDown").innerHTML = log_ESDown;
@@ -569,6 +573,15 @@ function showadslbootTime(){
 								</td>
 								<td>
 									<div id="div_FECUp"><% nvram_get("dsllog_fecup"); %></div>
+								</td>
+							</tr>
+							<tr>
+								<th>HEC</th>
+								<td>
+									<div id="div_HECDown"><% nvram_get("dsllog_hecdown"); %></div>
+								</td>
+								<td>
+									<div id="div_HECUp"><% nvram_get("dsllog_hecup"); %></div>
 								</td>
 							</tr>
 							<tr>
