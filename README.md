@@ -21,6 +21,8 @@
   ·
   <a href="https://www.snbforums.com/threads/gnutons-merlin-builds-for-dsl-router-386-1_2-released.70980/">Support forum</a>
   ·
+  <a href="https://twitter.com/gnuton">Follow @me on Twitter</a>
+  ·  
   <a href="https://gitter.im/asuswrt/merlin-dsl">Chat</a>
 </p>
 
