@@ -95,6 +95,18 @@ then
     git add -f $REPO/release/src/router/aaews/prebuild/*
     git add -f $REPO/release/src/router/dsl_drv_tool/*
     git add -f $REPO/release/src/router/spectrum/*
+    git add -f $REPO/release/src/router/asuswebstorage/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/dropbox_client/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/ftpclient/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/libasc/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/libasuslog/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/libbcm/prebuilt/DSL-AC68U/*
+    git add -f $REPO/release/src/router/libupnp_arm/*
+    git add -f $REPO/release/src/router/nas_arm/nas/prebuilt/*
+    git add -f $REPO/release/src/router/webdav_client/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src/router/wlc_nt/prebuild/DSL-AC68U/*
+    git add -f $REPO/release/src-rt-6.x.4708/tc_fw/*
+
 elif [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
     git add -f $REPO/release/src-rt-5.02axhnd.675x/wl/exe/prebuilt/*
