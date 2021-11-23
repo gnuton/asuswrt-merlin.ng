@@ -1,4 +1,5 @@
 version: 2.1
+orbs: git-shallow-clone: guitarrapc/git-shallow-clone@2.4.0
 jobs:
   build:
     parameters:
@@ -18,7 +19,7 @@ jobs:
           TERM: "xterm-256color"
     resource_class: large
     steps:
-      - checkout
+      - git-shallow-clone
       - run:
           name: Set Version from TAG
           shell: /bin/bash
