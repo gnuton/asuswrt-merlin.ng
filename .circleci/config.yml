@@ -1,6 +1,26 @@
 version: 2.1
-orbs: git-shallow-clone: guitarrapc/git-shallow-clone@2.4.0
+
+orbs: 
+  git-shallow-clone: guitarrapc/git-shallow-clone@2.4.0
+
 jobs:
+  getcode:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - run:
+          name: Get code
+          shell: /bin/bash
+          command: |
+            #git clone --depth 1 --branch $CIRCLE_BRANCH  $CIRCLE_REPOSITORY_URL
+            pwd
+            ls
+            rm -Rf .git
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
   build:
     parameters:
       model:
@@ -19,7 +39,8 @@ jobs:
           TERM: "xterm-256color"
     resource_class: large
     steps:
-      - git-shallow-clone
+      - attach_workspace:
+          at: .
       - run:
           name: Set Version from TAG
           shell: /bin/bash
@@ -155,10 +176,16 @@ workflows:
   version: 2.1
   build_and_release:
     jobs:
+      - getcode:
+          filters:
+            tags:
+              only: /.*/
       - build:
           name: "build_dsl-ac68u"
           model: "dsl-ac68u"
           release_dir: "src-rt-6.x.4708"
+          requires:
+            - getcode
           filters:
             tags:
               only: /.*/
@@ -171,6 +198,8 @@ workflows:
           name: "build_dsl-ax82u"
           model: "dsl-ax82u"
           release_dir: "src-rt-5.02axhnd.675x"
+          requires:
+            - getcode
           filters:
             tags:
               only: /.*/
@@ -183,6 +212,8 @@ workflows:
           name: "build_rt-ax82u"
           model: "rt-ax82u"
           release_dir: "src-rt-5.02axhnd.675x"
+          requires:
+            - getcode
           filters:
             tags:
               only: /.*/
