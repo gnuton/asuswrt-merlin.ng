@@ -58,7 +58,7 @@ host$ id
 uid=12345(antonio) gid=67890(users)
 
 # 2. Craete the users group in docker
-docker$ groupadd 678980 -g  users
+docker$ groupadd  -g 678980 users
 # 3. Create the user
 docker$ useradd myuser -u 12345 -g 67890 -m -s /bin/bash
 ```
