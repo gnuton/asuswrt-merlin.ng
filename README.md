@@ -18,10 +18,11 @@
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=enhancement&template=feature_request.md">Request feature</a>
   ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=bug&template=bug_report.md">Report bug</a>
-  ·
+</p>
+<p align="center">
   <a href="https://www.snbforums.com/threads/gnutons-merlin-builds-for-dsl-router-386-1_2-released.70980/">Support forum</a>
   ·
-  <a href="https://twitter.com/gnuton">Follow @me on Twitter</a>
+  <a href="https://twitter.com/gnuton">@MyTweets</a>
   ·  
   <a href="https://gitter.im/asuswrt/merlin-dsl">Chat</a>
 </p>
