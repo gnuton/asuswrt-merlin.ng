@@ -42,7 +42,7 @@ git checkout -b gnuton-master origin/gnuton-master
 
 docker run -it --rm -v "$PWD:/build" gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04 /bin/bash
 
-#DSL-AX82U
+#RT/DSL-AX82U
 cd release/src-rt-5.02axhnd.675x
 make dsl-ax82u
 
