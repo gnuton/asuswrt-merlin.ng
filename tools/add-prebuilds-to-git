@@ -63,6 +63,7 @@ then
 
 elif [ "$BUILD_NAME" == "DSL-AC68U" ]
 then
+    git add -f $REPO/release/src/router/infosvr/prebuild/DSL-AC68U/*
     git add -f $REPO/release/src-rt-6.x.4708/wl/exe/prebuilt/DSL-AC68U/*
     git add -f $REPO/release/src/router/bwdpi_source/asus_sql/prebuild/DSL-AC68U/*
     git add -f $REPO/release/src/router/bwdpi_source/prebuild/DSL-AC68U/*

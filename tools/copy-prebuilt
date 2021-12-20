@@ -234,9 +234,9 @@ fi
 if [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
     cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
-	cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
-	cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
-	cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
+    cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
+    cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
+    cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
 fi
 
 # Cleanup
