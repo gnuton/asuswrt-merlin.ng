@@ -237,6 +237,7 @@ then
     cp -a release/src/router/dsl_diag/* $REPO/release/src/router/dsl_diag
     cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
     cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
+    cp -a release/src-rt-5.02axhnd.675x/kernel/dts/prebuilt/* $REPO/release/src-rt-5.02axhnd.675x/kernel/dts/prebuilt/
 fi
 
 # Cleanup
