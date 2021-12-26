@@ -6,10 +6,11 @@ labels: bug
 assignees: ''
 
 ---
-** Router Model Affected **
+
+**Router Model Affected**
 Models: (eg: DSL-AX82U/RT-AX82U/...)
 
-**Firmware Version Affected **
+**Firmware Version Affected**
 384.xx
 
 **Is this bug present in upstream Merlin releases too?**
