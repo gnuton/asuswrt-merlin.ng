@@ -1,38 +1,23 @@
-curl and libcurl 7.76.1
+curl and libcurl 7.79.1
 
- Public curl releases:         199
- Command line options:         240
- curl_easy_setopt() options:   288
+ Public curl releases:         203
+ Command line options:         242
+ curl_easy_setopt() options:   290
  Public functions in libcurl:  85
- Contributors:                 2366
-
-This release includes the following changes:
-
- o
+ Contributors:                 2489
 
 This release includes the following bugfixes:
 
- o configure: disable min version set for Darwin [19]
- o configure: include <time.h> unconditionally [16]
- o configure: remove use of RETSIGTYPE [17]
- o docs/HTTP3.md: update the build instruction using gnutls [20]
- o examples/hiperfifo.c: check event_initialized before delete [11]
- o file: support GETing directories again [10]
- o github/workflow: add "security-extended" to codeql-analysis.yml [14]
- o h2: allow 100 streams by default [9]
- o hostip: fix builds that disable all asynchronous DNS [1]
- o http_proxy: only loop on 407 + close if we have credentials [8]
- o install: add instructions for Apple Darwin platforms [18]
- o lib: remove unused HAVE_INET_NTOA_R* defines [15]
- o libssh: get rid of PATH_MAX [7]
- o ngtcp2+gnutls: clear credentials when freed [5]
- o ngtcp2: Use ALPN h3-29 for now [21]
- o ntlm: fix negotiated flags usage [12]
- o ntlm: support version 2 on 32-bit platforms [13]
- o openssl: fix CURLOPT_SSLCERT_BLOB without CURLOPT_SSLCERT_KEY [2]
- o TLS: fix HTTP/2 selection [3]
- o tool_progress: fix progress meter final update in parallel mode [6]
- o typecheck-gcc: make the ssl-ctx-cb check use SSL_CTX pointers [4]
+ o Curl_http2_setup: don't change connection data on repeat invokes [10]
+ o curl_multi_fdset: make FD_SET() not operate on sockets out of range [4]
+ o dist: provide lib/.checksrc in the tarball [6]
+ o FAQ: add GOPHERS + curl works on data, not files
+ o hsts: CURLSTS_FAIL from hsts read callback should fail transfer [8]
+ o hsts: handle unlimited expiry [3]
+ o http: fix the broken >3 digit response code detection [1]
+ o strerror: use sys_errlist instead of strerror on Windows [5]
+ o test1184: disable [9]
+ o tests/sshserver.pl: make it work with openssh-8.7p1 [2]
 
 This release includes the following known bugs:
 
@@ -41,34 +26,19 @@ This release includes the following known bugs:
 This release would not have looked like this without help, code, reports and
 advice from friends like these:
 
-  Anthony Shaw, Benbuck Nason, Cesar Eduardo Barros, Cherish98 on github,
-  Christian Schmitz, Daniel Kurečka, Daniel Stenberg, David Hu, Emil Engler,
-  Gilles Vollant, Jochem Broekhoff, Jürgen Gmach, Kenneth Davidson,
-  locpyl-tidnyd on github, Luke Granger-Brown, Marcel Raad, Michael Forney,
-  Muhammed Yavuz Nuzumlalı, Patrick Monnerat, Ray Satiro, romamik om github,
-  Tatsuhiro Tsujikawa, Viktor Szakats,
-  (23 contributors)
+  0xee on github, Daniel Stenberg, Evangelos Foutras, Glenn de boer,
+  Jonathan Cardoso Machado, Kamil Dudka, Marcel Raad, Ray Satiro,
+  RiderALT on github, tawmoto on github, Viktor Szakats,
+  (11 contributors)
 
 References to bug reports and discussions on issues:
 
- [1] = https://curl.se/bug/?i=6831
- [2] = https://curl.se/bug/?i=6816
- [3] = https://curl.se/bug/?i=6825
- [4] = https://curl.se/bug/?i=6818
- [5] = https://curl.se/bug/?i=6824
- [6] = https://curl.se/bug/?i=6840
- [7] = https://curl.se/bug/?i=6829
- [8] = https://curl.se/bug/?i=6828
- [9] = https://curl.se/bug/?i=6852
- [10] = https://curl.se/bug/?i=6845
- [11] = https://curl.se/bug/?i=6876
- [12] = https://curl.se/bug/?i=6813
- [13] = https://curl.se/bug/?i=6849
- [14] = https://curl.se/bug/?i=6815
- [15] = https://curl.se/bug/?i=6867
- [16] = https://curl.se/bug/?i=6859
- [17] = https://curl.se/bug/?i=6861
- [18] = https://curl.se/bug/?i=6860
- [19] = https://curl.se/bug/?i=6838
- [20] = https://curl.se/bug/?i=6857
- [21] = https://curl.se/bug/?i=6864
+ [1] = https://curl.se/bug/?i=7738
+ [2] = https://curl.se/bug/?i=7724
+ [3] = https://curl.se/bug/?i=7720
+ [4] = https://curl.se/bug/?i=7718
+ [5] = https://curl.se/bug/?i=7735
+ [6] = https://curl.se/bug/?i=7733
+ [8] = https://curl.se/bug/?i=7726
+ [9] = https://curl.se/bug/?i=7725
+ [10] = https://curl.se/bug/?i=7730

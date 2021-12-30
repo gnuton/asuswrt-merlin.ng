@@ -4,6 +4,51 @@ Change Log
 All notable changes to the project are documented in this file.
 
 
+[v2.9.1][] - 2021-12-09
+-----------------------
+
+### Changes
+- `debian/` directory and packaging dropped in favor of downstream
+  official packaging.  Too difficult to support different versions and
+  derivatives, not just Debian but also Ubuntu, etc.
+- Source `$INADYN_ARGS`, or `$INADYN_OPTS`, for the command line from an
+  `EnvironmentFile` in the systemd unit file
+- Reference the README in the systemd unit file instead of home page
+
+### Fixes
+- Issue #367: fix multiple hostname composition in custom providers when
+  using `printf(3)` style format specifiers in `ddns-path`
+- Issue #368: fix build with GCC 4.8, by Fabrice Fontaine
+
+
+[v2.9.0][] - 2021-11-21
+-----------------------
+
+### Changes
+- Support for including provider config, e.g. username & password
+  from an external file: `include("~/.freedns.pw")`
+- Support for a test framework, initial test cases: DynDNS and FreeDNS
+- Use native Google Domains checkip server instead of generic from Dyn
+- Code size reduction for embedded systems, by Dan Fandrich.  Enable in
+  configure script with `--enable-reduce`
+- Disable logging of base64 encoded password in debug mode
+- Drop deprecated autoconf macros
+- Ignore `SIGPIPE` so `SSL_read()`, `read()` et al return error with
+  `EPIPE` instead of having inadyn exiting (crashing) when the remote
+  end suddenly closes its HTTP/HTTPS connection on us
+- Update maintainer last name and copyright years
+- Add support for GitHub Container Registry
+
+### Fixes
+- Issue #347: default checkip server for DuckDNS, FreeMyIP and GiraDNS
+  changed from ipv4.wtfismyip.com to wtfismyip.com
+- Issue #351: update examples for Google Domains
+- Issue #352: add missing sub_domain=%s (prefix) to dnspod plugin
+- Issue #356: handle FreeDNS authentication errors and improve logging
+- Issue #361: unclear example for NameCheap DDNS
+- Issue #365: memory leak in OpenSSL backend when connection fails
+
+
 [v2.8.1][] - 2021-01-31
 -----------------------
 
@@ -851,7 +896,9 @@ First stable version.
 - port to pSOS
 
 
-[UNRELEASED]: https://github.com/troglobit/inadyn/compare/v2.8.1...HEAD
+[UNRELEASED]: https://github.com/troglobit/inadyn/compare/v2.9.1...HEAD
+[v2.9.1]: https://github.com/troglobit/inadyn/compare/v2.9.0...v2.9.1
+[v2.9.0]: https://github.com/troglobit/inadyn/compare/v2.8.1...v2.9.0
 [v2.8.1]: https://github.com/troglobit/inadyn/compare/v2.8...v2.8.1
 [v2.8]:   https://github.com/troglobit/inadyn/compare/v2.7...v2.8
 [v2.7]:   https://github.com/troglobit/inadyn/compare/v2.6...v2.7

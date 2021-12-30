@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003-2004  Narcis Ilisei
  * Copyright (C) 2006       Steve Horbachuk
- * Copyright (C) 2010-2020  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (C) 2010-2021  Joachim Wiberg <troglobit@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,7 +60,11 @@
 
 int os_install_signal_handler (void *ctx);
 int os_check_perms            (void);
-int os_shell_execute          (char *cmd, char *ip, char *hostname, char *event, int error);
+int os_shell_execute          (char *cmd, char *ip,
+#ifdef USE_IPV6
+	char *ipv6,
+#endif
+	char *hostname, char *event, int error);
 
 #endif /* INADYN_OS_H_ */
 

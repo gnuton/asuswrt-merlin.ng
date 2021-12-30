@@ -8,7 +8,6 @@
 
 #define CFG_FILE_LOCK		"cfg_mnt"
 #define KEY_SHM_CFG		2001
-#define CFG_CLIENT_NUM		16
 #define MAC_LIST_JSON_FILE	"/tmp/maclist.json"
 #define ALIAS_LEN			33
 #define IP_LEN				4
@@ -17,11 +16,12 @@
 #define MODEL_NAME_LEN		33
 #define TERRITORY_CODE_LEN	33
 #define RE_LIST_JSON_FILE	"/tmp/relist.json"
-#ifdef RTCONFIG_MAX_RE_32
-#define MAX_RELIST_COUNT	32
+#ifdef RTCONFIG_MAX_RE
+#define MAX_RELIST_COUNT	RTCONFIG_MAX_RE
 #else
-#define MAX_RELIST_COUNT	9
+#define MAX_RELIST_COUNT	MAX_RELIST_NUM
 #endif
+#define CFG_CLIENT_NUM		(MAX_RELIST_COUNT + 1)
 #define SSID_LEN				33
 #define LLDP_STAT_LEN       128
 #define RE_LIST_MAX_LEN		(MAX_RELIST_COUNT * 128)
@@ -54,14 +54,24 @@ typedef struct _CM_CLIENT_TABLE {
 	unsigned char ap5g1[CFG_CLIENT_NUM][MAC_LEN];
 	unsigned char apDwb[CFG_CLIENT_NUM][MAC_LEN];
 	unsigned char ap6g[CFG_CLIENT_NUM][MAC_LEN];
+	unsigned char ap2g_fh[CFG_CLIENT_NUM][MAC_LEN];
+	unsigned char ap5g_fh[CFG_CLIENT_NUM][MAC_LEN];
+	unsigned char ap5g1_fh[CFG_CLIENT_NUM][MAC_LEN];
+	unsigned char ap6g_fh[CFG_CLIENT_NUM][MAC_LEN];
 	char ap2g_ssid[CFG_CLIENT_NUM][SSID_LEN];
 	char ap5g_ssid[CFG_CLIENT_NUM][SSID_LEN];
 	char ap5g1_ssid[CFG_CLIENT_NUM][SSID_LEN];
 	char ap6g_ssid[CFG_CLIENT_NUM][SSID_LEN];
+	char ap2g_ssid_fh[CFG_CLIENT_NUM][SSID_LEN];
+	char ap5g_ssid_fh[CFG_CLIENT_NUM][SSID_LEN];
+	char ap5g1_ssid_fh[CFG_CLIENT_NUM][SSID_LEN];
+	char ap6g_ssid_fh[CFG_CLIENT_NUM][SSID_LEN];
 	int level[CFG_CLIENT_NUM];
 	char fwVer[CFG_CLIENT_NUM][FWVER_LEN];
 	char newFwVer[CFG_CLIENT_NUM][FWVER_LEN];
 	char modelName[CFG_CLIENT_NUM][MODEL_NAME_LEN];
+	char productId[CFG_CLIENT_NUM][MODEL_NAME_LEN];
+	char frsModelName[CFG_CLIENT_NUM][MODEL_NAME_LEN];
 	char territoryCode[CFG_CLIENT_NUM][TERRITORY_CODE_LEN];
 	int activePath[CFG_CLIENT_NUM];
 	int bandnum[CFG_CLIENT_NUM];
@@ -79,8 +89,8 @@ typedef struct _CM_CLIENT_TABLE {
 } CM_CLIENT_TABLE, *P_CM_CLIENT_TABLE;
 
 extern int cm_checkReListExist(char *Mac);
-extern int cm_checkReListUpdate(char *newReMac, char *sta2gMac, char *sta5gMac);
-extern void cm_updateReList(char *newReMac, char *sta2gMac, char *sta5gMac, int action);
+extern int cm_checkReListUpdate(char *newReMac, char *sta2gMac, char *sta5gMac, char *sta6gMac);
+extern void cm_updateReList(char *newReMac, char *sta2gMac, char *sta5gMac, char *sta6gMac, int action);
 extern void cm_handleReListUpdate(unsigned char *decodeMsg);
 extern int cm_isReWifiUpstreamMac(char *staMac);
 extern int cm_prepareReListMsg(char *msg, int msgLen);
@@ -106,6 +116,7 @@ extern int cm_checkObVifReListUpdate(char *newReMac);
 extern int cm_getObVifReByNewReMac(char *newReMac, char *obReMac, int macLen);
 extern void cm_updateObVifReList(char *newReMac, char *obReMac, int action);
 #endif
+extern void cm_reorganizeReList();
 
 #endif /* __CFG_SLAVELIST_H__ */
 /* End of cfg_slavelist.h */

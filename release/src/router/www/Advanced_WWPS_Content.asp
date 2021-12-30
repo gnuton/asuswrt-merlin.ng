@@ -206,7 +206,10 @@ function applyRule(){
 }
 
 function enableWPS(){
-	document.form.action_script.value = "restart_wireless";
+	if(Qcawifi_support && amesh_support)
+		document.form.action_script.value = "restart_wpsie";
+	else
+		document.form.action_script.value = "restart_wireless";
 	document.form.action_mode.value = "apply_new";
 	document.form.action_wait.value = "3";
 	applyRule();
@@ -865,8 +868,14 @@ function checkWLReady(){
 										}					
 									}
 									
-									document.form.wps_enable.value = "1";
-									enableWPS();
+									if( !SG_mode || (SG_mode && confirm('Enabling WPS may result in the leak of your WiFi network password. Do you still want to proceed?'))){
+										document.form.wps_enable.value = "1";
+										enableWPS();
+									}
+									else{
+										$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
+										return false;
+									}
 								 },
 								 function() {
 									document.form.wps_enable.value = "0";
@@ -875,7 +884,7 @@ function checkWLReady(){
 							);
 						</script>
 						<span id="wps_enable_hint"></span>
-		  	  </td>
+				</td>
 			</tr>
 			<tr id="wps_band_tr">
 				<th width="30%"><a class="hintstyle" href="javascript:void(0);" onclick="openHint(13,5);"><#Current_band#></th>

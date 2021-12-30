@@ -2,6 +2,7 @@ Long: version
 Short: V
 Help: Show version number and quit
 Category: important curl
+Example: --version
 ---
 Displays information about curl and the libcurl version it uses.
 
@@ -50,8 +51,6 @@ This curl supports transfers of large files, files larger than 2GB.
 .IP "libz"
 Automatic decompression (via gzip, deflate) of compressed files over HTTP is
 supported.
-.IP "Metalink"
-This curl supports Metalink.
 .IP "MultiSSL"
 This curl supports multiple TLS backends.
 .IP "NTLM"

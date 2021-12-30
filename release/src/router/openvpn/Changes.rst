@@ -1,3 +1,103 @@
+Overview of changes in 2.5.5
+============================
+
+User-visible Changes
+--------------------
+- SWEET32/64bit cipher deprecation change was postponed to 2.7
+
+- Windows: use network address for emulated DHCP server as default
+  this enables use of a /30 subnet, which is needed when connecting
+  to OpenVPN Cloud.
+
+- require EC support in windows builds
+  (this means it's no longer possible to build a Windows OpenVPN binary
+  with an OpenSSL lib without EC support)
+
+New features
+------------
+- Windows build: use CFG and Spectre mitigations on MSVC builds
+
+- bring back OpenSSL config loading to Windows builds.
+  OpenSSL config is loaded from %installdir%\SSL\openssl.cfg
+  (typically: c:\program files\openvpn\SSL\openssl.cfg) if it exists.
+
+  This is important for some hardware tokens which need special
+  OpenSSL config for correct operation.  Trac #1296
+
+Bugfixes
+--------
+- Windows build: enable EKM
+
+- Windows build: improve various vcpkg related build issues
+
+- Windows build: fix regression related to non-writeable status files
+  (Trac #1430)
+
+- Windows build: fix regression that broke OpenSSL EC support
+
+- Windows build: fix "product version" display (2.5..4 -> 2.5.4)
+
+- Windows build: fix regression preventing use of PKCS12 files
+
+- improve "make check" to notice if "openvpn --show-cipher" crashes
+
+- improve argv unit tests
+
+- ensure unit tests work with mbedTLS builds without BF-CBC ciphers
+
+- include "--push-remove" in the output of "openvpn --help"
+
+- fix error in iptables syntax in example firewall.sh script
+
+- fix "resolvconf -p" invocation in example "up" script
+
+- fix "common_name" environment for script calls when
+  "--username-as-common-name" is in effect (Trac #1434)
+
+Documentation
+-------------
+- move "push-peer-info" documentation from "server options" to "client"
+  (where it belongs)
+
+- correct "foreign_option_{n}" typo in manpage
+
+- update IRC information in CONTRIBUTING.rst (libera.chat)
+
+- README.down-root: fix plugin module name
+
+
+Overview of changes in 2.5.4
+============================
+Bugfixes
+--------
+- fix prompting for password on windows console if stderr redirection
+  is in use - this breaks 2.5.x on Win11/ARM, and might also break
+  on Win11/adm64 when released.
+
+- fix setting MAC address on TAP adapters (--lladdr) to use sitnl
+  (was overlooked, and still used "ifconfig" calls)
+
+- various improvements for man page building (rst2man/rst2html etc)
+
+- minor bugfix with IN6_IS_ADDR_UNSPECIFIED() use (breaks build on
+  at least one platform strictly checking this)
+
+- fix minor memory leak under certain conditions in add_route() and
+  add_route_ipv6()
+
+User-visible Changes
+--------------------
+- documentation improvements
+
+- copyright updates where needed
+
+- better error reporting when win32 console access fails
+
+New features
+------------
+- also build man page on Windows builds
+
+
 Overview of changes in 2.5.3
 ============================
 Bugfixes

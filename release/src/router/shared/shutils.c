@@ -358,7 +358,7 @@ EXIT:
 		pid = getpid();
 
 		if ((fd = open("/dev/console", O_RDWR | O_NONBLOCK)) < 0) {
-			sprintf(s, "/tmp/eval.%d", pid);
+			snprintf(s, sizeof(s), "/tmp/eval.%d", pid);
 			fd = open(s, O_CREAT | O_RDWR | O_NONBLOCK, 0600);
 		} else
 			dup2(fd, STDIN_FILENO);
@@ -574,7 +574,7 @@ get_pid_by_name(char *name)
 		if (!isdigit(*next->d_name))
 			continue;
 
-		sprintf(filename, "/proc/%s/cmdline", next->d_name);
+		snprintf(filename, sizeof(filename), "/proc/%s/cmdline", next->d_name);
 		fp = fopen(filename, "r");
 		if (!fp) {
 			continue;
@@ -614,7 +614,7 @@ get_pid_by_thrd_name(char *name)
                 /* If it isn't a number, we don't want it */
                 if (!isdigit(*next->d_name))
                         continue;
-                sprintf(filename, "/proc/%s/comm", next->d_name);
+                snprintf(filename, sizeof(filename), "/proc/%s/comm", next->d_name);
                 fp = fopen(filename, "r");
                 if (!fp) {
                         continue;
@@ -1005,7 +1005,7 @@ get_ifname_unit(const char* ifname, int *unit, int *subunit)
 	}
 #endif
 
-	strcpy(str, ifname);
+	strlcpy(str, ifname, sizeof(str));
 
 	/* find the trailing digit chars */
 	len = sh_strrspn(str, digits);
@@ -1145,7 +1145,7 @@ _find_in_list(const char *haystack, const char *needle, char deli)
 	if (!haystack || !needle || !*haystack || !*needle)
 		return NULL;
 
-	sprintf(strde, "%c", deli);
+	snprintf(strde, sizeof(strde), "%c", deli);
 	needle_len = strlen(needle);
 	haystack_len = strlen(haystack);
 
@@ -1957,9 +1957,9 @@ wl_ether_etoa(const struct ether_addr *n)
 		if (i)
 			*c++ = ':';
 #if defined(RTCONFIG_LANTIQ)|| defined(RTCONFIG_LANTIQ)|| defined(RTCONFIG_QCA)			
-		c += sprintf(c, "%02X", n->ether_addr_octet[i] & 0xff);
+		c += snprintf(c, sizeof(etoa_buf) - (c - etoa_buf), "%02X", n->ether_addr_octet[i] & 0xff);
 #else
-		c += sprintf(c, "%02X", n->octet[i] & 0xff);
+		c += snprintf(c, sizeof(etoa_buf) - (c - etoa_buf), "%02X", n->octet[i] & 0xff);
 #endif		
 	}
 	return etoa_buf;
@@ -2027,7 +2027,7 @@ char *enc_str(char *str, char *enc_buf)
         memset(buf2, 0, sizeof(buf2));
         memset(enc_buf, 0, ENC_WORDS_LEN);
 
-        strcpy((char *) buf, str);
+        strlcpy((char *) buf, str, sizeof(buf));
 
         shortstr_encrypt(buf, buf2, &used_shift);
         memcpy(enc_buf, buf2, DATA_WORDS_LEN);
@@ -2157,6 +2157,41 @@ char *trimNL(char *str)
 	return str;
 }
 
+/*******************************************************************
+* NAME: trimWS
+* AUTHOR: Renjie Lee
+* CREATE DATE: 2021/05/20
+* DESCRIPTION: remove leading and tailing white space(s)
+* INPUT:  str: the string to be procesed
+* OUTPUT:  None
+* RETURN: the string which has neither leading nor tailing white space(s)
+* NOTE:
+*******************************************************************/
+char *trimWS(char *str)
+{
+	char *end;
+
+	while(*str == ' ')
+	{
+		str++;
+	}
+
+	if(*str == 0)
+	{
+		return str;
+	}
+
+	end = str + strlen(str) - 1;
+	while((end > str) && (*end == ' '))
+	{
+		end--;
+	}
+
+	*(end+1) = '\0';
+
+	return str;
+}
+
 /**
 ** get_char_count()
 ** return the number of occurrence of character 'ch' in the C string 'str'.
@@ -2185,7 +2220,7 @@ int get_char_count(char *str, int ch)
 char *get_process_name_by_pid(const int pid)
 {
 	static char name[1024];
-	sprintf(name, "/proc/%d/cmdline",pid);
+	snprintf(name, sizeof(name), "/proc/%d/cmdline",pid);
 	FILE* f = fopen(name,"r");
 	if(f){
 		size_t size;
@@ -2326,7 +2361,10 @@ int remove_kmods(char *kmods_list)
 			return -2;
 		}
 	} else
-		p = strcpy(buf, kmods_list);
+	{
+		strlcpy(buf, kmods_list, sizeof(buf));
+		p = buf;
+	}
 
 	for (q = NULL; q != p;) {
 		q = strrchr(p, ' ') ? : p;
@@ -2354,6 +2392,36 @@ int num_of_wl_if()
 
 	strlcpy(wl_ifnames, nvram_safe_get("wl_ifnames"), sizeof(wl_ifnames));
 	foreach (word, wl_ifnames, next)
+		count++;
+
+	return count;
+}
+
+int num_of_5g_if()
+{
+	char word[256], *next;
+	int count = 0;
+	char wl_ifnames[32] = { 0 };
+	int band;
+
+	strlcpy(wl_ifnames, nvram_safe_get("wl_ifnames"), sizeof(wl_ifnames));
+	foreach (word, wl_ifnames, next) {
+		wl_ioctl(word, WLC_GET_BAND, &band, sizeof(band));
+		if(band == WLC_BAND_5G)
+			count++;
+	}
+
+	return count;
+}
+
+int num_of_wan_if()
+{
+	char word[256], *next;
+	int count = 0;
+	char wan_ifnames[32] = { 0 };
+
+	strlcpy(wan_ifnames, nvram_safe_get("wan_ifnames"), sizeof(wan_ifnames));
+	foreach (word, wan_ifnames, next)
 		count++;
 
 	return count;
@@ -2547,10 +2615,10 @@ void retrieve_static_maclist_from_nvram(int idx,struct maclist *maclist,int macl
 	snprintf(prefix,16,"wl%d_",idx);
 
 #ifdef RTCONFIG_AMAS
-	if (nvram_get("cfg_relist"))
+	if (is_cfg_relist_exist())
 	{
 		if (nvram_get_int("re_mode") == 1) {
-			nv = nvp = strdup(nvram_safe_get("cfg_relist"));
+			nv = nvp = get_cfg_relist(0);
 			if (nv) {
 				while ((b = strsep(&nvp, "<")) != NULL) {
 					if ((vstrsep(b, ">", &reMac, &maclist2g, &maclist5g, &timestamp) != 4))
@@ -2606,7 +2674,7 @@ void retrieve_static_maclist_from_nvram(int idx,struct maclist *maclist,int macl
 #ifdef RTCONFIG_AMAS
 		if (nvram_match(strcat_r(prefix, "macmode", tmp), "allow"))
 		{
-			nv = nvp = strdup(nvram_safe_get("cfg_relist"));
+			nv = nvp = get_cfg_relist(0);
 			if (nv) {
 				while ((b = strsep(&nvp, "<")) != NULL) {
 					if ((vstrsep(b, ">", &reMac, &maclist2g, &maclist5g, &timestamp) != 4))

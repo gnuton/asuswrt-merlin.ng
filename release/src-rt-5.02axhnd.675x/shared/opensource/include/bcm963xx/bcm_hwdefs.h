@@ -317,7 +317,7 @@ mappaed address is for NAND in the kerSysEarlyFlashInit in board driver bcm63xx_
 #define DEFAUT_BACKUP_PSI  0
 
 #define DEFAULT_WPS_DEVICE_PIN     "12345670"
-#ifdef DSLAX82U
+#if defined(DSLAX82U) && defined(RTCONFIG_BCM_MFG)
 #define DEFAULT_WLAN_DEVICE_FEATURE  2
 #else
 #define DEFAULT_WLAN_DEVICE_FEATURE  0

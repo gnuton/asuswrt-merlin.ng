@@ -72,7 +72,7 @@ typedef struct igmp_grp_entry
 
 int bcm_mcast_igmp_process_ignore_group_list (int count, t_BCM_MCAST_IGNORE_GROUP_ENTRY* ignoreMsgPtr);
 int bcm_mcast_igmp_wipe_group(bcm_mcast_ifdata *parent_if, int dest_ifindex, struct in_addr *gpAddr);
-void bcm_mcast_igmp_del_entry(bcm_mcast_ifdata *pif, 
+int bcm_mcast_igmp_del_entry(bcm_mcast_ifdata *pif,
                               t_igmp_grp_entry *igmp_fdb,
                               struct in_addr   *rep,
                               unsigned char    *repMac);

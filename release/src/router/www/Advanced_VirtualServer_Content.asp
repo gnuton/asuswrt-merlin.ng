@@ -18,9 +18,9 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
+<script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" language="JavaScript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/httpApi.js"></script>
-<script type="text/javascript" src="form.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <style type="text/css">
 .contentM_qis{
@@ -84,17 +84,15 @@ if(support_dual_wan_unit_flag){
 	rulelist_nv.push("vts1_rulelist");
 }
 var profileMaxNum = 64;
-var usb_port_conflict_faq = "https://www.asus.com/support/FAQ/1037906";
+var usb_port_conflict_faq = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=Faq&lang="+ui_lang+"&kw=&num=134";
 var usb_port_conflict_current = false;
 var vts_enable_current = "0";
 function initial(){
 	show_menu();
-	httpApi.faqURL("1037906", function(url){
-		document.getElementById("faq").href = url;
-		usb_port_conflict_faq = url;
-		if($("#ftpPortConflict").find("#ftp_port_conflict_faq").length)
+	document.getElementById("faq").href=usb_port_conflict_faq;
+	if($("#ftpPortConflict").find("#ftp_port_conflict_faq").length){
 			$("#ftpPortConflict").find("#ftp_port_conflict_faq").attr("href", usb_port_conflict_faq);
-	});
+	}
 	//parse nvram to array
 	var parseNvramToArray = function(oriNvram) {
 		var parseArray = [];
@@ -128,6 +126,20 @@ function initial(){
 	Object.keys(vts_rulelist_array).forEach(function(key) {
 		gen_vts_ruleTable_Block(key);
 	});
+
+	if(wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1){
+		$(".setup_info_icon").show();
+		$(".setup_info_icon").click(
+			function() {				
+				if($("#s46_ports_content").is(':visible'))
+					$("#s46_ports_content").fadeOut();
+				else{
+					var position = $(".setup_info_icon").position();
+					pop_s46_ports(position, "pf");
+				}
+			}
+		);
+	}
 	
 	loadAppOptions();
 	loadGameOptions();
@@ -323,12 +335,13 @@ function validate_multi_range(val, mini, maxi, obj){
 				return false;												
 		}else				
 			return true;	
-	}else{
+	}
+	else{
 		if(!validate_single_range(val, mini, maxi)){	
-					return false;											
-				}
-				return true;								
-			}	
+			return false;											
+		}
+		return true;								
+	}	
 }
 function validate_single_range(val, min, max) {
 	for(j=0; j<val.length; j++){		//is_number
@@ -343,11 +356,11 @@ function validate_single_range(val, min, max) {
 		return false;
 	}else	
 		return true;
-}	
-var parse_port="";
+}
+
 function check_multi_range(obj, mini, maxi, allow_range){
-	_objValue = obj.value.replace(/[-~]/gi,":");	// "~-" to ":"
-	var PortSplit = _objValue.split(",");
+	var _objValue = obj.value.replace(/[-~]/gi,":");	// "~-" to ":"
+	var PortSplit = _objValue.split(/,|:/);
 	for(i=0;i<PortSplit.length;i++){
 		PortSplit[i] = PortSplit[i].replace(/(^\s*)|(\s*$)/g, ""); 		// "\space" to ""
 		PortSplit[i] = PortSplit[i].replace(/(^0*)/g, ""); 		// "^0" to ""	
@@ -360,22 +373,38 @@ function check_multi_range(obj, mini, maxi, allow_range){
 		}
 		if(allow_range)
 			res = validate_multi_range(PortSplit[i], mini, maxi, obj);
-		else	res = validate_single_range(PortSplit[i], mini, maxi, obj);
+		else	
+			res = validate_single_range(PortSplit[i], mini, maxi, obj);
+
 		if(!res){
 			obj.focus();
 			obj.select();
 			return false;
-		}						
-		
-		if(i ==PortSplit.length -1)
-			parse_port = parse_port + PortSplit[i];
-		else
-			parse_port = parse_port + PortSplit[i] + ",";
-			
+		}
 	}
-	obj.value = parse_port;
-	parse_port ="";
-	return true;	
+	
+	return true;
+}
+
+function check_multi_range_s46_ports(obj){
+	_objValue = obj.value.replace(/[-~]/gi,":");	// "~-" to ":"
+	var PortSplit = _objValue.split(/,|:/);
+	var res=false;
+	var res_result=0;
+	for(i=0;i<PortSplit.length;i++){
+		PortSplit[i] = PortSplit[i].replace(/(^\s*)|(\s*$)/g, ""); 		// "\space" to ""
+		PortSplit[i] = PortSplit[i].replace(/(^0*)/g, ""); 		// "^0" to ""	
+
+		res = validator.range_s46_ports(obj, PortSplit[i]);
+		if(res)
+			res_result++;
+	}
+
+	if(res_result != PortSplit.length){
+		return false;
+	}
+
+	return true;
 }
 
 function del_Row(_this){
@@ -520,6 +549,35 @@ function editProfile(_mode, _this) {
 	$("#wans_unit").prop("selectedIndex", 0);
 	$("#vts_desc_x").val("");
 	$("#vts_proto_x").prop("selectedIndex", 0);
+	$("#vts_proto_x").change(
+		function() {
+			if( $("#vts_proto_x").val() == "OTHER"){
+				$("#vts_port_x").parent().parent().find('th').html('Protocol Number');
+				$("#vts_port_x").attr('class', 'input_6_table');
+				$("#vts_port_x").attr('maxlength','3');
+				$("#vts_lport_x").parent().parent().hide();
+			}
+			else{
+				$("#vts_port_x").parent().parent().find('th').html('<#IPConnection_VSList_External_Port#><div class="setup_info_icon" style="display:none;"></div>');
+				if(wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1){
+					$(".setup_info_icon").show();
+					$(".setup_info_icon").click(
+						function() {
+							if($("#s46_ports_content").is(':visible'))
+								$("#s46_ports_content").fadeOut();
+							else{
+								var position = $(".setup_info_icon").position();
+								pop_s46_ports(position, "pf");
+							}
+						}
+					);
+				}
+				$("#vts_port_x").attr('class', 'input_25_table');
+				$("#vts_port_x").attr('maxlength','60');
+				$("#vts_lport_x").parent().parent().show();
+				}
+		}
+	);
 	$("#vts_port_x").val("");
 	$("#vts_lport_x").val("");
 	$("#vts_ipaddr_x").val("");
@@ -620,11 +678,21 @@ function saveProfile(_mode, _wanIdx, _rowIdx) {
 		return false;
 	if(document.getElementById("vts_proto_x").value == "OTHER") {
 		document.getElementById("vts_lport_x").value = "";
-		if (!check_multi_range(document.getElementById("vts_port_x"), 1, 255, false))
+		if (!validator.numberRange(document.getElementById("vts_port_x"), 1, 255, false))
 			return false;
 	}
-	if(!check_multi_range(document.getElementById("vts_port_x"), 1, 65535, true))
-		return false;
+	else{
+		if(!check_multi_range(document.getElementById("vts_port_x"), 1, 65535, true))
+			return false;
+		if(wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1){
+			if (!check_multi_range_s46_ports(document.getElementById("vts_port_x"))){
+				if(!confirm("The following port related settings may not work properly since the port is not available in current v6plus usable port range. Do you want to continue?")){
+					document.getElementById("vts_port_x").focus();
+					return false;
+				}
+			}
+		}
+	}
 	if(document.getElementById("vts_lport_x").value.length > 0
 			&& !validator.numberRange(document.getElementById("vts_lport_x"), 1, 65535)) {
 		return false;
@@ -685,6 +753,10 @@ function saveProfile(_mode, _wanIdx, _rowIdx) {
 		obj["" +  rulelist_nv[idx] + ""] = parseArrayToNvram(vts_rulelist_array[element]);
 	});
 	httpApi.nvramSet(obj);
+
+	if($("#s46_ports_content").is(':visible'))
+		$("#s46_ports_content").fadeOut();
+	
 	$("#profile_setting").fadeOut(300,function(){
 		if(vts_enable_current == "1"){
 			var usb_port_conflict_mod = httpApi.ftp_port_conflict_check.conflict();
@@ -710,6 +782,9 @@ function saveProfile(_mode, _wanIdx, _rowIdx) {
 	});
 }
 function cancelProfile() {
+	if($("#s46_ports_content").is(':visible'))
+		$("#s46_ports_content").fadeOut();
+	
 	$("#profile_setting").fadeOut(300);
 }
 </script>
@@ -863,7 +938,7 @@ function cancelProfile() {
 			</td>
 		</tr>
 		<tr>
-			<th><#IPConnection_VSList_External_Port#></th>
+			<th><#IPConnection_VSList_External_Port#><div class="setup_info_icon" style="display:none;"></div></th>
 			<td>
 				<input type="text" maxlength="60" class="input_25_table" id="vts_port_x" onKeyPress="return validator.isPortRange(this, event);" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 			</td>
@@ -871,7 +946,7 @@ function cancelProfile() {
 		<tr>
 			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,26);"><#IPConnection_VSList_Internal_Port#></a></th>
 			<td>
-				<input type="text" maxlength="5" class="input_25_table" id="vts_lport_x" onKeyPress="return validator.isNumber(this,event);" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+				<input type="text" maxlength="5" class="input_6_table" id="vts_lport_x" onKeyPress="return validator.isNumber(this,event);" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 				<span><#feedback_optional#></span>
 			</td>
 		</tr>

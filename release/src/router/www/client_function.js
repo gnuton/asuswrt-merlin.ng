@@ -647,7 +647,7 @@ function popClientListEditTable(event) {
 	//adv setting start
 	if(adv_setting) {
 		var block_internet_hint = "Enable this button to block this device to access internet.";/* untranslated */
-		var time_scheduling_hint = "Time Scheduling allows you to set the time limit for a client's network usage.";/* untranslated */
+		var time_scheduling_hint = "<#ParentalCtrl_Desc_TS#>";
 		var ip_binding_hint = "Enable this button to bind specific IP with MAC Address of this device.";/* untranslated */
 		var internetTimeScheduling_title = (bwdpi_support) ? "<#Time_Scheduling#>" : "<#Parental_Control#>";
 		code += '<tr>';
@@ -735,7 +735,7 @@ function popClientListEditTable(event) {
 		custom_icon_list_api.paramObj.select_icon_callBack = card_select_custom_icon;
 		custom_icon_list_api.paramObj.upload_callBack = previewCardUploadIcon;
 		custom_icon_list_api.gen_component(custom_icon_list_api.paramObj);
-		$.getJSON("http://nw-dlcdnet.asus.com/plugin/js/extend_custom_icon.json",
+		$.getJSON("/ajax/extend_custom_icon.json",
 			function(data){
 				custom_icon_list_api.paramObj.container = $('#edit_client_block').find("#card_custom_image");
 				custom_icon_list_api.paramObj.source = "cloud";
@@ -1165,8 +1165,8 @@ function card_confirm(event) {
 					ip_obj.focus();
 					retFlag = 0;
 				}
-				else if(ip_num <= getSubnet('<% nvram_get("lan_ipaddr"); %>', '<% nvram_get("lan_netmask"); %>', "head") ||
-					 ip_num >= getSubnet('<% nvram_get("lan_ipaddr"); %>', '<% nvram_get("lan_netmask"); %>', "end")){
+				else if(card_client_variable.ipBindingFlag && (ip_num <= getSubnet('<% nvram_get("lan_ipaddr"); %>', '<% nvram_get("lan_netmask"); %>', "head") ||
+					 ip_num >= getSubnet('<% nvram_get("lan_ipaddr"); %>', '<% nvram_get("lan_netmask"); %>', "end"))){
 					alert(ip_obj.value+" <#JS_validip#>");
 					ip_obj.value = $('#edit_client_block #card_client_ipaddr_field_orig').val();
 					ip_obj.focus();
@@ -1459,10 +1459,6 @@ function card_confirm(event) {
 							genClientList();
 
 							switch(callBack) {
-								case "DNSFilter" :
-									showDropdownClientList('setclientmac', 'name>mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
-									show_dnsfilter_list();
-									break;
 								case "DHCP" :
 									showDropdownClientList('setClientIP', 'mac>ip', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 									showdhcp_staticlist();
@@ -1502,6 +1498,10 @@ function card_confirm(event) {
 								case "AiMesh" :
 									client_remove_client_upload_icon(document.getElementById("card_client_macaddr_field").value);
 									display_client_block();
+									break;
+								case "DNSFilter" :
+									showDropdownClientList('setClientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
+									show_dnsfilter_list();
 									break;
 								default :
 									refreshpage();
@@ -1905,12 +1905,17 @@ var sorter = {
 			b_num = b[sorter.indexFlag].replace(/:/g, "");
 			return parseInt(a_num) - parseInt(b_num);
 		}
+		else if(sorter.indexFlag == 8){//Access time
+			var a_num = 0, b_num = 0;
+			a_num = sorter.convert_time_to_num(a[sorter.indexFlag]);
+			b_num = sorter.convert_time_to_num(b[sorter.indexFlag]);
+			return parseInt(a_num) - parseInt(b_num);
+		}
 		else {
 			return parseInt(a[sorter.indexFlag]) - parseInt(b[sorter.indexFlag]);
 		}
 	},
 	"num_decrease" : function(a, b) {
-		var a_num = 0, b_num = 0;
 		if(sorter.indexFlag == 3) { //IP
 			var a_num = 0, b_num = 0;
 			a_num = inet_network(a[sorter.indexFlag]);
@@ -1927,6 +1932,12 @@ var sorter = {
 			var a_num = 0, b_num = 0;
 			a_num = a[sorter.indexFlag].replace(/:/g, "");
 			b_num = b[sorter.indexFlag].replace(/:/g, "");
+			return parseInt(b_num) - parseInt(a_num);
+		}
+		else if(sorter.indexFlag == 8){//Access time
+			var a_num = 0, b_num = 0;
+			a_num = sorter.convert_time_to_num(a[sorter.indexFlag]);
+			b_num = sorter.convert_time_to_num(b[sorter.indexFlag]);
 			return parseInt(b_num) - parseInt(a_num);
 		}
 		else {
@@ -1968,8 +1979,7 @@ var sorter = {
 			sorter[""+clickItem+"_index"] = sorterClickIndex;
 			sorter["sortingMethod_"+clickItem+""] = (sorter["sortingMethod_"+clickItem+""] == "increase") ? "decrease" : "increase";
 		}
-		obj.parentNode.childNodes[sorterLastIndex].style.borderTop = '1px solid #222';
-		obj.parentNode.childNodes[sorterLastIndex].style.borderBottom = '1px solid #222';	
+		obj.parentNode.childNodes[sorterLastIndex].style.boxShadow = "";
 	},
 	"drawBorder" : function(_arrayName) {
 		var clickItem = _arrayName.split("_")[0];
@@ -1989,28 +1999,12 @@ var sorter = {
 			clickIndex = sorter[""+_arrayName.substr(0,3)+"_index"];
 			clickSortingMethod = sorter["sortingMethod_"+_arrayName.substr(0,3)+""];
 		}
-		var borderTopCss = "";
-		var borderBottomCss = "";
-		if(getBrowser_info().ie != undefined || getBrowser_info().ie != null) {
-			borderTopCss = "3px solid #FC0";
-			borderBottomCss = "1px solid #FC0";
-		}
-		else if(getBrowser_info().firefox != undefined || getBrowser_info().firefox != null) {
-			borderTopCss = "2px solid #FC0";
-			borderBottomCss = "1px solid #FC0";
-		}
-		else {
-			borderTopCss = "2px solid #FC0";
-			borderBottomCss = "2px solid #FC0";
-		}
-		if(clickSortingMethod == "increase") {
-			document.getElementById("tr_"+clickItem+"_title").childNodes[clickIndex].style.borderTop = borderTopCss;
-			document.getElementById("tr_"+clickItem+"_title").childNodes[clickIndex].style.borderBottom = '1px solid #222';
-		}
-		else {
-			document.getElementById("tr_"+clickItem+"_title").childNodes[clickIndex].style.borderTop = '1px solid #222';
-			document.getElementById("tr_"+clickItem+"_title").childNodes[clickIndex].style.borderBottom = borderBottomCss;
-		}
+		var boxShadowTopCss = "0 1px 0 #FC0 inset";
+		var boxShadowBottomCss = "0 -1px 0 #FC0 inset";
+		if(clickSortingMethod == "increase")
+			document.getElementById("tr_"+clickItem+"_title").childNodes[clickIndex].style.boxShadow = boxShadowTopCss;
+		else
+			document.getElementById("tr_"+clickItem+"_title").childNodes[clickIndex].style.boxShadow = boxShadowBottomCss;
 	},
 	"doSorter" : function(_flag, _Method, _arrayName) {	
 		// update variables
@@ -2030,6 +2024,22 @@ var sorter = {
 		}
 		drawClientListBlock(_arrayName);
 		sorter.drawBorder(_arrayName);
+	},
+	"convert_time_to_num" : function(_time) {
+		var num = 0;
+		var array = _time.split(":");
+		var hour = parseInt(array[0], 10) * 60 * 60;
+		if(isNaN(hour))
+			hour = 0;
+		var min = parseInt(array[1], 10) * 60;
+		if(isNaN(min))
+			min = 0;
+		var sec = parseInt(array[2], 10);
+		if(isNaN(sec))
+			sec = 0;
+
+		num = hour + min + sec;
+		return num;
 	}
 }
 var wired_list = new Array();
@@ -2244,7 +2254,7 @@ function exportClientListLog() {
 
 function sorterClientList() {
 	//initial sort ip
-	var indexMapType = ["", "", "str", "num", "str", "num", "num", "num", "str"];
+	var indexMapType = ["", "", "str", "num", "str", "num", "num", "num", "num"];
 	switch (clienlistViewMode) {
 		case "All" :
 			sorter.doSorter(sorter.all_index, indexMapType[sorter.all_index], 'all_list');
@@ -2340,7 +2350,7 @@ function create_clientlist_listview() {
 			if(stainfo_support && !(isSwMode('mb') || isSwMode('ew'))) {
 				code += "<th width=" + obj_width[6] + " onclick='sorter.addBorder(this);sorter.doSorter(6, \"num\", \"all_list\");' style='cursor:pointer;' title='The transmission rates of your wireless device'>Tx Rate (Mbps)</th>";/*untranslated*/
 				code += "<th width=" + obj_width[7] + " onclick='sorter.addBorder(this);sorter.doSorter(7, \"num\", \"all_list\");' style='cursor:pointer;' title='The receive rates of your wireless device'>Rx Rate (Mbps)</th>";/*untranslated*/
-				code += "<th width=" + obj_width[8] + " onclick='sorter.addBorder(this);sorter.doSorter(8, \"str\", \"all_list\");' style='cursor:pointer;'><#Access_Time#></th>";
+				code += "<th width=" + obj_width[8] + " onclick='sorter.addBorder(this);sorter.doSorter(8, \"num\", \"all_list\");' style='cursor:pointer;'><#Access_Time#></th>";
 			}
 			code += "</tr>";
 			code += "</table>";
@@ -2386,7 +2396,7 @@ function create_clientlist_listview() {
 				if(stainfo_support && !(isSwMode('mb') || isSwMode('ew'))) {
 					code += "<th width=" + obj_width[6] + " onclick='sorter.addBorder(this);sorter.doSorter(6, \"num\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;' title='The transmission rates of your wireless device'>Tx Rate (Mbps)</th>";/*untranslated*/
 					code += "<th width=" + obj_width[7] + " onclick='sorter.addBorder(this);sorter.doSorter(7, \"num\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;' title='The receive rates of your wireless device'>Rx Rate (Mbps)</th>";/*untranslated*/
-					code += "<th width=" + obj_width[8] + " onclick='sorter.addBorder(this);sorter.doSorter(8, \"str\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;'><#Access_Time#></th>";
+					code += "<th width=" + obj_width[8] + " onclick='sorter.addBorder(this);sorter.doSorter(8, \"num\", \"wl"+wl_map[wl_nband_title[i]]+"_list\");' style='cursor:pointer;'><#Access_Time#></th>";
 				}
 				code += "</tr>";
 				code += "</table>";
@@ -2409,7 +2419,7 @@ function create_clientlist_listview() {
 					if(stainfo_support && !(isSwMode('mb') || isSwMode('ew'))) {
 						code += "<th width=" + obj_width[6] + " onclick='sorter.addBorder(this);sorter.doSorter(6, \"num\", \"gn"+i+"_list\");' style='cursor:pointer;' title='The transmission rates of your wireless device'>Tx Rate (Mbps)</th>";/*untranslated*/
 						code += "<th width=" + obj_width[7] + " onclick='sorter.addBorder(this);sorter.doSorter(7, \"num\", \"gn"+i+"_list\");' style='cursor:pointer;' title='The receive rates of your wireless device'>Rx Rate (Mbps)</th>";/*untranslated*/
-						code += "<th width=" + obj_width[8] + " onclick='sorter.addBorder(this);sorter.doSorter(8, \"str\", \"gn"+i+"_list\");' style='cursor:pointer;'><#Access_Time#></th>";
+						code += "<th width=" + obj_width[8] + " onclick='sorter.addBorder(this);sorter.doSorter(8, \"num\", \"gn"+i+"_list\");' style='cursor:pointer;'><#Access_Time#></th>";
 					}
 					code += "</tr>";
 					code += "</table>";
@@ -2629,7 +2639,7 @@ function drawClientListBlock(objID) {
 				clientListCode += "</td>";
 
 				clientListCode += "<td style='word-wrap:break-word; word-break:break-all;' width='" + obj_width[2] + "'>";
-				var clientNameEnCode = htmlEnDeCode.htmlEncode(decodeURIComponent(clientlist_sort[j].name));
+				var clientNameEnCode = htmlEnDeCode.htmlEncode(clientlist_sort[j].name);
 				clientListCode += "<div id='div_clientName_"+objID+"_"+j+"' class='viewclientlist_clientName_edit' onclick='editClientName(\""+objID+"_"+j+"\");'>"+clientNameEnCode+"</div>";
 				clientListCode += "<input id='client_name_"+objID+"_"+j+"' type='text' value='"+clientNameEnCode+"' class='input_25_table' maxlength='32' style='width:95%;margin-left:0px;display:none;' onblur='saveClientName(\""+objID+"_"+j+"\", "+clientlist_sort[j].type+", \"" + clientlist_sort[j].mac + "\");'>";
 				clientListCode += "</td>";
@@ -3113,10 +3123,14 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 		}
 	}
 
-	if(document.getElementById(_containerID).childNodes.length == "0")
-		document.getElementById(_pullArrowID).style.display = "none";
-	else
-		document.getElementById(_pullArrowID).style.display = "";
+	if(document.getElementById(_containerID).childNodes.length == "0"){
+		if(document.getElementById(_pullArrowID) != null)
+			document.getElementById(_pullArrowID).style.display = "none";
+	}
+	else{
+		if(document.getElementById(_pullArrowID) != null)
+			document.getElementById(_pullArrowID).style.display = "";
+	}
 }
 
 function redirectTimeScheduling(_mac) {
@@ -3135,7 +3149,7 @@ var custom_icon_list_api = {
 	"db": {
 		"electronic_product": {
 			"title": "Electronic Devices",
-			"translation": "",
+			"translation": "#CLIENTLIST_ELECTRONIC_DEVICES",
 			"list": [
 				{
 					"num": 0,
@@ -3145,7 +3159,7 @@ var custom_icon_list_api = {
 				{
 					"num": 34,
 					"title": "Desktop",
-					"translation": ""
+					"translation": "#CLIENTLIST_DESKTOP"
 				},
 				{
 					"num": 14,
@@ -3155,62 +3169,62 @@ var custom_icon_list_api = {
 				{
 					"num": 1,
 					"title": "Windows Desktop",
-					"translation": ""
+					"translation": "#CLIENTLIST_WINDOWS_DESKTOP"
 				},
 				{
 					"num": 72,
 					"title": "Linux Desktop",
-					"translation": ""
+					"translation": "#CLIENTLIST_LINUX_DESKTOP"
 				},
 				{
 					"num": 22,
 					"title": "Linux Device",
-					"translation": ""
+					"translation": "#CLIENTLIST_LINUX_DEVICE"
 				},
 				{
 					"num": 33,
 					"title": "Smartphone",
-					"translation": ""
+					"translation": "#CLIENTLIST_SMARTPHONE"
 				},
 				{
 					"num": 10,
 					"title": "iPhone",
-					"translation": ""
+					"translation": "#CLIENTLIST_IPHONE"
 				},
 				{
 					"num": 28,
 					"title": "ASUS smartphone",
-					"translation": ""
+					"translation": "#CLIENTLIST_ASUS_SMARTPHONE"
 				},
 				{
 					"num": 19,
 					"title": "Windows Phone",
-					"translation": ""
+					"translation": "#CLIENTLIST_WINDOWS_PHONE"
 				},
 				{
 					"num": 9,
 					"title": "Android Phone",
-					"translation": ""
+					"translation": "#CLIENTLIST_ANDROID_PHONE"
 				},
 				{
 					"num": 73,
 					"title": "Pad",
-					"translation": ""
+					"translation": "#CLIENTLIST_PAD"
 				},
 				{
 					"num": 21,
 					"title": "iPad",
-					"translation": ""
+					"translation": "#CLIENTLIST_IPAD"
 				},
 				{
 					"num": 29,
 					"title": "ASUS Pad",
-					"translation": ""
+					"translation": "#CLIENTLIST_ASUS_PAD"
 				},
 				{
 					"num": 20,
 					"title": "Android Tablet",
-					"translation": ""
+					"translation": "#CLIENTLIST_ANDROID_TABLET"
 				},
 				{
 					"num": 2,
@@ -3220,37 +3234,37 @@ var custom_icon_list_api = {
 				{
 					"num": 24,
 					"title": "Repeater",
-					"translation": ""
+					"translation": "#CLIENTLIST_REPEATER"
 				},
 				{
 					"num": 4,
 					"title": "NAS/Server",
-					"translation": "#NAS"
+					"translation": "#CLIENTLIST_NAS_SERVER"
 				},
 				{
 					"num": 37,
 					"title": "Notebook",
-					"translation": ""
+					"translation": "#CLIENTLIST_NB"
 				},
 				{
 					"num": 35,
 					"title": "Windows NB",
-					"translation": ""
+					"translation": "#CLIENTLIST_WINDOWS_NB"
 				},
 				{
 					"num": 6,
 					"title": "Macbook",
-					"translation": ""
+					"translation": "#CLIENTLIST_MACBOOK"
 				},
 				{
 					"num": 38,
 					"title": "ASUS Notebook",
-					"translation": ""
+					"translation": "#Clientlist_ASUS_NB"
 				},
 				{
 					"num": 39,
 					"title": "SD Card",
-					"translation": ""
+					"translation": "#CLIENTLIST_SD_CARD"
 				},
 				{
 					"num": 40,
@@ -3270,7 +3284,7 @@ var custom_icon_list_api = {
 				{
 					"num": 15,
 					"title": "ROG Device",
-					"translation": ""
+					"translation": "#CLIENTLIST_ROG_DEVICE"
 				},
 				{
 					"num": 25,
@@ -3280,33 +3294,33 @@ var custom_icon_list_api = {
 				{
 					"num": 26,
 					"title": "Scanner",
-					"translation": ""
+					"translation": "#CLIENTLIST_SCANNER"
 				},
 				{
 					"num": 32,
 					"title": "Apple Device",
-					"translation": ""
+					"translation": "#CLIENTLIST_APPLE_DEVICE"
 				},
 				{
 					"num": 31,
 					"title": "Android Device",
-					"translation": ""
+					"translation": "#CLIENTLIST_ANDROID_DEVICE"
 				},
 				{
 					"num": 30,
 					"title": "Windows Device",
-					"translation": ""
+					"translation": "#CLIENTLIST_WINDOWS_DEVICE"
 				},
 				{
 					"num": 42,
 					"title": "ASUS Device",
-					"translation": ""
+					"translation": "#CLIENTLIST_ASUS_DEVICE"
 				}
 			]
 		},
 		"media_and_entertainment": {
 			"title": "Media and Entertainment",
-			"translation": "",
+			"translation": "#CLIENTLIST_MEDIA_ENTERTAINMENT",
 			"list": [
 				{
 					"num": 43,
@@ -3382,93 +3396,93 @@ var custom_icon_list_api = {
 		},
 		"electronic_equipment": {
 			"title": "Electronic equipment",
-			"translation": "",
+			"translation": "#CLIENTLIST_ELECTRONIC_EQUIPMENT",
 			"list": [
 				{
 					"num": 49,
 					"title": "Air Conditioner",
-					"translation": ""
+					"translation": "#CLIENTLIST_AIR_CONDITIONER"
 				},
 				{
 					"num": 50,
 					"title": "Refrigerator",
-					"translation": ""
+					"translation": "#CLIENTLIST_REFRIGERATOR"
 				},
 				{
 					"num": 51,
 					"title": "Weight scale",
-					"translation": ""
+					"translation": "#CLIENTLIST_WEIGHT_SCALE"
 				},
 				{
 					"num": 52,
 					"title": "Electric pot",
-					"translation": ""
+					"translation": "#CLIENTLIST_ELECTRIC_POT"
 				},
 				{
 					"num": 53,
 					"title": "Microwave oven",
-					"translation": ""
+					"translation": "#CLIENTLIST_MICROWAVE_OVEN"
 				},
 				{
 					"num": 54,
 					"title": "Air Purifier",
-					"translation": ""
+					"translation": "#CLIENTLIST_AIR_PURIFIER"
 				},
 				{
 					"num": 55,
 					"title": "Fan",
-					"translation": ""
+					"translation": "#CLIENTLIST_FAN"
 				},
 				{
 					"num": 56,
 					"title": "Dehumidifier",
-					"translation": ""
+					"translation": "#CLIENTLIST_DEHUMIDIFIER"
 				},
 				{
 					"num": 57,
 					"title": "Washing Machine",
-					"translation": ""
+					"translation": "#CLIENTLIST_WASHING_MACHINE"
 				},
 				{
 					"num": 58,
 					"title": "Water Heater",
-					"translation": ""
+					"translation": "#CLIENTLIST_WATER_HEATER"
 				},
 				{
 					"num": 59,
 					"title": "Electric Kettle",
-					"translation": ""
+					"translation": "#CLIENTLIST_ELECTRIC_KETTLE"
 				},
 				{
 					"num": 60,
 					"title": "Smart Bulb",
-					"translation": ""
+					"translation": "#CLIENTLIST_SMART_BULB"
 				},
 				{
 					"num": 23,
-					"title": "TV",
-					"translation": ""
+					"title": "Smart TV",
+					"translation": "#CLIENTLIST_SMART_TV"
 				},
 				{
 					"num": 61,
 					"title": "Cleaning Robot",
-					"translation": ""
+					"translation": "#CLIENTLIST_CLEANING_ROBOT"
 				}
 			]
 		},
 		"security": {
 			"title": "Security",
-			"translation": "",
+			"translation": "#CLIENTLIST_SECURITY",
 			"list": [
 				{
 					"num": 62,
 					"title": "Seismograph",
-					"translation": ""
+					"translation": "#CLIENTLIST_SEISMOGRAPH"
 				},
 				{
 					"num": 63,
-					"title": "Smart Door Lock",
-					"translation": ""
+					"title": "Smart lock",
+					"translation": "#CLIENTLIST_SMART_LOCK"
 				},
 				{
 					"num": 5,
@@ -3479,17 +3493,17 @@ var custom_icon_list_api = {
 		},
 		"warables": {
 			"title": "Wearables",
-			"translation": "",
+			"translation": "#CLIENTLIST_WEARABLES",
 			"list": [
 				{
 					"num": 64,
 					"title": "Smart Bracelet",
-					"translation": ""
+					"translation": "#CLIENTLIST_SMART_BRACELET"
 				},
 				{
 					"num": 65,
-					"title": "Smart Watch",
-					"translation": ""
+					"title": "Watch",
+					"translation": "#CLIENTLIST_WATCH"
 				}
 			]
 		},
@@ -3500,38 +3514,93 @@ var custom_icon_list_api = {
 				{
 					"num": 66,
 					"title": "Wall Switch",
-					"translation": ""
+					"translation": "#CLIENTLIST_WALL_SWITCH"
 				},
 				{
 					"num": 67,
 					"title": "Smart Door Lock",
-					"translation": ""
+					"translation": "#CLIENTLIST_WINDOW_SENSOR"
 				},
 				{
 					"num": 68,
 					"title": "Temperature Humidity Sensor",
-					"translation": ""
+					"translation": "#CLIENTLIST_TEMPERATURE_HUMIDITY_SENSOR"
 				},
 				{
 					"num": 69,
-					"title": "Human Body Sensor",
-					"translation": ""
+					"title": "Body Sensor",
+					"translation": "#CLIENTLIST_BODY_SENSOR"
 				},
 				{
 					"num": 70,
-					"title": "Smart Socket",
-					"translation": ""
+					"title": "Smart plug",
+					"translation": "#CLIENTLIST_SMART_PLUG"
 				},
 				{
 					"num": 71,
 					"title": "Robot",
-					"translation": ""
+					"translation": "#CLIENTLIST_ROBOT"
 				}
 			]
 		}
 	},
 	gen_component : function(_paramObj){
 		var custom_icon_db_translation_mapping = [
+			{tag:"#CLIENTLIST_ELECTRONIC_DEVICES",text:"<#Clientlist_Electronic_Devices#>"},
+			{tag:"#CLIENTLIST_DESKTOP",text:"<#Clientlist_Desktop#>"},
+			{tag:"#CLIENTLIST_WINDOWS_DESKTOP",text:"<#Clientlist_Windows_Desktop#>"},
+			{tag:"#CLIENTLIST_LINUX_DESKTOP",text:"<#Clientlist_Linux_Desktop#>"},
+			{tag:"#CLIENTLIST_LINUX_DEVICE",text:"<#Clientlist_Linux_Device#>"},
+			{tag:"#CLIENTLIST_SMARTPHONE",text:"<#Clientlist_Smartphone#>"},
+			{tag:"#CLIENTLIST_IPHONE",text:"<#Clientlist_iPhone#>"},
+			{tag:"#CLIENTLIST_ASUS_SMARTPHONE",text:"<#Clientlist_ASUS_smartphone#>"},
+			{tag:"#CLIENTLIST_WINDOWS_PHONE",text:"<#Clientlist_Windows_Phone#>"},
+			{tag:"#CLIENTLIST_ANDROID_PHONE",text:"<#Clientlist_Android_Phone#>"},
+			{tag:"#CLIENTLIST_PAD",text:"<#Clientlist_Pad#>"},
+			{tag:"#CLIENTLIST_IPAD",text:"<#Clientlist_iPad#>"},
+			{tag:"#CLIENTLIST_ASUS_PAD",text:"<#Clientlist_ASUS_pad#>"},
+			{tag:"#CLIENTLIST_ANDROID_TABLET",text:"<#Clientlist_Android_Tablet#>"},
+			{tag:"#CLIENTLIST_REPEATER",text:"<#Clientlist_Repeater#>"},
+			{tag:"#CLIENTLIST_NAS_SERVER",text:"<#Clientlist_NAS_Server#>"},
+			{tag:"#CLIENTLIST_NB",text:"<#Clientlist_NB#>"},
+			{tag:"#CLIENTLIST_WINDOWS_NB",text:"<#Clientlist_Windows_NB#>"},
+			{tag:"#CLIENTLIST_MACBOOK",text:"<#Clientlist_Macbook#>"},
+			{tag:"#Clientlist_ASUS_NB",text:"<#Clientlist_ASUS_NB#>"},
+			{tag:"#CLIENTLIST_SD_CARD",text:"<#Clientlist_SD_Card#>"},
+			{tag:"#CLIENTLIST_ROG_DEVICE",text:"<#Clientlist_ROG_Device#>"},
+			{tag:"#CLIENTLIST_SCANNER",text:"<#Clientlist_Scanner#>"},
+			{tag:"#CLIENTLIST_APPLE_DEVICE",text:"<#Clientlist_Apple_Device#>"},
+			{tag:"#CLIENTLIST_ANDROID_DEVICE",text:"<#Clientlist_Android_Device#>"},
+			{tag:"#CLIENTLIST_WINDOWS_DEVICE",text:"<#Clientlist_Windows_Device#>"},
+			{tag:"#CLIENTLIST_ASUS_DEVICE",text:"<#Clientlist_ASUS_Device#>"},
+			{tag:"#CLIENTLIST_MEDIA_ENTERTAINMENT",text:"<#Clientlist_Media_Entertainment#>"},
+			{tag:"#CLIENTLIST_ELECTRONIC_EQUIPMENT",text:"<#Clientlist_Electronic_Equipment#>"},
+			{tag:"#CLIENTLIST_AIR_CONDITIONER",text:"<#Clientlist_Air_Conditioner#>"},
+			{tag:"#CLIENTLIST_REFRIGERATOR",text:"<#Clientlist_Refrigerator#>"},
+			{tag:"#CLIENTLIST_WEIGHT_SCALE",text:"<#Clientlist_Weight_Scale#>"},
+			{tag:"#CLIENTLIST_ELECTRIC_POT",text:"<#Clientlist_Electric_Pot#>"},
+			{tag:"#CLIENTLIST_MICROWAVE_OVEN",text:"<#Clientlist_Microwave_Oven#>"},
+			{tag:"#CLIENTLIST_AIR_PURIFIER",text:"<#Clientlist_Air_Purifier#>"},
+			{tag:"#CLIENTLIST_FAN",text:"<#Clientlist_Fan#>"},
+			{tag:"#CLIENTLIST_DEHUMIDIFIER",text:"<#Clientlist_Dehumidifier#>"},
+			{tag:"#CLIENTLIST_WASHING_MACHINE",text:"<#Clientlist_Washing_Machine#>"},
+			{tag:"#CLIENTLIST_WATER_HEATER",text:"<#Clientlist_Water_Heater#>"},
+			{tag:"#CLIENTLIST_ELECTRIC_KETTLE",text:"<#Clientlist_Electric_Kettle#>"},
+			{tag:"#CLIENTLIST_SMART_BULB",text:"<#Clientlist_Smart_Bulb#>"},
+			{tag:"#CLIENTLIST_SMART_TV",text:"<#Clientlist_Smart_TV#>"},
+			{tag:"#CLIENTLIST_CLEANING_ROBOT",text:"<#Clientlist_Cleaning_Robot#>"},
+			{tag:"#CLIENTLIST_SECURITY",text:"<#Clientlist_Security#>"},
+			{tag:"#CLIENTLIST_SEISMOGRAPH",text:"<#Clientlist_Seismograph#>"},
+			{tag:"#CLIENTLIST_SMART_LOCK",text:"<#Clientlist_Smart_lock#>"},
+			{tag:"#CLIENTLIST_WEARABLES",text:"<#Clientlist_Wearables#>"},
+			{tag:"#CLIENTLIST_SMART_BRACELET",text:"<#Clientlist_Smart_bracelet#>"},
+			{tag:"#CLIENTLIST_WATCH",text:"<#Clientlist_Watch#>"},
+			{tag:"#CLIENTLIST_WALL_SWITCH",text:"<#Clientlist_Wall_switch#>"},
+			{tag:"#CLIENTLIST_WINDOW_SENSOR",text:"<#Clientlist_Window_sensor#>"},
+			{tag:"#CLIENTLIST_TEMPERATURE_HUMIDITY_SENSOR",text:"<#Clientlist_Temperature_humidity_sensor#>"},
+			{tag:"#CLIENTLIST_BODY_SENSOR",text:"<#Clientlist_Body_sensor#>"},
+			{tag:"#CLIENTLIST_SMART_PLUG",text:"<#Clientlist_Smart_plug#>"},
+			{tag:"#CLIENTLIST_ROBOT",text:"<#Clientlist_Robot#>"},
 			{tag:"#PRINTER",text:"<#Clientlist_Printer#>"},
 			{tag:"#ROUTER",text:"<#Device_type_02_RT#>"},
 			{tag:"#NAS",text:"<#Device_type_04_NS#>"},

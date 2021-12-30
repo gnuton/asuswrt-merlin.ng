@@ -1,7 +1,7 @@
 /* Reads and updates cache files
  *
  * Copyright (C) 2003-2004  Narcis Ilisei <inarcis2002@hotpop.com>
- * Copyright (C) 2010-2020  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (C) 2010-2021  Joachim Wiberg <troglobit@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -197,9 +197,9 @@ int write_cache_file(ddns_alias_t *alias)
 int remove_cache_file_with_hostname(ddns_alias_t *alias)
 {
 	char buf[512] = {0};
+#if 0
 	char old_domain_name[512] = {0};
 
-#if 0
 	if(!alias || !cache_dir)
 		return 0;
 
@@ -211,7 +211,6 @@ int remove_cache_file_with_hostname(ddns_alias_t *alias)
 		snprintf(buf, sizeof(buf),  "%s/%s.cache", cache_dir, old_domain_name);
 		unlink(buf);
 	}
-	return 1;
 #else
 	if(!cache_dir)
 		return 0;
@@ -221,6 +220,7 @@ int remove_cache_file_with_hostname(ddns_alias_t *alias)
 	system(buf);
 
 #endif
+	return 1;
 }
 #endif
 

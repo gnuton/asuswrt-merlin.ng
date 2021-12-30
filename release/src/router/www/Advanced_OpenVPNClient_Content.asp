@@ -11,6 +11,7 @@
 <title><#Web_Title#> - OpenVPN Client Settings</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<link rel="stylesheet" type="text/css" href="css/icon.css">
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -83,6 +84,17 @@
 	font-weight:bold;
 	line-height:140%;
 	color:#ffffff;
+}
+.icon_eye_open{
+	width: 40px;
+	height: 27px;
+	background-size: 50%;
+}
+
+.icon_eye_close{
+	width: 40px;
+	height: 27px;
+	background-size: 50%;
 }
 </style>
 <script>
@@ -171,11 +183,19 @@ function initial()
 {
 	show_menu();
 
-	if(vpnc_support) {
-		var vpn_client_array = {"OpenVPN" : ["OpenVPN", "Advanced_OpenVPNClient_Content.asp"], "PPTP" : ["PPTP/L2TP", "Advanced_VPNClient_Content.asp"]};
-		$('#divSwitchMenu').html(gen_switch_menu(vpn_client_array, "OpenVPN"));
-		document.getElementById("divSwitchMenu").style.display = "";
-	}
+	var vpn_client_array = {"OpenVPN" : ["OpenVPN", "Advanced_OpenVPNClient_Content.asp"], "PPTP" : ["PPTP/L2TP", "Advanced_VPNClient_Content.asp"], "Wireguard" : ["Wireguard", "Advanced_WireguardClient_Content.asp"]};
+
+        if(!wireguard_support) {
+                delete vpn_client_array.Wireguard;
+        }
+        if(!vpnc_support) {
+                delete vpn_client_array.PPTP;
+        }
+        if(!openvpnd_support) {
+                delete vpn_client_array.OpenVPN;
+        }
+
+	$('#divSwitchMenu').html(gen_switch_menu(vpn_client_array, "OpenVPN"));
 
 	showclientlist();
 
@@ -545,7 +565,8 @@ function change_vpn_unit(val){
 
 /* password item show or not */
 function pass_checked(obj){
-	switchType(obj, document.form.show_pass_1.checked, true);
+	obj.toggleClass("icon_eye_close").toggleClass("icon_eye_open");
+	$("#vpn_client_password").prop("type", (function(){return obj.hasClass("icon_eye_close") ? "password" : "text";}));
 }
 
 function ImportOvpn(){
@@ -634,7 +655,7 @@ function showclientlist(){
 
 	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="clientlist_table">';
 	if(clientlist_row.length == 1)
-		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
+		code +='<tr><td class="hint-color" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		for(var i = 1; i < clientlist_row.length; i++){
 			line ='<tr id="row'+i+'">';
@@ -774,7 +795,7 @@ function refreshVPNIP() {
 			</tr>
 			<tr>
 				<div style="margin-left:30px; margin-top:10px;">
-					<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
+					<p><#vpn_openvpn_KC_Edit1#> <span class="hint-color">----- BEGIN xxx ----- </span>/<span class="hint-color"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
 					<p>Limit: 7999 characters per field
 				</div>
 				<div style="margin:5px;*margin-left:-5px;width: 730px; height: 2px;" class="splitLine"></div>
@@ -1109,14 +1130,16 @@ function refreshVPNIP() {
 					<tr id="client_username">
 						<th>Username</th>
 						<td>
-							<input type="text" maxlength="255" class="input_25_table" name="vpn_client_username" value="<% nvram_clean_get("vpn_client_username"); %>" autocorrect="off" autocapitalize="off" spellcheck="false">
+							<input type="text" maxlength="64" class="input_25_table" name="vpn_client_username" value="<% nvram_clean_get("vpn_client_username"); %>" autocorrect="off" autocapitalize="off" spellcheck="false">
 						</td>
 					</tr>
 					<tr id="client_password">
 						<th>Password</th>
 						<td>
-							<input type="password" autocomplete="new-password" maxlength="255" class="input_25_table" name="vpn_client_password" value="<% nvram_clean_get("vpn_client_password"); %>">
-							<input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.vpn_client_password)"><#QIS_show_pass#>
+							<div style="display:flex; align-items:center;">
+								<input type="password" autocomplete="new-password" maxlength="64" class="input_25_table" id="vpn_client_password" name="vpn_client_password" value="<% nvram_clean_get("vpn_client_password"); %>">
+								<div class="icon_eye_close" id="show_pass_1" type="password"  onclick="pass_checked($('#show_pass_1'));"></div>
+							</div>
 						</td>
 					</tr>
 					<tr id="client_useronly">
@@ -1188,7 +1211,7 @@ function refreshVPNIP() {
 						<th>Log verbosity</th>
 						<td>
 							<input type="text" maxlength="2" class="input_6_table" name="vpn_client_verb" onKeyPress="return validator.isNumber(this,event);" value="<% nvram_get("vpn_client_verb"); %>">
-							<span style="color:#FC0">(Between 0 and 6. Default: 3)</span>
+							<span class="hint-color">(Between 0 and 6. Default: 3)</span>
 						</td>
 					</tr>
 					<tr>
@@ -1210,14 +1233,14 @@ function refreshVPNIP() {
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(32,19);">TLS Renegotiation Time</th>
 						<td>
 							<input type="text" maxlength="5" class="input_6_table" name="vpn_client_reneg" value="<% nvram_get("vpn_client_reneg"); %>">
-							<span style="color:#FC0">(in seconds, -1 for default)</span>
+							<span class="hint-color">(in seconds, -1 for default)</span>
 						</td>
 					</tr>
 					<tr>
 						<th>Connection Retry attempts</th>
 						<td>
 							<input type="text" maxlength="3" class="input_6_table" name="vpn_client_connretry" value="<% nvram_get("vpn_client_connretry"); %>">
-							<span style="color:#FC0">(0 for infinite)</span>
+							<span class="hint-color">(0 for infinite)</span>
 						</td>
 					</tr>
 					<tr id="client_tlsremote">

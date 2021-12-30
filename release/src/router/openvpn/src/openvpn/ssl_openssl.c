@@ -6,7 +6,7 @@
  *             packet compression.
  *
  *  Copyright (C) 2002-2021 OpenVPN Inc <sales@openvpn.net>
- *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@fox-it.com>
+ *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -63,6 +63,10 @@
 #include <openssl/ssl.h>
 #ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
+#endif
+
+#if defined(_MSC_VER) && !defined(_M_ARM64)
+#include <openssl/applink.c>
 #endif
 
 /*

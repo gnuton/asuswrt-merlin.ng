@@ -19,13 +19,11 @@
 #define CHILD_LIFETIME 150 /* secs 'till terminated (RFC1035 suggests > 120s) */
 #define TCP_MAX_QUERIES 100 /* Maximum number of queries per incoming TCP connection */
 #define TCP_BACKLOG 32  /* kernel backlog limit for TCP connections */
-#ifndef EDNS_PKTSZ
 #define EDNS_PKTSZ 4096 /* default max EDNS.0 UDP packet from RFC5625 */
-#endif
 #define SAFE_PKTSZ 1280 /* "go anywhere" UDP packet size */
 #define KEYBLOCK_LEN 40 /* choose to minimise fragmentation when storing DNSSEC keys */
 #define DNSSEC_WORK 50 /* Max number of queries to validate one question */
-#define TIMEOUT 10 /* drop UDP queries after TIMEOUT seconds */
+#define TIMEOUT 10     /* drop UDP queries after TIMEOUT seconds */
 #define FORWARD_TEST 50 /* try all servers every 50 queries */
 #define FORWARD_TIME 20 /* or 20 seconds */
 #define UDP_TEST_TIME 60 /* How often to reset our idea of max packet size. */
@@ -151,6 +149,7 @@ NO_SCRIPT
 NO_LARGEFILE
 NO_AUTH
 NO_DUMPFILE
+NO_LOOP
 NO_INOTIFY
    these are available to explicitly disable compile time options which would 
    otherwise be enabled automatically or which are enabled  by default 
@@ -158,8 +157,6 @@ NO_INOTIFY
    with something like "make COPTS=-DNO_SCRIPT" will do the trick.
 NO_GMP
    Don't use and link against libgmp, Useful if nettle is built with --enable-mini-gmp.
-NO_GOST
-   Disable DNSSEC GOST algo support,
 
 LEASEFILE
 CONFFILE
@@ -202,8 +199,6 @@ RESOLVFILE
 /* #define HAVE_CONNTRACK */
 /* #define HAVE_CRYPTOHASH */
 /* #define HAVE_DNSSEC */
-/* #define HAVE_NETTLE */
-/* #define HAVE_OPENSSL */
 
 
 /* Default locations for important system files. */

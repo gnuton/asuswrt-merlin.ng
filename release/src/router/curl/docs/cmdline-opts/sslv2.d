@@ -8,7 +8,8 @@ Requires: TLS
 See-also: http1.1 http2
 Help: Use SSLv2
 Category: tls
+Example: --sslv2 $URL
 ---
-Forces curl to use SSL version 2 when negotiating with a remote SSL
-server. Sometimes curl is built without SSLv2 support. SSLv2 is widely
-considered insecure (see RFC 6176).
+This option previously asked curl to use SSLv2, but starting in curl 7.77.0
+this instruction is ignored. SSLv2 is widely considered insecure (see RFC
+6176).

@@ -3,9 +3,10 @@ Arg: <host[:port]>
 Help: SOCKS4a proxy on given host + port
 Added: 7.18.0
 Category: proxy
+Example: --socks4a hostname:4096 $URL
 ---
 Use the specified SOCKS4a proxy. If the port number is not specified, it is
-assumed at port 1080.
+assumed at port 1080. This asks the proxy to resolve the host name.
 
 This option overrides any previous use of --proxy, as they are mutually
 exclusive.

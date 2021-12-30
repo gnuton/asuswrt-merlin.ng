@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2003-2004  Narcis Ilisei <inarcis2002@hotpop.com>
  * Copyright (C) 2006       Steve Horbachuk
- * Copyright (C) 2010-2020  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (C) 2010-2021  Joachim Wiberg <troglobit@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,6 +44,9 @@
 
 #ifdef BCMARM
 #include "ifaddrs.c"
+#endif
+#ifdef ASUSWRT
+#include <bcmnvram.h>
 #endif
 
 /* Conversation with the checkip server */
@@ -177,7 +180,7 @@ static int is_address_valid(int family, const char *host)
 	 * block cloudflare ips so that https://1.1.1.1/cdn-cgi/trace would work
 	 * even if 1.1.1.1 is the first ip in the response body
 	 */
-	const char *except[] = {
+	static const char *except[] = {
 		"1.1.1.1",
 		"1.0.0.1",
 		"2606:4700:4700::1111",
@@ -193,8 +196,9 @@ static int is_address_valid(int family, const char *host)
 		"2606:4700:4700::64",
 		"2606:4700:4700::6400"
 	};
+	size_t i;
 
-	for (size_t i = 0; i < NELEMS(except); i++) {
+	for (i = 0; i < NELEMS(except); i++) {
 		if (!strncmp(host, except[i], strlen(host))) {
 			return 0;
 		}
@@ -251,7 +255,7 @@ error:
 static int parse_ipv4_address(char *buffer, char *address, size_t len)
 {
 	int found = 0;
-	char *accept = "0123456789.";
+	static const char *accept = "0123456789.";
 	char *needle, *haystack, *end;
 	struct in_addr  addr;
 
@@ -291,7 +295,7 @@ static int parse_ipv4_address(char *buffer, char *address, size_t len)
 static int parse_ipv6_address(char *buffer, char *address, size_t len)
 {
 	int found = 0;
-	char *accept = "0123456789abcdefABCDEF:";
+	static const char *accept = "0123456789abcdefABCDEF:";
 	char *needle, *haystack, *end;
 	struct in6_addr addr;
 
@@ -636,14 +640,13 @@ static int send_update(ddns_t *ctx, ddns_info_t *info, ddns_alias_t *alias, int 
 		goto exit;
 	}
 
+	ctx->request_buf[trans.req_len] = 0;
+	logit(LOG_DEBUG, "Sending alias table update to DDNS server: %s", ctx->request_buf);
+
 #ifdef ENABLE_SIMULATION
 	logit(LOG_WARNING, "In simulation, skipping update to server ...");
 	goto exit;
 #endif
-
-	ctx->request_buf[trans.req_len] = 0;
-	logit(LOG_DEBUG, "Sending alias table update to DDNS server: %s", ctx->request_buf);
-
 	rc = http_transaction(client, &trans);
 	if (rc) {
 		/* Update failed, force update again in ctx->cmd_check_period seconds */
@@ -723,12 +726,6 @@ static int update_alias_table(ddns_t *ctx)
 			rc = 0;
 
 			if (!alias->update_required) {
-#ifdef ASUSWRT
-                                if (script_exec && !alias->script_called)
-                                {
-                                        goto script_exec;
-                                }
-#endif
 				if (exec_mode == EXEC_MODE_COMPAT)
 					continue;
 				event = "nochg";
@@ -740,21 +737,17 @@ static int update_alias_table(ddns_t *ctx)
 				/* Only reset if send_update() succeeds. */
 				alias->update_required = 0;
 				alias->last_update = time(NULL);
-#ifdef ASUSWRT
-				remove_cache_file_with_hostname(alias);
-#endif
 				/* Update cache file for this entry */
 				write_cache_file(alias);
 			}
 
 			/* Run command or script on successful update. */
-			if (script_exec) {
-#ifdef ASUSWRT
-			script_exec:
-				alias->script_called = 1;
+			if (script_exec)
+				os_shell_execute(script_exec, alias->address,
+#ifdef USE_IPV6
+				alias->ipv6_address,
 #endif
-				os_shell_execute(script_exec, alias->address, alias->name, event, rc);
-			}
+				alias->name, event, rc);
 		}
 
 		if (RC_DDNS_RSP_NOTOK == rc || RC_DDNS_RSP_AUTH_FAIL == rc || RC_DDNS_RSP_NOHOST == rc)
@@ -762,7 +755,44 @@ static int update_alias_table(ddns_t *ctx)
 
 		if (RC_DDNS_RSP_RETRY_LATER == rc && !remember)
 			remember = rc;
-
+#ifdef ASUSWRT
+		if(nvram_match("ddns_return_code", "ddns_query") && rc != RC_OK)
+		{
+			switch (rc) {
+				/* Return these cases (define in check_error()) will retry again in Inadyn,
+				 * so set the error code and retry in watchdog */
+				/* defined in check_error() */
+				case RC_TCP_INVALID_REMOTE_ADDR: /* Probably temporary DNS error. */
+				case RC_TCP_CONNECT_FAILED:      /* Cannot connect to DDNS server atm. */
+				case RC_TCP_SEND_ERROR:
+				case RC_TCP_RECV_ERROR:
+				case RC_OS_INVALID_IP_ADDRESS:
+				case RC_DDNS_RSP_RETRY_LATER:
+				case RC_DDNS_INVALID_CHECKIP_RSP:
+					logit(LOG_WARNING, "Will retry again ...");
+					nvram_set ("ddns_return_code_chk", "Time-out"); /* not set ddns_return_code for Retry mechanism */
+					break;
+				case RC_HTTPS_FAILED_CONNECT:
+				case RC_HTTPS_FAILED_GETTING_CERT:
+					logit(LOG_WARNING, "Will retry again ...");
+					nvram_set ("ddns_return_code_chk", "connect_fail"); /* not set ddns_return_code for Retry mechanism */
+					break;
+				case RC_DDNS_RSP_NOHOST:
+				case RC_DDNS_RSP_NOTOK:
+					nvram_set("ddns_return_code", "Update failed");
+					nvram_set("ddns_return_code_chk", "Update failed");
+					break;
+				case RC_DDNS_RSP_AUTH_FAIL:
+					nvram_set("ddns_return_code", "auth_fail");
+					nvram_set("ddns_return_code_chk", "auth_fail");
+					break;
+				default:
+					nvram_set("ddns_return_code", "unknown_error");
+					nvram_set("ddns_return_code_chk", "unknown_error");
+					break;
+			}
+		}
+#endif
 		info = conf_info_iterator(0);
 	}
 
@@ -820,7 +850,7 @@ static int get_encoded_user_passwd(void)
 			break;
 		}
 
-		logit(LOG_DEBUG, "Base64 encoded string: %s", encode);
+//		logit(LOG_DEBUG, "Base64 encoded string: %s", encode);
 		info->creds.encoded_password = encode;
 		info->creds.encoded = 1;
 		info->creds.size = strlen(info->creds.encoded_password);

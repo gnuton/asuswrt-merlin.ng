@@ -8,6 +8,8 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <link rel="icon" href="images/favicon.png">
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/https_redirect/https_redirect.js"></script>
 <title><#Web_Title#></title>
 <style>
 @font-face{
@@ -332,7 +334,7 @@ body{
 }
 </style>
 <script>
-var odm_support = ('<% nvram_get("rc_support"); %>'.indexOf('odm') != -1) ? true : false;
+var odm_support = ('<% nvram_get("rc_support"); %>'.indexOf(' odm') != -1) ? true : false;
 
 /* add Array.prototype.forEach() in IE8 */
 if(typeof Array.prototype.forEach != 'function'){
@@ -694,11 +696,11 @@ function regen_captcha(){
 					<div class="login-title-desc"><#Sign_in_title#></div>
 					<div id="name_title_ie" style="display:none" class="p1"><#Username#></div>
 					<div class="input-container">
-						<input type="text" id="login_username" name="login_username" tabindex="1" class="form-input" maxlength="20" autocapitalize="off" autocomplete="off" placeholder="<#Username#>">
+						<input type="text" id="login_username" name="login_username" tabindex="1" class="form-input" maxlength="128" autocapitalize="off" autocomplete="off" placeholder="<#Username#>">
 					</div>
 					<div id="password_title_ie" style="display:none" class="p1"><#HSDPAConfig_Password_itemname#></div>
 					<div class="input-container">
-						<input type="password" name="login_passwd" tabindex="2" class="form-input" maxlength="16" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
+						<input type="password" name="login_passwd" tabindex="2" class="form-input" maxlength="128" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
 					</div>
 					<div id="error_status_field" class="error-hint-bg" style="display: none;" ></div>
 					<div class="input-container">

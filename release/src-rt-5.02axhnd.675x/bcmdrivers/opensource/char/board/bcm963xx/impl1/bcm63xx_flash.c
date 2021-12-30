@@ -63,7 +63,9 @@ written consent.
 #include <asm/delay.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
+#ifdef CRASHLOG
 #include <linux/math64.h>
+#endif
 
 #include "bcm_assert_locks.h"
 #include "bcmtypes.h"
@@ -691,6 +693,7 @@ int kerSysCfeVersionGet(char *string, int stringLength)
     return(0);
 }
 
+
 void kerSysNvRamGet(char *string, int strLen, int offset)
 {
     memcpy(string, (unsigned char *) &ikos_nvram_data, sizeof(NVRAM_DATA));
@@ -784,11 +787,6 @@ void kerSysNvRamGetBoardId(char *boardId)
 }
 EXPORT_SYMBOL(kerSysNvRamGetBoardId);
 
-#ifdef CRASHLOG
-#include <linux/kmsg_dump.h>
-static struct kmsg_dumper flash_oops_dump;
-static void flash_oops_notify_register(void);
-#endif /* CRASHLOG */
 
 void kerSysFlashInit( void )
 {
@@ -797,11 +795,6 @@ void kerSysFlashInit( void )
     // too early in bootup sequence to acquire spinlock, not needed anyways
     // only the kernel is running at this point
     flash_init_info(&inMemNvramData, &fInfo);
-
-#ifdef CRASHLOG
-    memset(&flash_oops_dump, 0, sizeof(struct kmsg_dumper));
-    flash_oops_notify_register();
-#endif /* CRASHLOG */
 }
 
 /***********************************************************************
@@ -1375,18 +1368,39 @@ static int nandWriteBlk(struct mtd_info *mtd, int blk_addr, int data_len, char *
 }
 
 #ifdef CRASHLOG
-#define CRASHLOG_MAX_SIZE (64*1024)
 #define MIN(a,b)        (((a)<(b))?(a):(b))
-char crashlog_filename[SYSCTL_CRASHLOG_FILENAME_LEN] = {0};
-char crashlog_mtd[SYSCTL_CRASHLOG_MTD_LEN] = {0};
+
+#define CRASHLOG_MAX_SIZE (52000)
 static unsigned char crashLogBuf[CRASHLOG_MAX_SIZE] = {0};
-static unsigned int cLogOffset = 0;
+static unsigned int cLogOffset = 0, cLogPrintState = 0;;
 /* e.g. misc3 in raw partition*/
 extern char crashlog_mtd[10];
 
+/* save console printing to crash log buffer, dont print in this function */
+void crashLogText(const char *buffer, unsigned int len)
+{
+    int copylen;
+    if (!cLogPrintState) {
+        memset(crashLogBuf, 0, sizeof(crashLogBuf));
+        cLogPrintState = 1;
+    }
+    copylen = MIN(len, sizeof(crashLogBuf) - cLogOffset);
+
+    memcpy(&crashLogBuf[cLogOffset], buffer, copylen);
+    cLogOffset += copylen;
+    len -= copylen;
+    if (len) {
+        memcpy(&crashLogBuf[0], &buffer[copylen], len);
+        cLogOffset = len;
+        cLogPrintState = 2; /* wrap over */
+    }
+    cLogOffset = (cLogOffset >= sizeof(crashLogBuf)) ? 0 : cLogOffset;
+    return;
+}
+
 /* Commit buffer to flash. Simple try write wrap around buffer.
 May took two NAND flash block but to prevent malloc during panic. */
-static int crashLogCommit(void)
+int crashLogCommit(void)
 {
     struct mtd_info *mtd;
     int block = 0, data_offset = 0, tot_mtdblocks;
@@ -1397,13 +1411,25 @@ static int crashLogCommit(void)
         return -1;
     }
 
-    sprintf(&crashLogBuf[0], "%s", "LOG");
-#if 0
-    tot_mtdblocks = mtd->size / mtd->erasesize;
-#else
-    tot_mtdblocks = div_u64(mtd->size, mtd->erasesize);
-#endif
+    if ((cLogOffset > (sizeof(crashLogBuf) - 4)))
+        cLogOffset = 0;
+    if (cLogPrintState == 2) {
+        cLogOffset = (cLogOffset+0x3) & 0xfffffffc;
+        sprintf(&crashLogBuf[cLogOffset], "%s", "LOG");
+    } else
+        sprintf(&crashLogBuf[0], "%s", "LOG");
+
+    tot_mtdblocks = (uint32_t)mtd->size / mtd->erasesize;
     block = 0;
+    data_offset = cLogOffset;
+    for (; (cLogPrintState == 2) && (block < tot_mtdblocks) && (data_offset < sizeof(crashLogBuf)); block++) {
+        /* skip bad block */
+        if (nandEraseBlk(mtd, (block * mtd->erasesize)) == 0) {
+            nandWriteBlk(mtd, (block * mtd->erasesize), mtd->erasesize, &crashLogBuf[data_offset], FALSE);
+            data_offset += mtd->erasesize;
+        }
+    }
+
     data_offset = 0;
     for (; (block < tot_mtdblocks) && (data_offset < cLogOffset); block++) {
         /* skip bad block */
@@ -1417,41 +1443,6 @@ static int crashLogCommit(void)
 
     return 0;
 }
-
-static int crashLogErase(void)
-{
-    struct mtd_info *mtd;
-    int block = 0, data_offset = 0, tot_mtdblocks;
-
-    mtd = get_mtd_device_nm(crashlog_mtd);
-    if (IS_ERR_OR_NULL(mtd)) {
-        printk("\n crashLogErase: Failed to get mtd !\n");
-        return -1;
-    }
-
-    memset(crashLogBuf, 0, CRASHLOG_MAX_SIZE);
-#if 0
-    tot_mtdblocks = mtd->size / mtd->erasesize;
-#else
-    tot_mtdblocks = div_u64(mtd->size, mtd->erasesize);
-#endif
-    block = 0;
-    data_offset = 0;
-    for (; (block < tot_mtdblocks) && (data_offset < CRASHLOG_MAX_SIZE); block++) {
-        /* skip bad block */
-        if (nandEraseBlk(mtd, (block * mtd->erasesize)) == 0)  {
-            nandWriteBlk(mtd, (block * mtd->erasesize), mtd->erasesize, &crashLogBuf[data_offset], FALSE);
-            data_offset += mtd->erasesize;
-	    break;
-        }
-    }
-
-    printk("crashLogErase: write %d blocks  data_offset %d \n", block+1, data_offset);
-
-    return 0;
-}
-
-
 /* Read from nand flash and save to file */
 int crashFileSet(const char* filename)
 {
@@ -1482,43 +1473,18 @@ int crashFileSet(const char* filename)
 
     if (ret != 0 || retlen <= 4 || pbuffer[0] != 'L' || pbuffer[1] != 'O' || pbuffer[2] != 'G') {
         printk("crashFileSet: log signature invalid ! \n");
-	printk("ret %d retlen %d buff %c %c %c\n",
-		ret, retlen, pbuffer[0], pbuffer[1], pbuffer[2]);
-        //size = 0; /* zero-length file */
-    } else {
-        kerSysFsFileSet(filename, pbuffer, size);
-        crashLogErase();
+        size = 0; /* zero-length file */
+    }
+    kerSysFsFileSet(filename, pbuffer, size);
+    kfree(pbuffer);
+
+    /* erase NAND flash to destory log signature*/
+    if (size && pbuffer[0] == 'L' && pbuffer[1] == 'O' && pbuffer[2] == 'G') {
+       if(nandEraseBlk(mtd, 0) == 0)
+       printk("%s: erase block 0 to destory log signature! \n", __FUNCTION__);
     }
 
-    kfree(pbuffer);
     return 0;
-}
-
-static void flash_oops_do_dump(struct kmsg_dumper *dumper, enum kmsg_dump_reason reason)
-{
-    size_t len = 0;
-
-    if (reason == KMSG_DUMP_OOPS)
-        return;
-
-    kmsg_dump_get_buffer(dumper, true, crashLogBuf,
-			     CRASHLOG_MAX_SIZE, &len);
-
-    if (len > CRASHLOG_MAX_SIZE)
-        len = CRASHLOG_MAX_SIZE;
-
-    cLogOffset = len;
-    crashLogCommit();
-}
-
-static void flash_oops_notify_register(void)
-{
-    if (flash_oops_dump.registered)
-        return;
-
-    flash_oops_dump.max_reason = KMSG_DUMP_OOPS;
-    flash_oops_dump.dump = flash_oops_do_dump;
-    kmsg_dump_register(&flash_oops_dump);
 }
 #endif /* CRASHLOG */
 

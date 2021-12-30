@@ -378,12 +378,12 @@ extern int (*fdb_check_expired_wl_hook)(unsigned char *addr,
 extern int (*send_packet_to_upper_layer)(struct sk_buff *skb);
 extern int inject_to_fastpath;
 
-#if defined(PKTC)
+#if defined(PKTC) || defined(PKTC_TBL)
 extern unsigned long(* wl_pktc_req_hook)(int request, /* with lock */
             unsigned long param0, unsigned long param1, unsigned long param2);
 #endif
 
-#if defined(BCM_BLOG)
+#if defined(BCM_BLOG) || defined(PKTC_TBL)
 /** Hook registered with blog shim */
 extern void (*wl_pktc_del_hook)(unsigned long addr,
                                 struct net_device * net_device);
