@@ -331,6 +331,9 @@ void enable_wan_led()
 #ifdef GTAC2900
 	eval("sw", "0x800c00a0", "0");				// disable event on tx/rx activity
 #else
+#if defined(RTAX58U_V2) || defined(GTAX6000)
+	wan_phy_led_pinmux(0);
+#endif
 	led_control(LED_WAN_NORMAL, LED_ON);
 #endif
 #else
@@ -344,6 +347,9 @@ void disable_wan_led()
 #ifdef RTCONFIG_HND_ROUTER_AX
 	return;
 #elif defined(HND_ROUTER)
+#if defined(RTAX58U_V2) || defined(GTAX6000)
+	wan_phy_led_pinmux(1);
+#endif
 	led_control(LED_WAN_NORMAL, LED_OFF);
 #else
 	eval("et", "-i", "eth0", "robowr", "0", "0x18", "0x01fe");
@@ -830,9 +836,6 @@ int do_dns_detect(int wan_unit)
 	int timeout, size, ret, pipefd[2];
 	int debug = nvram_get_int("dns_probe_debug");
 
-	if (!nvram_get_int("dns_probe"))
-		return -1;
-
 #if defined(RTCONFIG_IPV6) && defined(RTCONFIG_USB_MODEM)
 	if(dualwan_unit__usbif(wan_unit) && modem_pdp == 2)
 		return 1;
@@ -840,6 +843,10 @@ int do_dns_detect(int wan_unit)
 
 	snprintf(host, sizeof(host), "%s", nvram_safe_get("dns_probe_host"));
 	snprintf(content, sizeof(content), "%s", nvram_safe_get("dns_probe_content"));
+	if (*content == '\0' || *host == '\0') {
+		snprintf(content, sizeof(content), "%s", nvram_default_get("dns_probe_content"));
+		snprintf(host, sizeof(host), "%s", nvram_default_get("dns_probe_host"));
+	}
 	if (debug)
 		_dprintf("%s: %s %s %s\n", __FUNCTION__, "check", host, content);
 
@@ -1053,11 +1060,11 @@ int detect_internet(int wan_unit)
 #ifdef DETECT_INTERNET_MORE
 	else if(!get_packets_of_net_dev(wan_ifname, &rx_packets, &tx_packets) || rx_packets <= RX_THRESHOLD)
 		link_internet = DISCONN;
-	else if(!isFirstUse && (!dns_ret && !do_tcp_dns_detect(wan_unit) && !wanduck_ping_detect(wan_unit)))
+	else if(!isFirstUse && (dns_ret <= 0 && !do_tcp_dns_detect(wan_unit) && !wanduck_ping_detect(wan_unit)))
 		link_internet = DISCONN;
 #endif
 #if defined(RTCONFIG_IPV6) && defined(RTCONFIG_INTERNAL_GOBI)
-	else if(dualwan_unit__usbif(wan_unit) && modem_pdp == 2 && !ping_ret)
+	else if(dualwan_unit__usbif(wan_unit) && modem_pdp == 2 && ping_ret <= 0)
 		link_internet = DISCONN;
 #endif
 #ifdef RTCONFIG_DUALWAN
@@ -1071,9 +1078,9 @@ int detect_internet(int wan_unit)
 			nat_state = stop_nat_rules();
 	}
 #else
-	else if((wandog_enable && !ping_ret && !dnsprobe_enable)
-			|| (dnsprobe_enable && !dns_ret && !wandog_enable)
-			|| (wandog_enable && !ping_ret && dnsprobe_enable && !dns_ret)
+	else if((wandog_enable && ping_ret <= 0 && !dnsprobe_enable)
+			|| (dnsprobe_enable && dns_ret <= 0 && !wandog_enable)
+			|| (wandog_enable && ping_ret <= 0 && dnsprobe_enable && dns_ret <= 0)
 			){
 		link_internet = DISCONN;
 
@@ -1083,14 +1090,14 @@ int detect_internet(int wan_unit)
 	}
 #endif
 #endif
-	else if(!dns_ret && /* PPP connections with DNS detection */
+	else if(dns_ret <= 0 && /* PPP connections with DNS detection */
 			wan_ppp && nvram_get_int(strcat_r(prefix, "ppp_echo", tmp)) == 2)
 		link_internet = DISCONN;
 	else
 		link_internet = CONNED;
 
 	/* Set no DNS state even if connected for WEB UI */
-	if(link_internet == DISCONN || !dns_ret){
+	if(link_internet == DISCONN || dns_ret <= 0){
 		if(nvram_get_int("web_redirect") & WEBREDIRECT_FLAG_NOINTERNET)
 			set_link_internet(wan_unit, 1);
 		else{
@@ -1106,7 +1113,6 @@ int detect_internet(int wan_unit)
 
 	return link_internet;
 }
-
 int passivesock(char *service, int protocol_num, int qlen){
 	//struct servent *pse;
 	struct sockaddr_in sin;
@@ -1835,7 +1841,7 @@ _dprintf("# wanduck(%d): if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_s
 				record_wan_state_nvram(wan_unit, -1, -1, WAN_AUXSTATE_NONE);
 
 				if(nvram_get_int(strcat_r(prefix, "dhcpenable_x", tmp)) == 0 && !found_default_route(wan_unit))
-					add_multi_routes(0);
+					add_multi_routes(0, -1);
 			}
 			else{
 //_dprintf("# wanduck(%d): set %s=%d.\n", wan_unit, wired_link_nvram, DISCONN);
@@ -1877,15 +1883,33 @@ _dprintf("# wanduck(%d): if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_s
 	sw_led_ctrl();
 #endif
 
-#ifdef RTCONFIG_DSL_BCM
+#ifdef RTCONFIG_DSL
 	if (get_dualwan_by_unit(wan_unit) == WANS_DUALWAN_IF_DSL) {
-		static int first_up = 1;
 		if (link_changed[wan_unit] && link_wan[wan_unit]) {
 			_dprintf("\n=====\nwan[%d] down->up\n=====\n", wan_unit);
-			dsl_wan_config(2);
-			if (first_up) {
-				handle_wan_line(wan_unit, 0);
-				first_up = 0;
+#ifdef RTCONFIG_DSL_BCM
+			if (nvram_get_int("dsltmp_config_xtm")) {
+				static int first_up = 1;
+				nvram_set("dsltmp_config_xtm", "0");
+				dsl_wan_config(2);
+				if (first_up) {
+					handle_wan_line(wan_unit, 0);
+					first_up = 0;
+				}
+			}
+			else
+#endif
+			if (nvram_get_int("dsltmp_syncup_short")
+#ifdef RTCONFIG_DUALWAN
+			  && (strstr(dualwan_wans, "none") || strcmp(dualwan_mode, "lb")) //not loadbalance
+#endif
+			) {
+				// to skip restart wan if
+				_dprintf("set connected\n");
+				nvram_set("dsltmp_syncup_short", "0");
+				link_setup[wan_unit] = 0;
+				record_wan_state_nvram(wan_unit, WAN_STATE_CONNECTED, WAN_STOPPED_REASON_NONE, WAN_AUXSTATE_NONE);
+				return CONNED;
 			}
 		}
 	}
@@ -1973,6 +1997,9 @@ _dprintf("# wanduck(%d): if_wan_phyconnected: x_Setting=%d, link_modem=%d, sim_s
 				disconn_case[wan_unit] = CASE_DISWAN;
 			}
 
+#ifdef RTCONFIG_DSL
+			if (get_dualwan_by_unit(wan_unit) != WANS_DUALWAN_IF_DSL)
+#endif
 			max_disconn_count[wan_unit] = max_disconn_count[wan_unit]/2;
 			if(max_disconn_count[wan_unit] < 1)
 				max_disconn_count[wan_unit] = 1;
@@ -2253,6 +2280,15 @@ void send_page(int wan_unit, int sfd, char *file_dest, char *url){
 		}
 	}
 #endif
+
+	// avoid redirect loops
+	if(nvram_get_int("http_enable") == 2){
+		if(strstr(url, "generate_204")){
+			snprintf(buf, sizeof(buf), "%s", "HTTP/1.1 204\r\n");
+			wl_url_hit = 1;
+		}
+	}
+
 	if(!wl_url_hit){
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s", "HTTP/1.0 302 Moved Temporarily\r\n", "Server: wanduck\r\n", "Date: ", timebuf, "\r\n");
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -2388,6 +2424,22 @@ void handle_http_req(int sfd, char *line){
 		close_socket(sfd, T_HTTP);
 }
 
+int op_resolve(char *name, struct addrinfo **res) {
+	struct addrinfo hints;
+	int err;
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_RAW;
+
+	if ((err = getaddrinfo(name, NULL, &hints, res)) != 0) {
+		fprintf(stderr, "%s\n", strerror(err));
+		return -1;
+	}
+	return 0;
+}
+
+
 void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr *pcliaddr, int clen){
 #if !defined(RTCONFIG_FINDASUS)
 	const static unsigned char auth_name_srv[] = {
@@ -2409,6 +2461,7 @@ void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr
 	dns_queries queries;
 	dns_answer answer;
 	uint16_t opcode;
+	int is_answer_ready = 0;
 
 	/* validation */
 	d_req = (dns_header *)request;
@@ -2490,6 +2543,43 @@ void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr
 			d_reply->flag_set.flag_num = htons(0x8183);
 			d_reply->auth_rrs = htons(1);
 #endif
+#ifdef RTCONFIG_DSL
+		} else if (strcasecmp(queries.name, "ntp01.mvp.tivibu.com.tr") == 0) {
+			d_reply->answer_rrs = htons(1);
+			answer.addr = htonl(0xc0a87946);
+		} else if (strcasecmp(queries.name, "ntp02.mvp.tivibu.com.tr") == 0) {
+			d_reply->answer_rrs = htons(1);
+			answer.addr = htonl(0xc0a87947);
+#endif
+#ifdef DSL_AX82U
+		} else if (is_ax5400_i1() && op_is_whitelist_url(queries.name)) { // Optus comstomization
+			struct addrinfo *res;
+			struct addrinfo *p;
+			//char command[255];
+			if (op_resolve(queries.name, &res) == 0) {
+				/* no error */
+				int rrs = 0;
+				for(p = res; p != NULL; p = p->ai_next) {
+					if (p->ai_family == AF_INET) {
+						//snprintf(command, sizeof(command), IPTABLES_CMD, inet_ntoa(((struct sockaddr_in*)(p->ai_addr))->sin_addr));
+						answer.addr = ((struct sockaddr_in*)(p->ai_addr))->sin_addr.s_addr;
+						//system(command);
+						if (end - ptr < sizeof(answer))
+							break;
+						ptr = memcpy(ptr, &answer, sizeof(answer)) + sizeof(answer);
+						rrs++;
+					}
+				}
+				d_reply->answer_rrs = htons(rrs);
+				is_answer_ready = 1;
+				op_check_and_add_rules((void *)res);
+				freeaddrinfo(res);
+			} else {
+				/* non existent domain */
+				d_reply->flag_set.flag_num = htons(0x8183);
+				d_reply->auth_rrs = htons(1);
+			}
+#endif
 		} else if (*queries.name) {
 			/* no error */
 			d_reply->answer_rrs = htons(1);
@@ -2500,7 +2590,7 @@ void handle_dns_req(int sfd, unsigned char *request, int maxlen, struct sockaddr
 		d_reply->flag_set.flag_num = htons(0x8184);
 	}
 
-	if (d_reply->answer_rrs) {
+	if (!is_answer_ready && d_reply->answer_rrs) {
 		if (end - ptr < sizeof(answer))
 			return;
 		ptr = memcpy(ptr, &answer, sizeof(answer)) + sizeof(answer);
@@ -2677,6 +2767,7 @@ void record_conn_status(int wan_unit){
 				return;
 			disconn_case_old[wan_unit] = CASE_DHCPFAIL;
 
+#if 0
 			if(!strcmp(wan_proto, "dhcp")
 #ifdef RTCONFIG_WIRELESSREPEATER
 					|| sw_mode == SW_MODE_HOTSPOT
@@ -2690,6 +2781,8 @@ void record_conn_status(int wan_unit){
 				eval("Notify_Event2NC", buff, "");
 #endif
 			}
+#endif
+
 #if defined(RTCONFIG_AMAS) && defined(RTCONFIG_PRELINK)
 			if (nvram_match("x_Setting", "0")) {
 				nvram_set("amas_bdl_wanstate", "2");

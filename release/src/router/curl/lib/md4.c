@@ -36,8 +36,12 @@
 #endif /* USE_OPENSSL */
 
 #ifdef USE_MBEDTLS
-#include <mbedtls/config.h>
 #include <mbedtls/version.h>
+#if MBEDTLS_VERSION_NUMBER >= 0x03000000
+#include <mbedtls/mbedtls_config.h>
+#else
+#include <mbedtls/config.h>
+#endif
 
 #if(MBEDTLS_VERSION_NUMBER >= 0x02070000)
   #define HAS_MBEDTLS_RESULT_CODE_BASED_FUNCTIONS
@@ -174,7 +178,7 @@ static void MD4_Init(MD4_CTX *ctx)
 
 static void MD4_Update(MD4_CTX *ctx, const void *data, unsigned long size)
 {
-  if(ctx->data == NULL) {
+  if(!ctx->data) {
     ctx->data = malloc(size);
     if(ctx->data != NULL) {
       memcpy(ctx->data, data, size);

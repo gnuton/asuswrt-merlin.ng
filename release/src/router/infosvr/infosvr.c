@@ -63,15 +63,23 @@ char productid_g[32];
 char firmver_g[16];
 unsigned char mac[6] = { 0x00, 0x0c, 0x6e, 0xbd, 0xf3, 0xc5};
 unsigned char label_mac[6] = { 0x00, 0x0c, 0x6e, 0xbd, 0xf3, 0xc5};
+#if defined(RTCONFIG_AMAS)
+unsigned char cfg_group_g[20];
+int cfg_groupid_is_null;
+#define ID_LEN		20
+#endif
 
 void sig_do_nothing(int sig)
 {
 }
-
 void load_sysparam(void)
 {
 	char macstr[32], label_macstr[32];
-
+#if defined(RTCONFIG_AMAS)
+	char *tmp = NULL;
+	size_t cfg_group_len = 0;
+	int ts = time((time_t *)NULL);
+#endif
 	get_discovery_ssid(ssid_g, sizeof(ssid_g));
 	strncpy(netmask_g, nvram_safe_get("lan_netmask"), sizeof(netmask_g));
 	strncpy(productid_g, get_productid(), sizeof(productid_g));
@@ -85,6 +93,17 @@ void load_sysparam(void)
 	strlcpy(label_macstr, get_label_mac(), sizeof(label_macstr));
 //	printf("label_mac: %d\n", strlen(label_macstr));
 	if (strlen(label_macstr)!=0) ether_atoe(label_macstr, label_mac);
+#if defined(RTCONFIG_AMAS)
+	tmp = gen_vsie_id(ts, &cfg_group_len);
+	if (tmp){
+		str2hex(tmp, cfg_group_g, cfg_group_len);
+		cfg_groupid_is_null = 0;
+		free(tmp);
+	}
+	else{
+		cfg_groupid_is_null = 1;
+	}
+#endif
 }
 
 int main(int argc , char* argv[])

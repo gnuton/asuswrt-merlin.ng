@@ -66,7 +66,7 @@ static inline int phy_bus_c45_read32(phy_dev_t *phy_dev, uint32_t reg32, uint16_
 }
 #define phy_bus_c45_write32(phy_dev, reg32, val) \
     phy_bus_c45_write(phy_dev, ((reg32)>>16)&0xffff, reg32&0xffff, val)
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
 #define IsC45Phy(phy) (phy->phy_drv->phy_type == PHY_TYPE_EXT3 || phy->phy_drv->phy_type == PHY_TYPE_RTL8226)
 #else
 #define IsC45Phy(phy) (phy->phy_drv->phy_type == PHY_TYPE_EXT3)

@@ -1,7 +1,59 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
-386.03_2-gnuton5 (??-??-????)
+386.4 (xx-xxx-2021)
+  - NEW: Added support for the RT-AX86S (uses the same firmware
+         as the RT-AX86U).
+  - NEW: Added wireguard kernel module + userspace tool to
+         HND models firmware images.
+  - NEW: IPv6 support for OpenVPN server.  Allows connecting over
+         your WAN's IPv6, and also reach LAN clients over their
+         IPv6 (redirecting IPv6 Internet traffic does not work).
+  - UPDATED: Merged with GPL 386_45958 + a few newer patches
+             from Asus.
+  - UPDATED: curl to 7.79.1.
+  - UPDATED: vsftpd to 3.0.5.
+  - UPDATED: openssl to 1.1.1m.
+  - UPDATED: wget to 1.21.1.
+  - UPDATED: nettle to 3.7.3.
+  - UPDATED: dnsmasq to 2.86.
+  - UPDATED: openvpn to 2.5.5.
+  - UPDATED: tor to 0.4.5.11.
+  - UPDATED: miniupnpd to 2.2.3-git 20211017.
+  - UPDATED: inadyn to 2.9.1.
+  - UPDATED: CA bundle to 2021-12-13.
+  - UPDATED: amtm to 3.2.1 (thelonelycoder)
+  - CHANGED: replaced jitterentropy-rngd with haveged.
+             It uses more resources, but it works
+             properly on older platforms, and is
+             generally less CPU intensive in regular
+             use.  This is implemented for all router
+             models.
+  - CHANGED: Switched dnsmasq crypto backend to nettle.
+  - CHANGED: Switched to Asus's own dhcp hostname support.
+             Existing dhcp_hostnames entries will be
+             converted on first boot.
+  - CHANGED: miniupnpd will now be supplied the public WAN
+             IP to improve compatibility with dual NAT
+             setups.
+  - CHANGEED: Disabling Auto DoH will now also disable
+              Windows' new Discovery of Designated
+              Resolvers (DDR) feature.
+  - FIXED: Wrong interface might be used for the default
+           gateway in an openvpn client routing table.
+  - FIXED: Generated OpenVPN certs used SHA1 signatures
+           instead of SHA256 (regression from 386.1)
+  - FIXED: Various issues with protocol handling when
+           importing an ovpn client file.
+  - FIXED: IPv6 not working while in Dual WAN mode.
+  - FIXED: Failed OpenVPN client connections might sometime
+           be stuck with a "Connecting" state.
+  - FIXED: NTP sometimes failing to update at boot time
+           when using IPv6.
+  - FIXED: Changes done by firewall-start may be lost after
+           ddns service gets stopped when using tunnelbroker
+
+386.03_2-gnuton5 (17-Nov-2021)
   - FIXED: regression in PPPoA for DSL-AX82U
   - FIXED: DSL-AX82U added ip set kernel modules to make skynet working
 

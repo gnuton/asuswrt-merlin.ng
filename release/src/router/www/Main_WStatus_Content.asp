@@ -63,7 +63,7 @@ if (band5g_support) {
 	guestnames.push(["<% nvram_get("wl1.1_ssid"); %>",
 	                 "<% nvram_get("wl1.2_ssid"); %>",
 	                 "<% nvram_get("wl1.3_ssid"); %>"]);
-	if (wl_info.band5g_2_support) {
+	if (wl_info.band5g_2_support || wl_info.band6g_support) {
 		guestnames.push(["<% nvram_get("wl2.1_ssid"); %>",
 		                 "<% nvram_get("wl2.2_ssid"); %>",
 		                 "<% nvram_get("wl2.3_ssid"); %>"]);
@@ -129,7 +129,16 @@ function redraw(){
 		display_clients(wificlients24, document.getElementById('wifi24block'), 0);
 	}
 
-	if (band5g_support)  {
+	if (band6g_support) {
+		if (dataarray52.length == 0) {
+		        document.getElementById('wifi52headerblock').innerHTML='<span class="wifiheader" style="font-size: 125%;">Wireless 6 GHz is disabled.</span>';
+		} else {
+		        display_header(dataarray52, 'Wireless 6 GHz', document.getElementById('wifi52headerblock'), false);
+		        display_clients(wificlients52, document.getElementById('wifi52block'), 2);
+		}
+	}
+
+	if (band5g_support) {
 		if (wl_info.band5g_2_support) {
 			if (dataarray5.length == 0) {
 				document.getElementById('wifi5headerblock').innerHTML='<span class="wifiheader" style="font-size: 125%;">Wireless 5 GHz-1 is disabled.</span>';
@@ -189,9 +198,9 @@ function display_clients(clientsarray, obj, unit) {
 					if (guestheader < ii) {
 						guestheader = ii;
 						if (sw_mode == "2")
-							code += '<tr><th colspan="6" style="color:white;height:20px;"><span style="color:#FFCC00;font-weight:bolder;">Local Clients:</span> ' + guestnames[unit][ii-1] + '</th></tr>';
+							code += '<tr><th colspan="6" style="color:white;height:20px;"><span class="hint-color" style="font-weight:bolder;">Local Clients:</span> ' + guestnames[unit][ii-1] + '</th></tr>';
 						else
-							code += '<tr><th colspan="6" style="color:white;height:20px;"><span style="color:#FFCC00;font-weight:bolder;">Guest Network ' + guestheader +':</span> ' + guestnames[unit][ii-1] + '</th></tr>';
+							code += '<tr><th colspan="6" style="color:white;height:20px;"><span class="hint-color" style="font-weight:bolder;">Guest Network ' + guestheader +':</span> ' + guestnames[unit][ii-1] + '</th></tr>';
 						ii = 5;
 					}
 				}

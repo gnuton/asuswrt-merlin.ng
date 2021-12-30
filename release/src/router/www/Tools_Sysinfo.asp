@@ -59,6 +59,10 @@ function initial(){
 		document.getElementById("wifi51_clients_th").innerHTML = "Wireless Clients (5 GHz-1)";
 		document.getElementById("wifi5_2_clients_tr").style.display = "";
 	}
+	if (wl_info.band6g_support) {
+		document.getElementById("wifi6_clients_tr").style.display = "";
+	}
+
 	if (based_modelid == "RT-AC87U") {
 		document.getElementById("wifi5_clients_tr_qtn").style.display = "";
 		document.getElementById("qtn_version").style.display = "";
@@ -93,6 +97,7 @@ function initial(){
 	update_temperatures();
 	updateClientList();
 	update_sysinfo();
+	show_wifi_version();
 }
 
 function update_temperatures(){
@@ -110,6 +115,10 @@ function update_temperatures(){
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-2:</b> <span>" + curr_coreTmp_52_raw + "</span>";
 			} else if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+			}
+
+			if (wl_info.band6g_support) {
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>6 GHz:</b> <span>" + curr_coreTmp_52_raw + "</span>";
 			}
 
 			if (curr_cpuTemp != "")
@@ -388,6 +397,12 @@ function show_connstate(){
 		                                                 "Authenticated: <span>" + wlc_52_arr[2] + "</span>";
 	}
 
+	if (wl_info.band6g_support) {
+		document.getElementById("wlc_6_td").innerHTML = "Associated: <span>" + wlc_52_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+		                                                "Authorized: <span>" + wlc_52_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
+		                                                "Authenticated: <span>" + wlc_52_arr[2] + "</span>";
+	}
+
 }
 
 
@@ -433,6 +448,20 @@ function update_sysinfo(e){
 			setTimeout("update_sysinfo();", 3000);
 		}
 	});
+}
+
+function show_wifi_version() {
+	var buf = "<td>";
+
+	buf += "<% sysinfo("driver_version.0"); %>";
+	if (band5g_support)
+		buf += "<br><% sysinfo("driver_version.1"); %>";
+	if (wl_info.band5g_2_support || wl_info.band6g_support)
+		buf += "<br><% sysinfo("driver_version.2"); %>";
+
+	buf += "</td>";
+
+	document.getElementById("wifi_version_td").innerHTML = buf;
 }
 
 </script>
@@ -506,8 +535,8 @@ function update_sysinfo(e){
 						<td><% sysinfo("cfe_version"); %></td>
 					</tr>
 					<tr>
-						<th>Driver version</th>
-						<td><% sysinfo("driver_version"); %></td>
+						<th>Wireless Driver Version</th>
+						<td id="wifi_version_td"></td>
 					</tr>
 					<tr id="qtn_version" style="display:none;">
 						<th>Quantenna Firmware</th>
@@ -634,6 +663,10 @@ function update_sysinfo(e){
 					<tr id="wifi5_clients_tr_qtn" style="display:none;">
 						<th>Wireless Clients (5 GHz)</th>
 						<td id="wlc_5qtn_td"></td>
+					</tr>
+					<tr id="wifi6_clients_tr" style="display:none;">
+						<th>Wireless Clients (6 GHz)</th>
+						<td id="wlc_6_td"></td>
 					</tr>
 				</table>
 				</td>

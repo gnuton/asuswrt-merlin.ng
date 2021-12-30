@@ -87,7 +87,7 @@ phy_type_t bp_parse_phy_type(const EMAC_PORT_INFO *port_info)
         case MAC_IF_SERDES:
             phy_type = PHY_TYPE_SF2_SERDES;
             break;
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
 		case MAC_IF_SGMII:
 		case MAC_IF_HSGMII:
 		{

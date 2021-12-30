@@ -20,7 +20,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_MAXFILESIZE 3 "November 04, 2020" "libcurl 7.76.1" "curl_easy_setopt options"
+.TH CURLOPT_MAXFILESIZE 3 "July 23, 2021" "libcurl 7.79.1" "curl_easy_setopt options"
 
 .SH NAME
 CURLOPT_MAXFILESIZE \- maximum file size allowed to download
@@ -36,13 +36,13 @@ be returned.
 
 The file size is not always known prior to download, and for such files this
 option has no effect even if the file transfer ends up being larger than this
-given limit. This concerns both FTP and HTTP transfers.
+given limit.
 
 If you want a limit above 2GB, use \fICURLOPT_MAXFILESIZE_LARGE(3)\fP.
 .SH DEFAULT
 None
 .SH PROTOCOLS
-FTP and HTTP
+FTP, HTTP and MQTT
 .SH EXAMPLE
 .nf
 CURL *curl = curl_easy_init();

@@ -6,7 +6,7 @@
  *             packet compression.
  *
  *  Copyright (C) 2002-2021 OpenVPN Inc <sales@openvpn.net>
- *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@fox-it.com>
+ *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -729,7 +729,7 @@ warn_insecure_key_type(const char *ciphername, const cipher_kt_t *cipher)
             " bit (%d bit).  This allows attacks like SWEET32.  Mitigate by "
             "using a --cipher with a larger block size (e.g. AES-256-CBC). "
             "Support for these insecure ciphers will be removed in "
-            "OpenVPN 2.6.",
+            "OpenVPN 2.7.",
             ciphername, cipher_kt_block_size(cipher)*8);
     }
 }

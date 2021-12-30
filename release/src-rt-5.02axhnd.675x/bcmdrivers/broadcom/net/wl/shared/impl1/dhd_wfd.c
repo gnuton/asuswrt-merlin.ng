@@ -202,7 +202,7 @@ dhd_handle_wfd_blog(dhd_pub_t *dhdp, struct net_device *net, int ifidx,
 #endif
             }
 
-            DHD_PERIM_UNLOCK(dhdp);
+            DHD_UNLOCK(dhdp);
 
             blog_emit(pktbuf, dhd_idx2net(dhdp, ifidx), TYPE_ETH, 0, BLOG_WLANPHY);
 
@@ -215,7 +215,7 @@ dhd_handle_wfd_blog(dhd_pub_t *dhdp, struct net_device *net, int ifidx,
             blog_link(IF_DEVICE, blog_p, (void*)net, DIR_TX, PKTLEN(dhdp->osh, pktbuf));
             blog_unlock();
 #endif /* BCM_DHD_RUNNER */
-            DHD_PERIM_LOCK(dhdp);
+            DHD_LOCK(dhdp);
         }
     }
 
@@ -242,8 +242,8 @@ dhd_wfd_forward(unsigned int pkt_cnt, void **pkts, unsigned long wl_radio_idx, u
     int ret;
     flow_ring_node_t *flow_ring_node;
 
-    DHD_PERIM_LOCK_ALL(wl_radio_idx % FWDER_MAX_UNIT);
     dhdp = g_dhd_info[wl_radio_idx];
+    DHD_LOCK(dhdp);
 
     for (cnt = 0; cnt < pkt_cnt; cnt++) { /* Process the array of packets */
 
@@ -330,7 +330,7 @@ dhd_wfd_forward(unsigned int pkt_cnt, void **pkts, unsigned long wl_radio_idx, u
     /* Flush all pending tx queued packets in bus(s) managed on this CPU core */
     dhd_wfd_invoke_func(wl_radio_idx, dhd_bus_txqueue_flush);
 
-    DHD_PERIM_UNLOCK_ALL(wl_radio_idx % FWDER_MAX_UNIT);
+    DHD_UNLOCK(dhdp);
 
     return 0;
 }
@@ -355,8 +355,8 @@ _dhd_wfd_mcasthandler(uint32_t wl_radio_idx, uint32_t ifidx, void *fkb)
     int pktlen;
 #endif
 
-    DHD_PERIM_LOCK_ALL(wl_radio_idx % FWDER_MAX_UNIT);
     dhdp = g_dhd_info[wl_radio_idx];
+    DHD_LOCK(dhdp);
     if(dhd_idx2net(dhdp,ifidx)==NULL)
        goto free_drop;
 #if (defined(DSLCPE) && defined(BCM_NBUFF))|| defined(BCM_NBUFF_WLMCAST)
@@ -423,7 +423,7 @@ succ_count:
 mcast_count:
     dhdp->tx_packets_wfd_mcast++;
 unlock:
-    DHD_PERIM_UNLOCK_ALL( wl_radio_idx % FWDER_MAX_UNIT);
+    DHD_UNLOCK(dhdp);
     return;
 }
 

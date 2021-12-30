@@ -294,10 +294,7 @@ function show_cert_settings(show){
 	if(show){
 		document.form.le_enable.disabled = false;
 		showhide("https_cert", 1);
-		if(orig_le_enable != "0")
-			showhide("cert_details", 1);
-		else
-			showhide("cert_details", 0);
+		showhide("cert_details", 1);
 	}
 	else{
 		document.form.le_enable.disabled = true;
@@ -337,10 +334,12 @@ function change_common_radio(o, s, v, r){
 				showhide("wildcard_field",1);
 			}
 
-			if(letsencrypt_support)
-				show_cert_settings(1);
+//			if(letsencrypt_support)
+//				show_cert_settings(1);
 
 			change_ddns_setting(document.form.ddns_server_x.value);
+			inputCtrl(document.form.ddns_refresh_x, 1);
+			showhide("ddns_ipcheck_tr", 1);
 		}else{
 			if(document.form.ddns_server_x.value == "WWW.ASUS.COM"){
 				document.form.DDNSName.parentNode.parentNode.parentNode.style.display = "none";
@@ -359,11 +358,13 @@ function change_common_radio(o, s, v, r){
 			document.form.ddns_regular_check.value = 0;
 			showhide("check_ddns_field", 0);
 			inputCtrl(document.form.ddns_regular_period, 0);
+			inputCtrl(document.form.ddns_refresh_x, 0);
+			showhide("ddns_ipcheck_tr", 0);
 
 			document.getElementById("ddns_status_tr").style.display = "none";
 			document.getElementById("ddns_result_tr").style.display = "none";
-			if(letsencrypt_support)
-				show_cert_settings(0);
+//			if(letsencrypt_support)
+//				show_cert_settings(0);
 		}
 		update_ddns_wan_unit_option();
 	}
@@ -450,19 +451,23 @@ function openLink(s){
 		if (document.form.ddns_server_x.value.indexOf("WWW.DYNDNS.ORG")!=-1)
 			tourl = "https://account.dyn.com/services/zones/svc/add.html?_add_dns=c&trial=standarddns";
 		else if (document.form.ddns_server_x.value == 'WWW.ZONEEDIT.COM')
-			tourl = "http://www.zoneedit.com/";
+			tourl = "https://www.zoneedit.com/";
 		else if (document.form.ddns_server_x.value == 'WWW.SELFHOST.DE')
-			tourl = "http://WWW.SELFHOST.DE";
+			tourl = "https://WWW.SELFHOST.DE";
 		else if (document.form.ddns_server_x.value == 'WWW.DNSOMATIC.COM')
-			tourl = "http://dnsomatic.com/create/";
+			tourl = "https://dnsomatic.com/create/";
 		else if (document.form.ddns_server_x.value == 'WWW.TUNNELBROKER.NET')
-			tourl = "http://www.tunnelbroker.net/register.php";
+			tourl = "https://www.tunnelbroker.net/register.php";
 		else if (document.form.ddns_server_x.value == 'WWW.ASUS.COM')
 			tourl = "";
 		else if (document.form.ddns_server_x.value == 'WWW.NO-IP.COM')
-			tourl = "http://www.no-ip.com/newUser.php";
+			tourl = "https://www.no-ip.com/newUser.php";
+		else if (document.form.ddns_server_x.value == 'WWW.NAMECHEAP.COM')
+			tourl = "https://www.namecheap.com";
+		else if (document.form.ddns_server_x.value == "FREEDNS.AFRAID.ORG")
+			tourl = "https://freedns.afraid.org/";
 		else if (document.form.ddns_server_x.value == 'WWW.ORAY.COM')
-			tourl = "http://www.oray.com/";
+			tourl = "https://www.oray.com/";
 		else if (document.form.ddns_server_x.value == 'DOMAINS.GOOGLE.COM')
 			tourl = "https://domains.google/";
 		else	tourl = "";
@@ -1458,7 +1463,7 @@ function wl_auth_mode_change(isload){
 		opts = document.form.wl_auth_mode_x.options;
 		if(opts[opts.selectedIndex].text == "WPA-Personal" || opts[opts.selectedIndex].text == "WPA-Enterprise")
 			algos = new Array("TKIP");
-		else if(opts[opts.selectedIndex].text == "WPA2-Personal" || opts[opts.selectedIndex].text == "Opportunistic Wireless Encryption" || opts[opts.selectedIndex].text == "WPA3-Personal" || opts[opts.selectedIndex].text == "WPA2/WPA3-Personal" || opts[opts.selectedIndex].text == "WPA2-Enterprise")
+		else if(opts[opts.selectedIndex].text == "WPA2-Personal" || opts[opts.selectedIndex].text == "<#Wireless_Encryption_OWE#>" || opts[opts.selectedIndex].text == "WPA3-Personal" || opts[opts.selectedIndex].text == "WPA2/WPA3-Personal" || opts[opts.selectedIndex].text == "WPA2-Enterprise")
 			algos = new Array("AES");
 		else
 			algos = new Array("AES", "TKIP+AES");
@@ -1574,7 +1579,7 @@ function wl_auth_mode_change(isload){
 function showhide(element, sh)
 {
 	var status;
-	if (sh == 1){
+	if ((sh == 1) || (sh == true)){
 		status = "";
 	}
 	else{
@@ -1699,7 +1704,7 @@ function limit_auth_method(g_unit){
 	if(sw_mode == 2){
 		if(wpa3_support){
 			if(band6g_support && wl_unit == '2'){	// for 6 GHz
-				var auth_array = [["Opportunistic Wireless Encryption", "owe"], ["WPA3-Personal", "sae"]];
+				var auth_array = [["<#Wireless_Encryption_OWE#>", "owe"], ["WPA3-Personal", "sae"]];
 			}
 			else{
 				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA3-Personal", "sae"], ["WPA/WPA2-Personal", "pskpsk2"], ["WPA2/WPA3-Personal", "psk2sae"]];
@@ -1722,7 +1727,7 @@ function limit_auth_method(g_unit){
 		else{
 			if(wpa3_support){
 				if(band6g_support && wl_unit == '2'){	// for 6 GHz
-					var auth_array = [["Opportunistic Wireless Encryption", "owe"], ["WPA3-Personal", "sae"]];
+					var auth_array = [["<#Wireless_Encryption_OWE#>", "owe"], ["WPA3-Personal", "sae"]];
 				}
 				else{
 					var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA3-Personal", "sae"], ["WPA/WPA2-Personal", "pskpsk2"], ["WPA2/WPA3-Personal", "psk2sae"], ["WPA2-Enterprise", "wpa2"], ["WPA/WPA2-Enterprise", "wpawpa2"]];
@@ -1744,7 +1749,7 @@ function limit_auth_method(g_unit){
 			if(new_wifi_cert_support){
 				if(wpa3_support){
 					if(band6g_support && wl_unit == '2'){	// for 6 GHz
-						var auth_array = [["Opportunistic Wireless Encryption", "owe"], ["WPA3-Personal", "sae"]];
+						var auth_array = [["<#Wireless_Encryption_OWE#>", "owe"], ["WPA3-Personal", "sae"]];
 					}
 					else{
 						var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA2-Personal", "psk2"], ["WPA3-Personal", "sae"], ["WPA/WPA2-Personal", "pskpsk2"], ["WPA2/WPA3-Personal", "psk2sae"], ["WPA2-Enterprise", "wpa2"], ["WPA/WPA2-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
@@ -1770,7 +1775,7 @@ function limit_auth_method(g_unit){
 		if(wpa3_support){
 			if(band6g_support && g_unit == '2'){	// for 6 GHz
 	
-				var auth_array = [["Opportunistic Wireless Encryption", "owe"], ["WPA3-Personal", "sae"]];
+				var auth_array = [["<#Wireless_Encryption_OWE#>", "owe"], ["WPA3-Personal", "sae"]];
 				if(auth_method_array != 'owe' && auth_method_array != 'sae'){
 					auth_method_array = 'owe';
 				}
@@ -1786,6 +1791,15 @@ function limit_auth_method(g_unit){
 
 	if(is_KR_sku){	// MODELDEP by Territory_code
 		auth_array.splice(0, 1); //remove Open System
+	}
+
+	if(isSupport("amas") && isSupport("amasRouter") && (isSwMode("rt") || isSwMode("ap"))){
+		var re_count = httpApi.hookGet("get_cfg_clientlist", true).length;
+		if(re_count > 1){
+			auth_array = auth_array.filter(function(item){
+				return (item[1] != "wpa2" && item[1] != "wpawpa2");//have re node then hide WPA2-Enterprise, WPA/WPA2-Enterprise
+			});
+		}
 	}
 
 	free_options(document.form.wl_auth_mode_x);
@@ -1823,6 +1837,8 @@ function getDDNSState(ddns_return_code, ddns_hostname, ddns_old_hostname)
 		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_8#>";
 	else if(ddns_return_code.indexOf('299')!=-1)
 		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_9#>";
+	else if(ddns_return_code.indexOf('390')!=-1)
+		ddnsStateHint = "Server Error";
 	else if(ddns_return_code.indexOf('401')!=-1)
 		ddnsStateHint = "<#LANHostConfig_x_DDNS_alarm_10#>";
 	else if(ddns_return_code.indexOf('407')!=-1)
@@ -1985,3 +2001,12 @@ function gen_tab_menu(_tab_list_array, _currentItem) {
 		return code;
 	}
 }
+
+function check_is_merlin_fw(_fw) {
+	var fw_array = _fw.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)\.([^_]+)_(\w+)/);
+	if (fw_array && (fw_array[5].indexOf('.') > 0) )
+		return true;
+	else
+		return false;
+}
+

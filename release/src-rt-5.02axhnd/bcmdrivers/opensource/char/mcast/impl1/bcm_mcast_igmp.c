@@ -117,7 +117,7 @@ static inline int bcm_mcast_igmp_hash(const u32 grp)
    return (jhash_1word(grp, mcast_ctrl->ipv4_hash_salt) & (BCM_MCAST_HASH_SIZE - 1));
 }
 
-void bcm_mcast_igmp_del_entry(bcm_mcast_ifdata *pif, 
+int bcm_mcast_igmp_del_entry(bcm_mcast_ifdata *pif,
                               t_igmp_grp_entry *igmp_fdb,
                               struct in_addr   *rep,
                               unsigned char    *repMac)
@@ -152,9 +152,10 @@ void bcm_mcast_igmp_del_entry(bcm_mcast_ifdata *pif,
       bcm_mcast_blog_release(BCM_MCAST_PROTO_IPV4, (void *)igmp_fdb);
 #endif
       kmem_cache_free(mcast_ctrl->ipv4_grp_cache, igmp_fdb);
+      return -ENOENT;
    }
 
-   return;
+   return 0;
 }
 
 static void bcm_mcast_igmp_set_timer( bcm_mcast_ifdata *pif)
@@ -241,7 +242,10 @@ int bcm_mcast_igmp_wipe_group(bcm_mcast_ifdata *parent_if, int dest_ifindex, str
             {
                if ((mcast_group->rxGrp.s_addr == gpAddr->s_addr) && (mcast_group->dst_dev == destDev))
                {
-                  bcm_mcast_igmp_del_entry(parent_if, mcast_group, &reporter_group->rep, NULL);
+                   if (bcm_mcast_igmp_del_entry(parent_if, mcast_group, &reporter_group->rep, NULL))
+                   {
+                       break;
+                   }
                }
             }
          }
@@ -268,7 +272,10 @@ static void bcm_mcast_igmp_reporter_timeout(bcm_mcast_ifdata *pif)
          {
             if (time_after_eq(jiffies, reporter_group->tstamp)) 
             {
-               bcm_mcast_igmp_del_entry(pif, mcast_group, &reporter_group->rep, NULL);
+               if (bcm_mcast_igmp_del_entry(pif, mcast_group, &reporter_group->rep, NULL))
+               {
+		   break;
+               }
             }
          }
       }

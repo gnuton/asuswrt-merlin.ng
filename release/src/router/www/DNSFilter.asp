@@ -27,14 +27,6 @@
 <% login_state_hook(); %>
 
 var dnsfilter_rule_list = '<% nvram_get("dnsfilter_rulelist"); %>'.replace(/&#60/g, "<");
-if (isSupport("hnd")) {
-	dnsfilter_rule_list += '<% nvram_get("dnsfilter_rulelist1"); %>'.replace(/&#60/g, "<") +
-		'<% nvram_get("dnsfilter_rulelist2"); %>'.replace(/&#60/g, "<") +
-		'<% nvram_get("dnsfilter_rulelist3"); %>'.replace(/&#60/g, "<") +
-		'<% nvram_get("dnsfilter_rulelist4"); %>'.replace(/&#60/g, "<") +
-		'<% nvram_get("dnsfilter_rulelist5"); %>'.replace(/&#60/g, "<");
-}
-
 var dnsfilter_rule_list_row = dnsfilter_rule_list.split('<');
 
 var modes_array = [[ "0", "No Filtering" ],
@@ -121,7 +113,7 @@ function show_dnsfilter_list(){
 
 	code = '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="clientTable">';
 	if(dnsfilter_rule_list_row.length < 2)
-		code += '<tr><td style="color:#FFCC00;" colspan="3"><#IPConnection_VSList_Norule#></td></tr>';
+		code += '<tr><td class="hint-color" colspan="3"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		//user icon
 		var userIconBase64 = "NoIcon";
@@ -196,10 +188,7 @@ function show_dnsfilter_list(){
 }
 
 function applyRule(){
-	if (isSupport("hnd"))
-		split_clientlist(dnsfilter_rule_list.replace(/&#62/g, ">"));
-	else
-		document.form.dnsfilter_rulelist.value = dnsfilter_rule_list.replace(/&#62/g, ">") ;
+	document.form.dnsfilter_rulelist.value = dnsfilter_rule_list.replace(/&#62/g, ">") ;
 
 	showLoading();
 	document.form.submit();

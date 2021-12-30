@@ -2917,6 +2917,8 @@ typedef struct {
     wait_queue_head_t   wqh;
     unsigned long       work_avail;
 #define BLOG_WORK_AVAIL               (1<<0)
+	spinlock_t		wakeup_lock;
+	bool wakeup_done;
 } wq_info_t;
 
 #define BLOG_WAKEUP_WORKER_THREAD(x, mask)                              \
@@ -2925,6 +2927,17 @@ do {                                                                    \
         (x)->work_avail |= mask;                                        \
         wake_up_interruptible(&((x)->wqh));                             \
     }                                                                   \
+} while (0)
+
+/*wake up with spinlock to avoid preemption/bh processing between
+ *setting work_avail & wakeup
+ */
+#define BLOG_WAKEUP_WORKER_THREAD_NO_PREEMPT(x, mask)               \
+do {                                                                \
+    spin_lock_bh(&((x)->wakeup_lock));								\
+    BLOG_WAKEUP_WORKER_THREAD(x, mask);	                         	\
+    (x)->wakeup_done = true;                                        \
+    spin_unlock_bh(&((x)->wakeup_lock));                            \
 } while (0)
 
 

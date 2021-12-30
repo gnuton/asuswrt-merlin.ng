@@ -209,19 +209,19 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			}
 		} else if(strcmp(type,"memory.total") == 0) {
 			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.totalram/(float)MBYTES));
+			sprintf(result,"%.2f",(sys.totalram * sys.mem_unit / (float)MBYTES));
 		} else if(strcmp(type,"memory.free") == 0) {
 			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.freeram/(float)MBYTES));
+			sprintf(result,"%.2f",(sys.freeram * sys.mem_unit / (float)MBYTES));
 		} else if(strcmp(type,"memory.buffer") == 0) {
 			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.bufferram/(float)MBYTES));
+			sprintf(result,"%.2f",(sys.bufferram * sys.mem_unit / (float)MBYTES));
 		} else if(strcmp(type,"memory.swap.total") == 0) {
 			sysinfo(&sys);
-			sprintf(result,"%.2f",(sys.totalswap/(float)MBYTES));
+			sprintf(result,"%.2f",(sys.totalswap * sys.mem_unit / (float)MBYTES));
 		} else if(strcmp(type,"memory.swap.used") == 0) {
 			sysinfo(&sys);
-			sprintf(result,"%.2f",((sys.totalswap - sys.freeswap) / (float)MBYTES));
+			sprintf(result,"%.2f",((sys.totalswap - sys.freeswap) * sys.mem_unit / (float)MBYTES));
 		} else if(strcmp(type,"memory.cache") == 0) {
 			int size = 0;
 			char *buffer = read_whole_file("/proc/meminfo");
@@ -364,20 +364,29 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			else
 				sprintf(result,"%d",count);
 
-		} else if(strcmp(type,"driver_version") == 0 ) {
-			system("/usr/sbin/wl ver >/tmp/output.txt");
+		} else if(strncmp(type,"driver_version",14) == 0 ) {
+			int radio = 0;
+			char buf[32], buf2[64];
 
-			char *buffer = read_whole_file("/tmp/output.txt");
+			sscanf(type,"driver_version.%d", &radio);
+			sprintf(buf, "wl%d_ifname", radio);
+			tmp = nvram_safe_get(buf);
+			if (*tmp) {
+				snprintf(buf2, sizeof (buf2), "/usr/sbin/wl -i %s ver >/tmp/output.txt", tmp);
+				system(buf2);
 
-			if (buffer) {
-				if ((tmp = strstr(buffer, "\n")))
-					strlcpy(result, tmp+1, sizeof result);
-				else
-					strlcpy(result, buffer, sizeof result);
+				char *buffer = read_whole_file("/tmp/output.txt");
 
-				free(buffer);
+				if (buffer) {
+					if ((tmp = strstr(buffer, "\n")))
+						strlcpy(result, tmp+1, sizeof result);
+					else
+						strlcpy(result, buffer, sizeof result);
+					replace_char(result, '\n', ' ');
+					free(buffer);
+				}
+				unlink("/tmp/output.txt");
 			}
-			unlink("/tmp/output.txt");
 #ifdef RTCONFIG_QTN
                 } else if(strcmp(type,"qtn_version") == 0 ) {
 
@@ -617,7 +626,7 @@ unsigned int get_phy_temperature(int radio)
 		interface = nvram_safe_get("wl0_ifname");
 	} else if (radio == 5) {
 		interface = nvram_safe_get("wl1_ifname");
-#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAC5300) || defined(GTAX11000)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAC5300) || defined(GTAX11000) || defined(GTAXE11000)
 	} else if (radio == 52) {
 		interface = nvram_safe_get("wl2_ifname");
 #endif

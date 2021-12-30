@@ -455,16 +455,13 @@ static int port_sf2mac_stats_read(mac_dev_t *mac_dev, mac_stats_t *mac_stats)
     memset(mac_stats, 0, sizeof(*mac_stats));
     
     {
-        spin_lock_bh(&sf2_stat_access);
         sf2_rreg(PAGE_CONTROL, REG_LOW_POWER_EXP1, &ctr32, 4);
         if (ctr32 & (1<<mac_dev->mac_id)) {
-            spin_unlock_bh(&sf2_stat_access);
             printk("Err: port=%d is in low power mode - mib counters not accessible!!\n", mac_dev->mac_id);    // SLEEP_SYSCLK_PORT for specified port is set
             return -1;
         }
         sf2_rreg(PAGE_CONTROL, REG_SW_RESET, &ctr32, 4);
         if (ctr32 & REG_SW_RST) {
-            spin_unlock_bh(&sf2_stat_access);
             printk("Err: sf2 switch in reset - mib counters not accessible!!\n");
             return -1;
         }
@@ -568,16 +565,19 @@ static int port_sf2mac_stats_read(mac_dev_t *mac_dev, mac_stats_t *mac_stats)
     mac_stats->tx_dropped = ctr32;
     sf2_rreg(PAGE_MIB_P0 + mac_dev->mac_id, REG_MIB_P0_EXT_TXFRAMEINDISC, &ctr32, 4);
     mac_stats->tx_dropped += ctr32;
-    spin_unlock_bh(&sf2_stat_access);
 
     return 0;
 }
 static int port_sf2mac_stats_get(mac_dev_t *mac_dev, mac_stats_t *mac_stats)
 {
+    static mac_stats_t scratch_stats;
     sf2_mac_dev_priv_data_t *p_priv = (sf2_mac_dev_priv_data_t*)mac_dev->priv;
-    port_sf2mac_stats_read(mac_dev, mac_stats);
-    port_sf2mac_fold_stats(&p_priv->mac_stats, &p_priv->last_mac_stats, mac_stats);
+    spin_lock_bh(&sf2_stat_access);
+    if (port_sf2mac_stats_read(mac_dev,&scratch_stats) == 0) {
+        port_sf2mac_fold_stats(&p_priv->mac_stats, &p_priv->last_mac_stats, &scratch_stats);
+    }
     memcpy(mac_stats, &p_priv->mac_stats, sizeof(*mac_stats));
+    spin_unlock_bh(&sf2_stat_access);
     return 0;
 }
 static int port_sf2mac_stats_clear(mac_dev_t *mac_dev)

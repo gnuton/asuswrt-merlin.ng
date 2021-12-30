@@ -15,6 +15,8 @@
 # of running runtests.pl as a child of itself sharing
 # some of the directories.
 1182
+# test 1184 causes flakiness in CI builds, mostly visible on macOS
+1184
 1209
 1211
 # fnmatch differences are just too common to make testing them sensible
@@ -27,3 +29,77 @@
 # test 1801 causes problems on Mac OS X and github
 # https://github.com/curl/curl/issues/380
 1801
+#
+#
+# Tests that are disabled here for Hyper are SUPPOSED to work but
+# still need adjustments in tests or code. Tests that cannot be
+# fixed for hyper should be adjusted for it in the test file.
+#
+# hyper support remains EXPERIMENTAL as long as there's a test number
+# listed below
+%if hyper
+206
+207
+209
+213
+217
+262
+265
+266
+326
+357
+358
+359
+547
+551
+552
+555
+559
+565
+579
+580
+581
+587
+661
+670
+671
+672
+673
+718
+1008
+1021
+1060
+1061
+1070
+1071
+1077
+1078
+1144
+1156
+1160
+1164
+1176
+1266
+1267
+1287
+1288
+1294
+1417
+1430
+1431
+1455
+1456
+1525
+1526
+1527
+1528
+1533
+1540
+1554
+1556
+1591
+1700
+1701
+1702
+1800
+%endif

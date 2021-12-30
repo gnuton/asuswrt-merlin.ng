@@ -98,6 +98,16 @@ enum WLEMF_CMD {
 #define netdev_wlan_unset_dwds_client(wlif)     ((wlif)->flags &= ~FLAG_DWDS_CLIENT)
 #define is_netdev_wlan_dwds_client(wlif)        ((wlif)->flags & FLAG_DWDS_CLIENT)
 
+#ifdef BCM_DHD_LOCK
+#if defined(BCM_ROUTER_DHD) && defined(BCM_GMAC3)
+#define DHD_LOCK(dhdp)        dhd_perim_lock(dhdp)
+#define DHD_UNLOCK(dhdp)      dhd_perim_unlock(dhdp)
+#else
+#define DHD_LOCK(dhdp)        do {} while (0)
+#define DHD_UNLOCK(dhdp)      do {} while (0)
+#endif /* BCM_ROUTER_DHD && BCM_GMAC3 */
+#endif /* BCM_DHD_LOCK */
+
 /* check if virtual wlan net deivce */
 #define check_virt_wlan(_dev)  ( !(_dev) || !netdev_path_is_root(_dev) || \
 	((_dev)->priv_flags & IFF_BCM_VLAN) || ((_dev)->priv_flags & IFF_802_1Q_VLAN) )

@@ -107,7 +107,7 @@ typedef enum
     PHY_TYPE_CROSSBAR,
     PHY_TYPE_MAC2MAC,
     PHY_TYPE_G9991,
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
     PHY_TYPE_RTL8226,
 #endif
     PHY_TYPE_MAX,

@@ -106,6 +106,7 @@ typedef enum
     PHY_TYPE_XGAE,
     PHY_TYPE_CROSSBAR,
     PHY_TYPE_MAC2MAC,
+    PHY_TYPE_GPY211,
     PHY_TYPE_MAX,
 } phy_type_t;
 

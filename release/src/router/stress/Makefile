@@ -21,7 +21,7 @@ clean:
 install:
 	@echo done
 stress:
-	cp prebuilt/$(EXE) $(EXE)
+	cp $(EXE)_$(PROFILE).save $(EXE)
 
 #
 # Set our CommEngine directory (by splitting the pwd into two words

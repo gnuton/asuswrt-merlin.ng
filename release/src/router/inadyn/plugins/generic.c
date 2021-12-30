@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2003-2004  Narcis Ilisei <inarcis2002@hotpop.com>
  * Copyright (C) 2006       Steve Horbachuk
- * Copyright (C) 2010-2020  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (C) 2010-2021  Joachim Wiberg <troglobit@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,7 +39,8 @@
 	"Authorization: Basic %s\r\n"					\
 	"User-Agent: %s\r\n\r\n"
 
-char *generic_responses[] = { "OK", "good", "true", "updated", "nochg", NULL };
+const char * const generic_responses[] =
+    { "OK", "good", "true", "updated", "nochg", NULL };
 
 static int request  (ddns_t       *ctx,   ddns_info_t *info, ddns_alias_t *alias);
 static int response (http_trans_t *trans, ddns_info_t *info, ddns_alias_t *alias);
@@ -85,11 +86,11 @@ static void skip_fmt(char *fmt, size_t len)
  * %h - hostname
  * %i - IP address
  */
-static int custom_server_url(ddns_info_t *info, ddns_alias_t *alias)
+static int custom_server_url(char *buf, ddns_info_t *info, ddns_alias_t *alias)
 {
 	char *ptr;
 
-	while ((ptr = strchr(info->server_url, '%'))) {
+	while ((ptr = strchr(buf, '%'))) {
 		if (!strncmp(ptr, "%u", 2)) {
 			if (strnlen(info->creds.username, USERNAME_LEN) <= 0) {
 				logit(LOG_ERR, "Format specifier in ddns-path used: '%%u',"
@@ -134,12 +135,12 @@ static int custom_server_url(ddns_info_t *info, ddns_alias_t *alias)
 		return -1;
 	}
 
-	return strlen(info->server_url);
+	return strlen(buf);
 }
 
 static char tohex(char code)
 {
-	static char hex[] = "0123456789abcdef";
+	static const char hex[] = "0123456789abcdef";
 
 	return hex[code & 15];
 }
@@ -203,17 +204,21 @@ static char *url_encode(char *str)
  */
 static int request(ddns_t *ctx, ddns_info_t *info, ddns_alias_t *alias)
 {
-	int ret;
-	char *url;
+	char  buf[2 * sizeof(info->server_url)];
 	char *arg = "";
+	char *url;
+	int ret;
+
+	/* Operate of copy of URL, may contain %-modifiers */
+	strlcpy(buf, info->server_url, sizeof(buf));
 
 	/*
-	 * if the user has specified modifiers, then he is probably
-	 * aware of how to append his hostname or IP, otherwise just
-	 * append the hostname or ip (depending on the append_myip option)
+	 * if the user has specified modifiers, then they probably know
+	 * how to append his hostname or IP, otherwise just append the
+	 * hostname or ip (depending on the append_myip option)
 	 */
-	if (strchr(info->server_url, '%')) {
-		if (custom_server_url(info, alias) <= 0)
+	if (strchr(buf, '%')) {
+		if (custom_server_url(buf, info, alias) <= 0)
 			logit(LOG_ERR, "Invalid server URL: %s", info->server_url);
 	} else {
 		/* Backwards compat, default to append hostname */
@@ -223,7 +228,7 @@ static int request(ddns_t *ctx, ddns_info_t *info, ddns_alias_t *alias)
 			arg = alias->address;
 	}
 
-	url = url_encode(info->server_url);
+	url = url_encode(buf);
 	if (!url)
 		return 0;
 

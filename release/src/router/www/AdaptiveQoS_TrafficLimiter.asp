@@ -24,8 +24,10 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 window.onresize = function() {
-	if(document.getElementById("alert_preference").style.display == "block") {
-		cal_panel_block("alert_preference", 0.25);
+	if(document.getElementById("alert_preference") != null){
+		if(document.getElementById("alert_preference").style.display == "block") {
+			cal_panel_block("alert_preference", 0.25);
+		}
 	}
 } 
 var wans_caps = '<% nvram_get("wans_cap"); %>';
@@ -878,13 +880,12 @@ function erase_traffic(){
 function corrected_timezone(){
 	var today = new Date();
 	var StrIndex;	
-	if(today.toString().lastIndexOf("-") > 0)
-		StrIndex = today.toString().lastIndexOf("-");
-	else if(today.toString().lastIndexOf("+") > 0)
-		StrIndex = today.toString().lastIndexOf("+");
+	if(today.toString().indexOf("-") > 0)
+		StrIndex = today.toString().indexOf("-");
+	else if(today.toString().indexOf("+") > 0)
+		StrIndex = today.toString().indexOf("+");
 
 	if(StrIndex > 0){		
-		//alert('dstoffset='+dstoffset+', 設定時區='+timezone+' , 當地時區='+today.toString().substring(StrIndex, StrIndex+5))
 		if(timezone != today.toString().substring(StrIndex, StrIndex+5)){
 			document.getElementById("timezone_hint").style.visibility = "visible";
 			document.getElementById("timezone_hint").innerHTML = "* <#LANHostConfig_x_TimeZone_itemhint#>";

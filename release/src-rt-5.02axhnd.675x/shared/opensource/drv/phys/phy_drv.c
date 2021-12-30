@@ -46,7 +46,7 @@
 #include "phy_macsec_common.h"
 
 #define MAX_PHY_DEVS 31     /* value should be < 32 */ 
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
 #include "bcm_gpio.h"
 #endif
 
@@ -60,7 +60,7 @@ extern phy_drv_t phy_drv_6856_sgmii;
 extern phy_drv_t phy_drv_ext1;
 extern phy_drv_t phy_drv_ext2;
 extern phy_drv_t phy_drv_ext3;
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
 extern phy_drv_t phy_drv_rtl8226;
 #endif
 extern phy_drv_t phy_drv_lport_serdes;
@@ -148,7 +148,7 @@ int phy_drivers_set(void)
     ret |= phy_driver_set(&phy_drv_ext2);
 #endif
 #ifdef PHY_EXT3
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
 	ret |= phy_driver_set(&phy_drv_rtl8226);
 #endif
     ret |= phy_driver_set(&phy_drv_ext3);
@@ -197,7 +197,7 @@ int phy_drivers_init(void)
     ret |= phy_driver_init(PHY_TYPE_CROSSBAR);
     ret |= phy_driver_init(PHY_TYPE_SF2_GPHY);
     ret |= phy_driver_init(PHY_TYPE_MAC2MAC);
-#if defined(RTAX95Q)
+#if defined(RTAX95Q) || defined(RTAXE95Q)
     ret |= phy_driver_init(PHY_TYPE_RTL8226);
 #endif
     return ret;

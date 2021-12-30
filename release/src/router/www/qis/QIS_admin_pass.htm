@@ -10,12 +10,27 @@
 <link href="../form_style.css"  rel="stylesheet" type="text/css">
 <link href="../usp_style.css"  rel="stylesheet" type="text/css">
 <link href="../pwdmeter.css" rel="stylesheet" type="text/css">
+<link type="text/css" rel="stylesheet" href="/css/icon.css">
 <script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
 <style type="text/css"> 
 .QISTutorFont{
 	font-family:Segoe UI, Arial, sans-serif;
 	width:280px;
 	line-height: 20px;
+}
+
+.icon_eye_open{
+	width:30px;
+	height:25px;
+	background-size: 20px;
+	margin-left: 5px;
+}
+
+.icon_eye_close{
+	width:30px;
+	height:25px;
+	background-size: 20px;
+	margin-left: 5px;
 }
 </style>
 <script type="text/javascript" language="JavaScript" src="/state.js"></script>
@@ -67,7 +82,6 @@ function QKinternettype_load_body(){
 		document.form.http_passwd.focus();
 
 		if (dsl_support) {
-			document.getElementById("prev_btn").style.display = "none";
 			document.form.next_page.value = "/qis/QIS_detect.htm";
 		}
 	}
@@ -77,6 +91,10 @@ function QKinternettype_load_body(){
 	if(parent.based_modelid == "DSL-AC68U" || parent.based_modelid == "DSL-AX82U"){	//dsl detect trigger, MODELDEP : DSL-AC68U
 		var RetryCountDown_fail = 5;
 		update_dsl_info();
+		if('<% nvram_get("x_Setting"); %>' == '1' && parent.based_modelid == "DSL-AC68U"){
+			document.form.action = "/qis/QIS_detect.htm";
+			document.form.submit();
+		}
 	}
 	
         if(parent.based_modelid == "RT-AC58U" || parent.based_modelid == "RT-AC82U"){
@@ -89,12 +107,14 @@ function QKinternettype_load_body(){
         }
 	
 
-	if(wanauxstate == 1)
+	if(!dsl_support && wanauxstate == 1)
 		document.getElementById("prev_btn").style.display = "";
 
 	var amesh_found_cap = '<% nvram_get("amesh_found_cap"); %>';
 	if(amesh_found_cap == "1" && parent.amesh_support)
 		document.getElementById("amesh_hint").style.display = "";
+
+	$(".secureInput").click(checkPasswd);
 }
 
 function waninfo(){
@@ -143,7 +163,7 @@ function submitForm(){
 		return false;
 	}
 	else{	
-		var alert_str = validator.account_name(document.form.http_username);
+		var alert_str = validator.host_name(document.form.http_username);
 		if(alert_str != ""){
 			showtext(document.getElementById("alert_msg1"), alert_str);
 			document.getElementById("alert_msg1").style.display = "";
@@ -198,19 +218,7 @@ function submitForm(){
 		return false;
 	}
 	
-	if(document.form.http_passwd.value.length > 0 && document.form.http_passwd.value.length < 5){
-		if(parent.ISMOBILE)
-			showtext(document.getElementById("_alert_msg2"),"* <#JS_short_password#>");
-		else
-			showtext(document.getElementById("alert_msg2"),"* <#JS_short_password#>");			
-		
-		document.form.http_passwd.focus();
-		document.form.http_passwd.select();
-		changeiuiBackground(0);
-		return false;
-	}
-
-	if(document.form.http_passwd.value.length > 16){
+	if(document.form.http_passwd.value.length > 32){
 		if(parent.ISMOBILE)
 			showtext(document.getElementById("_alert_msg2"),"* <#JS_max_password#>");
 		else
@@ -233,15 +241,35 @@ function submitForm(){
 		return false;
 	}
 
-	if(is_KR_sku){		/* MODELDEP by Territory Code */
+	if(is_KR_sku || is_SG_sku || is_AA_sku){		/* MODELDEP by Territory Code */
 		if(!validator.string_KR(document.form.http_passwd)){
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
 			changeiuiBackground(0);
 			return false;
 		}
+
+		if(document.form.http_passwd.value == document.form.http_username.value){
+			alert("<#JS_validLoginPWD#>");
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			return false;
+		}
 	}
 	else{
+
+		if(document.form.http_passwd.value.length > 0 && document.form.http_passwd.value.length < 5){
+			if(parent.ISMOBILE)
+				showtext(document.getElementById("_alert_msg2"),"* <#JS_short_password#> <#JS_password_length#>");
+			else
+				showtext(document.getElementById("alert_msg2"),"* <#JS_short_password#> <#JS_password_length#>");
+                
+			document.form.http_passwd.focus();
+			document.form.http_passwd.select();
+			changeiuiBackground(0);
+			return false;
+		}
+
 		if(!validator.string(document.form.http_passwd)){
 			document.form.http_passwd.focus();
 			document.form.http_passwd.select();
@@ -392,12 +420,7 @@ function skipsetting(){
 }
 
 function gotoPrev(){
-	if (dsl_support) {
-		location.href = "/qis/QIS_detect.htm";	
-	}
-	else {
-		location.href = "QIS_welcome.htm";
-	}
+	location.href = "QIS_welcome.htm";
 }
 
 /* password item show or not */
@@ -427,6 +450,15 @@ function paste_password(){
 	document.form.show_pass_1.checked = true;
 	pass_checked(document.form.http_passwd);
 	pass_checked(document.form.v_password2);
+}
+
+function checkPasswd($obj){
+	var targetObj = $(this);
+	targetObj.toggleClass("icon_eye_close").toggleClass("icon_eye_open");
+
+	$.each( targetObj.attr("for").split(" "), function(i, val){
+		$("#"+val).prop("type", (function(){return targetObj.hasClass("icon_eye_close") ? "password" : "text";}()));
+	});
 }
 </script>
 </head>  
@@ -468,7 +500,7 @@ function paste_password(){
 		  <th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,5)"><#Router_Login_Name#></a></th>
 		  <td class="QISformtd">
 			<div>
-				<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_18_table" maxlength="20" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
+				<input type="text" id="http_username" name="http_username" tabindex="1" style="height:25px;" class="input_18_table" maxlength="32" value="<% nvram_get("http_username"); %>" autocomplete="off" autocorrect="off" autocapitalize="off">
 				<br /><span id="alert_msg1" style="color:#FC0;margin-left:8px;display:none;"></span>
 			</div>
 		  </td>
@@ -476,7 +508,7 @@ function paste_password(){
 		<tr>
 			<th width="240"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 			<td class="QISformtd">
-				<input type="password" autocomplete="off" value="" name="http_passwd" tabindex="2" style="height:25px;" class="input_18_table" maxlength="17" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
+				<input type="password" autocomplete="off" value="" name="http_passwd" id="http_passwd" tabindex="2" style="height:25px;" class="input_18_table" maxlength="33" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off">
 			&nbsp;&nbsp;
 				<div id="scorebarBorder" style="margin-left:180px; margin-top:-26px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 				<div id="score" style="margin-top:3px;"></div>
@@ -487,8 +519,11 @@ function paste_password(){
 		<tr>
 			<th width="240"><span class="hintstyle"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></span></th>
 			<td class="QISformtd">
-				<input type="password" autocomplete="off" value="" name="v_password2" tabindex="3" style="height:25px;" class="input_18_table" maxlength="17" onpaste="setTimeout('paste_password();', 10)" autocorrect="off" autocapitalize="off"/>
-				<div style="margin:-25px 0px 0px 175px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
+				<div style="display: flex; align-items: center;">
+				<div><input type="password" autocomplete="off" value="" name="v_password2" id="v_password2" tabindex="3" style="height:25px;" class="input_18_table" maxlength="33" onpaste="setTimeout('paste_password();', 10)" autocorrect="off" autocapitalize="off"/></div>
+				<!--div style="margin:-25px 0px 0px 175px;"><input type="checkbox" name="show_pass_1" tabindex="4" onclick="pass_checked(document.form.http_passwd);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div-->
+				<div class="secureInput icon_eye_close" for="http_passwd v_password2"></div>
+			</div>
 			</td>
 		</tr>
 		<tr>			
@@ -533,10 +568,10 @@ function paste_password(){
 	<div class="row_end"><a id="loadingIcon_skip" class="iuiA" onclick="skipsetting();"><#CTL_Skip#></a></div>
 </fieldset>
 
-<div class="apply_gen" id="applyBtn">
+<div class="apply_gen">
 	<span id="skip_btn" style="display:none;"><input type="button" value="<#CTL_Skip#>" tabindex="6" onclick="skipsetting();" class="button_gen"></span>
 	<span id="prev_btn" style="display:none"><input type="button" value="<#CTL_prev#>" tabindex="6" onclick="gotoPrev();" class="button_gen"></span>
-	<input type="submit" id="nextButton" tabindex="5"	value="<#CTL_next#>" class="button_gen">
+	<input type="submit" id="nextButton" tabindex="5" value="<#CTL_next#>" class="button_gen">
 </div>
 
 </form>

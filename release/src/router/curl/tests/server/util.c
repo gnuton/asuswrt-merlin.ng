@@ -171,7 +171,7 @@ void win32_init(void)
   wVersionRequested = MAKEWORD(2, 2);
   err = WSAStartup(wVersionRequested, &wsaData);
 
-  if(err != 0) {
+  if(err) {
     perror("Winsock init failed");
     logmsg("Error initialising winsock -- aborting");
     exit(1);
@@ -269,17 +269,11 @@ int wait_ms(int timeout_ms)
   return r;
 }
 
-int write_pidfile(const char *filename)
+curl_off_t our_getpid(void)
 {
-  FILE *pidfile;
   curl_off_t pid;
 
   pid = (curl_off_t)getpid();
-  pidfile = fopen(filename, "wb");
-  if(!pidfile) {
-    logmsg("Couldn't write pid file: %s %s", filename, strerror(errno));
-    return 0; /* fail */
-  }
 #if defined(WIN32) || defined(_WIN32)
   /* store pid + 65536 to avoid conflict with Cygwin/msys PIDs, see also:
    * - https://cygwin.com/git/?p=newlib-cygwin.git;a=commit; ↵
@@ -289,6 +283,20 @@ int write_pidfile(const char *filename)
    */
   pid += 65536;
 #endif
+  return pid;
+}
+
+int write_pidfile(const char *filename)
+{
+  FILE *pidfile;
+  curl_off_t pid;
+
+  pid = our_getpid();
+  pidfile = fopen(filename, "wb");
+  if(!pidfile) {
+    logmsg("Couldn't write pid file: %s %s", filename, strerror(errno));
+    return 0; /* fail */
+  }
   fprintf(pidfile, "%" CURL_FORMAT_CURL_OFF_T "\n", pid);
   fclose(pidfile);
   logmsg("Wrote pid %" CURL_FORMAT_CURL_OFF_T " to %s", pid, filename);
@@ -317,8 +325,8 @@ void set_advisor_read_lock(const char *filename)
 
   do {
     lockfile = fopen(filename, "wb");
-  } while((lockfile == NULL) && ((error = errno) == EINTR));
-  if(lockfile == NULL) {
+  } while(!lockfile && ((error = errno) == EINTR));
+  if(!lockfile) {
     logmsg("Error creating lock file %s error: %d %s",
            filename, error, strerror(error));
     return;
@@ -488,7 +496,7 @@ static struct timeval tvnow(void)
     (void)gettimeofday(&now, NULL);
 #else
   else {
-    now.tv_sec = (long)time(NULL);
+    now.tv_sec = time(NULL);
     now.tv_usec = 0;
   }
 #endif
@@ -517,7 +525,7 @@ static struct timeval tvnow(void)
   ** time() returns the value of time in seconds since the Epoch.
   */
   struct timeval now;
-  now.tv_sec = (long)time(NULL);
+  now.tv_sec = time(NULL);
   now.tv_usec = 0;
   return now;
 }
@@ -534,12 +542,6 @@ long timediff(struct timeval newer, struct timeval older)
   return (long)(newer.tv_sec-older.tv_sec)*1000+
     (long)(newer.tv_usec-older.tv_usec)/1000;
 }
-
-/* do-nothing macro replacement for systems which lack siginterrupt() */
-
-#ifndef HAVE_SIGINTERRUPT
-#define siginterrupt(x,y) do {} while(0)
-#endif
 
 /* vars used to keep around previous signal handlers */
 
@@ -721,6 +723,36 @@ static DWORD WINAPI main_window_loop(LPVOID lpParameter)
 }
 #endif
 
+static SIGHANDLER_T set_signal(int signum, SIGHANDLER_T handler,
+                               bool restartable)
+{
+#if defined(HAVE_SIGACTION) && defined(SA_RESTART)
+  struct sigaction sa, oldsa;
+
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = handler;
+  sigemptyset(&sa.sa_mask);
+  sigaddset(&sa.sa_mask, signum);
+  sa.sa_flags = restartable? SA_RESTART: 0;
+
+  if(sigaction(signum, &sa, &oldsa))
+    return SIG_ERR;
+
+  return oldsa.sa_handler;
+#else
+  SIGHANDLER_T oldhdlr = signal(signum, handler);
+
+#ifdef HAVE_SIGINTERRUPT
+  if(oldhdlr != SIG_ERR)
+    siginterrupt(signum, (int) restartable);
+#else
+  (void) restartable;
+#endif
+
+  return oldhdlr;
+#endif
+}
+
 void install_signal_handlers(bool keep_sigalrm)
 {
 #ifdef WIN32
@@ -731,20 +763,20 @@ void install_signal_handlers(bool keep_sigalrm)
 #endif
 #ifdef SIGHUP
   /* ignore SIGHUP signal */
-  old_sighup_handler = signal(SIGHUP, SIG_IGN);
+  old_sighup_handler = set_signal(SIGHUP, SIG_IGN, FALSE);
   if(old_sighup_handler == SIG_ERR)
     logmsg("cannot install SIGHUP handler: %s", strerror(errno));
 #endif
 #ifdef SIGPIPE
   /* ignore SIGPIPE signal */
-  old_sigpipe_handler = signal(SIGPIPE, SIG_IGN);
+  old_sigpipe_handler = set_signal(SIGPIPE, SIG_IGN, FALSE);
   if(old_sigpipe_handler == SIG_ERR)
     logmsg("cannot install SIGPIPE handler: %s", strerror(errno));
 #endif
 #ifdef SIGALRM
   if(!keep_sigalrm) {
     /* ignore SIGALRM signal */
-    old_sigalrm_handler = signal(SIGALRM, SIG_IGN);
+    old_sigalrm_handler = set_signal(SIGALRM, SIG_IGN, FALSE);
     if(old_sigalrm_handler == SIG_ERR)
       logmsg("cannot install SIGALRM handler: %s", strerror(errno));
   }
@@ -753,27 +785,21 @@ void install_signal_handlers(bool keep_sigalrm)
 #endif
 #ifdef SIGINT
   /* handle SIGINT signal with our exit_signal_handler */
-  old_sigint_handler = signal(SIGINT, exit_signal_handler);
+  old_sigint_handler = set_signal(SIGINT, exit_signal_handler, TRUE);
   if(old_sigint_handler == SIG_ERR)
     logmsg("cannot install SIGINT handler: %s", strerror(errno));
-  else
-    siginterrupt(SIGINT, 1);
 #endif
 #ifdef SIGTERM
   /* handle SIGTERM signal with our exit_signal_handler */
-  old_sigterm_handler = signal(SIGTERM, exit_signal_handler);
+  old_sigterm_handler = set_signal(SIGTERM, exit_signal_handler, TRUE);
   if(old_sigterm_handler == SIG_ERR)
     logmsg("cannot install SIGTERM handler: %s", strerror(errno));
-  else
-    siginterrupt(SIGTERM, 1);
 #endif
 #if defined(SIGBREAK) && defined(WIN32)
   /* handle SIGBREAK signal with our exit_signal_handler */
-  old_sigbreak_handler = signal(SIGBREAK, exit_signal_handler);
+  old_sigbreak_handler = set_signal(SIGBREAK, exit_signal_handler, TRUE);
   if(old_sigbreak_handler == SIG_ERR)
     logmsg("cannot install SIGBREAK handler: %s", strerror(errno));
-  else
-    siginterrupt(SIGBREAK, 1);
 #endif
 #ifdef WIN32
   if(!SetConsoleCtrlHandler(ctrl_event_handler, TRUE))
@@ -791,31 +817,31 @@ void restore_signal_handlers(bool keep_sigalrm)
 {
 #ifdef SIGHUP
   if(SIG_ERR != old_sighup_handler)
-    (void)signal(SIGHUP, old_sighup_handler);
+    (void) set_signal(SIGHUP, old_sighup_handler, FALSE);
 #endif
 #ifdef SIGPIPE
   if(SIG_ERR != old_sigpipe_handler)
-    (void)signal(SIGPIPE, old_sigpipe_handler);
+    (void) set_signal(SIGPIPE, old_sigpipe_handler, FALSE);
 #endif
 #ifdef SIGALRM
   if(!keep_sigalrm) {
     if(SIG_ERR != old_sigalrm_handler)
-      (void)signal(SIGALRM, old_sigalrm_handler);
+      (void) set_signal(SIGALRM, old_sigalrm_handler, FALSE);
   }
 #else
   (void)keep_sigalrm;
 #endif
 #ifdef SIGINT
   if(SIG_ERR != old_sigint_handler)
-    (void)signal(SIGINT, old_sigint_handler);
+    (void) set_signal(SIGINT, old_sigint_handler, FALSE);
 #endif
 #ifdef SIGTERM
   if(SIG_ERR != old_sigterm_handler)
-    (void)signal(SIGTERM, old_sigterm_handler);
+    (void) set_signal(SIGTERM, old_sigterm_handler, FALSE);
 #endif
 #if defined(SIGBREAK) && defined(WIN32)
   if(SIG_ERR != old_sigbreak_handler)
-    (void)signal(SIGBREAK, old_sigbreak_handler);
+    (void) set_signal(SIGBREAK, old_sigbreak_handler, FALSE);
 #endif
 #ifdef WIN32
   (void)SetConsoleCtrlHandler(ctrl_event_handler, FALSE);

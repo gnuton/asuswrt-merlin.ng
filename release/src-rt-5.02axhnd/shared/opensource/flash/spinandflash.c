@@ -161,6 +161,10 @@
 #define ETRONPART           0xD5
 #define ID_EM73C044         0x11
 
+/* FM manufacturer ID */
+#define FMPART              0xA1
+#define ID_FM25S01          0xA1
+#define ID_FM25S01A         0xE4 // (DID) Device ID
 
 #define SPI_MAKE_ID(A,B)    \
     (((unsigned short) (A) << 8) | ((unsigned short) B & 0xff))
@@ -188,6 +192,8 @@
      {SPI_MAKE_ID(TOSHIBAPART,  ID_TC58CVG0S),   "Toshiba TC58CVG0S"},      \
      {SPI_MAKE_ID(TOSHIBAPART,  ID_TC58CVG1S),   "Toshiba TC58CVG1S"},      \
      {SPI_MAKE_ID(ETRONPART,    ID_EM73C044),    "Etron EM73C044"},         \
+     {SPI_MAKE_ID(FMPART,       ID_FM25S01),     "FM 25S01"},               \
+     {SPI_MAKE_ID(FMPART,       ID_FM25S01A),    "FM 25S01A"},              \
      {0,""}                                                                 \
     }
 
@@ -794,6 +800,16 @@ static int spi_nand_read_cfg(PCFE_SPI_NAND_CHIP pchip)
         pchip->ecclayout = &spinand_oob_etron;
 #endif
         break;
+
+    case SPI_MAKE_ID(FMPART, ID_FM25S01): // 1Gb, 128MB
+#if defined(CFG_RAMAPP)
+	pchip->chip_spare_size = 0x80; // 128, encompasses whole OOB and ECC
+	pchip->ecclayout = &spinand_oob_toshiba_micron_ab;
+#endif
+	break;
+
+    case SPI_MAKE_ID(FMPART, ID_FM25S01A): // 1Gb, 128MB
+	break;
 
     default: // 1Gb, 128MB
 #if defined(CFG_RAMAPP)
