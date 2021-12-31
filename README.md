@@ -8,7 +8,7 @@
 </h3>
 
 <p align="center">
-  A powerful third party alternative firmware for Asus routers.
+  A powerful third party alternative firmware for Asus routers.  
   <br>
   <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
@@ -56,7 +56,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 ### Supported Models
 * [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/)
 * [DSL-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
-* [RT-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)   .: [Alpha images here](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/rt-ax82u-latest) :.
+* [RT-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 
 ---------------------
 
