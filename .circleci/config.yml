@@ -231,6 +231,7 @@ workflows:
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
+            - build_rt-ax82u
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -259,6 +260,7 @@ workflows:
           requires:
             - build_dsl-ax82u
             - build_dsl-ac68u
+            - build_rt-ax82u
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
