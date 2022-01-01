@@ -59,7 +59,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [DSL-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 * [RT-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 
-Do you wanna see a new model supported? Feel free to add it to the list [here](https://github.com/gnuton/asuswrt-merlin.ng/issues/140).
+If your router is not supported yet please and you wanna see it supported by Merlin please read [here](https://github.com/gnuton/asuswrt-merlin.ng/issues/140).
 
 ---------------------
 
