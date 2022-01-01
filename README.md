@@ -70,6 +70,7 @@ Your router is not supported yet? Please read [here](https://github.com/gnuton/a
 ### Thanks to
 - Asus for the GPLs and HW samples.
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
+- [CircleCI](https://circleci.com/) for providing a powerful CI infra for building the images on the cloud. 
 
 ---------------------
 ### How can I help?
