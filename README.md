@@ -75,7 +75,8 @@ Is your router not in the list yet? Please read [here](https://github.com/gnuton
 ---------------------
 ### How can I help?
 Do you love this project? All kinds of contributions are welcome 🙌!
- * ⭐️ star the project
+ * ⭐️ star the project, by clicking <!-- Place this tag where you want the button to render. -->
+<a class="github-button" href="https://github.com/gnuton/asuswrt-merlin.ng" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-star" aria-label="Star gnuton/asuswrt-merlin.ng on GitHub">HERE!</a>
  * raise 🐞 issues 
  * send 🙇 code. ([Are you a dev? Click here!](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/DEV.md))
  * 💰 donations.
