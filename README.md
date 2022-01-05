@@ -64,7 +64,8 @@ Is your router not in the list yet? Please read [here](https://github.com/gnuton
 ---------------------
 
 ### Experimental builds:
-* [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/). Please note that AiMesh is supported by standard images and it's much performant than repeater but it works only with other Asus routers.
+* DSL-AC68U & DSL-AX82U
+  * [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/). Please note that AiMesh is supported by standard images and it's much performant than repeater but it works only with other Asus routers.
   
 ---------------------
 ### Thanks to
