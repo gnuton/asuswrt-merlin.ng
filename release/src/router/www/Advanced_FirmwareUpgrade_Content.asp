@@ -352,10 +352,6 @@ function initial(){
 						amesh_offline_flag = true;
 				}
 
-				if(SG_mode || is_CH_sku || isSupport("is_ax5400_i1n") || support_site_modelid == "GT-AC2900_SH"){	//No manual
-					$("div").remove("#manual_firmware_update");
-				}
-
 				have_node = true;
 			}
 		}
@@ -466,20 +462,6 @@ function initial(){
 	}
 	else{
 		showclock();
-	}
-
-	if(SG_mode || is_CH_sku || isSupport("is_ax5400_i1n") || support_site_modelid == "GT-AC2900_SH"){	//No manual
-		$("#fw_note3").hide();
-		$("div").remove("#amesh_manual_upload_fw");
-		$("tr").remove("#manually_upgrade_tr");
-		$(".aimesh_manual_fw_update_hint").css("display", "none");
-	}
-
-	if(isSupport("is_ax5400_i1"))
-	{
-		$("#fw_note2").hide();
-		$("#fw_note3").show();
-		$("#fw_note3").html("Firmware upgrade is only accessible through Optus server.");	//Untranslated
 	}
 
 	if(gobi_support && (usb_index != -1) && (sim_state != "")){
