@@ -1,6 +1,11 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.04_0-gnuton1 (XX-XX-XX)
+  - NOTE: AiMesh setup needs ethernet backhaul cable
+  - FIXED DSL-AX82U updated ADSL driver
+  - FIXED DSL-AX82U Allow manual upload for all variants 
+
 386.4 (1-Jan-2022)
   - NEW: Added support for the RT-AX86S (uses the same firmware
          as the RT-AX86U).
