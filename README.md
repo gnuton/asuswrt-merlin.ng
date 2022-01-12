@@ -56,7 +56,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 
 ### Supported Models
 * [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/)
-* [DSL-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
+* [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 * [RT-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 
 Is your router not in the list yet? Please read [here](https://github.com/gnuton/asuswrt-merlin.ng/issues/140)!
