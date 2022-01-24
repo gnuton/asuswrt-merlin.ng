@@ -6,7 +6,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: build_dslac68u
-        uses: "gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04"
+        uses: gnuton/asuswrt-merlin-toolchains-docker@latest-ubuntu-20_04
         with:
           command: |
             export MODEL="dsl-ac68u"
