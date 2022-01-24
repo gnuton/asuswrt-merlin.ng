@@ -1,7 +1,7 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
-386.04_0-gnuton1 (XX-XX-XX)
+386.04_0-gnuton1 (24-Jan-2022)
   - NOTE: AiMesh setup needs ethernet backhaul cable
   - FIXED DSL-AX82U updated ADSL driver
   - FIXED DSL-AX82U Allow manual upload for all variants 
