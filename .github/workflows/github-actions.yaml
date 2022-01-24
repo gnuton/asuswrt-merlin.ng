@@ -1,15 +1,19 @@
 on: push
 jobs:
-  build_dslac68u:
-    runs-on: gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - run: |
-          export MODEL="dsl-ac68u"
-          export PROJECT_DIR="/home/docker/project"
-          export RELEASE_DIR="src-rt-6.x.4708"
-          export IMAGE_PATH=${PROJECT_DIR}/release/${RELEASE_DIR}/image/
-          export MERLINUPDATE=y
-          cd ${PROJECT_DIR}/release/${RELEASE_DIR}
-          make ${MODEL}
-          ls ${IMAGE_PATH}
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: build_dslac68u
+        uses: "gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04"
+        with:
+          command: |
+            export MODEL="dsl-ac68u"
+            export PROJECT_DIR="/home/docker/project"
+            export RELEASE_DIR="src-rt-6.x.4708"
+            export IMAGE_PATH=${PROJECT_DIR}/release/${RELEASE_DIR}/image/
+            export MERLINUPDATE=y
+            cd ${PROJECT_DIR}/release/${RELEASE_DIR}
+            make ${MODEL}
+            ls ${IMAGE_PATH}
