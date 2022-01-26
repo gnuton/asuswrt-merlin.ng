@@ -1,6 +1,10 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.04_0-gnuton2 (31-Jan-2022)
+  - NOTE: AiMesh setup needs ethernet backhaul cable
+  - FIXED Added back DNS Priv and DNS SEC to VDSL WAN page
+
 386.04_0-gnuton1 (24-Jan-2022)
   - NOTE: AiMesh setup needs ethernet backhaul cable
   - FIXED DSL-AX82U updated ADSL driver
