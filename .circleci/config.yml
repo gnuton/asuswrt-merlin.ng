@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs: 
-  git-shallow-clone: guitarrapc/git-shallow-clone@2.4.0
-
 jobs:
   getcode:
     docker:
@@ -80,6 +77,9 @@ jobs:
             elif [[ ${MODEL} == "rt-ax82u" ]]; then
               echo $BWDPI_KEYS_RTAX82U | base64 -d > /tmp/keys.tgz
               tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/RT-AX82U
+            elif [[ ${MODEL} == "tuf-ax5400" ]]; then
+              echo $BWDPI_KEYS_TUFAX5400 | base64 -d > /tmp/keys.tgz
+              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/TUF-AX5400
             fi
             echo "----- BUILD -----"
             make ${MODEL} | tee "/tmp/build.log"
@@ -95,7 +95,7 @@ jobs:
               mv "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}.trx" "${IMAGE_PATH}/DSL-AC68U_${CIRCLE_TAG}_NO-DSL-FIRMWARE.trx"
               cp ${IMAGE_PATH}/*.trx workspace/release/
               cp ${IMAGE_PATH}/DSL*DSL*.md5 workspace/release/ || :
-            elif [[ ${MODEL} == "rt-ax82u" ]] || [[ ${MODEL} == "dsl-ax82u" ]]; then
+            else
               cp ${IMAGE_PATH}/*_cferom_puresqubi.md5 workspace/release
               cp ${IMAGE_PATH}/*_cferom_puresqubi.w   workspace/release || :
             fi
@@ -193,7 +193,6 @@ workflows:
               ignore:
                 - master
                 - mainline
-                - DEV_45581_3
       - build:
           name: "build_dsl-ax82u"
           model: "dsl-ax82u"
@@ -207,10 +206,22 @@ workflows:
               ignore:
                 - master
                 - mainline
-                - DEV_45581_3
       - build:
           name: "build_rt-ax82u"
           model: "rt-ax82u"
+          release_dir: "src-rt-5.02axhnd.675x"
+          requires:
+            - getcode
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
+      - build:
+          name: "build_tuf-ax5400"
+          model: "tuf-ax5400"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
@@ -232,6 +243,7 @@ workflows:
             - build_dsl-ax82u
             - build_dsl-ac68u
             - build_rt-ax82u
+            - build_tuf-ax5400  
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -261,6 +273,7 @@ workflows:
             - build_dsl-ax82u
             - build_dsl-ac68u
             - build_rt-ax82u
+            - build_tuf-ax5400
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
