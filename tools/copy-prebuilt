@@ -100,7 +100,7 @@ then
 	cp release/src-rt-5.02axhnd/bcmdrivers/broadcom/net/wl/impl51/main/components/apps/acsdv2/prebuilt/* $REPO/release/src-rt-5.02axhnd/bcmdrivers/broadcom/net/wl/impl51/main/components/apps/acsdv2/prebuilt/$BUILD_NAME/
 	rsync -a --del release/src-rt-5.02axhnd/router-sysdep/ $REPO/release/src-rt-5.02axhnd/router-sysdep.$BUILD_NAME_LC
 
-elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ] || [ "$BUILD_NAME" == "RT-AX82U" ]
+elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ] || [ "$BUILD_NAME" == "RT-AX82U" ] || [ "$BUILD_NAME" == "TUF-AX5400" ]
 then
 	SDK="_6750hnd"
 	ARCH="_arm"
@@ -144,7 +144,6 @@ else
 	echo "Unrecognized BUILD_NAME!"
 	exit
 fi
-
 # Common to all
 
 echo "*** Copying common files..."
@@ -158,6 +157,7 @@ cp release/src/router/bwdpi_source/asus/prebuild/* $REPO/release/src/router/bwdp
 cp release/src/router/bwdpi_source/asus_sql/prebuild/* $REPO/release/src/router/bwdpi_source/asus_sql/prebuild/$BUILD_NAME/
 cp release/src/router/bwdpi_source/prebuild/* $REPO/release/src/router/bwdpi_source/prebuild/$BUILD_NAME/
 cp release/src/router/dropbox_client/prebuild/* $REPO/release/src/router/dropbox_client/prebuild/$BUILD_NAME/
+
 cp release/src/router/ftpclient/prebuild/* $REPO/release/src/router/ftpclient/prebuild/$BUILD_NAME/
 cp release/src/router/protect_srv/prebuild/* $REPO/release/src/router/protect_srv/prebuild/$BUILD_NAME/
 cp release/src/router/protect_srv/lib/prebuild/* $REPO/release/src/router/protect_srv/lib/prebuild/$BUILD_NAME/
@@ -193,7 +193,6 @@ cp release/src/router/sysstate/log_daemon/prebuild/* $REPO/release/src/router/sy
 cp release/src/router/sysstate/commands/prebuild/* $REPO/release/src/router/sysstate/commands/prebuild/$BUILD_NAME/
 cp release/src/router/wb/prebuild/* $REPO/release/src/router/wb/prebuild/$BUILD_NAME/
 cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt/$BUILD_NAME/
-
 echo "*** Copying exceptions and special cases..."
 
 # Pre-HND
