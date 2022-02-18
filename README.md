@@ -29,6 +29,15 @@
 </p>
 
 ---------------------
+### Aim
+
+This is an official Merlin fork which is supported by [ASUS](https://twitter.com/ASUS) and [RMerlin](https://twitter.com/RMerlinDev?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor): Aim of this project is to make Merlin running on additional routers.
+
+My builds should support all features available in the original Merlin firmware, sometime I do unleash some extra features too for some specific models. The images are build in the cloud for transparency and the opensource code is publicly available in this github repository.
+
+If you enjoy this project feel free to scroll all the way down and check how you can ❤️ this project! 
+
+---------------------
 
 ### [Stats](https://somsubhra.github.io/github-release-stats/?username=gnuton&repository=asuswrt-merlin.ng)
 Latest release:
