@@ -35,7 +35,7 @@ This is an official [Merlin fork](https://github.com/RMerl/asuswrt-merlin) which
 
 My builds should support all features available in the original Merlin firmware, sometime I do unleash some extra features too for some specific models. The images are build in the cloud for transparency and the opensource code is publicly available in this github repository.
 
-If you enjoy this project feel free to scroll all the way down and check how you can ❤️ this project! 
+If you enjoy this project feel free to scroll all the way down and check on how you can ❤️ this project! 
 
 ---------------------
 
