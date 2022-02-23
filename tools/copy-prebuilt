@@ -100,7 +100,7 @@ then
 	cp release/src-rt-5.02axhnd/bcmdrivers/broadcom/net/wl/impl51/main/components/apps/acsdv2/prebuilt/* $REPO/release/src-rt-5.02axhnd/bcmdrivers/broadcom/net/wl/impl51/main/components/apps/acsdv2/prebuilt/$BUILD_NAME/
 	rsync -a --del release/src-rt-5.02axhnd/router-sysdep/ $REPO/release/src-rt-5.02axhnd/router-sysdep.$BUILD_NAME_LC
 
-elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ] || [ "$BUILD_NAME" == "RT-AX82U" ] || [ "$BUILD_NAME" == "TUF-AX5400" ]
+elif [ "$BUILD_NAME" == "RT-AX56U" ] || [ "$BUILD_NAME" == "RT-AX58U" ] || [ "$BUILD_NAME" == "DSL-AX82U" ] || [ "$BUILD_NAME" == "RT-AX82U" ] || [ "$BUILD_NAME" == "TUF-AX5400" ]  || [ "$BUILD_NAME" == "RT-AX95Q" ]
 then
 	SDK="_6750hnd"
 	ARCH="_arm"
@@ -176,7 +176,7 @@ cp release/src/router/libletsencrypt/prebuild/* $REPO/release/src/router/liblets
 cp release/src/router/libbcm/prebuilt/* $REPO/release/src/router/libbcm/prebuilt/$BUILD_NAME/
 cp release/src/router/infosvr/prebuild/* $REPO/release/src/router/infosvr/prebuild/$BUILD_NAME/
 cp -ar release/src/router/ookla_speedtest/OOKLA-* $REPO/release/src/router/ookla_speedtest/
-
+ 
 # Common to most
 echo "*** Copying optional files - ignore errors"
 cp release/src/router/dblog/daemon/prebuild/* $REPO/release/src/router/dblog/daemon/prebuild/$BUILD_NAME/
