@@ -182,7 +182,7 @@ workflows:
               only: /.*/
       - build:
           name: "build_dsl-ac68u"
-          model: "dsl-ac68u"
+          model: "Xdsl-ac68u"
           release_dir: "src-rt-6.x.4708"
           requires:
             - getcode
@@ -195,7 +195,7 @@ workflows:
                 - mainline
       - build:
           name: "build_dsl-ax82u"
-          model: "dsl-ax82u"
+          model: "Xdsl-ax82u"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
@@ -208,7 +208,21 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax82u"
-          model: "rt-ax82u"
+          model: "Xrt-ax82u"
+          release_dir: "src-rt-5.02axhnd.675x"
+          requires:
+            - getcode
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
+                - DEV_TUF*
+      - build:
+          name: "build_rt-ax95q"
+          model: "rt-ax95q"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
@@ -221,7 +235,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax5400"
-          model: "tuf-ax5400"
+          model: "Xtuf-ax5400"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
@@ -243,7 +257,8 @@ workflows:
             - build_dsl-ax82u
             - build_dsl-ac68u
             - build_rt-ax82u
-            - build_tuf-ax5400  
+            - build_tuf-ax5400
+            - build_rt-ax95q  
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -274,6 +289,7 @@ workflows:
             - build_dsl-ac68u
             - build_rt-ax82u
             - build_tuf-ax5400
+            - build_rt-ax95q
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
