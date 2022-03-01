@@ -19,7 +19,7 @@ else
 endif
 else
 ifeq ($(RTCONFIG_ISP_OPTUS),y)
-	-cp prebuild/tr_181.xml.dsl.optus conf/ASUSWRT/tr_181.xml
+	-cp prebuild/tr_181.xml.dsl.optus conf/ASUSWRT/tr_181.xml.dsl.optus
 else
 	-cp prebuild/tr_181.xml conf/ASUSWRT/tr_181.xml
 endif
