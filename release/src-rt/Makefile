@@ -553,6 +553,10 @@ wl_sysdep:
 		elif [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684b0/rtecdc.bin ]; then \
 			cp -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684b0/rtecdc.bin $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/43684b0/. ; \
 		fi; \
+		if [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684c0/rtecdc.bin ]; then \
+			mkdir -p $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/43684c0/ ; \
+			cp -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/$(BUILD_NAME)/43684c0/rtecdc.bin $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/43684c0/. ; \
+		fi; \
 	else \
 		if [ -f $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/sysdeps/default/6715b0/rtecdc.bin ]; then \
 			mkdir -p $(SRCBASE)/../../../bcm9$(BRCM_CHIP)/$(DHD_DIR)/src/dongle/bin/6715b0/ ; \
@@ -710,7 +714,7 @@ endif
 		echo "Unknown model! Need define COMBINE_MODEL..."; \
 		exit 1; \
 	fi
-	$(eval IMAGEVER := $(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO))
+	$(eval IMAGEVER := $(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(BUILDREV))
 ifeq ($(QCA),y)
 	@rm -f $(IMAGEDIR)/mix.trx
 	@for var in $(COMBINE_MODEL); do \

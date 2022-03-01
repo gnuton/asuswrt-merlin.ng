@@ -1375,7 +1375,7 @@ void start_dnsmasq(void)
 			if (!ether_atoe(mac, ea))
 				continue;
 
-			if(ip && *ip != '\0' && hostname && *hostname != '\0')
+			if(ip && *ip != '\0' && hostname && *hostname != '\0' && is_valid_hostname(hostname))
 			{
 				fprintf(fp, "%s %s.%s %s\n", ip, hostname, lan_domain, hostname);
 			}	
@@ -1968,8 +1968,10 @@ void start_dnsmasq(void)
 			fprintf(fp, "dnssec-check-unsigned=no\n");
 	}
 #endif
-	if (nvram_match("dns_norebind", "1"))
+	if (nvram_match("dns_norebind", "1")) {
 		fprintf(fp, "stop-dns-rebind\n");
+		fprintf(fp, "rebind-domain-ok=dns.msftncsi.com\n");
+	}
 
 	/* Instruct clients like Firefox to not auto-enable DoH */
 	n = nvram_get_int("dns_priv_override");
@@ -2408,6 +2410,7 @@ void start_s46_tunnel(int unit)
 	char tmp[256], prefix[sizeof("wanXXXXXXXXXX_")];
 	char ipaddr[INET_ADDRSTRLEN], draft[4];
 	char *wan_ifname, *wan6_ifname, *elim, *ttl, *end;
+	char *ports[256] = {0};
 #if defined(RTCONFIG_PORT_BASED_VLAN) || defined(RTCONFIG_TAGGED_BASED_VLAN)
 	char ip_mask[sizeof("192.168.100.200/255.255.255.255XXX")];
 #endif
@@ -2482,9 +2485,9 @@ void start_s46_tunnel(int unit)
 	     "encaplimit", elim,
 	     atoi(ttl) ? "hoplimit" : NULL, ttl);
 
-	_dprintf("[%s(%d)][wan_ifname]%s\n", __FUNCTION__, __LINE__, wan_ifname);
-	_dprintf("[%s(%d)][wan6_ifname]%s\n", __FUNCTION__, __LINE__, wan6_ifname);
-	_dprintf("[%s(%d)][elim]%s\n", __FUNCTION__, __LINE__, elim);
+	S46_DBG("[wan_ifname]:%s\n", wan_ifname);
+	S46_DBG("[wan6_ifname]:%s\n", wan6_ifname);
+	S46_DBG("[elim]:%s\n", elim);
 
 	/* Install FMRS into ip6_tunnel module via iproute2*/
 	eval("ip", "link", "set", wan_ifname, "type", "ip6tnl", "fmrs", "/tmp/v6maps", "draft", draft);
@@ -2492,7 +2495,9 @@ void start_s46_tunnel(int unit)
 	snprintf(tmp, sizeof(tmp), "echo \"%s\" > /proc/sys/net/ipv4/ip_local_reserved_ports",
 		 calc_s46_port_range(0, nvram_get_int(ipv6_nvname("ipv6_s46_psid")),
 					nvram_get_int(ipv6_nvname("ipv6_s46_psidlen")),
-					nvram_get_int(ipv6_nvname("ipv6_s46_offset"))));
+					nvram_get_int(ipv6_nvname("ipv6_s46_offset")),
+					ports, sizeof(ports)));
+	//S46_DBG("[CMD]:%s\n", tmp);
 	//system(tmp);
 
 	/* Assign static IP address to i/f */
@@ -2710,6 +2715,9 @@ int no_need_to_start_wps(void)
 	if ((sw_mode() != SW_MODE_ROUTER) &&
 #ifdef RTCONFIG_DPSTA
                 !((dpsta_mode()||rp_mode()) && nvram_get_int("re_mode") == 0) &&
+#endif
+#ifdef RTCONFIG_AMAS
+		!(sw_mode() == SW_MODE_AP && nvram_match("re_mode", "1")) &&
 #endif
 		(sw_mode() != SW_MODE_AP))
 		return 1;
@@ -3797,7 +3805,7 @@ void write_static_leases(FILE *fp)
 		}
 
 		if ((ip1 & lan_mask) == lan_net) {
-			if(hostname && hostname[0] != '\0')
+			if(hostname && hostname[0] != '\0' && is_valid_hostname(hostname))
 				fprintf(fp, "dhcp-host=%s,set:%s,%s,%s\n", mac, mac, hostname, ip);
 			else
 				fprintf(fp, "dhcp-host=%s,set:%s,%s\n", mac, mac, ip);
@@ -4042,10 +4050,6 @@ start_ddns(char *caller)
 	if (ipv6_enabled()) {
 		if (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0) {
 			logmessage("start_ddns", "%s has not yet obtained an ipv6 address", wan_ifname);
-			/* Trigger watchdog when start fails */
-			nvram_unset("ddns_updated");
-			nvram_set("ddns_return_code_chk", "ddns_query");
-			return -1;
 		}
 	}
 #endif
@@ -4335,7 +4339,8 @@ start_ddns(char *caller)
 				unlink(cache_path);
 				nvram_set("ddns_act", "update");
 			}
-			logmessage("start_ddns", "Start Inadyn.\n");
+			int ddns_check_retry = nvram_get_int("ddns_check_retry");
+			logmessage("start_ddns", "Start Inadyn(%d).\n", ddns_check_retry);
 			ret = _eval(inadyn_argv, NULL, 0, &pid);
 		}
 	} else {	// Custom DDNS
@@ -5168,17 +5173,7 @@ mcpd_conf(void)
 	if (nvram_get_int("switch_stb_x") == 0 || nvram_get_int("switch_stb_x") > 6) {
 		if (nvram_match("switch_wantag", "movistar"))
 			fprintf(fp, "igmp-proxy-interfaces %s\n", "vlan2");
-		else if (nvram_match("switch_wantag", "unifi_biz") ||
-			nvram_match("switch_wantag", "stuff_fibre") || nvram_match("switch_wantag", "spark") ||
-			nvram_match("switch_wantag", "2degrees") || nvram_match("switch_wantag", "slingshot") ||
-			nvram_match("switch_wantag", "orcon") || nvram_match("switch_wantag", "voda_nz") ||
-			nvram_match("switch_wantag", "tpg") || nvram_match("switch_wantag", "iinet") ||
-			nvram_match("switch_wantag", "aapt") || nvram_match("switch_wantag", "intronode") ||
-			nvram_match("switch_wantag", "amaysim") || nvram_match("switch_wantag", "dodo") ||
-			nvram_match("switch_wantag", "iprimus") || nvram_match("switch_wantag", "centurylink") ||
-			nvram_match("switch_wantag", "actrix") || nvram_match("switch_wantag", "jastel") ||
-			nvram_match("switch_wantag", "kpn_nl") ||
-			(nvram_match("switch_wantag", "manual") && !nvram_get_int("switch_stb_x") && nvram_get_int("switch_wan0tagid")))
+		else if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") == 0 && nvram_get_int("switch_wan0tagid") > 0)
 			fprintf(fp, "igmp-proxy-interfaces %s\n", nvram_safe_get("wan0_ifname"));
 		else
 			fprintf(fp, "igmp-proxy-interfaces %s\n", proxy_ifname);
@@ -5210,17 +5205,7 @@ mcpd_conf(void)
 	else if (nvram_match("switch_wantag", "unifi_home"))
 		fprintf(fp, "igmp-mcast-interfaces %s\n", "eth0.600");
 #endif
-	else if (nvram_match("switch_wantag", "unifi_biz") ||
-		nvram_match("switch_wantag", "stuff_fibre") || nvram_match("switch_wantag", "spark") ||
-		nvram_match("switch_wantag", "2degrees") || nvram_match("switch_wantag", "slingshot") ||
-		nvram_match("switch_wantag", "orcon") || nvram_match("switch_wantag", "voda_nz") ||
-		nvram_match("switch_wantag", "tpg") || nvram_match("switch_wantag", "iinet") ||
-		nvram_match("switch_wantag", "aapt") || nvram_match("switch_wantag", "intronode") ||
-		nvram_match("switch_wantag", "amaysim") || nvram_match("switch_wantag", "dodo") ||
-		nvram_match("switch_wantag", "iprimus") || nvram_match("switch_wantag", "centurylink") ||
-		nvram_match("switch_wantag", "actrix") || nvram_match("switch_wantag", "jastel") ||
-		nvram_match("switch_wantag", "kpn_nl") ||
-		(nvram_match("switch_wantag", "manual") && !nvram_get_int("switch_stb_x") && nvram_get_int("switch_wan0tagid")))
+	else if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") == 0 && nvram_get_int("switch_wan0tagid") > 0)
 		fprintf(fp, "igmp-mcast-interfaces %s\n", nvram_safe_get("wan0_ifname"));
 	else if (nvram_match("switch_wantag", "free"))
 		fprintf(fp, "igmp-mcast-interfaces %s\n", "eth0.100");
@@ -18561,7 +18546,7 @@ void setup_leds()
 #endif
 		}
 
-#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAX11000)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAX11000) || defined(GTAXE11000)
 		if (nvram_match("wl2_radio", "1")) {
 #if defined(RTAC3200)
 			eval("wl", "-i", "eth3", "ledbh", "10", "7");

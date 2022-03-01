@@ -1,5 +1,5 @@
  /*
- * Copyright 2020, ASUSTeK Inc.
+ * Copyright 2022, ASUSTeK Inc.
  * All Rights Reserved.
  *
  * THIS SOFTWARE IS OFFERED "AS IS", AND ASUS GRANTS NO WARRANTIES OF ANY
@@ -27,9 +27,6 @@
 #include "rc.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#ifdef RTCONFIG_FBWIFI
-#include <fbwifi.h>
-#endif
 #ifdef RTCONFIG_BWDPI
 #include <bwdpi.h>
 #endif
@@ -368,7 +365,7 @@ void del_EbtablesRules(void)
 
 #ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
 
-#ifdef RTCONFIG_FBWIFI
+#if defined(RTCONFIG_FBWIFI)
 static void set_fbwifi_mark(void)
 {
 	int band, j, max_mssid;
@@ -381,12 +378,9 @@ static void set_fbwifi_mark(void)
 
 	snprintf(mark, sizeof(mark), "0x%x", FBWIFI_MARK_SET(1));
 	snprintf(inv_mask, sizeof(inv_mask), "0x%x", FBWIFI_MARK_INV_MASK);
-	for (band = 0; band < ARRAYSIZE(fbwifi_iface); ++band) {
-#ifndef RTCONFIG_HAS_5G_2
-		/* Skip band 2, 5G-2, if DUT not support 2-nd 5G band. */
-		if (band == 2)
-			continue;
-#endif
+
+	for (band = 0; band < min(MAX_NR_WL_IF, (sizeof(fbwifi_iface)/sizeof(fbwifi_iface[0]))); ++band) {
+		SKIP_ABSENT_BAND(band);
 
 		if (nvram_match(fbwifi_iface[band], "off"))
 			continue;
@@ -406,6 +400,8 @@ static void set_fbwifi_mark(void)
 		eval("ebtables", "-A", "INPUT", "-i", wl_if, "-j", "mark", "--mark-or", mark, "--mark-target", "ACCEPT");
 	}
 }
+#else
+static inline void set_fbwifi_mark(void) { };
 #endif
 
 void add_EbtablesRules(void)
@@ -415,6 +411,7 @@ void add_EbtablesRules(void)
 	nv = g = strdup(nvram_safe_get("wl_ifnames"));
 	if(nv){
 		while ((p = strsep(&g, " ")) != NULL){
+			SKIP_ABSENT_FAKE_IFACE(p);
 			QOSLOG("p=%s", p);
 			eval("ebtables", "-t", "nat", "-A", "PREROUTING", "-i", p, "-j", "mark", "--mark-or", "6", "--mark-target", "ACCEPT");
 			eval("ebtables", "-t", "nat", "-A", "POSTROUTING", "-o", p, "-j", "mark", "--mark-or", "6", "--mark-target", "ACCEPT");
@@ -423,8 +420,8 @@ void add_EbtablesRules(void)
 	}
 
 	// for MultiSSID
-	int UnitNum = 2; 	// wl0.x, wl1.x
-	int GuestNum = 3;	// wlx.0, wlx.1, wlx.2
+	int UnitNum = 2; 			// wl0.x, wl1.x
+	int GuestNum = MAX_NO_MSSID - 1;	// wlx.0, wlx.1, wlx.2
 	char mssid_if[32];
 	char mssid_enable[32];
 	int i, j;
@@ -802,7 +799,7 @@ static int add_qos_rules(char *pcWANIF)
 		char *tmp_trans, *q_min, *q_max;
 		long min = 0, max =0;
 
-		snprintf(tmp, sizeof(tmp), "%s", transferred);
+		strlcpy(tmp, transferred, sizeof (tmp));
 		tmp_trans = tmp;
 		q_min = strsep(&tmp_trans, "~");
 		q_max = tmp_trans;
@@ -811,18 +808,16 @@ static int add_qos_rules(char *pcWANIF)
 			snprintf(conn, sizeof(conn), "%s", "");
 		}
 		else{
-			snprintf(tmp, sizeof(tmp), "%s", q_min);
-			min = atol(tmp);
+			min = atol(q_min);
 
-			if(strcmp(q_max,"") == 0) // q_max == NULL
+			if (strcmp(q_max,"") == 0) // q_max == NULL
 				snprintf(conn, sizeof(conn), "-m connbytes --connbytes %ld:%s --connbytes-dir both --connbytes-mode bytes", min*1024, q_max);
 			else{// q_max != NULL
-				snprintf(tmp, sizeof(tmp), "%s", q_max);
-				max = atol(tmp);
+				max = atol(q_max);
 				snprintf(conn, sizeof(conn), "-m connbytes --connbytes %ld:%ld --connbytes-dir both --connbytes-mode bytes", min*1024, max*1024-1);
 			}
 		}
-		QOSLOG("[qos] tmp=%s, transferred=%s, min=%ld, max=%ld, q_max=%s, conn=%s", tmp, transferred, min*1024, max*1024-1, q_max, conn);
+		QOSLOG("[qos] transferred=%s, min=%ld, max=%ld, q_max=%s, conn=%s", transferred, min*1024, max*1024-1, q_max, conn);
 
 		/*************************************************/
 		/*                      proto                    */
@@ -957,15 +952,11 @@ static int add_qos_rules(char *pcWANIF)
 	}
 #endif
 		fprintf(fn,
-			"-A QOSO -m connmark ! --mark 0x0/0x%x -j RETURN\n"
 			"-A QOSO -j CONNMARK %s 0x%x/0x%x\n"
 			"-A POSTROUTING -o %s -j QOSO\n",
-				class_mask,
 				action, class_num|class_gum, class_mask|class_gum,
 				pcWANIF
 			);
-		if(manual_return)
-			fprintf(fn , "-A QOSO -j RETURN\n");
 
 #ifdef RTCONFIG_IPV6
 	if (fn_ipv6 && ipv6_enabled() && *wan6face) {
@@ -984,15 +975,11 @@ static int add_qos_rules(char *pcWANIF)
 		}
 #endif
 		fprintf(fn_ipv6,
-			"-A QOSO -m connmark ! --mark 0x0/0x%x -j RETURN\n"
 			"-A QOSO -j CONNMARK %s 0x%x/0x%x\n"
 			"-A POSTROUTING -o %s -j QOSO\n",
-				class_mask,
 				action, class_num|class_gum, class_mask|class_gum,
 				wan6face
 			);
-		if(manual_return)
-			fprintf(fn_ipv6, "-A QOSO -j RETURN\n");
 	}
 #endif
 
@@ -1007,11 +994,13 @@ static int add_qos_rules(char *pcWANIF)
 		if ((!g) || ((p = strsep(&g, ",")) == NULL)) continue;
 		if ((inuse & (1 << i)) == 0) continue;
 		if (safe_atoi(p) > 0) {
+			fprintf(fn, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0x%x\n", pcWANIF, class_mask);
 #ifdef CLS_ACT
 			fprintf(fn, "-A PREROUTING -i %s -j IMQ --todev 0\n", pcWANIF);
 #endif
 #ifdef RTCONFIG_IPV6
 			if (fn_ipv6 && ipv6_enabled() && *wan6face) {
+				fprintf(fn_ipv6, "-A PREROUTING -i %s -j CONNMARK --restore-mark --mask 0x%x\n", wan6face, class_mask);
 #ifdef CLS_ACT
 				fprintf(fn_ipv6, "-A PREROUTING -i %s -j IMQ --todev 0\n", wan6face);
 #endif
@@ -1034,7 +1023,7 @@ static int add_qos_rules(char *pcWANIF)
 		fprintf(fn_ipv6, "COMMIT\n");
 		fclose(fn_ipv6);
 		chmod(mangle_fn_ipv6, 0700);
-//		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
+		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
 	}
 #endif
 	run_custom_script("qos-start", 0, "rules", NULL);
@@ -1079,8 +1068,9 @@ static int start_tqos(void)
 	char burst_root[32];
 	char burst_leaf[32];
 	char *qsched;
-	int overhead = 0;
+	int overhead = 0, overheaddl = 0;
 	char overheadstr[sizeof("overhead 128 linklayer ethernet")];
+	char overheaddlstr[sizeof("overhead 128 linklayer ethernet")];
 	char nvmtu[sizeof("wan0_mtu")];
 
 	// judge interface by get_wan_ifname
@@ -1105,6 +1095,21 @@ static int start_tqos(void)
 	if(i > 0) snprintf(burst_leaf, sizeof(burst_leaf), "burst %dk", i);
 		else burst_leaf[0] = 0;
 
+	const char *mode;
+	switch (nvram_get_int("qos_atm")) {
+	    default:
+		mode = "";
+		break;
+	    case 1:
+		mode = " linklayer atm";
+		break;
+	    case 2:
+		mode = "";
+		obw = obw * 64 / 65;
+		ibw = ibw * 64 / 65;
+		break;
+	}
+
 	/* Egress OBW  -- set the HTB shaper (Classful Qdisc)
 	* the BW is set here for each class
 	*/
@@ -1117,19 +1122,42 @@ static int start_tqos(void)
 	else
 		qsched = "fq_codel noecn";
 
-	overhead = nvram_get_int("qos_overhead");
+	overhead = overheaddl = nvram_get_int("qos_overhead");
 #else
 	qsched = "sfq perturb 10";
 #endif
 
-	if (overhead > 0)
-		snprintf(overheadstr, sizeof(overheadstr),"overhead %d %s",
-		         overhead, nvram_get_int("qos_atm") ? "linklayer atm" : "linklayer ethernet");
-	else
-		strcpy(overheadstr, "");
-
 	const char *wan_ifname = get_wan_ifname(wan_primary_ifunit());
 	const char *lan_ifname = nvram_safe_get("lan_ifname");
+
+	if(strncmp(wan_ifname, "ppp", 3)==0) {
+		// No adjustment required
+	} else {
+		// Adjust from Cake-like IP overhead as seen in GUI to what htb uses
+		// (it already counts the Ethernet header, so it's not part of its overhead)
+		overhead -= 14;
+	}
+	if (overhead < 0)
+		overhead = 0;
+
+#ifdef CLS_ACT
+	// No adjustment required for imq0
+#else
+	// Again, adjust for the Ethernet header on the LAN interface
+	overheaddl -= 14;
+#endif
+	if (overheaddl < 0)
+		overheaddl = 0;
+
+#ifdef RTCONFIG_BCMARM
+	snprintf(overheadstr, sizeof(overheadstr),"overhead %d %s",
+		 overhead, mode);
+	snprintf(overheaddlstr, sizeof(overheaddlstr),"overhead %d %s",
+		 overheaddl, mode);
+#else
+	strcpy(overheadstr, "");
+	strcpy(overheaddlstr, "");
+#endif
 
 	snprintf(nvmtu, sizeof (nvmtu), "wan%d_mtu", wan_primary_ifunit());
 	mtu = nvram_get_int(nvmtu);
@@ -1180,9 +1208,10 @@ static int start_tqos(void)
 		"# upload 1:60: LAN-to-LAN (vlan@%s)\n"
 		"\t$TCAUL parent 1:2 classid 1:60 htb rate 1000000kbit ceil 1000000kbit burst 10000 cburst 10000 prio 6\n"
 		"\t$TQAUL parent 1:60 handle 60: pfifo\n"
-		"\t$TFAUL parent 1: prio 6 protocol 802.1q u32 match u32 0 0 flowid 1:60\n",
+		"\t$TFAUL parent 1: prio 6 protocol 802.1q u32 match mark 6 0x%x flowid 1:60\n",
 			wan_ifname,
-			wan_ifname
+			wan_ifname,
+			QOS_MASK
 		);
 #endif
 
@@ -1207,15 +1236,10 @@ static int start_tqos(void)
 			else s[0] = 0;
 		x = (i + 1) * 10;
 
-		fprintf(f,
-			"# upload 1:%d: %u-%u%%\n"
-			"\t$TCAUL parent 1:1 classid 1:%d htb rate %ukbit %s %s prio %d quantum %u %s\n"
-			"\t$TQAUL parent 1:%d handle %d: $SCH\n"
-			"\t$TFAUL parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n",
-				i, rate, ceil,
-				x, calc(bw, rate), s, burst_leaf, (i >= 6) ? 7 : (i + 1), mtu, overheadstr,
-				x, x,
-				x, i + 1, x);
+		fprintf(f, "# egress %d: %u-%u%%\n", i, rate, ceil);
+		fprintf(f, "\t$TCAUL parent 1:1 classid 1:%d htb rate %ukbit %s %s prio %d quantum %u %s\n", x, calc(bw, rate), s, burst_leaf, (i >= 6) ? 7 : (i + 1), mtu, overheadstr);
+		fprintf(f, "\t$TQAUL parent 1:%d handle %d: $SCH\n", x, x);
+		fprintf(f, "\t$TFAUL parent 1: prio %d u32 match mark %d 0x%x flowid 1:%d\n", x, i + 1, QOS_MASK, x);
 	}
 	free(buf);
 
@@ -1294,9 +1318,9 @@ static int start_tqos(void)
 					"# download 2:60: LAN-to-LAN\n"
 					"\t$TCADL parent 2:2 classid 2:60 htb rate 10240000kbit ceil 10240000kbit burst 10000 cburst 10000 prio 6\n"
 					"\t$TQADL parent 2:60 handle 60: pfifo\n"
-					"\t$TFADL parent 2: prio 6 protocol ip handle 6 fw flowid 2:60\n",
+					"\t$TFADL parent 2: prio 6 u32 match mark 6 7 flowid 2:60\n",
 						(nvram_get_int("qos_default") + 1) * 10,
-						bw, bw, burst_root, overheadstr
+						bw, bw, burst_root, overheaddlstr
 					);
 			}
 
@@ -1312,9 +1336,9 @@ static int start_tqos(void)
 				"# download 2:%d: %u%%\n"
 				"\t$TCADL parent 2:1 classid 2:%d htb rate %ukbit %s prio %d quantum %u %s\n"
 				"\t$TQADL parent 2:%d handle %d: $SCH\n"
-				"\t$TFADL parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n",
+				"\t$TFADL parent 2: prio %d u32 match mark %d 7 flowid 2:%d\n",
 					i, rate,
-					x, calc(bw, rate), burst_leaf, (i >= 6) ? 7 : (i + 1), mtu, overheadstr,
+					x, calc(bw, rate), burst_leaf, (i >= 6) ? 7 : (i + 1), mtu, overheaddlstr,
 					x, x,
 					x, i + 1, x);
 		}

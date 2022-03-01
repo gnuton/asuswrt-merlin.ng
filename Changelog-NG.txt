@@ -1,6 +1,39 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.5 (xx-xxx-2022)
+  - NEW: Added support for the RT-AC68U V4.
+  - NEW: Added support for the GT-AXE11000.
+  - NEW: Added config option for the Boost key on
+         GT models.  The option can be found on the
+         Administration -> System page.
+  - NEW: Basic IPv6 support for TQoS (Kevin Bracey)
+  - UPDATED: Merged with GPL 386_46065.
+  - UPDATED: Reverted dnsmasq from 2.86 to 2.85.
+  - UPDATED: miniupnpd to 2.3.0.
+  - UPDATED: avahi to 0.8 + a few backports.
+  - CHANGED: Improved accuracy of overhead parameters
+             in Traditional QoS (Kevin Bracey)
+  - CHANGED: Report download stats for TQoS (Kevin Bracey)
+  - CHANGED: Report DFS scanning state for both 5 GHz bands
+             if appropriate on tri-band models
+  - CHANGED: Enabled pass_persist support in net-snmp.
+  - FIXED: Various TQoS issues (Kevin Bracey)
+  - FIXED: enabling/disabling 802.11b rates wouldn't get saved
+           to nvram.
+  - FIXED: netatalk failing to load extensions, breaking
+           Time Machine.
+  - FIXED: Large swapfiles reported the incorrect size on
+           the Tools page (Kevin Bracey)
+  - FIXED: User accounts would not show as connected on
+           the OpenVPN server username list if a remote
+           client connected over IPv6.
+  - FIXED: Earlier syslog content was missing on RT-AX86U
+           and RT-AX68U after a reboot.
+  - FIXED: WAN monitoring could fail if using IPv6 and
+           DNS Rebind protection was enabled.
+  - FIXED: RT-AX86U syslog could be truncated after a reboot.
+
 386.04_0-gnuton2 (31-Jan-2022)
   - NOTE: AiMesh setup needs ethernet backhaul cable
   - FIXED Added back DNS Priv and DNS SEC to VDSL WAN page
@@ -8,7 +41,7 @@ Asuswrt-Merlin 386/NG Changelog
 386.04_0-gnuton1 (24-Jan-2022)
   - NOTE: AiMesh setup needs ethernet backhaul cable
   - FIXED DSL-AX82U updated ADSL driver
-  - FIXED DSL-AX82U Allow manual upload for all variants 
+  - FIXED DSL-AX82U Allow manual upload for all variants
 
 386.4 (1-Jan-2022)
   - NEW: Added support for the RT-AX86S (uses the same firmware
@@ -46,9 +79,9 @@ Asuswrt-Merlin 386/NG Changelog
   - CHANGED: miniupnpd will now be supplied the public WAN
              IP to improve compatibility with dual NAT
              setups.
-  - CHANGEED: Disabling Auto DoH will now also disable
-              Windows' new Discovery of Designated
-              Resolvers (DDR) feature.
+  - CHANGED: Disabling Auto DoH will now also disable
+             Windows' new Discovery of Designated
+             Resolvers (DDR) feature.
   - FIXED: Wrong interface might be used for the default
            gateway in an openvpn client routing table.
   - FIXED: Generated OpenVPN certs used SHA1 signatures
