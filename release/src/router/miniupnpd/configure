@@ -108,9 +108,9 @@ if [ -f /etc/platform ]; then
 	fi
 fi
 
-# OpenWRT special case
+# OpenWrt special case
 if [ -f ./os.openwrt ]; then
-	OS_NAME=OpenWRT
+	OS_NAME=OpenWrt
 	OS_VERSION=$(cat ./os.openwrt)
 fi
 
@@ -393,10 +393,9 @@ case $OS_NAME in
 		fi
 		V6SOCKETS_ARE_V6ONLY=`$(find /sbin /bin /usr/sbin /usr/bin -name sysctl) -n net.ipv6.bindv6only`
 		;;
-	OpenWRT)
+	OpenWrt)
 		OS_URL=http://www.openwrt.org/
 		echo "#define USE_IFACEWATCHER 1" >> ${CONFIGFILE}
-		FW=iptables
 		;;
 	OpenEmbedded)
 		OS_URL=http://www.openembedded.org/
@@ -502,7 +501,7 @@ case $FW in
 		if [ "$IPTABLESPATH" ] ; then
 			echo "CPPFLAGS += -I${IPTABLESPATH}/include/" >> config.mk
 			echo "LDFLAGS += -L${IPTABLESPATH}/libiptc/" >> config.mk
-			# to test : change the following test to [ "$OS_NAME" != "OpenWRT" ]
+			# to test : change the following test to [ "$OS_NAME" != "OpenWrt" ]
 			if [ -z "$TARGET_OPENWRT" ] ; then
 				IPTABLESVERSION=`grep "\#define VERSION" ${IPTABLESPATH}/config.h | tr -d \" |cut -d" " -f3`
 				echo "detected libiptc version $IPTABLESVERSION"
@@ -521,7 +520,7 @@ case $FW in
 					echo "LDLIBS += ${IPTABLESPATH}/libiptc/libiptc.a" >> config.mk
 				fi
 			else
-				# OpenWRT
+				# OpenWrt
 				# check for system-wide iptables files. Test if iptables version >= 1.4.3
 				# the following test has to be verified :
 				if test -f /usr/include/iptables/internal.h && \
@@ -602,7 +601,7 @@ fi
 # UUID API
 =======
 case $OS_NAME in
-	OpenWRT)
+	OpenWrt)
 		echo "#define LIB_UUID" >> ${CONFIGFILE}
 		;;
 	AsusWRT)

@@ -32,6 +32,7 @@ Fully supported devices:
  * RT-AC66U_B1 (use the RT-AC68U firmware)
  * RT-AC68U, RT-AC68P, RT-AC68UF (including HW revision C1 and E1)
  * RT-AC68U V3 (use the RT-AC68U firmware)
+ * RT-AC68U V4 (use the specific V4 firmware)
  * RT-AC1900 & RT-AC1900P (use the RT-AC68U firmware)
  * RT-AC88U
  * RT-AC3100
@@ -45,6 +46,7 @@ Fully supported devices:
  * GT-AC2900
  * GT-AX11000
  * RT-AX68U
+ * GT-AXE11000
 
 No longer supported:
  * RT-N16

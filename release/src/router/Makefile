@@ -370,7 +370,7 @@ export SRCBASE_FW := $(SRCBASE)/../../43684/src
 export SRCBASE_SYS := $(SRCBASE_DHD)
 export DHDAP_BUILD_TYPE := ram
 export CONFIG_MBO_AP=y
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AX11000 GT-AXE11000))
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AX11000 GT-AXE11000 RT-AX95Q))
 export BUILD_43684_COMBO := y
 else ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-AX86U))
 export BUILD_43684b0 := y
@@ -5638,14 +5638,20 @@ endif
 
 else
 	[ -d wlexe ] || install -d wlexe
-ifneq ($(wildcard $(SRC_PRE_WLEXE)/prebuilt/$(BUILD_NAME)/wl),)
+
+ifneq ($(wildcard $(SRCBASE)/wl/exe/prebuilt/$(BUILD_NAME)/wl),)
 	install $(SRC_PRE_WLEXE)/prebuilt/$(BUILD_NAME)/wl wlexe
+	-install $(SRC_PRE_WLEXE)/prebuilt/$(BUILD_NAME)/wl_server_socket wlexe
 else
 	install $(SRC_PRE_WLEXE)/prebuilt/wl wlexe
+	-install $(SRC_PRE_WLEXE)/prebuilt/wl_server_socket wlexe
 endif
-ifeq ($(HND_ROUTER_AX_675X),y)
+ifeq ($(or $(HND_ROUTER_AX_675X),$(HND_ROUTER_AX_6710),$(BCM_502L07P2)),y)
 	install $(SRCBASE)/router-sysdep/hnd_extra/prebuilt/wl_server_socket wlexe
+else
+	-install $(SRCBASE)/router/hnd_extra/prebuilt/wl_server_socket wlexe
 endif
+
 endif
 endif
 	@true
@@ -6135,7 +6141,6 @@ lighttpd-1.4.39-install:
 			install -D lighttpd-1.4.39/prebuild/$(BUILD_NAME)/*.so $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/ ; \
 		fi ; \
 		install -D samba-3.5.8/source3/bin/libsmbclient.so.0 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libsmbclient.so.0 ; \
-		install -D libexif/libexif/.libs/libexif.so.12 $(INSTALLDIR)/lighttpd-1.4.39/usr/lib/libexif.so.12 ; \
 		mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/css && mkdir -p $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd/js ; \
 		cp -rf lighttpd-1.4.39/external_file/css/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd ; \
 		cp -rf lighttpd-1.4.39/external_file/js/ $(INSTALLDIR)/lighttpd-1.4.39/usr/lighttpd ; \
@@ -6571,6 +6576,7 @@ net-snmp-5.7.2/stamp-h1:
 		ucd-snmp/pass,\
 		ucd-snmp/proc,\
 		ucd-snmp/vmstat,\
+		ucd-snmp/pass_persist,\
 		util_funcs"
 	@touch net-snmp-5.7.2/stamp-h1
 
@@ -6579,6 +6585,9 @@ net-snmp-5.7.2: net-snmp-5.7.2/stamp-h1
 
 net-snmp-5.7.2-install:
 	@$(MAKE) -C net-snmp-5.7.2 install
+	rm -rf $(INSTALLDIR)/net-snmp-5.7.2/usr/lib/*.la
+	$(STRIP) $(INSTALLDIR)/net-snmp-5.7.2/usr/sbin/snmpd
+	$(STRIP) $(INSTALLDIR)/net-snmp-5.7.2/usr/lib/*.so*
 
 net-snmp-5.7.2-clean:
 	@[ ! -f net-snmp-5.7.2/Makefile ] || $(MAKE) -C net-snmp-5.7.2 clean
@@ -6766,6 +6775,7 @@ netaconfig netatalk-3.0.5/stamp-h1:
 		--with-dtrace=no \
 		--with-ssl-dir=$(TOP)/openssl \
 		--with-libgcrypt-dir=$(TOP)/libgcrypt-1.5.1 \
+		$(if $(RTCONFIG_HND_ROUTER),,--with-ld-library-path=$(SRCBASE)/toolchains/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib) \
 		--with-libevent=no \
 		--with-libevent-header=$(TOP)/libevent-2.0.21/include ;\
 		touch stamp-h1 ; \
@@ -6850,7 +6860,7 @@ avahi/Makefile: avahi/configure
 		--prefix=/usr --sysconfdir=/tmp localstatedir=/var --with-distro=none \
 		--disable-nls --disable-glib --disable-gobject \
 		--enable-introspection=no \
-		--disable-qt3 --disable-qt4 --disable-gtk --disable-gtk3 \
+		--disable-qt3 --disable-qt4 --disable-qt5 --disable-gtk --disable-gtk3 \
 		--disable-dbus \
 		--disable-gdbm \
 		--disable-python --disable-pygtk --disable-python-dbus \
@@ -6868,13 +6878,13 @@ avahi/Makefile: avahi/configure
 
 avahi-install: avahi
 	install -D avahi/avahi-daemon/.libs/avahi-daemon $(INSTALLDIR)/avahi/usr/sbin/avahi-daemon
-	install -D avahi/avahi-common/.libs/libavahi-common.so.3.5.3 $(INSTALLDIR)/avahi/usr/lib/libavahi-common.so.3.5.3
-	install -D avahi/avahi-core/.libs/libavahi-core.so.7.0.2 $(INSTALLDIR)/avahi/usr/lib/libavahi-core.so.7.0.2
+	install -D avahi/avahi-common/.libs/libavahi-common.so.3.5.4 $(INSTALLDIR)/avahi/usr/lib/libavahi-common.so.3.5.4
+	install -D avahi/avahi-core/.libs/libavahi-core.so.7.1.0 $(INSTALLDIR)/avahi/usr/lib/libavahi-core.so.7.1.0
 	$(STRIP) $(INSTALLDIR)/avahi/usr/sbin/avahi-daemon
-	$(STRIP) $(INSTALLDIR)/avahi/usr/lib/libavahi-common.so.3.5.3
-	$(STRIP) $(INSTALLDIR)/avahi/usr/lib/libavahi-core.so.7.0.2
-	cd $(INSTALLDIR)/avahi/usr/lib && ln -sf libavahi-common.so.3.5.3 libavahi-common.so.3
-	cd $(INSTALLDIR)/avahi/usr/lib && ln -sf libavahi-core.so.7.0.2 libavahi-core.so.7
+	$(STRIP) $(INSTALLDIR)/avahi/usr/lib/libavahi-common.so.3.5.4
+	$(STRIP) $(INSTALLDIR)/avahi/usr/lib/libavahi-core.so.7.1.0
+	cd $(INSTALLDIR)/avahi/usr/lib && ln -sf libavahi-common.so.3.5.4 libavahi-common.so.3
+	cd $(INSTALLDIR)/avahi/usr/lib && ln -sf libavahi-core.so.7.1.0 libavahi-core.so.7
 
 avahi-clean:
 	[ ! -f avahi/Makefile ] || $(MAKE) -C avahi distclean
