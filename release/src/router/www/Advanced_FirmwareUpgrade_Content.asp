@@ -1126,7 +1126,7 @@ function show_fw_release_note(event) {
 	if (event.data.isMerlin) {
 		document.amas_release_note.version.value = event.data.newfwver.replace("3.0.0.4.","");
 		if (event.data.model_name)
-			siteurl = "https://fwupdate.asuswrt-merlin.net/" + event.data.model_name;
+			siteurl = "https://gnuton.github.io/asuswrt-merlin.ng/updates/" + event.data.model_name;
 		else
 			siteurl = download_url;
 	} else {
