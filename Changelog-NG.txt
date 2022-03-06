@@ -1,6 +1,10 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+386.05_0-gnuton1 (xx-xxxx-xxxx)
+  - NEW: Added support for ZenWifi AX (X8)/RT-AX95Q 
+  - NEW: Added support for TUF-AX5400
+
 386.5 (2-March-2022)
   - NEW: Added support for the RT-AC68U V4.  All
          RT-AC68U models are using a combined
