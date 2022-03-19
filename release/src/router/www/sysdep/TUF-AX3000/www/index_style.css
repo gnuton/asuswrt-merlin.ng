@@ -1015,6 +1015,10 @@ width:122px;
   background: url(images/New_ui/icon_indexes.png);
   background-position: -0px -40px; width: 43px; height: 43px;
 }
+.menu_Tools{
+	background: url(images/New_ui/icon_indexes.png);
+	background-position: 0px -324px;
+}
 .radio_hint{
     background-color: #FA9100;
 }
