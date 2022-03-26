@@ -80,6 +80,9 @@ jobs:
             elif [[ ${MODEL} == "tuf-ax5400" ]]; then
               echo $BWDPI_KEYS_TUFAX5400 | base64 -d > /tmp/keys.tgz
               tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/TUF-AX5400
+            elif [[ ${MODEL} == "rt-ax95q" ]]; then
+              echo $BWDPI_KEYS_RTAX95Q | base64 -d > /tmp/keys.tgz
+              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/RT-AX95Q
             fi
             echo "----- BUILD -----"
             make ${MODEL} | tee "/tmp/build.log"
