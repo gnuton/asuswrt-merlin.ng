@@ -7,7 +7,7 @@ Since Asuswrt-Merlin is mostly a variant of the original Asuswrt, it means that 
 ## Procedure:
 * Click the download button below in this page
 * Download the .w file
-* Upload the trx to http://router.asus.com/Advanced_FirmwareUpgrade_Content.asp
+* Upload the image to http://router.asus.com/Advanced_FirmwareUpgrade_Content.asp
 * If anything goes wrong please check the notes below
 
 ## Troubleshooting
