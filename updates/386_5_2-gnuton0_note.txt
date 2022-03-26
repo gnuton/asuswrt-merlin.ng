@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: March 26, 2022
+Release: 386.5_2-gnuton0
+
+  - NEW: Added support for ZenWifi AX (X8)/RT-AX95Q 
+  - NEW: Added support for TUF-AX5400
+
+
