@@ -1,4 +1,4 @@
-# A new GNUton's ASUS Merlin build is available for your RT-AX82U!
+# A new GNUton's ASUS Merlin build is available for your TUF-AX5400!
 <p align="center">
   <img src="logo.jpg">
 </p>  
