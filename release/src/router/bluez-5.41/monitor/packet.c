@@ -1816,15 +1816,19 @@ static void print_key_size(uint8_t key_size)
 static void print_hex_field(const char *label, const uint8_t *data,
 								uint8_t len)
 {
-	char str[len * 2 + 1];
+	char *str;
 	uint8_t i;
 
+	str = (char *)malloc(len * 2 + 1);
+	if (!str)
+		return;
 	str[0] = '\0';
 
 	for (i = 0; i < len; i++)
 		sprintf(str + (i * 2), "%2.2x", data[i]);
 
 	print_field("%s: %s", label, str);
+	free(str);
 }
 
 static void print_key(const char *label, const uint8_t *link_key)
@@ -1839,13 +1843,17 @@ static void print_link_key(const uint8_t *link_key)
 
 static void print_pin_code(const uint8_t *pin_code, uint8_t pin_len)
 {
-	char str[pin_len + 1];
+	char *str;
 	uint8_t i;
 
+	str = (char *)malloc(pin_len + 1);
+	if (!str)
+		return;
 	for (i = 0; i < pin_len; i++)
 		sprintf(str + i, "%c", (const char) pin_code[i]);
 
 	print_field("PIN code: %s", str);
+	free(str);
 }
 
 static void print_hash_p192(const uint8_t *hash)

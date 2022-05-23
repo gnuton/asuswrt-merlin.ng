@@ -1,10 +1,45 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
+
+386.7 (xx-xxx-xxxx)
+  - UPDATED: Merged with 386_48823 GPL.
+  - UPDATED: openssl to 1.1.1o.
+  - CHANGED: dhcpc-event now has a second parameter that will
+             contain "4" or "6" depending on the IP protocol of
+             the event (dave14305)
+  - FIXED: JFFS backup/restore functions not working on XT12
+           and GT-AX6000.
+  - FIXED: CVE-2022-0934 in dnsmasq (backport)
+  - FIXED: CVE-2022-26376 (reported by Cisco Talos, fixed by Asus)
+
+
+386.6 (20-Apr-2022)
+  - NOTE: This release is only available on the GT-AX6000
+          and XT12.
+  - NEW: Added support for the GT-AX6000.
+  - NEW: Added support for the ZenWifi Pro XT12.
+  - NEW: Added Cloudflare and AdGuard to DNSFilter services.
+  - NEW: Added option to enable/disable IPv6 support to OpenVPN
+         server.  This is disabled by default.
+  - NEW: Added NAT support for OpenVPN server in IPv6 mode.
+         This allows to redirect IPv6 Internet traffic
+         through your OpenVPN server.
+  - UPDATED: Merged with GPL 386_47885.
+  - UPDATED: wget to 1.21.3.
+  - UPDATED: dropbear to 2022.82.
+  - CHANGED: Reworked DNSFilter page design.
+  - CHANGED: Allow requesting bigger IPv6 subnets from
+             your ISP (Tvlz)
+  - CHANGED: Allow hostuniq PPPoE value of up to 256
+             characters long.
+  - FIXED: Traditional QoS download traffic limited by
+           upstream bandwidth (dave14305)
+
 386.05_2-gnuton0 (26-March-2022)
   - NEW: Added support for ZenWifi AX (X8)/RT-AX95Q 
   - NEW: Added support for TUF-AX5400
-
+  
 386.5_2 (25-March-2022)
   - UPDATED: openssl to 1.1.1n.
   - UPDATED: openvpn to 2.5.6.
@@ -20,7 +55,7 @@ Asuswrt-Merlin 386/NG Changelog
   - NEW: Added support for the RT-AC68U V4.  All
          RT-AC68U models are using a combined
          firmware file (like stock firmware),
-         with both firmwares within the samae file.
+         with both firmwares within the same file.
   - NEW: Added support for the GT-AXE11000.
   - NEW: Added config option for the Boost key on
          GT models.  The option can be found on the

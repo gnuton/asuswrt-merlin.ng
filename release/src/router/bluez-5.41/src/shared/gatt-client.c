@@ -2221,7 +2221,8 @@ unsigned int bt_gatt_client_read_multiple(struct bt_gatt_client *client,
 					void *user_data,
 					bt_gatt_client_destroy_func_t destroy)
 {
-	uint8_t pdu[num_handles * 2];
+	uint8_t *pdu;
+	uint16_t pdu_length = num_handles * 2;
 	struct request *req;
 	struct read_op *op;
 	int i;
@@ -2235,11 +2236,16 @@ unsigned int bt_gatt_client_read_multiple(struct bt_gatt_client *client,
 	if (num_handles * 2 > bt_att_get_mtu(client->att) - 1)
 		return 0;
 
+	pdu = (uint8_t *)malloc(pdu_length);
+	if (!pdu)
+		return 0;
+
 	op = new0(struct read_op, 1);
 
 	req = request_create(client);
 	if (!req) {
 		free(op);
+		free(pdu);
 		return 0;
 	}
 
@@ -2254,9 +2260,10 @@ unsigned int bt_gatt_client_read_multiple(struct bt_gatt_client *client,
 		put_le16(handles[i], pdu + (2 * i));
 
 	req->att_id = bt_att_send(client->att, BT_ATT_OP_READ_MULT_REQ,
-							pdu, sizeof(pdu),
+							pdu, pdu_length,
 							read_multiple_cb, req,
 							request_unref);
+	free(pdu);
 	if (!req->att_id) {
 		op->destroy = NULL;
 		request_unref(req);
@@ -2446,7 +2453,8 @@ unsigned int bt_gatt_client_write_without_response(
 					uint16_t value_handle,
 					bool signed_write,
 					const uint8_t *value, uint16_t length) {
-	uint8_t pdu[2 + length];
+	uint8_t *pdu;
+	uint16_t pdu_length = 2 + length;
 	struct request *req;
 	int security;
 	uint8_t op;
@@ -2458,6 +2466,9 @@ unsigned int bt_gatt_client_write_without_response(
 	if (!req)
 		return 0;
 
+	pdu = (uint8_t *)malloc(pdu_length);
+	if (!pdu)
+		return 0;
 	/* Only use signed write if unencrypted */
 	if (signed_write) {
 		security = bt_att_get_security(client->att);
@@ -2469,8 +2480,9 @@ unsigned int bt_gatt_client_write_without_response(
 	put_le16(value_handle, pdu);
 	memcpy(pdu + 2, value, length);
 
-	req->att_id = bt_att_send(client->att, op, pdu, sizeof(pdu), NULL, req,
+	req->att_id = bt_att_send(client->att, op, pdu, pdu_length, NULL, req,
 								request_unref);
+	free(pdu);
 	if (!req->att_id) {
 		request_unref(req);
 		return 0;
@@ -2527,16 +2539,21 @@ unsigned int bt_gatt_client_write_value(struct bt_gatt_client *client,
 {
 	struct request *req;
 	struct write_op *op;
-	uint8_t pdu[2 + length];
+	uint8_t *pdu;
+	uint16_t pdu_length = 2 + length;
 
 	if (!client)
 		return 0;
 
+	pdu = (uint8_t *)malloc(pdu_length);
+	if (!pdu)
+		return 0;
 	op = new0(struct write_op, 1);
 
 	req = request_create(client);
 	if (!req) {
 		free(op);
+		free(pdu);
 		return 0;
 	}
 
@@ -2551,9 +2568,10 @@ unsigned int bt_gatt_client_write_value(struct bt_gatt_client *client,
 	memcpy(pdu + 2, value, length);
 
 	req->att_id = bt_att_send(client->att, BT_ATT_OP_WRITE_REQ,
-							pdu, sizeof(pdu),
+							pdu, pdu_length,
 							write_cb, req,
 							request_unref);
+	free(pdu);
 	if (!req->att_id) {
 		op->destroy = NULL;
 		request_unref(req);
@@ -2962,7 +2980,8 @@ unsigned int bt_gatt_client_prepare_write(struct bt_gatt_client *client,
 {
 	struct request *req;
 	struct prep_write_op *op;
-	uint8_t pdu[4 + length];
+	uint8_t *pdu;
+	uint16_t pdu_length = 4 + length;
 
 	if (!client)
 		return 0;
@@ -2986,6 +3005,9 @@ unsigned int bt_gatt_client_prepare_write(struct bt_gatt_client *client,
 	if (!req)
 		return 0;
 
+	pdu = (uint8_t *)malloc(pdu_length);
+	if (!pdu)
+		return 0;
 	op = (struct prep_write_op *)req->data;
 
 	op->callback = callback;
@@ -3022,8 +3044,9 @@ unsigned int bt_gatt_client_prepare_write(struct bt_gatt_client *client,
 	 * Note that request_unref will be done on write execute
 	 */
 	req->att_id = bt_att_send(client->att, BT_ATT_OP_PREP_WRITE_REQ, pdu,
-					sizeof(pdu), prep_write_cb, req,
+					pdu_length, prep_write_cb, req,
 					NULL);
+	free(pdu);
 	if (!req->att_id) {
 		op->destroy = NULL;
 		request_unref(req);

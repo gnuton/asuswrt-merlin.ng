@@ -599,6 +599,7 @@ void rc_strongswan_conf_set()
 		"	user = %s\n"
 		"	threads = %d\n"
 		"	send_vendor_id = yes\n"
+		"	max_packet = 32000\n"
 		"	interfaces_ignore = %s\n"
 		"	starter { load_warning = no }\n"
 		"	load_modular = yes\n"
@@ -1049,7 +1050,11 @@ void rc_ipsec_gen_cert(int skip_checking)
         ca_lifetime = nvram_get_int("ipsec_ca_lifetime");
     }
 
-    snprintf(ddns_name, sizeof(ddns_name), "%s", nvram_safe_get("ddns_hostname_x"));
+    if(nvram_match("ddns_enable_x", "1"))
+    {
+        snprintf(ddns_name, sizeof(ddns_name), "%s", nvram_safe_get("ddns_hostname_x"));
+    }
+
     if(strlen(ddns_name) == 0 )
     {
         snprintf(prefix, sizeof(prefix), "wan%d_", get_active_wan_unit());

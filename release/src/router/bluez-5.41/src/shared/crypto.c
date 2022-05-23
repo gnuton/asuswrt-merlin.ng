@@ -267,15 +267,21 @@ bool bt_crypto_sign_att(struct bt_crypto *crypto, const uint8_t key[16],
 				const uint8_t *m, uint16_t m_len,
 				uint32_t sign_cnt, uint8_t signature[12])
 {
-	int fd;
+	int fd = -1;
 	int len;
 	uint8_t tmp[16], out[16];
 	uint16_t msg_len = m_len + sizeof(uint32_t);
-	uint8_t msg[msg_len];
-	uint8_t msg_s[msg_len];
+	uint8_t *msg = NULL;
+	uint8_t *msg_s = NULL;
+	int ret_ok = 0;
 
 	if (!crypto)
-		return false;
+		goto err_out;
+
+	msg = (uint8_t *)malloc(msg_len);
+	msg_s = (uint8_t *)malloc(msg_len);
+	if (!msg || !msg_s)
+		goto err_out;
 
 	memset(msg, 0, msg_len);
 	memcpy(msg, m, m_len);
@@ -288,24 +294,18 @@ bool bt_crypto_sign_att(struct bt_crypto *crypto, const uint8_t key[16],
 
 	fd = alg_new(crypto->cmac_aes, tmp, 16);
 	if (fd < 0)
-		return false;
+		goto err_out;
 
 	/* Swap msg before signing */
 	swap_buf(msg, msg_s, msg_len);
 
 	len = send(fd, msg_s, msg_len, 0);
-	if (len < 0) {
-		close(fd);
-		return false;
-	}
+	if (len < 0)
+		goto err_out;
 
 	len = read(fd, out, 16);
-	if (len < 0) {
-		close(fd);
-		return false;
-	}
-
-	close(fd);
+	if (len < 0)
+		goto err_out;
 
 	/*
 	 * As to BT spec. 4.1 Vol[3], Part C, chapter 10.4.1 sign counter should
@@ -320,8 +320,16 @@ bool bt_crypto_sign_att(struct bt_crypto *crypto, const uint8_t key[16],
 	 */
 	swap_buf(out, tmp, 16);
 	memcpy(signature, tmp + 4, 12);
+	ret_ok = 1;
 
-	return true;
+err_out:
+	if (msg) free(msg);
+	if (msg_s) free(msg_s);
+	if (fd >= 0) close(fd);
+	if (!ret_ok)
+		return false;
+	else
+		return true;
 }
 /*
  * Security function e

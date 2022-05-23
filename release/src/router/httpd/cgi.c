@@ -69,10 +69,13 @@ unescape(char *s)
 	while ((s = strpbrk(s, "%+"))) {
 		/* Parse %xx */
 		if (*s == '%') {
-			sscanf(s + 1, "%02x", &c);
-			*s++ = (char) c;
-			strlcpy(s_tmp, s + 2, sizeof(s_tmp));
-			strncpy(s, s_tmp, strlen(s) + 1);
+			if(isxdigit(s[1]) && isxdigit(s[2])){
+				sscanf(s + 1, "%02x", &c);
+				*s++ = (char) c;
+				strlcpy(s_tmp, s + 2, sizeof(s_tmp));
+				strncpy(s, s_tmp, strlen(s) + 1);
+			}else
+				*s++;
 		}
 		/* Space is special */
 		else if (*s == '+')
@@ -101,33 +104,51 @@ get_cgi(char *name)
 char *
 get_cgi_json(char *name, json_object *root)
 {
+	int obj_find = 0;
 	char *value;
 
-	if(root == NULL){
+	if(root){
+		json_object_object_foreach(root, key, val) {
+			obj_find = 1;
+			break;
+		}
+	}
+
+
+	if(obj_find == 0){
 		value = get_cgi(name);
 		return value;
 	}else{
 		struct json_object *json_value = NULL;
-		json_object_object_get_ex(root, name, &json_value);
+		if(json_object_object_get_ex(root, name, &json_value)){
 #ifdef RTCONFIG_CFGSYNC
-		if (json_object_is_type(json_value, json_type_object))
-			return (char *)json_object_to_json_string(json_value);
-		else
-			return (char *)json_object_get_string(json_value);
+			if (json_object_is_type(json_value, json_type_object))
+				return (char *)json_object_to_json_string(json_value);
+			else
+				return (char *)json_object_get_string(json_value);
 #else
-		return (char *)json_object_get_string(json_value);
+			return (char *)json_object_get_string(json_value);
 #endif
+		}else
+			return NULL;
 	}
 }
 
 char *
 safe_get_cgi_json(char *name, json_object *root)
 {
+	int obj_find = 0;
 	char *value;
 
-	if(root == NULL){
-		value = get_cgi(name);
+	if(root){
+		json_object_object_foreach(root, key, val) {
+			obj_find = 1;
+			break;
+		}
+	}
 
+	if(obj_find == 0){
+		value = get_cgi(name);
 	}else{
 		struct json_object *json_value = NULL;
 		json_object_object_get_ex(root, name, &json_value);

@@ -245,7 +245,7 @@ static gboolean characteristics(gpointer user_data)
 static void char_read_cb(guint8 status, const guint8 *pdu, guint16 plen,
 							gpointer user_data)
 {
-	uint8_t value[plen];
+	uint8_t *value = NULL;
 	ssize_t vlen;
 	int i;
 
@@ -255,7 +255,13 @@ static void char_read_cb(guint8 status, const guint8 *pdu, guint16 plen,
 		goto done;
 	}
 
-	vlen = dec_read_resp(pdu, plen, value, sizeof(value));
+	value = (uint8_t *)malloc(plen);
+	if (!value) {
+		g_printerr("Malloc fail@[%s]\n", __func__);
+		goto done;
+	}
+
+	vlen = dec_read_resp(pdu, plen, value, plen);
 	if (vlen < 0) {
 		g_printerr("Protocol error\n");
 		goto done;
@@ -268,6 +274,7 @@ static void char_read_cb(guint8 status, const guint8 *pdu, guint16 plen,
 done:
 	if (!opt_listen)
 		g_main_loop_quit(event_loop);
+	free(value);
 }
 
 static void char_read_by_uuid_cb(guint8 status, const guint8 *pdu,

@@ -1,6 +1,10 @@
 include ../common.mak
-include $(SRCBASE)/.config
 
+ifeq ($(HND_ROUTER_AX),y)
+ifeq ($(BRCM_CHIP),$(filter $(BRCM_CHIP),4908 4912))
+CFLAGS += -DBCM49XX
+endif
+endif
 CFLAGS += -Wall -Os $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/networkmap
 ifneq ($(HND_ROUTER),y)
@@ -82,17 +86,17 @@ endif
 ifeq ($(HND_ROUTER),y)
 CFLAGS += -I$(HND_SRC)/userspace/public/include -I$(HND_SRC)/userspace/public/include/linux -I$(HND_SRC)/userspace/private/include
 CFLAGS += -I$(HND_SRC)/shared/opensource/include/$(BRCM_BOARD)
-ifeq ($(HND_ROUTER_AX_675X),y)
-LDFLAGS += -L$(TOP_PLATFORM)/gen_util -lgen_util -L$(TOP_PLATFORM)/sys_util -lsys_util
+ifeq ($(RTCONFIG_BCM_502L07P2),y)
+LDFLAGS += -L$(TOP_PLATFORM)/ethctl_lib -lethctl
 endif
-ifeq ($(HND_ROUTER_AX_6756),y)
+ifeq ($(or $(HND_ROUTER_AX_675X),$(HND_ROUTER_AX_6756),$(HND_ROUTER_AX_6710),$(BCM_502L07P2)),y)
 LDFLAGS += -L$(TOP_PLATFORM)/gen_util -lgen_util -L$(TOP_PLATFORM)/sys_util -lsys_util
 endif
 ifeq ($(HND_ROUTER_AX_6756),y)
 LDFLAGS += -L$(TOP_PLATFORM)/wlcsm -lwlcsm -L$(TOP_PLATFORM)/bcm_flashutil -lbcm_flashutil -L$(TOP_PLATFORM)/bcm_util $(if $(HND_ROUTER_AX_6756),-lbcm_util) -L$(TOP_PLATFORM)/bcm_boardctl -lbcm_boardctl
 CFLAGS += -I$(TOP_PLATFORM)/bcm_flashutil -I$(HND_SRC)/userspace/public/include -I$(HND_SRC)/userspace/public/include/linux
 else
-LDFLAGS += -L$(TOP_PLATFORM)/wlcsm -lwlcsm -L$(TOP_PLATFORM)/bcm_flashutil -lbcm_flashutil -L$(TOP_PLATFORM)/bcm_util $(if $(HND_ROUTER_AX_675X),-lbcm_util,-lbcm_crc) -L$(TOP_PLATFORM)/bcm_boardctl -lbcm_boardctl
+LDFLAGS += -L$(TOP_PLATFORM)/wlcsm -lwlcsm -L$(TOP_PLATFORM)/bcm_flashutil -lbcm_flashutil -L$(TOP_PLATFORM)/bcm_util $(if $(or $(HND_ROUTER_AX_675X),$(HND_ROUTER_AX_6710),$(BCM_502L07P2)),-lbcm_util,-lbcm_crc) -L$(TOP_PLATFORM)/bcm_boardctl -lbcm_boardctl
 endif
 endif
 ifeq ($(HND_ROUTER_AX),y)
@@ -106,8 +110,9 @@ CFLAGS += -I$(HND_SRC)/bcmdrivers/opensource/include/bcm963xx -I$(HND_SRC)/share
 CFLAGS += -I$(WPA_SUPPLICANT_DIR)/src/common
 LDFLAGS += -L$(WPA_SUPPLICANT_DIR)/wpa_supplicant -L$(INSTALLDIR)/wpa_supplicant/usr/lib
 WPS_PBCD := wps_pbcd
-ifeq ($(RTCONFIG_WIFI6E),y)
-OBJS_WPS_PBCD := $(if $(wildcard sysdeps/broadcom/wps_pbcd_6e.c),wps_pbcd_6e.o,prebuild/wps_pbcd_6e.o) $(if $(wildcard sysdeps/broadcom/hostapd_config_6e.c),hostapd_config_6e.o,prebuild/hostapd_config_6e.o)
+ifeq ($(or $(RTCONFIG_WIFI6E),$(HND_ROUTER_AX_6756),$(RTCONFIG_BCM_502L07P2)),y)
+OBJS_WPS_PBCD := $(if $(wildcard sysdeps/broadcom/wps_pbcd_6e.c),wps_pbcd_6e.o,prebuild/wps_pbcd_6e.o)
+OBJS_WPS_PBCD += $(if $(wildcard sysdeps/broadcom/hostapd_config_6e.c),hostapd_config_6e.o,prebuild/hostapd_config_6e.o)
 ifeq ($(RTCONFIG_AMAS_WGN), y)
 OBJS_WPS_PBCD += $(if $(wildcard amas_wgn.c),amas_wgn.o,prebuild/amas_wgn.o)
 endif
@@ -115,7 +120,7 @@ else
 OBJS_WPS_PBCD := $(if $(wildcard sysdeps/broadcom/wps_pbcd.c),wps_pbcd.o,prebuild/wps_pbcd.o)
 endif
 LDFLAGS += -lwpa_client
-ifeq ($(RTCONFIG_WIFI6E),y)
+ifeq ($(or $(RTCONFIG_WIFI6E),$(RTCONFIG_BCM_502L07P2)),y)
 # For now, enable HAPD_WDS only for router builds
 # CFLAGS += -DHAPD_WDS_DRAFT
 # For now, enable HAPD_WDS_HOTPLUG only for router builds
@@ -294,8 +299,11 @@ endif
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o
 OBJS += firewall.o ppp.o services.o common.o
-OBJS += watchdog.o check_watchdog.o  $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
+OBJS += watchdog.o check_watchdog.o fwupg_flashing.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
 OBJS += format.o
+ifeq ($(RTCONFIG_SINGLEIMG_B),y)
+OBJS += fwupg_flashing.o
+endif
 ifeq ($(RTCONFIG_CONNTRACK),y)
 OBJS += pctime.o
 endif
@@ -384,6 +392,10 @@ endif
 endif
 ifeq ($(RTCONFIG_WIFI_SON),y)
 OBJS += repacd.o
+endif
+ifeq ($(RTCONFIG_QCA_EZMESH),y)
+OBJS += ezmesh_1905.o
+OBJS += ezmesh_file.o
 endif
 else ifeq ($(RTCONFIG_ALPINE),y)
 OBJS += init-alpine.o wps-alpine.o alpine.o ate-alpine.o
@@ -842,7 +854,7 @@ CFLAGS += -I$(TOP)/libasuslog
 endif
 
 ifeq ($(RTCONFIG_BRCM_HOSTAPD),y)
-ifeq ($(RTCONFIG_WIFI6E),y)
+ifeq ($(or $(RTCONFIG_WIFI6E),$(HND_ROUTER_AX_6756),$(RTCONFIG_BCM_502L07P2)),y)
 OBJS += $(if $(wildcard sysdeps/broadcom/hostapd_config_6e.c),hostapd_config_6e.o,prebuild/hostapd_config_6e.o)
 else
 OBJS += $(if $(wildcard sysdeps/broadcom/hostapd_config.c),hostapd_config.o,prebuild/hostapd_config.o)
@@ -870,9 +882,6 @@ ifeq ($(RTCONFIG_CONNDIAG),y)
 ifeq ($(RTCONFIG_BCMBSD),y)
 CFLAGS += -I$(TOP)/bsd
 endif
-ifeq ($(or $(RTCONFIG_LANTIQ),$(RTAC59_CD6R),$(RTAC59_CD6N)),y)
-CFLAGS += -fPIC
-endif
 ifeq ($(RTCONFIG_HND_ROUTER_AX),y)
 CFLAGS += $(ACSDV2_DIR)
 endif
@@ -892,13 +901,20 @@ endif
 DIAG_OBJS += conn_diag-sql.o
 endif
 
-ifeq ($(or $(RTAX82U),$(GSAX3000),$(GSAX5400),$(TUFAX5400),$(GTAX11000_PRO),$(GTAXE16000),$(GTAX6000)),y)
+ifeq ($(BUILD_NAME), GT10)
+export GT10=y
+endif
+
+ifeq ($(or $(RTAX82U),$(GSAX3000),$(GSAX5400),$(TUFAX5400),$(GTAX11000_PRO),$(GTAXE16000),$(GTAX6000),$(GT10)),y)
 LDFLAGS += -lm
 OBJS += ledg.o
 OBJS += ledbtn.o
 endif
 ifeq ($(DSL_AX82U),y)
 OBJS += ledg.o
+endif
+ifeq ($(GTAX6000),y)
+OBJS += antled.o
 endif
 
 OBJS += dhcpc_vc_query.o
@@ -971,6 +987,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rcheck
 	@cd $(INSTALLDIR)/sbin && ln -sf rc radio
 	@cd $(INSTALLDIR)/sbin && ln -sf rc led_ctrl
+	@cd $(INSTALLDIR)/sbin && ln -sf rc led_str_ctrl
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
 	@cd $(INSTALLDIR)/sbin && ln -sf rc netool
@@ -999,6 +1016,9 @@ endif
 #	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
 	@cd $(INSTALLDIR)/sbin && ln -sf rc check_watchdog
+ifeq ($(RTCONFIG_SINGLEIMG_B),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc fwupg_flashing
+endif
 ifeq ($(RTCONFIG_CONNTRACK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc pctime
 endif
@@ -1117,7 +1137,7 @@ endif
 ifeq ($(RTCONFIG_EXT_RTL8370MB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 endif
-ifeq ($(or $(RTAX55),$(RTAX1800),$(RTAX58U_V2)),y)
+ifeq ($(or $(RTAX55),$(RTAX1800),$(RTAX58U_V2),$(RTAX3000N)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 endif
 ifeq ($(RTCONFIG_QCA),y)
@@ -1166,6 +1186,9 @@ endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc restart_wireless
 
+ifeq ($(RTCONFIG_HW_DOG), y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc hwdog
+endif
 ifeq ($(RTCONFIG_PTHSAFE_POPEN), y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc PS_pod
 endif
@@ -1393,9 +1416,13 @@ ifeq ($(RTCONFIG_EXTPHY_BCM84880),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_ext_phy_id
 endif
 
-ifeq ($(or $(RTAX82U),$(DSL_AX82U),$(GSAX3000),$(GSAX5400),$(TUFAX5400),$(GTAX11000_PRO),$(GTAXE16000),$(GTAX6000)),y)
+ifeq ($(or $(RTAX82U),$(DSL_AX82U),$(GSAX3000),$(GSAX5400),$(TUFAX5400),$(GTAX11000_PRO),$(GTAXE16000),$(GTAX6000),$(GT10)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ledg
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ledbtn
+endif
+
+ifeq ($(GTAX6000),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc antled
 endif
 
 ifeq ($(RTCONFIG_DSL_HOST),y)
@@ -1492,7 +1519,7 @@ ifeq ($(RTCONFIG_AMAS_WGN), y)
 ifneq ($(wildcard ./prebuild/amas_wgn.o),)
 amas_wgn:
 	@-cp -f ./prebuild/amas_wgn.o .
-endif	
+endif
 endif
 
 # asustest command is for DSL models only, debugging purpose.
@@ -1820,8 +1847,8 @@ endif
 endif
 endif
 
-ifeq ($(or $(RTAX82U),$(DSL_AX82U),$(GSAX3000),$(GSAX5400),$(TUF-AX5400),$(GTAX11000_PRO),$(GTAXE16000),$(GTAX6000)),y)
-ifneq ($(wildcard ./prebuild/ledg.o.o),)
+ifeq ($(or $(RTAX82U),$(DSL_AX82U),$(GSAX3000),$(GSAX5400),$(TUF-AX5400),$(GTAX11000_PRO),$(GTAXE16000),$(GTAX6000),$(GT10)),y)
+ifneq ($(wildcard ./prebuild/ledg.o),)
 ledg.o:
 	@-cp -f ./prebuild/ledg.o .
 endif
@@ -1836,6 +1863,13 @@ ifeq ($(RTCONFIG_TPVPN),y)
 ifneq ($(wildcard ./prebuild/tpvpn.o),)
 tpvpn.o:
 	@-cp -f ./prebuild/tpvpn.o .
+endif
+endif
+
+ifeq ($(GTAX6000),y)
+ifneq ($(wildcard ./prebuild/antled.o),)
+broadcom.o:
+	@-cp -f ./prebuild/antled.o .
 endif
 endif
 
@@ -1859,10 +1893,17 @@ pswatch: pswatch.c
 	$(CPTMP)
 
 ifeq ($(RTCONFIG_CONNDIAG),y)
-libconn_diag.so: $(DIAG_OBJS)
+libconn_diag.so:
+	@for f in $(patsubst %.o,%,$(DIAG_OBJS)) ; do \
+		if [ -f $${f}.c ] ; then \
+			$(CC) $(CFLAGS) -fPIC -c $${f}.c; \
+		else \
+			cp -f ./prebuild/$${f}.o .; \
+		fi \
+	done
 ifeq ($(HND_ROUTER_AX),y)
-	$(LD) -L$(TOP_PLATFORM)/nvram -lnvram -L$(TOP)/shared -lshared -shared -o $@ $^
+	$(LD) -L$(TOP_PLATFORM)/nvram -lnvram -L$(TOP)/shared -lshared -shared $(if $(RTCONFIG_BCM_502L07P2),-L$(TOP_PLATFORM)/ethctl_lib -lethctl) -o $@ $(DIAG_OBJS)
 else
-	$(LD) -L$(TOP)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared -shared -o $@ $^
+	$(LD) -L$(TOP)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared -shared -o $@ $(DIAG_OBJS)
 endif
 endif

@@ -264,16 +264,16 @@ skip_mnt:
 		// This refer to jffs2.c. 
 		// Because ubifs_unlock (erase) doesn't be called if ISP_CUSTOMIZE=y.
 		// We use rm command (remove file includes hidden files.) instead.
-		//if((0 == nvram_get_int("x_Setting")) && (check_if_file_exist("/jffs/remove_hidden_flag")))
-		//{
+		if((0 == nvram_get_int("x_Setting")) && (check_if_file_exist("/jffs/remove_hidden_flag")))
+		{
 #if defined(RTCONFIG_ISP_CUSTOMIZE_TOOL) || defined(RTCONFIG_ISP_CUSTOMIZE)
 			// Remove hidden folder but excluding /jffs/.ac and /jffs/.package.
 			system("find /jffs/ -name '.*' -a ! -name '.ict' -a ! -name '.package' -a ! -name '.package.tar.gz' -a ! -name 'package.tar.gz' -exec rm -rf {} \\;");
 			_dprintf("Clean /jffs/.*\n");
 #else
-			//system("rm -rf /jffs/.*");
+			system("rm -rf /jffs/.*");
 #endif
-		//}
+		}
 		_dprintf("Clean /jffs/*\n");
 		system("rm -fr /jffs/*");
 		nvram_unset("ubifs_clean_fs");
@@ -292,6 +292,10 @@ skip_mnt:
 	}
 	run_userfile(UBIFS_MNT_DIR, ".asusrouter", UBIFS_MNT_DIR, 3);
 #endif
+
+	if (!check_if_dir_exist("/jffs/scripts/")) mkdir("/jffs/scripts/", 0755);
+	if (!check_if_dir_exist("/jffs/configs/")) mkdir("/jffs/configs/", 0755);
+	if (!check_if_dir_exist("/jffs/addons/")) mkdir("/jffs/addons/", 0755);
 
 #if defined(RTCONFIG_TEST_BOARDDATA_FILE)
 	/* Copy /lib/firmware to /tmp/firmware, and

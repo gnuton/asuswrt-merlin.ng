@@ -516,11 +516,15 @@ static int avctp_send(struct avctp_channel *control, uint8_t transaction,
 	struct avc_header avc;
 	struct msghdr msg;
 	int sk, err = 0;
-	struct iovec pdu[iov_cnt + 2];
+	struct iovec *pdu;
 	int i;
 	size_t len = sizeof(avctp) + sizeof(avc);
 
 	DBG("");
+
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(iov_cnt + 2));
+	if (!pdu)
+		return -ENOMEM;
 
 	pdu[0].iov_base = &avctp;
 	pdu[0].iov_len  = sizeof(avctp);
@@ -533,8 +537,10 @@ static int avctp_send(struct avctp_channel *control, uint8_t transaction,
 		len += iov[i].iov_len;
 	}
 
-	if (control->omtu < len)
+	if (control->omtu < len) {
+		free(pdu);
 		return -EOVERFLOW;
+	}
 
 	sk = g_io_channel_unix_get_fd(control->io);
 
@@ -558,6 +564,7 @@ static int avctp_send(struct avctp_channel *control, uint8_t transaction,
 	if (sendmsg(sk, &msg, 0) < 0)
 		err = -errno;
 
+	free(pdu);
 	return err;
 }
 
@@ -567,10 +574,14 @@ static int avctp_browsing_send(struct avctp_channel *browsing,
 {
 	struct avctp_header avctp;
 	struct msghdr msg;
-	struct iovec pdu[iov_cnt + 1];
+	struct iovec *pdu;
 	int sk, err = 0;
 	int i;
 	size_t len = sizeof(avctp);
+
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(iov_cnt + 1));
+	if (!pdu)
+		return -ENOMEM;
 
 	for (i = 0; i < iov_cnt; i++) {
 		pdu[i + 1].iov_base = iov[i].iov_base;
@@ -581,8 +592,10 @@ static int avctp_browsing_send(struct avctp_channel *browsing,
 	pdu[0].iov_base = &avctp;
 	pdu[0].iov_len  = sizeof(avctp);
 
-	if (browsing->omtu < len)
+	if (browsing->omtu < len) {
+		free(pdu);
 		return -EOVERFLOW;
+	}
 
 	sk = g_io_channel_unix_get_fd(browsing->io);
 
@@ -600,6 +613,7 @@ static int avctp_browsing_send(struct avctp_channel *browsing,
 	if (sendmsg(sk, &msg, 0) < 0)
 		err = -errno;
 
+	free(pdu);
 	return err;
 }
 

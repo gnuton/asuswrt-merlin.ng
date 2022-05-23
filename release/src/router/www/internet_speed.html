@@ -32,8 +32,9 @@ $(function(){
 	if(internetSpeed_lite_support){
 		$("#history_desc").hide();
 		$("#speedTest_history_div").hide();
-		$("#packet_loss_div").hide();
 	}
+
+	$("#packet_loss_div").hide();
 });
 
 var speedTest_result = [];
@@ -649,7 +650,7 @@ function add_speedTest_history(history_obj, type){//type: 'last', 'first'
 	var packetloss = "0.00";
 	if(typeof history_obj.packetLoss != "undefined")
 		packetloss = history_obj.packetLoss.toFixed(2);
-
+/*
 	var packetLossContainer =
 			$("<div>")
 			.addClass("history_loss_div")
@@ -674,7 +675,7 @@ function add_speedTest_history(history_obj, type){//type: 'last', 'first'
 				.addClass("ping_unit")
 				.html("%")
 				.appendTo(lossValue);
-
+*/
 	var historyMoreObj =
 		$("<div>")
 		.addClass("history_more")
@@ -1132,7 +1133,7 @@ function build_interface_list(){
 					<div id="outer_server_container">
 						<div class="server_list_close"><div class="close_icon" onclick="show_server_list();"></div></div>
 						<div id="server_list_div" class="server_list_container">
-							<div class="sub_server_container">
+							<div class="sub_server_container" style="height: 30px;">
 								<div class="server_brick_container"><div class="server_list_brick"></div></div>
 								<div style="display: flex; align-items: center; justify-content: space-between; width: 100%;" onclick="choose_auto_server();">
 									<div class="sub_server_title"><#Auto#></div>
@@ -1365,10 +1366,10 @@ function build_interface_list(){
 							<div><#InternetSpeed_Jitter#></div>
 							<div>(<#InternetSpeed_ms#>)</div>
 						</div>
-						<div class="history_loss_div">
+						<!--div class="history_loss_div">
 							<div><#InternetSpeed_Loss#></div>
 							<div>(%)</div>
-						</div>
+						</div-->
 					</div>
 				</div>
 				<div class="history_container history_title_m">

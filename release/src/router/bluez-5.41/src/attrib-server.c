@@ -990,7 +990,7 @@ static void channel_handler(const uint8_t *ipdu, uint16_t len,
 							gpointer user_data)
 {
 	struct gatt_channel *channel = user_data;
-	uint8_t opdu[channel->mtu];
+	uint8_t *opdu;
 	uint16_t length, start, end, mtu, offset;
 	bt_uuid_t uuid;
 	uint8_t status = 0;
@@ -1003,6 +1003,11 @@ static void channel_handler(const uint8_t *ipdu, uint16_t len,
 		error("Too much data on ATT socket");
 		status = ATT_ECODE_INVALID_PDU;
 		goto done;
+	}
+	opdu = (uint8_t *)malloc(channel->mtu);
+	if (!opdu) {
+		error("channel_handler malloc fail");
+		return;
 	}
 
 	switch (ipdu[0]) {
@@ -1082,6 +1087,7 @@ static void channel_handler(const uint8_t *ipdu, uint16_t len,
 		if (length > 0)
 			write_value(channel, start, value, vlen, opdu,
 								channel->mtu);
+		free(opdu);
 		return;
 	case ATT_OP_FIND_BY_TYPE_REQ:
 		length = dec_find_by_type_req(ipdu, len, &start, &end,
@@ -1095,10 +1101,12 @@ static void channel_handler(const uint8_t *ipdu, uint16_t len,
 							opdu, channel->mtu);
 		break;
 	case ATT_OP_HANDLE_CNF:
+		free(opdu);
 		return;
 	case ATT_OP_HANDLE_IND:
 	case ATT_OP_HANDLE_NOTIFY:
 		/* The attribute client is already handling these */
+		free(opdu);
 		return;
 	case ATT_OP_READ_MULTI_REQ:
 	case ATT_OP_PREP_WRITE_REQ:
@@ -1118,6 +1126,7 @@ done:
 								channel->mtu);
 
 	g_attrib_send(channel->attrib, 0, opdu, length, NULL, NULL, NULL);
+	free(opdu);
 }
 
 GAttrib *attrib_from_device(struct btd_device *device)

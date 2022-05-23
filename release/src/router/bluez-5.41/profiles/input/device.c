@@ -146,7 +146,7 @@ static bool hidp_send_message(GIOChannel *chan, uint8_t hdr,
 {
 	int fd;
 	ssize_t len;
-	uint8_t msg[size + 1];
+	uint8_t *msg;
 
 	if (!chan) {
 		error("BT socket not connected");
@@ -156,6 +156,12 @@ static bool hidp_send_message(GIOChannel *chan, uint8_t hdr,
 	if (data == NULL)
 		size = 0;
 
+	msg = (uint8_t *)malloc(size + 1);
+	if (!msg) {
+		error("BT malloc fail");
+		return false;
+	}
+
 	msg[0] = hdr;
 	if (size > 0)
 		memcpy(&msg[1], data, size);
@@ -164,6 +170,7 @@ static bool hidp_send_message(GIOChannel *chan, uint8_t hdr,
 	fd = g_io_channel_unix_get_fd(chan);
 
 	len = write(fd, msg, size);
+	free(msg);
 	if (len < 0) {
 		error("BT socket write error: %s (%d)", strerror(errno), errno);
 		return false;

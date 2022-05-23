@@ -235,18 +235,18 @@ void ovpn_client_down_handler(int unit)
 
 	sprintf(dirname, "/etc/openvpn/client%d", unit);
 
-	sprintf(buffer, "%s/qos.sh", dirname);
+	snprintf(buffer, sizeof(buffer), "%s/qos.sh", dirname);
 	if (f_exists(buffer)) {
 		eval("sed", "-i", "s/-A/-D/g", buffer);
 		eval(buffer);
 		unlink(buffer);
 	}
 
-	sprintf(buffer, "%s/client.resolv", dirname);
+	snprintf(buffer, sizeof(buffer), "%s/client.resolv", dirname);
 	if (f_exists(buffer))
 		unlink(buffer);
 
-	sprintf(buffer, "%s/client.conf", dirname);
+	snprintf(buffer, sizeof(buffer), "%s/client.conf", dirname);
 	if (f_exists(buffer))
 		unlink(buffer);
 }
@@ -998,23 +998,9 @@ void ovpn_process_eas(int start) {
 	int unit;
 
 	// Process servers
-	strlcpy(enabled, nvram_safe_get("vpn_serverx_start"), sizeof(enabled));
-
-	for (ptr = enabled; *ptr != '\0'; ptr++) {
-		if (!isdigit(*ptr))
-			continue;
-
-		unit = atoi(ptr);
-
-		if (unit > 0 && unit <= OVPN_SERVER_MAX) {
-			sprintf(buffer2, "vpnserver%d", unit);
-			if (pidof(buffer2) >= 0)
-				ovpn_stop_server(unit);
-
-			if (start)
-				ovpn_start_server(unit);
-		}
-	}
+	stop_ovpn_serverall();
+	if (start)
+		start_ovpn_serverall();
 
 	// Process clients
 	strlcpy(enabled, nvram_safe_get("vpn_clientx_eas"), sizeof(enabled));
@@ -1038,4 +1024,40 @@ void ovpn_process_eas(int start) {
 				ovpn_start_client(unit);
 		}
 	}
+}
+
+void start_ovpn_serverall() {
+        char enabled[32];
+        char *ptr;
+        int unit;
+
+	strlcpy(enabled, nvram_safe_get("vpn_serverx_start"), sizeof(enabled));
+
+	for (ptr = enabled; *ptr != '\0'; ptr++) {
+		if (!isdigit(*ptr))
+			continue;
+
+		unit = atoi(ptr);
+		if (unit > 0 && unit <= OVPN_SERVER_MAX)
+			ovpn_start_server(unit);
+	}
+}
+
+
+void stop_ovpn_serverall() {
+	char enabled[32], buffer[32];
+	char *ptr;
+	int unit;
+
+	strlcpy(enabled, nvram_safe_get("vpn_serverx_start"), sizeof(enabled));
+
+	for (ptr = enabled; *ptr != '\0'; ptr++) {
+		if (!isdigit(*ptr))
+			continue;
+
+		unit = atoi(ptr);
+		sprintf(buffer, "vpnserver%d", unit);
+		if (pidof(buffer) >= 0)
+			ovpn_stop_server(unit);
+        }
 }

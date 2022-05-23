@@ -1093,10 +1093,14 @@ static int avrcp_send_internal(struct avrcp *session, uint8_t transaction,
 					uint8_t pdu_id, uint8_t type,
 					const struct iovec *iov, int iov_cnt)
 {
-	struct iovec pdu[iov_cnt + 1];
+	struct iovec *pdu;
 	struct avrcp_header hdr;
 	int i;
+	int ret;
 
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(iov_cnt + 1));
+	if (!pdu)
+		return -ENOMEM;
 	/*
 	 * If a receiver receives a start fragment or non-fragmented AVRCP
 	 * Specific AV/C message when it already has an incomplete fragment
@@ -1148,8 +1152,10 @@ static int avrcp_send_internal(struct avrcp *session, uint8_t transaction,
 	hdr.pdu_id = pdu_id;
 	hdr.params_len = htons(hdr.params_len);
 
-	return avctp_send_vendor(session->conn, transaction, code, subunit,
+	ret = avctp_send_vendor(session->conn, transaction, code, subunit,
 							pdu, iov_cnt + 1);
+	free(pdu);
+	return ret;
 }
 
 static ssize_t request_continuing(struct avrcp *session, uint8_t transaction,
@@ -1591,11 +1597,16 @@ static int avrcp_send_req(struct avrcp *session, uint8_t code, uint8_t subunit,
 					int iov_cnt, avctp_rsp_cb func,
 					void *user_data)
 {
-	struct iovec pdu[iov_cnt + 1];
+	struct iovec *pdu;
 	struct avrcp_header hdr;
 	int i;
+	int ret;
 
 	memset(&hdr, 0, sizeof(hdr));
+
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(iov_cnt + 1));
+	if (!pdu)
+		return -ENOMEM;
 
 	pdu[0].iov_base = &hdr;
 	pdu[0].iov_len = sizeof(hdr);
@@ -1611,8 +1622,10 @@ static int avrcp_send_req(struct avrcp *session, uint8_t code, uint8_t subunit,
 	hdr.packet_type = AVRCP_PACKET_TYPE_SINGLE;
 	hdr.params_len = htons(hdr.params_len);
 
-	return avctp_send_vendor_req(session->conn, code, subunit, pdu,
+	ret = avctp_send_vendor_req(session->conn, code, subunit, pdu,
 						iov_cnt + 1, func, user_data);
+	free(pdu);
+	return ret;
 }
 
 static int avrcp_send_browsing_req(struct avrcp *session, uint8_t pdu_id,
@@ -1620,10 +1633,14 @@ static int avrcp_send_browsing_req(struct avrcp *session, uint8_t pdu_id,
 					avctp_browsing_rsp_cb func,
 					void *user_data)
 {
-	struct iovec pdu[iov_cnt + 1];
+	struct iovec *pdu;
 	struct avrcp_browsing_header hdr;
 	int i;
+	int ret;
 
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(iov_cnt + 1));
+	if (!pdu)
+		return -ENOMEM;
 	memset(&hdr, 0, sizeof(hdr));
 
 	for (i = 0; i < iov_cnt; i++) {
@@ -1638,18 +1655,24 @@ static int avrcp_send_browsing_req(struct avrcp *session, uint8_t pdu_id,
 	pdu[0].iov_base = &hdr;
 	pdu[0].iov_len = sizeof(hdr);
 
-	return avctp_send_browsing_req(session->conn, pdu, iov_cnt + 1,
+	ret = avctp_send_browsing_req(session->conn, pdu, iov_cnt + 1,
 							func, user_data);
+	free(pdu);
+	return ret;
 }
 
 static int avrcp_send_browsing(struct avrcp *session, uint8_t transaction,
 				uint8_t pdu_id, const struct iovec *iov,
 				int iov_cnt)
 {
-	struct iovec pdu[iov_cnt + 1];
+	struct iovec *pdu;
 	struct avrcp_browsing_header hdr;
 	int i;
+	int ret;
 
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(iov_cnt + 1));
+	if (!pdu)
+		return -ENOMEM;
 	memset(&hdr, 0, sizeof(hdr));
 
 	for (i = 0; i < iov_cnt; i++) {
@@ -1664,8 +1687,10 @@ static int avrcp_send_browsing(struct avrcp *session, uint8_t transaction,
 	pdu[0].iov_base = &hdr;
 	pdu[0].iov_len = sizeof(hdr);
 
-	return avctp_send_browsing(session->conn, transaction, pdu,
+	ret = avctp_send_browsing(session->conn, transaction, pdu,
 								iov_cnt + 1);
+	free(pdu);
+	return ret;
 }
 
 static gboolean get_capabilities_rsp(struct avctp *conn,

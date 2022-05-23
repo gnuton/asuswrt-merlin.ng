@@ -134,6 +134,8 @@ char cookies_buf[4096];
 int do_ssl = 0; 	// use Global for HTTPS upgrade judgment in web.c
 int ssl_stream_fd; 	// use Global for HTTPS stream fd in web.c
 int json_support = 0;
+char wl_band_list[8][8] = {{0}};
+char pidfile[32];
 
 #ifdef TRANSLATE_ON_FLY
 char Accept_Language[16];
@@ -260,6 +262,9 @@ int skip_auth = 0;
 char url[128];
 int http_port = 0;
 char *http_ifname = NULL;
+#ifdef RTCONFIG_IPV6
+int http_ipv6_only = 0;
+#endif
 time_t login_dt=0;
 char login_url[128];
 int login_error_status = 0;
@@ -343,7 +348,9 @@ void Debug2File(const char *path, const char *fmt, ...)
 
 	fp = fopen(path, "a+");
 	if (fp) {
+#ifndef RTCONFIG_AVOID_TZ_ENV
 		setenv("TZ", nvram_safe_get_x("", "time_zone_x"), 1);
+#endif
 		now = time(NULL);
 		localtime_r(&now, &tm);
 		strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S", &tm);
@@ -561,7 +568,7 @@ send_login_page(int fromapp_flag, int error_status, char* url, char* file, int l
 	}else{
 		snprintf(inviteCode, sizeof(inviteCode), "\"error_status\":\"%d\"", error_status);
 		if(error_status == LOGINLOCK){
-			snprintf(buf, sizeof(buf), ",\"remaining_lock_time\":\"%ld\"", LOCKTIME - login_dt);
+			snprintf(buf, sizeof(buf), ",\"remaining_lock_time\":\"%ld\"", max_lock_time - login_dt);
 			strlcat(inviteCode, buf, sizeof(inviteCode));
 		}
 	}
@@ -778,36 +785,6 @@ int web_write(const char *buffer, int len, FILE *stream)
 		n -= r;
 	}
 	return r;
-}
-
-int check_user_agent(char* user_agent){
-
-	int fromapp = 0;
-
-	if(user_agent != NULL){
-		char *cp1=NULL, *app_router=NULL, *app_platform=NULL, *app_framework=NULL, *app_verison=NULL;
-		cp1 = strdup(user_agent);
-
-		vstrsep(cp1, "-", &app_router, &app_platform, &app_framework, &app_verison);
-
-		if(app_router != NULL && app_framework != NULL && strcmp( app_router, "asusrouter") == 0){
-				fromapp=FROM_ASUSROUTER;
-			if(strcmp( app_framework, "DUTUtil") == 0)
-				fromapp=FROM_DUTUtil;
-			else if(strcmp( app_framework, "ASSIA") == 0)
-				fromapp=FROM_ASSIA;
-			else if(strcmp( app_framework, "IFTTT") == 0)
-				fromapp=FROM_IFTTT;
-			else if(strcmp( app_framework, "Alexa") == 0)
-				fromapp=FROM_ALEXA;
-			else if(strcmp( app_framework, "WebView") == 0)
-				fromapp=FROM_WebView;
-			else
-				fromapp=FROM_UNKNOWN;
-		}
-		if(cp1) free(cp1);
-	}
-	return fromapp;
 }
 
 #if defined(RTCONFIG_IFTTT) || defined(RTCONFIG_ALEXA) || defined(RTCONFIG_GOOGLE_ASST)
@@ -1403,7 +1380,7 @@ handle_request(void)
 			}
 			if (handler->auth) {
 				url_do_auth = 1;
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) || defined(GTAX11000_PRO) || defined(GT10)
 				switch_ledg(LEDG_QIS_FINISH);
 #endif
 				if ((mime_exception&MIME_EXCEPTION_NOAUTH_FIRST)&&!x_Setting) {
@@ -2148,7 +2125,7 @@ load_dictionary (char *lang, pkw_t pkw)
 #endif  // RELOAD_DICT
 
 //	gettimeofday (&tv1, NULL);
-	if (lang == NULL || (lang != NULL && strlen (lang) == 0)) {
+	if(lang == NULL || strlen(lang) != 2 || !strstr(ALL_LANGS, lang)){
 		// if "lang" is invalid, use English as default
 		snprintf (dfn, sizeof (dfn), eng_dict);
 	} else {
@@ -2293,6 +2270,12 @@ void check_alive()
 	alarm(20);
 }
 
+void httpd_exit(int sig)
+{
+        remove(pidfile);
+        exit(0);
+}
+
 int enabled_http_ifname()
 {
 #ifdef DSL_AX82U
@@ -2313,7 +2296,6 @@ int main(int argc, char **argv)
 {
 	usockaddr usa;
 	int listen_fd[3];
-	char pidfile[32];
 	fd_set active_rfds;
 	conn_list_t pool;
 	int i, c;
@@ -2324,7 +2306,9 @@ int main(int argc, char **argv)
 	/* set initial TZ to avoid mem leaks
 	 * it suppose to be convert after applying
 	 * time_zone_x_mapping(); */
+#ifndef RTCONFIG_AVOID_TZ_ENV
 	setenv("TZ", nvram_safe_get_x("", "time_zone_x"), 1);
+#endif
 
 #ifdef RTCONFIG_LETSENCRYPT
 	nvram_unset("le_restart_httpd");
@@ -2350,6 +2334,11 @@ int main(int argc, char **argv)
 		case 'i':
 			http_ifname = optarg;
 			break;
+#ifdef RTCONFIG_IPV6
+		case '6':
+			http_ipv6_only = 1;
+			break;
+#endif
 		default:
 			fprintf(stderr, "ERROR: unknown option %c\n", c);
 			break;
@@ -2379,6 +2368,7 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, chld_reap);
 	signal(SIGUSR1, update_wlan_log);
 	signal(SIGALRM, check_alive);
+	signal(SIGTERM, httpd_exit);
 
 	alarm(20);
 
@@ -2393,7 +2383,11 @@ int main(int argc, char **argv)
 	i = 0;
 
 	{
-		if (enabled_http_ifname() && (listen_fd[i++] = initialize_listen_socket(AF_INET, &usa, http_ifname)) < 0) {
+		if (
+#ifdef RTCONFIG_IPV6
+			!http_ipv6_only &&
+#endif
+			enabled_http_ifname() && (listen_fd[i++] = initialize_listen_socket(AF_INET, &usa, http_ifname)) < 0) {
 			fprintf(stderr, "can't bind to %s ipv4 address\n", http_ifname ? : "any");
 			return errno;
 		}
@@ -2416,7 +2410,7 @@ int main(int argc, char **argv)
 	if (http_port == SERVER_PORT)
 		strlcpy(pidfile, "/var/run/httpd.pid", sizeof(pidfile));
 	else
-		snprintf(pidfile, sizeof(pidfile), "/var/run/httpd-%d.pid", http_port);
+		snprintf(pidfile, sizeof(pidfile), "/var/run/httpd-%s-%d.pid", http_ifname, http_port);
 	if (!(pid_fp = fopen(pidfile, "w"))) {
 		perror(pidfile);
 		return errno;
@@ -2431,6 +2425,7 @@ int main(int argc, char **argv)
 
 	/* handler global variable */
 	get_index_page(indexpage, sizeof(indexpage));
+	get_wl_nband_list();
 #if defined(RTCONFIG_SW_HW_AUTH) && defined(RTCONFIG_AMAS)
 	amas_support = getAmasSupportMode();
 #endif
@@ -2438,6 +2433,9 @@ int main(int argc, char **argv)
 		save_ui_support_to_file();
 		save_iptvSettings_to_file();
 	}
+#ifdef RTCONFIG_JFFS2USERICON
+	renew_upload_icon();
+#endif
 
 	/* Loop forever handling requests */
 	for (;;) {

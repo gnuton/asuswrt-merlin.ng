@@ -2175,7 +2175,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char ssidbuf[SSID_FMT_BUF_LEN];
 	wl_bss_info_t *bi;
 	int retval = 0;
-	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_", prefix2[] = "wlXXXXXXXXXX_";
 	char ifname[IFNAMSIZ] = { 0 };
 	uint32 chanim_enab = 0;
 	uint32 interference = 0;
@@ -2186,7 +2186,14 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char *retbuf = (char*) &bufstruct.bufdata;
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	strlcpy(ifname, nvram_safe_get(strlcat_r(prefix, "ifname", tmp, sizeof(tmp))), sizeof(ifname));
+	snprintf(prefix2, sizeof(prefix2), "wl%d.%d_", unit, 1);
+
+	if ((repeater_mode() || psr_mode()) &&
+		(unit == nvram_get_int("wlc_band")) &&
+		nvram_match(strlcat_r(prefix2, "bss_enabled", tmp, sizeof(tmp)), "1"))
+		strlcpy(ifname, nvram_safe_get(strlcat_r(prefix2, "ifname", tmp, sizeof(tmp))), sizeof(ifname));
+	else
+		strlcpy(ifname, nvram_safe_get(strlcat_r(prefix, "ifname", tmp, sizeof(tmp))), sizeof(ifname));
 
 	if ((ret = wl_ioctl(ifname, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN)) == 0) {
 		/* The adapter is associated. */
@@ -2769,6 +2776,10 @@ exit:
 	return ret;
 }
 
+#ifdef GTAXE16000
+static int wl_order[4] = {3,0,1,2};
+#endif
+
 int
 ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -2778,12 +2789,16 @@ ej_wl_status_2g(int eid, webs_t wp, int argc, char_t **argv)
 	char *temp;
 
 	for (ii = 0; ii < DEV_NUMIFS; ii++) {
+#ifdef GTAXE16000
+		snprintf(nv_param, sizeof(nv_param), "wl%d_unit", wl_order[ii]);
+#else
 		snprintf(nv_param, sizeof(nv_param), "wl%d_unit", ii);
+#endif
 		temp = nvram_get(nv_param);
 
 		if (temp && strlen(temp) > 0)
 		{
-			retval += ej_wl_status(eid, wp, argc, argv, ii);
+			retval += ej_wl_status(eid, wp, argc, argv, atoi(temp));
 			retval += websWrite(wp, "\n");
 		}
 	}
@@ -2855,12 +2870,14 @@ ej_wl_control_channel(int eid, webs_t wp, int argc, char_t **argv)
 	char wl_ifnames[32] = { 0 };
 
 	strlcpy(wl_ifnames, nvram_safe_get("wl_ifnames"), sizeof(wl_ifnames));
-	foreach (word, wl_ifnames, next)
-		count_wl_if++;
 
-	ret = websWrite(wp, "[\"%d\", \"%d\"", wl_control_channel(0), wl_control_channel(1));
-	if (count_wl_if >= 3)
-		ret += websWrite(wp, ", \"%d\"", wl_control_channel(2));
+	ret += websWrite(wp, "[");
+	foreach (word, wl_ifnames, next){
+		if(count_wl_if != 0)
+			ret += websWrite(wp, ", ");
+		ret += websWrite(wp, "\"%d\"", wl_control_channel(count_wl_if));
+		count_wl_if++;
+	}
 	ret += websWrite(wp, "]");
 
 	return ret;
@@ -3061,7 +3078,15 @@ ej_wl_chanspecs(int eid, webs_t wp, int argc, char_t **argv, int unit)
 
 		    continue;
 		}
-
+#ifdef RTAX3000N
+		if ((get_model() == MODEL_RTAX3000N) &&
+			!strcmp(get_productid(), "RT-AX55_V2") &&
+			strstr(chanbuf, "/160")) {
+			snprintf(tmpx, sizeof(tmpx), "%s \"%s\"]", tmp1, "0");
+			strlcpy(tmp1, tmpx, sizeof(tmp1));
+			break;
+		}
+#endif
 		if (i == 0 || need_brackets)
 		{
 			snprintf(tmp1, sizeof(tmp1), "[\"%s\",", chanbuf);
@@ -3452,19 +3477,45 @@ ERROR:
 int
 ej_wl_rate_2g(int eid, webs_t wp, int argc, char_t **argv)
 {
-	return ej_wl_rate(eid, wp, argc, argv, 0);
+	int i = 0;
+	for(i=0; i<(sizeof(wl_band_list)/sizeof(wl_band_list[0])) && wl_band_list[i][0] != '\0'; i++){
+		if(strncmp("2g1", wl_band_list[i], 3) == 0)
+			break;
+	}
+	return ej_wl_rate(eid, wp, argc, argv, i);
 }
 
 int
 ej_wl_rate_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
-	return ej_wl_rate(eid, wp, argc, argv, 1);
+	int i = 0;
+	for(i=0; i<(sizeof(wl_band_list)/sizeof(wl_band_list[0])) && wl_band_list[i][0] != '\0'; i++){
+		if(strncmp("5g1", wl_band_list[i], 3) == 0)
+			break;
+	}
+	return ej_wl_rate(eid, wp, argc, argv, i);
 }
 
 int
 ej_wl_rate_5g_2(int eid, webs_t wp, int argc, char_t **argv)
 {
-	return ej_wl_rate(eid, wp, argc, argv, 2);
+	int i = 0;
+	for(i=0; i<(sizeof(wl_band_list)/sizeof(wl_band_list[0])) && wl_band_list[i][0] != '\0'; i++){
+		if(strncmp("5g2", wl_band_list[i], 3) == 0)
+			break;
+	}
+	return ej_wl_rate(eid, wp, argc, argv, i);
+}
+
+int
+ej_wl_rate_6g(int eid, webs_t wp, int argc, char_t **argv)
+{
+	int i = 0;
+	for(i=0; i<(sizeof(wl_band_list)/sizeof(wl_band_list[0])) && wl_band_list[i][0] != '\0'; i++){
+		if(strncmp("6g1", wl_band_list[i], 3) == 0)
+			break;
+	}
+	return ej_wl_rate(eid, wp, argc, argv, i);
 }
 
 static int ej_wl_cap(int eid, webs_t wp, int argc, char_t **argv, int unit)
@@ -3496,7 +3547,10 @@ static int ej_wl_cap(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 ERROR:
-	retval += websWrite(wp, "%s", caps);
+	if(hook_get_json == 1)
+		retval += websWrite(wp, "\"%s\"", caps);
+	else
+		retval += websWrite(wp, "%s", caps);
 	return retval;
 }
 
@@ -3553,7 +3607,10 @@ static int ej_wl_chipnum(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		chipid = revinfo.chipnum;
 
 ERROR:
-	retval += websWrite(wp, "%x", chipid);
+	if(hook_get_json == 1)
+		retval += websWrite(wp, "\"%x\"", chipid);
+	else
+		retval += websWrite(wp, "%x", chipid);
 	return retval;
 }
 
