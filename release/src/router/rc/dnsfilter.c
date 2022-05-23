@@ -21,51 +21,25 @@
 
 #include <rc.h>
 #include <net/ethernet.h>
+#include <shared.h>
 #ifdef RTCONFIG_DNSFILTER
 #include "dnsfilter.h"
 
-char *server_table[][2] = {
-	{ "", "" },			/* 0: Unfiltered */
-	{ "208.67.222.222", "" },	/* 1: OpenDNS */
-	{ "", "" },			/* 2: Discontinued Norton Connect Safe */
-	{ "", "" },			/* 3: Discontinued Norton Connect Safe */
-	{ "", "" },			/* 4: Discontinued Norton Connect Safe */
-	{ "77.88.8.88", "" },		/* 5: Secure Mode safe.dns.yandex.ru */
-	{ "77.88.8.7", "" },		/* 6: Family Mode family.dns.yandex.ru */
-	{ "208.67.222.123", "" },	/* 7: OpenDNS Family Shield */
-	{ "", "" },			/* 8: Custom1 */
-	{ "", "" },			/* 9: Custom2 */
-	{ "", "" },			/* 10: Custom3 */
-	{ "", "" },			/* 11: Router */
-	{ "8.26.56.26", "" },		/* 12: Comodo Secure DNS */
-	{ "9.9.9.9", "" },		/* 13: Quad9 */
-	{ "185.228.168.9", "" },	/* 14: CleanBrowsing Security */
-	{ "185.228.168.10", "" },	/* 15: CleanBrowsing Adult */
-	{ "185.228.168.168", "" }	/* 16: CleanBrowsing Family */
-};
-
-#ifdef RTCONFIG_IPV6
-char *server6_table[][2] = {
-	{"", ""},		/* 0: Unfiltered */
-	{"", ""},		/* 1: OpenDNS */
-	{"", ""},		/* 2: Discontinued Norton Connect Safe */
-	{"", ""},		/* 3: Discontinued Norton Connect Safe */
-	{"", ""},		/* 4: Discontinued Norton Connect Safe */
-	{"2a02:6b8::feed:bad","2a02:6b8:0:1::feed:bad"},		/* 5: Secure Mode safe.dns.yandex.ru */
-	{"2a02:6b8::feed:a11","2a02:6b8:0:1::feed:a11"},		/* 6: Family Mode family.dns.yandex.ru */
-	{"", ""},		/* 7: OpenDNS Family Shield */
-	{"", ""},		/* 8: Custom1 - not supported yet */
-	{"", ""},		/* 9: Custom2 - not supported yet */
-	{"", ""},		/* 10: Custom3 - not supported yet */
-	{"", ""},		/* 11: Router  - semi-supported, refer dnsfilter_setup_dnsmasq() */
-	{"", ""},		/* 12: Comodo Secure DNS */
-	{"2620:fe::fe", "2620:fe::9"},	/* 13: Quad9 */
-	{"2a0d:2a00:1::2", "2a0d:2a00:2::2"},	/* 14: CleanBrowsing Security */
-	{"2a0d:2a00:1::1", "2a0d:2a00:2::1"},	/* 15: CleanBrowsing Adult */
-	{"2a0d:2a00:1::", "2a0d:2a00:2::"}	/* 16: CleanBrowsing Family */
-};
-#endif
-
+static int _get_table_size(const int server6)
+{
+	int i = 0;
+	if(!server6)
+	{
+		while(server_table[i][0] != NULL)
+			++i;
+	}
+	else
+	{
+		while(server6_table[i][0] != NULL)
+			++i;
+	}
+	return i;
+}
 
 // Return 1 if selected mode supports DNS over TLS
 int dnsfilter_support_dot(int mode)
@@ -92,7 +66,7 @@ int get_dns_filter(int proto, int mode, dnsf_srv_entry_t *dnsfsrv)
 	int count = 0;
 
 // Initialize
-	if (mode >= (sizeof(server_table)/sizeof(server_table[0]))) mode = 0;
+	if (mode >= _get_table_size(0)) mode = 0;
 
 #ifdef RTCONFIG_IPV6
 	if (proto == AF_INET6) {
@@ -266,12 +240,13 @@ void dnsfilter_setup_dnsmasq(FILE *fp) {
 	unsigned char ea[ETHER_ADDR_LEN];
 	char *name, *mac, *mode, *enable;
 	char *nv, *nvp, *b;
-	int count, dnsmode, defmode;
+	int count, dnsmode, defmode, table_size;
 	dnsf_srv_entry_t dnsfsrv;
 
 	defmode = nvram_get_int("dnsfilter_mode");
+	table_size = _get_table_size(1);
 
-	for (dnsmode = 1; dnsmode < (sizeof(server6_table)/sizeof(server6_table[0])); dnsmode++) {
+	for (dnsmode = 1; dnsmode < table_size; dnsmode++) {
 		if (dnsmode == defmode)
 			continue;
 		count = get_dns_filter(AF_INET6, dnsmode, &dnsfsrv);

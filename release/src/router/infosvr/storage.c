@@ -29,6 +29,9 @@ extern unsigned char cfg_group_g[];
 extern char productid_g[];
 extern char mac[];
 extern int cfg_groupid_is_null;
+char* gen_vsie_id(int, size_t *);
+#include <time.h>
+int str2hex(const char *, unsigned char *, size_t);
 #endif
 
 int getStorageStatus(STORAGE_INFO_T *st)
@@ -45,47 +48,8 @@ int getStorageStatus(STORAGE_INFO_T *st)
 
 	st->MagicWord = __cpu_to_le16(EXTEND_MAGIC);
 	st->AppAPILevel = EXTEND_API_LEVEL;
-	st->ExtendCap = 0;
+	st->ExtendCap = get_extend_cap();
 
-#ifdef RTCONFIG_WEBDAV
-	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_WEBDAV);
-#else
-	st->ExtendCap = 0;
-	if(check_if_file_exist("/opt/etc/init.d/S50aicloud")) 
-		st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_WEBDAV);
-#endif
-
-
-#ifdef RTCONFIG_TUNNEL
-	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_AAE_BASIC);
-#endif
-
-	st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_SWCTRL);
-
-#ifdef RTCONFIG_AMAS
-#ifdef RTCONFIG_SW_HW_AUTH
-	if (getAmasSupportMode() != 0)
-	{
-#endif
-		if (!repeater_mode()
-#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
-			&& !psr_mode()
-#endif
-#ifdef RTCONFIG_DPSTA
-			&& !(dpsta_mode() && nvram_get_int("re_mode") == 0)
-#endif
-		)
-			st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_AMAS);
-#ifdef RTCONFIG_SW_HW_AUTH
-	}
-#endif
-	if (nvram_get_int("amas_bdl"))
-		st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_AMAS_BDL);
-#endif
-#if defined(RTCONFIG_CFGSYNC) && defined(RTCONFIG_MASTER_DET)
-	if (nvram_get_int("cfg_master"))
-		st->ExtendCap |= __cpu_to_le16(EXTEND_CAP_MASTER);
-#endif
 	if(nvram_get_int("enable_webdav")) 	
 		st->u.wt.EnableWebDav = 1;
 	else

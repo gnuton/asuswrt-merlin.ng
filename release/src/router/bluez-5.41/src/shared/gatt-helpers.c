@@ -778,7 +778,13 @@ static void find_by_type_val_cb(uint8_t opcode, const void *pdu,
 	op->start_handle = last_end + 1;
 
 	if (last_end < op->end_handle) {
-		uint8_t pdu[6 + get_uuid_len(&op->uuid)];
+		uint8_t *pdu;
+		uint16_t pdu_length = 6 + get_uuid_len(&op->uuid);
+		pdu = (uint8_t *)malloc(pdu_length);
+		if (!pdu) {
+			success = false;
+			goto done;
+		}
 
 		put_le16(op->start_handle, pdu);
 		put_le16(op->end_handle, pdu + 2);
@@ -786,10 +792,11 @@ static void find_by_type_val_cb(uint8_t opcode, const void *pdu,
 		bt_uuid_to_le(&op->uuid, pdu + 6);
 
 		op->id = bt_att_send(op->att, BT_ATT_OP_FIND_BY_TYPE_REQ,
-						pdu, sizeof(pdu),
+						pdu, pdu_length,
 						find_by_type_val_cb,
 						bt_gatt_request_ref(op),
 						async_req_unref);
+		free(pdu);
 		if (op->id)
 			return;
 
@@ -840,13 +847,19 @@ static struct bt_gatt_request *discover_services(struct bt_att *att,
 						bt_gatt_request_ref(op),
 						async_req_unref);
 	} else {
-		uint8_t pdu[6 + get_uuid_len(uuid)];
+		uint8_t *pdu;
+		uint16_t pdu_length = 6 + get_uuid_len(uuid);
 
 		if (uuid->type == BT_UUID_UNSPEC) {
 			free(op);
 			return NULL;
 		}
 
+		pdu = (uint8_t *)malloc(pdu_length);
+		if (!pdu) {
+			free(op);
+			return NULL;
+		}
 		/* Discover by UUID */
 		op->uuid = *uuid;
 
@@ -856,10 +869,11 @@ static struct bt_gatt_request *discover_services(struct bt_att *att,
 		bt_uuid_to_le(&op->uuid, pdu + 6);
 
 		op->id = bt_att_send(att, BT_ATT_OP_FIND_BY_TYPE_REQ,
-						pdu, sizeof(pdu),
+						pdu, pdu_length,
 						find_by_type_val_cb,
 						bt_gatt_request_ref(op),
 						async_req_unref);
+		free(pdu);
 	}
 
 	if (!op->id) {
@@ -1333,17 +1347,24 @@ static void read_by_type_cb(uint8_t opcode, const void *pdu,
 	op->start_handle = last_handle + 1;
 
 	if (last_handle != op->end_handle) {
-		uint8_t pdu[4 + get_uuid_len(&op->uuid)];
+		uint8_t *pdu;
+		uint16_t pdu_length = 4 + get_uuid_len(&op->uuid);
+		pdu = (uint8_t *)malloc(pdu_length);
+		if (!pdu) {
+			success = false;
+			goto done;
+		}
 
 		put_le16(op->start_handle, pdu);
 		put_le16(op->end_handle, pdu + 2);
 		bt_uuid_to_le(&op->uuid, pdu + 4);
 
 		op->id = bt_att_send(op->att, BT_ATT_OP_READ_BY_TYPE_REQ,
-						pdu, sizeof(pdu),
+						pdu, pdu_length,
 						read_by_type_cb,
 						bt_gatt_request_ref(op),
 						async_req_unref);
+		free(pdu);
 		if (op->id)
 			return;
 
@@ -1364,11 +1385,15 @@ bool bt_gatt_read_by_type(struct bt_att *att, uint16_t start, uint16_t end,
 					bt_gatt_destroy_func_t destroy)
 {
 	struct bt_gatt_request *op;
-	uint8_t pdu[4 + get_uuid_len(uuid)];
+	uint8_t *pdu;
+	uint16_t pdu_length = 4 + get_uuid_len(uuid);
 
 	if (!att || !uuid || uuid->type == BT_UUID_UNSPEC)
 		return false;
 
+	pdu = (uint8_t *)malloc(pdu_length);
+	if (!pdu)
+		return false;
 	op = new0(struct bt_gatt_request, 1);
 	op->att = att;
 	op->callback = callback;
@@ -1382,10 +1407,11 @@ bool bt_gatt_read_by_type(struct bt_att *att, uint16_t start, uint16_t end,
 	put_le16(end, pdu + 2);
 	bt_uuid_to_le(uuid, pdu + 4);
 
-	op->id = bt_att_send(att, BT_ATT_OP_READ_BY_TYPE_REQ, pdu, sizeof(pdu),
+	op->id = bt_att_send(att, BT_ATT_OP_READ_BY_TYPE_REQ, pdu, pdu_length,
 						read_by_type_cb,
 						bt_gatt_request_ref(op),
 						async_req_unref);
+	free(pdu);
 	if (op->id)
 		return true;
 

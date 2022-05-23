@@ -113,7 +113,10 @@ Downloadlink = get_Downloadlink();
 var faq_href1 = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=Faq&lang="+ui_lang+"&kw=&num=131";
 var faq_href2 = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=Faq&lang="+ui_lang+"&kw=&num=107";
 
-var dpi_engine_status = <% bwdpi_engine_status(); %>;
+var dpi_engine_status = <%bwdpi_engine_status();%>;
+var sig_ver = '<% nvram_get("bwdpi_sig_ver"); %>';
+var sig_ver_ori = '<% nvram_get("bwdpi_sig_ver"); %>';
+var sig_update_t = '<% nvram_get("sig_update_t"); %>';
 if(cfg_sync_support){
 	var cfg_check = '<% nvram_get("cfg_check"); %>';
 	var cfg_upgrade = '<% nvram_get("cfg_upgrade"); %>';
@@ -262,7 +265,6 @@ function initial(){
 
 		var mac_id = '<% get_lan_hwaddr(); %>'.replace(/:/g, "");
 		html = "";
-		html += "<tr style='height:15px;'></tr>";
 		html += "<tr>";
 		html += "<td class='aimesh_node_category_bg' colspan='2'><#AiMesh_Router#></td>";
 		html += "</tr>";
@@ -352,6 +354,10 @@ function initial(){
 						amesh_offline_flag = true;
 				}
 
+				/*if(no_fw_manual_support || support_site_modelid == "GT-AC2900_SH"){      //No manual
+					$("div").remove("#manual_firmware_update");
+				}*/
+
 				have_node = true;
 			}
 		}
@@ -389,6 +395,7 @@ function initial(){
 		}
 	}
 	if(no_update_support){	//no live update
+		$("table").remove("#auto_upgrade_setting");
 		document.getElementById("update_div").style.display = "none";
 		document.getElementById("fw_tr").style.display = "none";
 		document.getElementById("linkpage_div").style.display = "none";
@@ -396,6 +403,7 @@ function initial(){
 	}
 	else{
 		if(!live_update_support || !HTTPS_support){
+			$("table").remove("#auto_upgrade_setting");
 			document.getElementById("update_div").style.display = "none";
 //			document.getElementById("fw_tr").style.display = "none";
 			document.getElementById("linkpage_div").style.display = "";
@@ -422,10 +430,16 @@ function initial(){
 				}
 			}
 		}
-	}
 
-	if(afwupg_support)
-		hide_upgrade_opt(webs_update_enable_orig);
+		if(afwupg_support){
+			hide_upgrade_opt(webs_update_enable_orig);
+			showclock();
+		}
+
+		if(!afwupg_support || support_site_modelid == "GT-AC2900_SH"){
+			$("table").remove("#auto_upgrade_setting");
+		}
+	}
 
 	if(based_modelid == "RT-AC68A"){        //MODELDEP : Spec special fine tune
 		document.getElementById("fw_note2").style.display = "none";
@@ -456,13 +470,25 @@ function initial(){
 		$("#dsl_n55u_fwver").show();
 		$("#dsl_n55u_ras").show();
 	}
+	/*
+	if(no_fw_manual_support || support_site_modelid == "GT-AC2900_SH"){	//No manual
+		$("#fw_note3").hide();
+		$("div").remove("#amesh_manual_upload_fw");
+		$("tr").remove("#manually_upgrade_tr");
+		$(".aimesh_manual_fw_update_hint").css("display", "none");
+	}
 
-	if(!afwupg_support || support_site_modelid == "GT-AC2900_SH"){
-		$("table").remove("#auto_upgrade_setting");
+	if(is_ISP_incompatible)
+	{
+		$("#fw_note2").show();
+		$("#fw_note2").html("The firmware of ISP (Internet Service Provider) project is not compatible with the ASUS retail models, and also it’s unavailable for firmware manual update.");	//Untranslated
 	}
-	else{
-		showclock();
-	}
+	
+	if(isSupport("is_ax5400_i1"))
+	{
+		$("#fw_note3").show();
+		$("#fw_note3").html("Firmware upgrade is only accessible through Optus server.");	//Untranslated
+	}*/
 
 	if(gobi_support && (usb_index != -1) && (sim_state != "")){
 		$("#modem_fw_upgrade").css("display", "");
@@ -616,7 +642,28 @@ function cfgsync_firmware_upgrade(){
 }
 
 function detect_update(){
+	var download_info = 0;
+
 	if(sw_mode != "1" || (link_status == "2" && link_auxstatus == "0") || (link_status == "2" && link_auxstatus == "2")){
+		download_info++;
+	}
+	else if(dualwan_enabled &&
+				((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")) ||
+				((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))){
+		download_info++;
+	}		
+	else{
+		document.getElementById('update_scan').style.display="none";
+		document.getElementById('update_states').style.display="";
+		document.getElementById('update_states').innerHTML="Unable to connect to the update server.";
+		return false;	
+	}
+
+	if(download_info > 0){
+		document.getElementById('update_states').style.display="";
+		document.getElementById('update_states').innerHTML="<#check_proceeding#>";
+		document.getElementById('update_scan').style.display="";
+		document.getElementById('update').disabled = true;
 		if(cfg_sync_support){
 			cfgsync_firmware_check();
 		}
@@ -626,28 +673,6 @@ function detect_update(){
 			document.start_update.action_script.value="start_webs_update";
 			document.start_update.submit();
 		}
-		document.getElementById('update_states').style.display="";
-		document.getElementById('update_states').innerHTML="Contacting the update server...";
-		document.getElementById('update_scan').style.display="";
-		document.getElementById('update').disabled = true;
-	}
-	else if(dualwan_enabled &&
-				((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")) ||
-				((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))){
-		document.start_update.action_mode.value="apply";
-		document.start_update.webs_update_trigger.value="FWUG";
-		document.start_update.action_script.value="start_webs_update";
-		document.getElementById('update_states').style.display="";
-		document.getElementById('update_states').innerHTML="Contacting the update server...";
-		document.getElementById('update_scan').style.display="";
-		document.getElementById('update').disabled = true;
-		document.start_update.submit();
-	}		
-	else{
-		document.getElementById('update_scan').style.display="none";
-		document.getElementById('update_states').style.display="";
-		document.getElementById('update_states').innerHTML="Unable to connect to the update server.";
-		return false;	
 	}
 }
 
@@ -810,7 +835,7 @@ function sig_version_check(){
 	document.getElementById("sig_check").disabled = true;
 	$("#sig_status").show();
 	document.sig_update.submit();
-	$("#sig_status").html("Signature checking ...");	/* Untranslated */
+	$("#sig_status").html("<#sig_checking#>");
 	document.getElementById("sig_update_scan").style.display = "";
 	setTimeout("sig_check_status();", 8000);
 }
@@ -835,13 +860,13 @@ function sig_check_status(){
 			--sig_chk_count;
 			$("#sig_status").show();
 			if(sig_state_flag == 0 && sig_state_error == 0 && sig_state_update == 1){		// no need upgrade
-				$("#sig_status").html("Signature is up to date");	/* Untranslated */
+				$("#sig_status").html("<#sig_up2date#>");
 				document.getElementById("sig_update_scan").style.display = "none";
 				document.getElementById("sig_check").disabled = false;
 			}
 			else{
 				if(sig_state_error != 0){		// update error
-					$("#sig_status").html("Signature update failed");	/* Untranslated */
+					$("#sig_status").html("<#sig_failed#>");
 					document.getElementById("sig_update_scan").style.display = "none";
 					document.getElementById("sig_check").disabled = false;
 				}
@@ -856,7 +881,7 @@ function sig_check_status(){
 							document.getElementById("sig_check").disabled = false;
 						}
 						else{
-							$("#sig_status").html("Signature is updating");	/* Untranslated */
+							$("#sig_status").html("<#sig_updating#>");
 							setTimeout("sig_check_status();", 1000);
 						}
 					}
@@ -875,13 +900,19 @@ function update_sig_ver(){
     		setTimeout('update_sig_ver();', 1000);
     	},
     	success: function(){
-    		document.getElementById("sig_update_date").innerHTML = "";
-    		document.getElementById("sig_update_scan").style.display = "none";
+		if(sig_ver == sig_ver_ori){
+			setTimeout("update_sig_ver();", 1000);
+		}
+		else{
+			document.getElementById("sig_update_date").innerHTML = "";
+			document.getElementById("sig_update_scan").style.display = "none";
 			document.getElementById("sig_check").disabled = false;
-    		$("#sig_status").html("Signature update completed");	/* Untranslated */
-    		$("#sig_ver_word").html(sig_ver);
-  		}
-  	});
+			$("#sig_status").html("<#sig_completed#>");
+			$("#sig_ver_word").html(sig_ver);
+		}
+	}
+  	
+	});
 }
 
 function hide_upgrade_opt(flag){
@@ -1115,7 +1146,7 @@ function show_current_release_note_result(_status) {
 		$(".confirm_block").children().find("#status_iframe").load();
 	}
 	else
-		$(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note_hint").val("Fail to grab release note");/* untranslated */
+		$(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note_hint").val("<#FW_rlnote_failed#>");
 }
 
 function show_fw_release_note(event) {
@@ -1182,7 +1213,7 @@ function show_fw_release_note_result(_status) {
 		$(".confirm_block").children().find("#status_iframe").load();
 	}
 	else
-		$(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note_hint").val("Fail to grab release note");/* untranslated */
+		$(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note_hint").val("<#FW_rlnote_failed#>");
 }
 function open_AiMesh_node_fw_upgrade(event) {
 	var url = httpApi.aimesh_get_win_open_url(event.data, "AiMesh_Node_FirmwareUpgrade.asp");

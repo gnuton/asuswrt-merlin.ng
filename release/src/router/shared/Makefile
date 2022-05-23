@@ -85,8 +85,6 @@ ifeq ($(RTCONFIG_5301X),y)
 CFLAGS += -DBCM5301X
 endif
 
-include $(SRCBASE)/.config
-
 ifeq ($(RTCONFIG_4352_5G),y)
 CFLAGS += -DBCM4352
 endif
@@ -222,6 +220,8 @@ else ifeq ($(RTCONFIG_QCN550X)$(RTCONFIG_SWITCH_QCA8337N),yy)
 OBJS += qca8337_ssdk_sh.o
 else ifeq ($(RTCONFIG_SOC_IPQ60XX),y)
 OBJS += ipq60xx.o
+else ifeq ($(RTCONFIG_SWITCH_IPQ50XX_QCA8337),y)
+OBJS += ipq50xx_qca8337.o
 else ifeq ($(RTCONFIG_SOC_IPQ50XX),y)
 OBJS += ipq50xx.o
 else
@@ -410,7 +410,7 @@ else
 vpath %.c sysdeps/broadcom  $(SRCBASE)/shared/bcmwifi/src
 ifeq ($(RTCONFIG_HND_ROUTER_AX),y)
 OBJS += bcmxtlv.o bcmutils.o
-ifeq ($(or $(RTAX55),$(RTAX1800),$(RTAX58U_V2)),y)
+ifeq ($(or $(RTAX55),$(RTAX1800),$(RTAX58U_V2),$(RTAX3000N)),y)
 OBJS += rtkswitch.o
 endif
 endif
@@ -433,7 +433,7 @@ ifeq ($(or $(RTCONFIG_JFFS_NVRAM),$(RTCONFIG_VAR_NVRAM)),y)
 OBJS += nvpriv.o
 endif
 
-ifeq ($(HND_ROUTER_AX_675X),y)
+ifeq ($(or $(HND_ROUTER_AX_675X),$(HND_ROUTER_AX_6710),$(BCM_502L07P2)),y)
 ifneq ($(RTCONFIG_SDK502L07P1_121_37),y)
 OBJS += event_utils.o
 endif
@@ -441,6 +441,9 @@ endif
 
 ifeq ($(OPDBG),y)
 CFLAGS += -DOPDBG
+endif
+ifeq ($(TURKT),y)
+CFLAGS += -DTURKT
 endif
 ifneq ($(CUSTOM_MODEL),)
 CFLAGS += -DCUSTOM_MODEL

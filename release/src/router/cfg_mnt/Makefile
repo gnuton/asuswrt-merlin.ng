@@ -1,5 +1,4 @@
 include ../common.mak
-include $(SRCBASE)/router/.config
 
 CFLAGS += -Wall -Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE) -I$(SRCBASE)/include -I./include -I$(TOP)/networkmap
@@ -9,6 +8,9 @@ CFLAGS += -I$(TOP)/json-c
 
 LDFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 LDFLAGS += -L$(TOP_PLATFORM)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared
+ifeq ($(RTCONFIG_BCM_502L07P2),y)
+LDFLAGS += -L$(TOP_PLATFORM)/ethctl_lib -lethctl
+endif
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
 LDFLAGS += -lpthread
 LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
@@ -110,6 +112,9 @@ COMMON_OBJS += cfg_dwb.o
 endif
 COMMON_OBJS += cfg_chanspec.o
 COMMON_OBJS += cfg_parammgnt.o
+ifeq ($(RTCONFIG_AMAS_CENTRAL_CONTROL),y)
+COMMON_OBJS += cfg_centralcontrol.o
+endif
 SERVER_OBJS += $(COMMON_OBJS) cfg_mnt.o
 CLIENT_OBJS += $(COMMON_OBJS) cfg_client.o
 REPORTSTATUS_OBJS += cfg_common.o cfg_reportstatus.o
@@ -141,6 +146,9 @@ ifeq ($(RTCONFIG_STA_AP_BAND_BIND),y)
 # for sta bind on AP
 CFLAGS += -DSTA_BIND_AP
 endif
+ifeq ($(RTCONFIG_AMAS_CENTRAL_CONTROL),y)
+CFLAGS += -DUPDATE_COMMON_CONFIG
+endif
 endif
 
 ifeq ($(RTCONFIG_AMASDB),y)
@@ -160,7 +168,7 @@ endif
 
 ifeq ($(RTCONFIG_HAS_5G_2), y)
 CFLAGS += -DSUPPORT_TRI_BAND
-else ifdef $(filter $(BUILD_NAME), RT-AC5300 GT-AC5300 RT-AC92U RT-AX92U GT-AX11000 RT-AX95Q XT8PRO RT-AXE95Q ET8PRO RP-AC92 GT-AXE11000 GT-AX11000PRO)
+else ifdef $(filter $(BUILD_NAME), RT-AC5300 GT-AC5300 RT-AC92U RT-AX92U GT-AX11000 RT-AX95Q XT8PRO XT8_V2 RT-AXE95Q ET8PRO RP-AC92 GT-AXE11000 GT-AX11000PRO)
 CFLAGS += -DSUPPORT_TRI_BAND
 endif
 

@@ -26,7 +26,7 @@ endif
  ifeq ($(HND_ROUTER_AX),y)
 export PLATFORM_ARCH := arm-glibc
 ifeq ($(HND_ROUTER_AX_6756),y)
-ifneq ($(findstring $(CUR_CHIP_PROFILE),47622 6750 6756),)
+ifneq ($(findstring $(CUR_CHIP_PROFILE),47622 6750 6756 6855),)
 export CROSS_COMPILE := /opt/toolchains/crosstools-arm-gcc-9.2-linux-4.19-glibc-2.30-binutils-2.32/usr/bin/arm-buildroot-linux-gnueabi-
 export CROSS_COMPILER := $(CROSS_COMPILE)
 export CONFIGURE := ./configure LD=$(CROSS_COMPILE)ld --host=arm-buildroot-linux-gnueabi
@@ -46,7 +46,7 @@ export CONFIGURE_64 := ./configure LD=$(CROSS_COMPILE_64)ld --host=aarch64-build
 export HOSTCONFIG_64 := linux-aarch64 -DL_ENDIAN -march=armv8-a -fomit-frame-pointer -mabi=lp64 -ffixed-r8 -D__ARM_ARCH_8A__
 endif
 endif
-ifeq ($(BRCM_CHIP),4908)
+ifneq ($(findstring $(BRCM_CHIP),4908 4912),)
 export HOSTCONFIG := linux-armv4 -DL_ENDIAN -march=armv8-a -fomit-frame-pointer -mabi=aapcs-linux -marm -ffixed-r8 -msoft-float -D__ARM_ARCH_8A__
 else
 export HOSTCONFIG := linux-armv4 -DL_ENDIAN -march=armv7-a -fomit-frame-pointer -mabi=aapcs-linux -marm -ffixed-r8 -msoft-float -D__ARM_ARCH_7A__
@@ -148,7 +148,7 @@ define platformRouterOptions
 		sed -i "/RTCONFIG_HAS_5G_2/d" $(1); \
 		echo "RTCONFIG_HAS_5G_2=y" >>$(1); \
 	fi; \
-	if [ "$(RTAX92U)" = "y" -o "$(GTAX11000)" = "y" -o "$(RTAX95Q)" = "y" -o "$(XT8PRO)" = "y" ]; then \
+	if [ "$(RTAX92U)" = "y" -o "$(GTAX11000)" = "y" -o "$(RTAX95Q)" = "y" -o "$(XT8PRO)" = "y" -o "$(XT8_V2)" = "y" ]; then \
 		sed -i "/RTCONFIG_HAS_5G_2/d" $(1); \
 		echo "RTCONFIG_HAS_5G_2=y" >>$(1); \
 	fi; \
@@ -505,11 +505,27 @@ define platformKernelConfig
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wlcsm.o $(HND_SRC)/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm$(PRBM_EXT).o ; \
 				if [ "$(DSL_BCM)" = "y" ]; then \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/adsldd.o $(HND_SRC)/bcmdrivers/broadcom/char/adsl/impl1/adsldd$(PRBM_EXT).o ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/adsl_phy.bin $(HND_SRC)/bcmdrivers/broadcom/char/adsl/impl1/adsl_phy.bin ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmxtmcfg.o $(HND_SRC)/bcmdrivers/broadcom/char/xtmcfg/impl2/bcmxtmcfg$(PRBM_EXT).o ; \
 				fi; \
-				if [ "$(HND_ROUTER_AX_675X)" = "y" ]; then \
+				if [ "$(HND_ROUTER_AX_675X)" = "y" ] || [ "$(HND_ROUTER_AX_6710)" = "y" ] || [ "$(BCM_502L07P2)" = "y" ]; then \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/archer.o $(HND_SRC)/bcmdrivers/broadcom/char/archer/impl1/archer$(PRBM_EXT).o ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmlibs.o $(HND_SRC)/bcmdrivers/broadcom/char/bcmlibs/impl1/bcmlibs$(PRBM_EXT).o ; \
+				fi; \
+				if [ "$(HND_ROUTER_AX_6756)" = "y" ]; then \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmlibs.o $(HND_SRC)/bcmdrivers/broadcom/char/bcmlibs/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_bpm.o $(HND_SRC)/bcmdrivers/broadcom/char/bpm/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/chipinfo.o $(HND_SRC)/bcmdrivers/broadcom/char/chipinfo/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/cmdlist.o $(HND_SRC)/bcmdrivers/broadcom/char/cmdlist/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_ingqos.o $(HND_SRC)/bcmdrivers/broadcom/char/ingqos/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/otp.o $(HND_SRC)/bcmdrivers/broadcom/char/otp/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/pktflow.o $(HND_SRC)/bcmdrivers/broadcom/char/pktflow/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/pktrunner.o $(HND_SRC)/bcmdrivers/broadcom/char/pktrunner/impl2/ ;\
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/pwrmngtd.o $(HND_SRC)/bcmdrivers/broadcom/char/pwrmngt/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmvlan.o $(HND_SRC)/bcmdrivers/broadcom/char/vlan/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wlcsm.o $(HND_SRC)/bcmdrivers/broadcom/char/wlcsm_ext/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_license.o $(HND_SRC)/bcmdrivers/broadcom/char/license/impl1/ ; \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_mpm.o $(HND_SRC)/bcmdrivers/broadcom/char/mpm/impl1/ ; \
 				fi; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm63xx_flash.o $(HND_SRC)/bcmdrivers/opensource/char/board/bcm963xx/impl1/ ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm63xx_gpio.o $(HND_SRC)/bcmdrivers/opensource/char/board/bcm963xx/impl1/ ; \

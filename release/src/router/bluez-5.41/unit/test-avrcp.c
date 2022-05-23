@@ -385,15 +385,23 @@ static int get_attribute_text(struct avrcp *session, uint8_t transaction,
 					uint8_t number, uint8_t *attrs,
 					void *user_data)
 {
-	const char *text[number];
+	const char **text;
+	const char *text2[1];
 
 	if (number) {
-		memset(text, 0, number);
+		text = (const char **)malloc(sizeof(char *)*number);
+		if (!text) return 0;
+		memset(text, 0, sizeof(char *)*number);
 		text[0] = "equalizer";
-	}
 
-	avrcp_get_player_attribute_text_rsp(session, transaction, number, attrs,
-									text);
+		avrcp_get_player_attribute_text_rsp(session, transaction, number, attrs,
+										text);
+		free(text);
+	} else {
+		text2[0] = NULL;
+		avrcp_get_player_attribute_text_rsp(session, transaction, number, attrs,
+										text2);
+	}
 
 	return 0;
 }
@@ -410,15 +418,23 @@ static int get_value_text(struct avrcp *session, uint8_t transaction,
 				uint8_t attr, uint8_t number, uint8_t *values,
 				void *user_data)
 {
-	const char *text[number];
+	const char **text;
+	const char *text2[1];
 
 	if (number) {
-		memset(text, 0, number);
+		text = (const char **)malloc(sizeof(char *)*number);
+		if (!text) return -EINVAL;
+		memset(text, 0, sizeof(char *)*number);
 		text[0] = "on";
-	}
 
-	avrcp_get_player_values_text_rsp(session, transaction, number,
-								values, text);
+		avrcp_get_player_values_text_rsp(session, transaction, number,
+									values, text);
+		free(text);
+	} else {
+		text2[0] = NULL;
+		avrcp_get_player_values_text_rsp(session, transaction, number,
+									values, text2);
+	}
 
 	return -EINVAL;
 }
@@ -426,13 +442,16 @@ static int get_value_text(struct avrcp *session, uint8_t transaction,
 static int get_value(struct avrcp *session, uint8_t transaction,
 			uint8_t number, uint8_t *attrs, void *user_data)
 {
-	uint8_t values[number];
+	uint8_t *values;
+
+	values = (uint8_t *)malloc(number);
+	if (!values) return 0;
 
 	memset(values, 0, number);
 
 	avrcp_get_current_player_value_rsp(session, transaction, number, attrs,
 									values);
-
+	free(values);
 	return 0;
 }
 

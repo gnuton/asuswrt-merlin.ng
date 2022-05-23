@@ -751,9 +751,12 @@ static void send_cmd(struct btdev *btdev, uint8_t evt, uint16_t opcode,
 					const struct iovec *iov, int iovlen)
 {
 	struct bt_hci_evt_hdr hdr;
-	struct iovec iov2[2 + iovlen];
+	struct iovec *iov2;
 	uint8_t pkt = BT_H4_EVT_PKT;
 	int i;
+
+	iov2 = (struct iovec *)malloc(sizeof(struct iovec)*(2 + iovlen));
+	if (!iov2) return;
 
 	iov2[0].iov_base = &pkt;
 	iov2[0].iov_len = sizeof(pkt);
@@ -773,6 +776,7 @@ static void send_cmd(struct btdev *btdev, uint8_t evt, uint16_t opcode,
 	if (run_hooks(btdev, BTDEV_HOOK_POST_CMD, opcode, iov[i -1].iov_base,
 							iov[i -1].iov_len))
 		send_packet(btdev, iov2, 2 + iovlen);
+	free(iov2);
 }
 
 static void cmd_complete(struct btdev *btdev, uint16_t opcode,

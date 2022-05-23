@@ -242,7 +242,7 @@ static void read_by_grp_type_cb(uint8_t opcode, const void *pdu,
 	bt_uuid_t type;
 	bt_uuid_t prim, snd;
 	uint16_t mtu = bt_att_get_mtu(server->att);
-	uint8_t rsp_pdu[mtu];
+	uint8_t *rsp_pdu = NULL;
 	uint16_t rsp_len;
 	uint8_t ecode = 0;
 	uint16_t ehandle = 0;
@@ -295,9 +295,16 @@ static void read_by_grp_type_cb(uint8_t opcode, const void *pdu,
 		goto error;
 	}
 
+	rsp_pdu = (uint8_t *)malloc(mtu);
+	if (!rsp_pdu) {
+		ecode = BT_ATT_ERROR_UNLIKELY;
+		goto error;
+	}
+
 	if (!encode_read_by_grp_type_rsp(server->db, q, server->att, mtu,
 							rsp_pdu, &rsp_len)) {
 		ecode = BT_ATT_ERROR_UNLIKELY;
+		free(rsp_pdu);
 		goto error;
 	}
 
@@ -307,6 +314,7 @@ static void read_by_grp_type_cb(uint8_t opcode, const void *pdu,
 							rsp_pdu, rsp_len,
 							NULL, NULL, NULL);
 
+	free(rsp_pdu);
 	return;
 
 error:
@@ -577,7 +585,7 @@ static void find_info_cb(uint8_t opcode, const void *pdu,
 	struct bt_gatt_server *server = user_data;
 	uint16_t start, end;
 	uint16_t mtu = bt_att_get_mtu(server->att);
-	uint8_t rsp_pdu[mtu];
+	uint8_t *rsp_pdu = NULL;
 	uint16_t rsp_len;
 	uint8_t ecode = 0;
 	uint16_t ehandle = 0;
@@ -616,8 +624,15 @@ static void find_info_cb(uint8_t opcode, const void *pdu,
 		goto error;
 	}
 
+	rsp_pdu = (uint8_t *)malloc(mtu);
+	if (!rsp_pdu) {
+		ecode = BT_ATT_ERROR_UNLIKELY;
+		goto error;
+	}
+
 	if (!encode_find_info_rsp(server->db, q, mtu, rsp_pdu, &rsp_len)) {
 		ecode = BT_ATT_ERROR_UNLIKELY;
+		free(rsp_pdu);
 		goto error;
 	}
 
@@ -625,6 +640,7 @@ static void find_info_cb(uint8_t opcode, const void *pdu,
 							NULL, NULL, NULL);
 	queue_destroy(q, NULL);
 
+	free(rsp_pdu);
 	return;
 
 error:
@@ -677,11 +693,17 @@ static void find_by_type_val_cb(uint8_t opcode, const void *pdu,
 	uint16_t start, end, uuid16;
 	struct find_by_type_val_data data;
 	uint16_t mtu = bt_att_get_mtu(server->att);
-	uint8_t rsp_pdu[mtu];
+	uint8_t *rsp_pdu = NULL;
 	uint16_t ehandle = 0;
 	bt_uuid_t uuid;
 
 	if (length < 6) {
+		data.ecode = BT_ATT_ERROR_INVALID_PDU;
+		goto error;
+	}
+
+	rsp_pdu = (uint8_t *)malloc(mtu);
+	if (!rsp_pdu) {
 		data.ecode = BT_ATT_ERROR_INVALID_PDU;
 		goto error;
 	}
@@ -719,9 +741,11 @@ static void find_by_type_val_cb(uint8_t opcode, const void *pdu,
 	bt_att_send(server->att, BT_ATT_OP_FIND_BY_TYPE_RSP, data.pdu,
 						data.len, NULL, NULL, NULL);
 
+	free (rsp_pdu);
 	return;
 
 error:
+	if (rsp_pdu) free (rsp_pdu);
 	bt_att_send_error_rsp(server->att, opcode, ehandle, data.ecode);
 }
 

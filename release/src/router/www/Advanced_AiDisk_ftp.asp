@@ -152,6 +152,11 @@ function switchAccount(protocol){
 	
 	switch(get_manage_type(protocol)){
 		case 1:
+			if(ftp_tls_orig=="1"){
+				alert("Allow anonymous login is in conflict with TLS settings.");       /* Untranslated */
+				refreshpage();
+				break;
+			}
 			if(confirm("<#Aidisk_FTP_hint_3#>")){
 				document.aidiskForm.action = "/aidisk/switch_share_mode.asp";
 				document.aidiskForm.protocol.value = protocol;
@@ -754,13 +759,12 @@ function switchUserType(flag){
 
 function secure_check(flag){
 	
-	document.getElementById("TLS_disabled").innerHTML = (flag==1)? "":"<#usb_tls_disabled_hint#>";
-
 	if(flag==1 && !get_manage_type(PROTOCOL)){
 		alert("<#usb_tls_conflict#>");
 		document.form.ftp_tls[1].checked = true;
 		return;
 	}
+	document.getElementById("TLS_disabled").innerHTML = (flag==1)? "":"<#usb_tls_disabled_hint#>";
 }
 </script>
 </head>
@@ -845,7 +849,7 @@ function secure_check(flag){
 					</td>
 				</tr>										
 				<tr>
-				<th>Enable WAN access</th>
+				<th><#enableWANaccess#></th>
 					<td>
 						<div class="left" style="width:94px; float:left; cursor:pointer;" id="radio_wan_ftp_enable"></div>
 						<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -874,7 +878,7 @@ function secure_check(flag){
 							<script type="text/javascript">
 								$('#radio_anonymous_enable').iphoneSwitch(!get_manage_type(PROTOCOL), 
 									function() {
-										if(!document.form.ftp_tls[0].checked){
+										if(ftp_tls_orig=="0"){
 											switchAccount(PROTOCOL);
 										}
 										else{

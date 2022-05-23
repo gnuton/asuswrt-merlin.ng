@@ -217,7 +217,11 @@ dump_bss_info_array(int eid, webs_t wp, int argc, char_t **argv, wl_bss_info_t *
 	/* Convert version 107 to 109 */
 	if (dtoh32(bi->version) == LEGACY_WL_BSS_INFO_VERSION) {
 		old_bi = (wl_bss_info_107_t *)bi;
+#if defined(RTCONFIG_HND_ROUTER_AX_6756)
+		bi->chanspec = CH20MHZ_CHSPEC(old_bi->channel, WL_CHANNEL_2G5G_BAND(old_bi->channel));
+#else
 		bi->chanspec = CH20MHZ_CHSPEC(old_bi->channel);
+#endif
 		bi->ie_length = old_bi->ie_length;
 		bi->ie_offset = sizeof(wl_bss_info_107_t);
 	} else {
@@ -677,10 +681,11 @@ sta_list:
 					arplistptr = strdup(arplist);
 					line = strtok(arplistptr, "\n");
 					while (line) {
-						if ( (sscanf(line,"%15s %*s %*s %17s",ipentry,macentry) == 2) &&
-						     (!strcasecmp(macentry, ether_etoa((void *)&auth->ea[ii], ea))) ) {
-							found = 1;
-							break;
+						if ( (sscanf(line,"%15s %*s %x %17s", ipentry, &flagentry, macentry) == 3) &&
+						     (!strcasecmp(macentry, ether_etoa((void *)&auth->ea[i], ea))) &&
+						     (flagentry != 0) ) {
+						         found = 1;
+						         break;
 						} else
 							line  = strtok(NULL, "\n");
 					}

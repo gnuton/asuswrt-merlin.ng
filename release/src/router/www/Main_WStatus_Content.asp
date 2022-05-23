@@ -75,7 +75,9 @@ var classObj= {
                 return encodeURIComponent(str).replace(/%/g,"\\x").toLowerCase();
         },
         UnHexCode:function(str){
-                return decodeURIComponent(str.replace(/\\x/g, "%"));
+		return str.replace(/(?:\\x[\da-fA-F]{2})+/g, m =>
+decodeURIComponent(m.replace(/\\x/g, '%'))).replace(/\\n/g,
+'<br>').replace(/\\/g, '');
         }
 }
 
@@ -97,8 +99,9 @@ function GenContent(){
 		},
 
 		success: function(resp){
-			content = htmlEnDeCode.htmlEncode(resp);
+			content = decodeURI(resp);
 			content = classObj.UnHexCode(content);
+			content = htmlEnDeCode.htmlEncode(content);
 			if(content.length > 10){
 				$("#wl_log").html(content);
 			}
@@ -424,7 +427,7 @@ function hide_details_window(){
 									<div id="flags_div">Flags: <span class="wifiheader">P</span>=Powersave Mode, <span class="wifiheader">S</span>=Short GI, <span class="wifiheader">T</span>=STBC, <span class="wifiheader">A</span>=Associated, <span class="wifiheader">U</span>=Authenticated</div>
 									<br>
 									<div class="apply_gen">
-										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen" >
+										<input type="button" onClick="location.reload();" value="<#CTL_refresh#>" class="button_gen" >
 									</div>
 								</td>
 							</tr>

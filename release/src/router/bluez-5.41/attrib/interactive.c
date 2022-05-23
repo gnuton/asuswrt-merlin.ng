@@ -308,7 +308,7 @@ static void char_desc_cb(uint8_t status, GSList *descriptors, void *user_data)
 static void char_read_cb(guint8 status, const guint8 *pdu, guint16 plen,
 							gpointer user_data)
 {
-	uint8_t value[plen];
+	uint8_t *value = NULL;
 	ssize_t vlen;
 	int i;
 	GString *s;
@@ -319,9 +319,16 @@ static void char_read_cb(guint8 status, const guint8 *pdu, guint16 plen,
 		return;
 	}
 
+	value = (uint8_t *)malloc(plen);
+	if (!value) {
+		g_printerr("Malloc fail@[%s]\n", __func__);
+		return;
+	}
+
 	vlen = dec_read_resp(pdu, plen, value, sizeof(value));
 	if (vlen < 0) {
 		error("Protocol error\n");
+		free(value);
 		return;
 	}
 
@@ -331,6 +338,7 @@ static void char_read_cb(guint8 status, const guint8 *pdu, guint16 plen,
 
 	rl_printf("%s\n", s->str);
 	g_string_free(s, TRUE);
+	free(value);
 }
 
 static void char_read_by_uuid_cb(guint8 status, const guint8 *pdu,

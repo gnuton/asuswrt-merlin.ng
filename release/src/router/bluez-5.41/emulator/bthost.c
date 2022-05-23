@@ -510,9 +510,11 @@ static void send_iov(struct bthost *bthost, uint16_t handle, uint16_t cid,
 	struct bt_hci_acl_hdr acl_hdr;
 	struct bt_l2cap_hdr l2_hdr;
 	uint8_t pkt = BT_H4_ACL_PKT;
-	struct iovec pdu[3 + iovcnt];
+	struct iovec *pdu;
 	int i, len = 0;
 
+	pdu = (struct iovec *)malloc(sizeof(struct iovec)*(3 + iovcnt));
+	if (!pdu) return;
 	for (i = 0; i < iovcnt; i++) {
 		pdu[3 + i].iov_base = iov[i].iov_base;
 		pdu[3 + i].iov_len = iov[i].iov_len;
@@ -535,6 +537,7 @@ static void send_iov(struct bthost *bthost, uint16_t handle, uint16_t cid,
 	pdu[2].iov_len = sizeof(l2_hdr);
 
 	send_packet(bthost, pdu, 3 + iovcnt);
+	free(pdu);
 }
 
 static void send_acl(struct bthost *bthost, uint16_t handle, uint16_t cid,

@@ -66,7 +66,7 @@ static int convert_line(int fd, const char *line)
 static void convert_file(const char *input_path, const char *output_path)
 {
 	size_t line_size = 1024;
-	char line_buffer[line_size];
+	char *line_buffer;
 	char *path;
 	const char *ptr;
 	FILE *fp;
@@ -121,9 +121,17 @@ static void convert_file(const char *input_path, const char *output_path)
 		return;
 	}
 
+	line_buffer = (char *)malloc(line_size);
+	if (!line_buffer) {
+		fprintf(stderr, "Malloc fail\n");
+		close(fd);
+		return;
+	}
+
 	fp = fopen(input_path, "r");
 	if (!fp) {
 		fprintf(stderr, "Failed to open input file\n");
+		free(line_buffer);
 		close(fd);
 		return;
 	}
@@ -146,6 +154,7 @@ static void convert_file(const char *input_path, const char *output_path)
 		}
 	}
 
+	free(line_buffer);
 	fclose(fp);
 
 	close(fd);
