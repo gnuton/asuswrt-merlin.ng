@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.
 #define _BCM_MCAST_BLOG_H_
 
 int bcm_mcast_blog_get_rep_info(struct net_device *repDev, unsigned char *repMac, uint32_t *info);
+int bcm_mcast_blog_cmp_rep_info(struct net_device *repDev, uint32_t info_1, uint32_t info_2);
 void bcm_mcast_blog_release(int proto, void *mc_fdb);
 int bcm_mcast_blog_process(bcm_mcast_ifdata *pif, void *mc_fdb, int proto, struct hlist_head *headMcHash);
 

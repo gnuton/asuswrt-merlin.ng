@@ -83,6 +83,9 @@ Boston, MA 02111-1307, USA.
 #if defined(CONFIG_BCM96878)
 #include <6878_intr.h>
 #endif
+#if defined(CONFIG_BCM96855)
+#include <6855_intr.h>
+#endif
 
 /* defines */
 /* The following definitions must match the definitions in linux/interrupt.h for 

@@ -75,5 +75,8 @@ Boston, MA 02111-1307, USA.
 #if defined(CONFIG_BCM96878)
 #include <6878_map_part.h>
 #endif
+#if defined(CONFIG_BCM96855)
+#include <6855_map_part.h>
+#endif
 #endif
 

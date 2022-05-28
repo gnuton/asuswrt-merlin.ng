@@ -32,6 +32,7 @@
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/nbuff.h>
+#include <linux/gbpm.h>
 
 #include "bcmtypes.h"
 #include "bcmPktDma_bds.h"
@@ -198,7 +199,6 @@ static int bcmPktDma_calc_rxbds( void )
 {
     uint32_t __attribute__((unused)) tot_mem_size = kerSysGetSdramSize();
 #if (defined(CONFIG_BCM_BPM) || defined(CONFIG_BCM_BPM_MODULE))
-    uint32_t buf_mem_size = (tot_mem_size/100) * CONFIG_BCM_BPM_BUF_MEM_PRCNT;
     uint32_t tot_num_bufs=0;
 #endif
     uint32_t chnl;
@@ -210,7 +210,7 @@ static int bcmPktDma_calc_rxbds( void )
     chnl = 0;                 /* to avoid compiler warning */
 
 #if (defined(CONFIG_BCM_BPM) || defined(CONFIG_BCM_BPM_MODULE))
-    tot_num_bufs = (buf_mem_size/BCM_PKTBUF_SIZE);
+    tot_num_bufs = gbpm_get_total_bufs();
 #endif
 
 #if defined(CONFIG_BCM_FAP) || defined(CONFIG_BCM_FAP_MODULE)

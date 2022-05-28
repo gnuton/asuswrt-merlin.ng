@@ -94,6 +94,7 @@ int wl_handle_blog_emit(struct wl_info *wl, struct wl_if *wlif, struct sk_buff *
 
 	if (wl->pub->fcache && (skb->blog_p != NULL)) {
 		uint8_t prio4bit = 0;
+		uint32_t hw_port;
 
 #if defined(BCM_WFD)
 		struct ether_header *eh = (struct ether_header*) PKTDATA(wl->osh, skb);
@@ -141,8 +142,8 @@ int wl_handle_blog_emit(struct wl_info *wl, struct wl_if *wlif, struct sk_buff *
 #endif /* BCM_WFD && CONFIG_BCM_FC_BASED_WFD */
 		}
 #endif
-
-		blog_emit(skb, dev, TYPE_ETH, 0, BLOG_WLANPHY);
+		hw_port = netdev_path_get_hw_port((struct net_device *)(skb->dev));
+		blog_emit(skb, dev, TYPE_ETH, hw_port, BLOG_WLANPHY);
 	}
 	skb->dev = dev;
 
@@ -156,8 +157,13 @@ int wl_handle_blog_sinit(struct wl_info *wl, struct sk_buff *skb)
 	 */
 	if (wl->pub->fcache) {
 		BlogAction_t blog_ret;
+		uint32_t hw_port;
 
-		blog_ret = blog_sinit(skb, skb->dev, TYPE_ETH, 0, BLOG_WLANPHY);
+		/* Clear skb->mark (WLAN internal for priority) field as it will be used as skb->fc_ctxt in blog for ingress */
+		skb->mark = 0;
+
+		hw_port = netdev_path_get_hw_port((struct net_device *)(skb->dev));
+		blog_ret = blog_sinit(skb, skb->dev, TYPE_ETH, hw_port, BLOG_WLANPHY);
 		if (PKT_DONE == blog_ret) {
 			/* Doesnot need go to IP stack */
 			return 0;
@@ -204,9 +210,7 @@ void wl_handle_blog_event(wl_info_t *wl, wlc_event_t *e)
 			params.flush_dstmac = 1;
 			params.flush_srcmac = 1;
 			memcpy(&params.mac[0], &e->event.addr.octet[0], sizeof(e->event.addr.octet));
-			blog_lock();
-			blog_notify(FLUSH, dev, (unsigned long)&params, 0);
-			blog_unlock();
+			blog_notify_async_wait(FLUSH, dev, (unsigned long)&params, 0);
 
 #if defined(PKTC_TBL)
 			/* mark as STA disassoc */
@@ -236,9 +240,7 @@ void wl_handle_blog_event(wl_info_t *wl, wlc_event_t *e)
 			params.flush_dstmac = 1;
 			params.flush_srcmac = 1;
 			memcpy(&params.mac[0], &e->event.addr.octet[0], sizeof(e->event.addr.octet));
-			blog_lock();
-			blog_notify(FLUSH, dev, (unsigned long)&params, 0);
-			blog_unlock();
+			blog_notify_async_wait(FLUSH, dev, (unsigned long)&params, 0);
 #if defined(PKTC_TBL)
 			/* mark as STA assoc */
 			WL_ERROR(("%s: mark as associated. addr=%02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -253,7 +255,7 @@ void wl_handle_blog_event(wl_info_t *wl, wlc_event_t *e)
 				struct scb *scb = wlc_scbfind_from_wlcif(wl->wlc, wlif->wlcif, e->event.addr.octet);
 				wlc_bsscfg_t *bsscfg = wl_bsscfg_find(wlif);
 				netdev_wlan_unset_dwds_client(wlif->d3fwd_wlif); /* reset first */
-				if (BSSCFG_STA(bsscfg) && SCB_DWDS(scb)) {
+				if (BSSCFG_STA(bsscfg) && scb && SCB_DWDS(scb)) {
 					netdev_wlan_set_dwds_client(wlif->d3fwd_wlif);
 				}
 			}
