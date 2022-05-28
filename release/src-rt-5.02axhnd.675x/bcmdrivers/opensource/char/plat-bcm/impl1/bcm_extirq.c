@@ -352,7 +352,7 @@ static irqreturn_t reset_isr(int irq, void *dev_id)
             schedule_work(&restoreDefaultWork);
         }
 #if defined(CONFIG_BCM94908)  || defined(CONFIG_BCM96858) | \
-    defined(CONFIG_BCM963158) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878)
+    defined(CONFIG_BCM963158) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878) || defined(CONFIG_BCM96855)
         BcmHalExternalIrqClear(irq);
 #endif
         return IRQ_HANDLED;
@@ -400,7 +400,7 @@ int map_external_irq (int irq)
         map_irq = INTERRUPT_ID_EXTERNAL_3;
         break ;
 #if defined(CONFIG_BCM96838) || defined(CONFIG_BCM963138) || defined(CONFIG_BCM963148) || defined(CONFIG_BCM96848) || defined(CONFIG_BCM96858) || \
-    defined(CONFIG_BCM94908) || defined(CONFIG_BCM963158) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878)
+    defined(CONFIG_BCM94908) || defined(CONFIG_BCM963158) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878) || defined(CONFIG_BCM96855)
     case BP_EXT_INTR_4   :
         map_irq = INTERRUPT_ID_EXTERNAL_4;
         break ;
@@ -409,7 +409,7 @@ int map_external_irq (int irq)
         break ;
 #endif
 #if defined(CONFIG_BCM963381) || defined(CONFIG_BCM96848) || defined(CONFIG_BCM963158) || \
-    defined(CONFIG_BCM96846) || defined(CONFIG_BCM96858)  || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878)
+    defined(CONFIG_BCM96846) || defined(CONFIG_BCM96858)  || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878) || defined(CONFIG_BCM96855)
     case BP_EXT_INTR_6   :
         map_irq = INTERRUPT_ID_EXTERNAL_6;
         break ;
@@ -471,7 +471,7 @@ void ext_irq_enable(int irq, int enable)
     else
         BcmHalInterruptDisable(irq);
 #else
-#if defined(CONFIG_BCM96858) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM963158) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878)
+#if defined(CONFIG_BCM96858) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM963158) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878) || defined(CONFIG_BCM96855)
     if (enable)
     	BcmHalExternalIrqUnmask(irq);
     else
@@ -498,7 +498,7 @@ EXPORT_SYMBOL(kerSysGetExtIntInfo);
 void bcm_extirq_init(void)
 {
 #if defined(CONFIG_BCM96858) || \
-    defined(CONFIG_BCM963158) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878)
+    defined(CONFIG_BCM963158) || defined(CONFIG_BCM96846) || defined(CONFIG_BCM96856) || defined(CONFIG_BCM96878) || defined(CONFIG_BCM96855)
     // clear all external interrupts
     PERF->ExtIrqCtrl |=  0xff;
     PERF->ExtIrqCtrl &=  ~0xff;

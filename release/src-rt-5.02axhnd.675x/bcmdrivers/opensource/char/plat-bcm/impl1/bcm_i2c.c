@@ -541,7 +541,10 @@ static int prepare_pmd_detection(int bus)
     int intf_idx;
     
     if (bcm_i2c_sfp_get_intf(bus, &intf_type, &intf_idx) != 0)
+    {
+        BCM_I2C_LOG("No SFP/SFF/PMD defined for i2c bus %d!!!\n", bus);
         return -1;
+    }
 #else
     intf_type = BP_INTF_TYPE_xPON;
 #endif
@@ -746,10 +749,10 @@ static __init int bcm_add_i2c(void)
             continue;
 
         if (prepare_pmd_detection(bus))
-            goto exit;
+            continue;
 
         if (sfp_detect(bus))
-            goto exit;
+            continue;
     }
 
     ret = 0;
@@ -893,7 +896,7 @@ int bcm_i2c_sfp_rescan(int bus)
 {
     struct bcm_i2c_platform_data *psfp;
 
-    BCM_I2C_LOG_DEBUG("rescan on bus %d", bus);
+    BCM_I2C_LOG("rescan on bus %d", bus);
 
     if (bus >= ARRAY_SIZE(bcm_i2c_platform_data_enum))
         return -1;

@@ -131,7 +131,7 @@ static TRX_DESCRIPTOR default_pluggable_trx = {
     .tx_sd_polarity        = TRX_ACTIVE_HIGH,
     .tx_sd_supported       = TRX_SIGNAL_NOT_SUPPORTED,
     .tx_pwr_down_polarity  = TRX_ACTIVE_LOW,
-    .tx_pwr_down_cfg_req   = false
+    .tx_pwr_down_cfg_req   = false,
 } ;
 
 
@@ -144,7 +144,7 @@ static TRX_DESCRIPTOR default_on_board_trx = {
     .tx_sd_polarity        = TRX_ACTIVE_HIGH,
     .tx_sd_supported       = TRX_SIGNAL_NOT_SUPPORTED,
     .tx_pwr_down_polarity  = TRX_ACTIVE_LOW,
-    .tx_pwr_down_cfg_req   = false
+    .tx_pwr_down_cfg_req   = false,
 } ;
 
 static TRX_DESCRIPTOR default_pmd_trx = {
@@ -157,8 +157,8 @@ static TRX_DESCRIPTOR default_pmd_trx = {
     .tx_sd_supported       = TRX_SIGNAL_NOT_SUPPORTED,
     .tx_pwr_down_polarity  = TRX_ACTIVE_LOW,
     .tx_pwr_down_cfg_req   = false,
-    .wan_types_bitmap      = SUPPORTED_WAN_TYPES_BIT_GPON | SUPPORTED_WAN_TYPES_BIT_EPON_1_1 | SUPPORTED_WAN_TYPES_BIT_TURBO_EPON_2_1 \
-        | SUPPORTED_WAN_TYPES_BIT_EPON_10_1 | SUPPORTED_WAN_TYPES_BIT_XGPON
+    .wan_types_bitmap      = SUPPORTED_WAN_TYPES_BIT_GPON | SUPPORTED_WAN_TYPES_BIT_EPON_1_1 | SUPPORTED_WAN_TYPES_BIT_TURBO_EPON_2_1
+        | SUPPORTED_WAN_TYPES_BIT_EPON_10_1 | SUPPORTED_WAN_TYPES_BIT_XGPON,
 } ;
 
 static int check_pluggable_module(int bus, TRX_TYPE type)
@@ -535,10 +535,7 @@ int i2c_read_trx_data(int bus)
 
                 default:
                     printk(KERN_ALERT "Opticaldet: Illegal TRX type %d\n", trx_ff);
-                    if( trx_ff == TRX_SFF )
-                        memcpy(trx_curr_p, &default_on_board_trx, sizeof(TRX_DESCRIPTOR));
-                    else
-                        memcpy(trx_curr_p, &default_pluggable_trx, sizeof(TRX_DESCRIPTOR));
+                    memcpy(trx_curr_p, &default_pluggable_trx, sizeof(TRX_DESCRIPTOR));
                     set_trx_desc_init_state(bus, 1);
             }
         }

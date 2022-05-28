@@ -57,9 +57,7 @@ Boston, MA 02111-1307, USA.
 #include <asm/delay.h>
 #include <linux/compiler.h>
 #include <linux/ctype.h>
-#ifdef CRASHLOG
 #include <linux/math64.h>
-#endif
 
 #include "bcm_assert_locks.h"
 #include "bcmtypes.h"
