@@ -267,14 +267,6 @@ if [ "$BUILD_NAME" == "GT-AC2900" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$
 then
         cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
 fi
-
-# Anything newer than SDK6
-if [ "$SDK" != "" ]
-then
-	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
-	cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
-fi
-
 if [ "$BUILD_NAME" == "DSL-AX82U" ]
 then
     cp -a release/src/router/dsl_autodet/* $REPO/release/src/router/dsl_autodet
@@ -282,6 +274,18 @@ then
     cp -a release/src/router/tr069/* $REPO/release/src/router/tr069
     cp -a release/src/router/spectrum/prebuild/* $REPO/release/src/router/spectrum/prebuild/$BUILD_NAME/
     cp -a release/src-rt-5.02axhnd.675x/kernel/dts/prebuilt/* $REPO/release/src-rt-5.02axhnd.675x/kernel/dts/prebuilt/
+fi
+if [ "$BUILD_NAME" == "RT-AX95Q" ]
+then
+    cp -a release/src/router/bluez-5.41/prebuild/* $REPO/release/src/router/bluez-5.41/prebuild/$BUILD_NAME/
+fi
+
+
+# Anything newer than SDK6
+if [ "$SDK" != "" ]
+then
+	cp release/src/router/bsd/prebuilt/* $REPO/release/src/router/bsd/prebuilt/$BUILD_NAME/
+	cp release/src/router/dhd/prebuilt/* $REPO/release/src/router/dhd/prebuilt/$BUILD_NAME/
 fi
 
 # Cleanup
