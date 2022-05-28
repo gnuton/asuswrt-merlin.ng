@@ -49,6 +49,9 @@ endif
 CFLAGS += -I$(LINUXDIR)/include
 
 LDFLAGS = -L$(TOP)/shared -lshared -L$(TOP_PLATFORM)/nvram${BCMEX} -lnvram
+ifeq ($(RTCONFIG_BCM_502L07P2),y)
+LDFLAGS += -L$(TOP_PLATFORM)/ethctl_lib -lethctl
+endif
 
 
 INSTALL = install
