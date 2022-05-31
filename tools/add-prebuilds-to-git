@@ -8,7 +8,7 @@ BUILD_NAME=$1
 REPO=.
 echo "*** Adding files to GIT after a GPL Merge..."
 
-if [ "$BUILD_NAME" == "RT-AX82U" ] || [ "$BUILD_NAME" == "TUF-AX5400" ]
+if [ "$BUILD_NAME" == "RT-AX82U" ] || [ "$BUILD_NAME" == "TUF-AX5400" ] || [ "$BUILD_NAME" == "TUF-AX3000" ] || [ "$BUILD_NAME" == "RT-AX95Q" ]
 then
     git add -f $REPO/release/src-rt-5.02axhnd.675x/wl/exe/prebuilt/*
     git add -f $REPO/release/src-rt-5.02axhnd.675x/hostTools/prebuilt/$BUILD_NAME/*

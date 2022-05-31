@@ -1,7 +1,7 @@
 #!/bin/sh
 
-MODEL=XT12
-SDK=arm_4912hnd
+MODEL=TUF-AX3000
+SDK=arm_6750hnd
 
 # Model Dirs
 mkdir -p bwdpi_source/asus/prebuild/$MODEL
