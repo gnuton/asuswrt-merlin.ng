@@ -8,7 +8,7 @@
 
 
 # 1 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h" 1
-# 520 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 535 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 struct allocs_rdp {
     unsigned char param1_size;
     unsigned char param2_size;
@@ -56,7 +56,7 @@ typedef struct
     } allocs;
     unsigned int ulMemoryConfig;
     struct partition_info {
-# 576 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 591 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
  unsigned short size;
     } part_info[4];
     struct allocs_dhd alloc_dhd;
@@ -66,10 +66,10 @@ typedef struct
 
     unsigned int ulFeatures;
     char chUnused[268];
-# 599 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 614 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
     unsigned int ulCheckSum;
 } NVRAM_DATA, *PNVRAM_DATA;
-# 648 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 663 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 typedef struct
 {
         int active_idx;
@@ -80,7 +80,7 @@ typedef struct
         unsigned short write_fail_count[20];
         int cferom_crc;
 }BOOT_BLOCK_MIRROR_INFO;
-# 696 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 711 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 typedef struct _SP_HEADER
 {
     char SPMagicNum[8];
@@ -94,7 +94,7 @@ typedef struct _TOKEN_DEF
     char tokenName[16];
     int tokenLen;
 } SP_TOKEN, *PSP_TOKEN;
-# 741 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 756 "/data/ASUSWRT/asuswrt-repository-386-rc2-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 typedef struct
 {
     char bootState;
