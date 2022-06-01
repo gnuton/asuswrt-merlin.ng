@@ -187,7 +187,7 @@ workflows:
               only: /.*/
       - build:
           name: "build_dsl-ac68u"
-          model: "Xdsl-ac68u"
+          model: "dsl-ac68u"
           release_dir: "src-rt-6.x.4708"
           requires:
             - getcode
