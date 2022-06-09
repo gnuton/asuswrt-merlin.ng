@@ -144,6 +144,7 @@ jobs:
             echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" >> ${UPDATE_DIR}/manifest.txt
             echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
             echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" >> ${UPDATE_DIR}/manifest.txt
+            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
             echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
             cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
@@ -213,7 +214,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax82u"
-          model: "Xrt-ax82u"
+          model: "rt-ax82u"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
@@ -226,7 +227,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax95q"
-          model: "Xrt-ax95q"
+          model: "rt-ax95q"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
@@ -239,7 +240,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax5400"
-          model: "Xtuf-ax5400"
+          model: "tuf-ax5400"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
