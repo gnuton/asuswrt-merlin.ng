@@ -1887,7 +1887,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dhcp_lease", "86400", CKN_STR7, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
 	{ "dhcp_gateway_x", "", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
 	{ "dhcp_dns1_x", "", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
-	{ "ipv6_dns1_x", "", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
+	{ "ipv6_dns1_x", "", CKN_STR39, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
 	{ "dhcp_wins_x", "", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
 	{ "dhcp_static_x", "0", CKN_STR1, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
 #if defined(RTCONFIG_EXTEND_LIMIT)
@@ -4292,7 +4292,6 @@ struct nvram_tuple router_defaults[] = {
 	{ "dns_norebind", "0", CKN_STR1, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },		// dnsmasq DNS rebind protection
 	{ "dns_local_cache", "0", CKN_STR1, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },	// use local dns as system resolver
 	{ "dns_priv_override", "0", CKN_STR1, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },	// Override DoH - 0: auto, 1: yes, 2: disable
-	{ "dhcp_hostnames", "", CKN_STR2999, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },	// Static DHCP hostnames
 	{ "webs_state_info_am", "", CKN_STR_DEFAULT, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },	// Latest FW available - real version
 
 // miniupnpd - PCP-related values
@@ -4313,6 +4312,16 @@ struct nvram_tuple router_defaults[] = {
 	{ "qos_overhead", "0", CKN_STR4, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 }, // Overhead, in bytes
 	{ "qos_atm", "0", CKN_STR1, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 }, // 2 = PTM (Cake only), 1 = ATM, 0 = Ethernet
 	{ "qos_mpu", "0", CKN_STR4, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 }, // MPU overhead for Cake, in bytes
+#endif
+
+#ifdef RTCONFIG_DNSFILTER
+#ifdef HND_ROUTER
+       { "dnsfilter_rulelist1", "", CKN_STR256, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
+       { "dnsfilter_rulelist2", "", CKN_STR256, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
+       { "dnsfilter_rulelist3", "", CKN_STR256, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
+       { "dnsfilter_rulelist4", "", CKN_STR256, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
+       { "dnsfilter_rulelist5", "", CKN_STR256, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },
+#endif
 #endif
 
 #ifdef RTCONFIG_DNSSEC
@@ -4660,6 +4669,11 @@ struct nvram_tuple router_defaults[] = {
 	{ "dnsfilter_custom1", "8.8.8.8", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },	/* User-defined DNS filter 1 */
 	{ "dnsfilter_custom2", "8.8.8.8", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },     /* User-defined DNS filter 2 */
 	{ "dnsfilter_custom3", "8.8.8.8", CKN_STR15, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },     /* User-defined DNS filter 3 */
+#if defined(HND_ROUTER) && defined(RTCONFIG_IPV6)
+	{ "dnsfilter_custom61", "", CKN_STR39, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },     /* IPV6 User-defined DNS filter 1 */
+	{ "dnsfilter_custom62", "", CKN_STR39, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },     /* IPV6 User-defined DNS filter 2 */
+	{ "dnsfilter_custom63", "", CKN_STR39, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },     /* IPV6 User-defined DNS filter 3 */
+#endif
 #endif
 #ifdef RTCONFIG_QCA_PLC2
 	{ "cfg_plc_master", "", CKN_STR17, CKN_TYPE_DEFAULT, CKN_ACC_LEVEL_DEFAULT, CKN_ENC_DEFAULT, 0 },	/* MAC address of the PLC master device */

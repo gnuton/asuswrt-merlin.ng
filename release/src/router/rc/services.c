@@ -1926,7 +1926,7 @@ void start_dnsmasq(void)
 		}
 #endif /* RTCONFIG_YANDEXDNS */
 
-#ifdef RTCONFIG_DNSFILTER
+#if defined(RTCONFIG_DNSFILTER) && !defined(HND_ROUTER)
 		if (nvram_get_int("dnsfilter_enable_x"))
 			dnsfilter_setup_dnsmasq(fp);
 #endif
@@ -14959,7 +14959,9 @@ check_ddr_done:
 				nvram_set("apps_state_cancel", "");
 				nvram_set("apps_state_error", "");
 
+#if !defined(RTCONFIG_HND_ROUTER)
 				free_caches(FREE_MEM_PAGE, 1, 0);
+#endif
 
 				cmd[0] = nvtmp;
 				start_script(count, cmd);
@@ -19235,10 +19237,6 @@ int service_main(int argc, char *argv[])
 
 void setup_leds()
 {
-	int model;
-
-	model = get_model();
-
 /*** Disable ***/
 	if (nvram_get_int("led_disable") == 1) {
 		setAllLedOff();
@@ -19246,12 +19244,6 @@ void setup_leds()
 #ifdef RTCONFIG_USB
 		stop_usbled();
 #endif
-#if defined(RTCONFIG_RGBLED)
-		nvram_set_int("aurargb_enable", 0);
-		nvram_commit();
-		start_aurargb();
-#endif
-
 	} else {
 /*** Enable ***/
 		nvram_set("AllLED", "1");
@@ -19318,7 +19310,10 @@ void setup_leds()
 #elif defined(RTAX58U) || defined(RTAX56U)
 			eval("wl", "-i", "eth5", "ledbh", "0", "25");
 #elif defined(RTAX86U)
-			eval("wl", "-i", "eth6", "ledbh", "7", "7");
+			if(!strcmp(get_productid(), "RT-AX86S"))
+				eval("wl", "-i", "eth5", "ledbh", "7", "7");
+			else
+				eval("wl", "-i", "eth6", "ledbh", "7", "7");
 #elif defined(RTAX68U)
 			eval("wl", "-i", "eth5", "ledbh", "7", "7");
 #elif defined(RTAC68U_V4)
@@ -19347,7 +19342,10 @@ void setup_leds()
 			qcsapi_wifi_run_script("router_command.sh", "wifi_led_on");
 			qcsapi_led_set(1, 1);
 #elif defined(RTAX88U) || defined(RTAX86U) || defined(GTAX11000)
-			eval("wl", "-i", "eth7", "ledbh", "15", "7");
+			if(!strcmp(get_productid(), "RT-AX86S"))
+				eval("wl", "-i", "eth6", "ledbh", "15", "7");
+			else
+				eval("wl", "-i", "eth7", "ledbh", "15", "7");
 #elif defined(RTAX68U)
 			eval("wl", "-i", "eth6", "ledbh", "7", "7");
 #elif defined(RTAC68U_V4)
@@ -19380,11 +19378,6 @@ void setup_leds()
 #ifdef RTCONFIG_LOGO_LED
 		led_control(LED_LOGO, LED_ON);
 #endif
-#if defined(RTCONFIG_RGBLED)
-		nvram_set_int("aurargb_enable", 1);
-		nvram_commit();
-		start_aurargb();
-#endif
 #ifdef GTAX6000
 		AntennaGroupReset(LED_ON);
 		setAntennaGroupOn();
@@ -19402,6 +19395,9 @@ void setup_leds()
 #endif
 
 	}
+#if defined(RTCONFIG_RGBLED)
+	start_aurargb();
+#endif
 }
 
 #if !defined(HND_ROUTER)
