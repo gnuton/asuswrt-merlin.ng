@@ -47,6 +47,11 @@ var wan_proto_orig = '<% nvram_get("wan_proto"); %>';
 var original_wan_type = wan_proto_orig;
 var wan_unit_tmp="";
 
+if(dnspriv_support){
+	//var dot_servers_array = [];
+	var dnspriv_rulelist_array = '<% nvram_get("dnspriv_rulelist"); %>';
+}
+
 if(dualWAN_support){
 	var wan_type_name = wans_dualwan.split(" ")[load_wan_unit];
 	wan_type_name = wan_type_name.toUpperCase();
@@ -101,7 +106,7 @@ function chg_pvc(pvc_to_chg) {	//pvc_to_chg: 0, 1, 101-109, 111-119
 
 	var iptv_idx=0;
 	disable_pvc_summary();
-	enable_all_ctrl();
+	enable_all_ctrl(pvc_to_chg);
 	document.form.wan_unit.value = pvc_to_chg;
 	
 	if (pvc_to_chg != "0" && pvc_to_chg != "1") {
@@ -128,30 +133,11 @@ function chg_pvc(pvc_to_chg) {	//pvc_to_chg: 0, 1, 101-109, 111-119
 	change_wan_unit_idx(pvc_to_chg,iptv_idx);
 	change_wan_proto_type(document.form.wan_proto.value);
 	fixed_change_wan_proto_type(document.form.wan_proto.value);
-}
 
-function chg_pvc_sub(pvc_to_chg) {
-	var iptv_row = 0;
-	for(var i = 0; i < MSWANList.length; i++){
-		if (MSWANList[i][0] != "0") {
-			iptv_row++;
-			if (pvc_to_chg == i) break;
-		}
+	if (pvc_to_chg != "0" && pvc_to_chg != "1") {	//useless setup
+		inputCtrl(document.form.wan_upnp_enable[0], 0);
+		inputCtrl(document.form.wan_upnp_enable[1], 0);
 	}
-
-	if (pvc_to_chg != "0") {
-		remove_item_from_select_bridge();
-	}
-	else
-	{
-		if (MSWANList[0][3] == "bridge")
-			remove_item_from_select_bridge();
-	}
-	
-	enable_all_ctrl();
-	change_wan_unit_idx(pvc_to_chg,iptv_row);
-	change_wan_proto_type(document.form.wan_proto.value);
-	fixed_change_wan_proto_type(document.form.wan_proto.value);
 }
 
 function remove_item_from_select_bridge() {
@@ -187,7 +173,6 @@ function remove_bridge(){
 }
 function add_pvc() {
 	var pvc_shift = (load_wan_unit==1)? "110":"100";
-	enable_all_ctrl();
 
 	// find a available PVC
 	var avail_pvc = 9;
@@ -206,6 +191,7 @@ function add_pvc() {
 
 	document.form.wan_unit.value = avail_pvc; //avail_pvc.toString();	//101~109 || 111~119
 
+	enable_all_ctrl(avail_pvc);
 	if(!mswan_support){
 		remove_item_from_select_bridge();
 	}
@@ -239,11 +225,15 @@ function add_pvc() {
 	change_wan_proto_type(document.form.wan_proto.value);
 	fixed_change_wan_proto_type(document.form.wan_proto.value);
 	document.form.wan_enable[0].checked = true;	//Add to enable it
+
+	//useless setup
+	inputCtrl(document.form.wan_upnp_enable[0], 0);
+	inputCtrl(document.form.wan_upnp_enable[1], 0);
 }
 
 function add_pvc_0() {
 	disable_pvc_summary();
-	enable_all_ctrl();
+	enable_all_ctrl(load_wan_unit);
 	
 	remove_bridge();
 
@@ -585,7 +575,7 @@ function applyRule(){
 		}
 
 		if(dnspriv_support){
-			if(document.form.dnspriv_enable.value == 1){
+			if(document.form.dnspriv_enable.value == 1 && document.form.wan_unit.value < 100){
 				var dnspriv_rulelist_value = "";
 				for(k=0; k<document.getElementById('dnspriv_rulelist_table').rows.length; k++){
 					for(j=0; j<document.getElementById('dnspriv_rulelist_table').rows[k].cells.length-1; j++){
@@ -776,7 +766,7 @@ function disable_all_ctrl() {
 	document.getElementById("btn_apply").style.display = "none";
 }
 
-function enable_all_ctrl() {
+function enable_all_ctrl(pvc) {
 	document.getElementById("desc_default").style.display = "none";
 	document.getElementById("desc_edit").style.display = "";
 	document.getElementById("t2BC").style.display = "";
@@ -788,7 +778,7 @@ function enable_all_ctrl() {
 	document.getElementById("vpn_server").style.display = "";
 	document.getElementById("btn_apply").style.display = "";
 
-	if(dnspriv_support){
+	if(dnspriv_support && pvc < 100){
 		inputCtrl(document.form.dnspriv_enable, 1);
 		change_dnspriv_enable(document.form.dnspriv_enable.value);
 	}
@@ -1419,6 +1409,7 @@ function showDiableDHCPclientID(clientid_enable){
 <input type="hidden" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" />
 <input type="hidden" name="wan_unit" value="<% nvram_get("wan_unit"); %>">
 <input type="hidden" name="wan_clientid_type" value="">
+<input type="hidden" name="dnspriv_rulelist" value="<% nvram_get("dnspriv_rulelist"); %>" disabled>
 <!--input type="hidden" name="wan_dhcpenable_x" value="<% nvram_get("wan_dhcpenable_x"); %>"-->
 <span id="bridgePPPoE_relay"></span>
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -1620,11 +1611,11 @@ function showDiableDHCPclientID(clientid_enable){
 
 										<tr style="display:none">
 											<th>
-												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(-1,-1);">DNS Privacy Protocol</a>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,35);"><#WAN_DNS_Privacy#></a>
 											</th>
 											<td align="left">
 												<select id="dnspriv_enable" class="input_option" name="dnspriv_enable" onChange="change_dnspriv_enable(this.value);">
-												<option value="0" <% nvram_match("dnspriv_enable", "0", "selected"); %>>None</option>
+												<option value="0" <% nvram_match("dnspriv_enable", "0", "selected"); %>><#wl_securitylevel_0#></option>
 												<option value="1" <% nvram_match("dnspriv_enable", "1", "selected"); %>>DNS-over-TLS (DoT)</option>
 												<!--option value="2" <% nvram_match("dnspriv_enable", "2", "selected"); %>>DNS-over-HTTPS (DoH)</option-->
 												<!--option value="3" <% nvram_match("dnspriv_enable", "3", "selected"); %>>DNS-over-TLS/HTTPS (DoT+DoH)</option-->
@@ -1634,11 +1625,11 @@ function showDiableDHCPclientID(clientid_enable){
 										</tr>
 										<tr style="display:none">
 											<th>
-												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(-1,-1);">DNS-over-TLS Profile</a>
+												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,36);"><#WAN_DNS_over_TLS#></a>
 											</th>
 											<td>
-												<input type="radio" name="dnspriv_profile" class="input" value="1" onclick="return change_common_radio(this, 'IPConnection', 'dnspriv_profile', 1)" <% nvram_match("dnspriv_profile", "1", "checked"); %> />Strict
-												<input type="radio" name="dnspriv_profile" class="input" value="0" onclick="return change_common_radio(this, 'IPConnection', 'dnspriv_profile', 0)" <% nvram_match("dnspriv_profile", "0", "checked"); %> />Opportunistic
+												<input type="radio" name="dnspriv_profile" class="input" value="1" onclick="return change_common_radio(this, 'IPConnection', 'dnspriv_profile', 1)" <% nvram_match("dnspriv_profile", "1", "checked"); %> /><#WAN_DNS_over_TLS_Strict#>
+												<input type="radio" name="dnspriv_profile" class="input" value="0" onclick="return change_common_radio(this, 'IPConnection', 'dnspriv_profile', 0)" <% nvram_match("dnspriv_profile", "0", "checked"); %> /><#WAN_DNS_over_TLS_Opportunistic#>
 											</td>
 										</tr>
 									</table>
@@ -1646,14 +1637,14 @@ function showDiableDHCPclientID(clientid_enable){
 									<table id="DNSPrivacy" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_table" style="display:none">
 									<thead>
 			  						<tr>
-										<td colspan="5">DNS-over-TLS Server List</td>
+										<td colspan="5"><#WAN_DNS_over_TLS_server#>&nbsp;(<#List_limit#>&nbsp;8)</td>
 			  						</tr>
 									</thead>
 									<tr>
-										<th><a href="javascript:void(0);" onClick="openHint(-1,-1);"><div class="table_text">Address</div></a></th>
-										<th><a href="javascript:void(0);" onClick="openHint(-1,-1);"><div class="table_text">TLS Port</div></a></th>
-										<th><a href="javascript:void(0);" onClick="openHint(-1,-1);"><div class="table_text">TLS Hostname</div></a></th>
-										<th><a href="javascript:void(0);" onClick="openHint(-1,-1);"><div class="table_text">SPKI Fingerprint</div></a></th>
+										<th><a href="javascript:void(0);" onClick="openHint(7,37);"><div class="table_text"><div class="table_text"><#IPConnection_ExternalIPAddress_itemname#></div></a></th>
+										<th><a href="javascript:void(0);" onClick="openHint(7,38);"><div class="table_text"><div class="table_text"><#WAN_DNS_over_TLS_server_port#></div></a></th>
+										<th><a href="javascript:void(0);" onClick="openHint(7,39);"><div class="table_text"><div class="table_text"><#WAN_DNS_over_TLS_server_name#></div></a></th>
+										<th><a href="javascript:void(0);" onClick="openHint(7,40);"><div class="table_text"><div class="table_text"><#WAN_DNS_over_TLS_server_SPKI#></div></a></th>
 										<th><#list_add_delete#></th>
 									</tr>
 									<!-- server info -->
@@ -1673,13 +1664,13 @@ function showDiableDHCPclientID(clientid_enable){
 											<tr><td colspan="2"><#ipv6_6rd_dhcp_option#></td></tr>
 										</thead>
 										<tr>
-											<th width="40%">Class-identifier (option 60):</th>
+											<th width="40%"><#DHCPoption_Class#> (<#NetworkTools_option#> 60):</th>
 											<td>
 												<input type="text" name="wan_vendorid" class="input_25_table" value="<% nvram_get("wan_vendorid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
 											</td>
 										</tr>
 										<tr>
-											<th width="40%">Client-identifier (option 61):</th>
+											<th width="40%"><#DHCPoption_Client#> (<#NetworkTools_option#> 61):</th>
 											<td>
 												<input type="checkbox" id="tmp_dhcp_clientid_type" name="tmp_dhcp_clientid_type" onclick="showDiableDHCPclientID(this);" <% nvram_match("wan_clientid_type", "1", "checked"); %>>IAID/DUID<br>
 												<input type="text" name="wan_clientid" class="input_25_table" value="<% nvram_get("wan_clientid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
@@ -1779,7 +1770,7 @@ function showDiableDHCPclientID(clientid_enable){
 												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,18);">Host-Uniq (<#Hexadecimal#>)</a>
 											</th>
 											<td align="left">
-												<input type="text" maxlength="32" class="input_32_table" name="wan_pppoe_hostuniq" value="<% nvram_get("wan_pppoe_hostuniq"); %>" onkeypress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
+												<input type="text" maxlength="256" class="input_32_table" name="wan_pppoe_hostuniq" value="<% nvram_get("wan_pppoe_hostuniq"); %>" onkeypress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 											</td>
 										</tr>
 

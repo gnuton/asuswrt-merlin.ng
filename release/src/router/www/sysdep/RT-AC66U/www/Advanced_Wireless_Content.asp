@@ -191,10 +191,10 @@ function initial(){
 
 		if(disable11b_support){
 			if(document.form.wl_rateset.value == "ofdm"){
-				document.form.wl_rateset.checked = true;
+				document.form.wl_rateset_check.checked = true;
 			}
 			else{
-				document.form.wl_rateset.checked = false;
+				document.form.wl_rateset_check.checked = false;
 			}
 
 			wl_mode_change(document.form.wl_nmode_x.value);
@@ -2677,6 +2677,7 @@ function gen_fronthaul_ap(_value){
 <input type="hidden" name="wps_dualband" value="<% nvram_get("wps_dualband"); %>">
 <input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 <input type="hidden" name="wl1_80211h" value="<% nvram_get("wl1_80211h"); %>" >
+<input type="hidden" name="wl_rateset" value="<% nvram_get("wl_rateset"); %>" >
 <input type="hidden" name="w_Setting" value="1">
 <input type="hidden" name="w_apply" value="1">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -2926,7 +2927,7 @@ function gen_fronthaul_ap(_value){
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 7);"><#WLANConfig11b_x_PSKKey_itemname#></a></th>
 					<td>
 						<div class="wpa_psk_container">
-							<div><input name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>" autocorrect="off" autocapitalize="off" autocomplete="new-password" type="password" onBlur="switchType(this, false);" onFocus="switchType(this, true);"></div>
+							<div><input type="text" name="wl_wpa_psk" maxlength="64" class="input_32_table" value="<% nvram_get("wl_wpa_psk"); %>" autocorrect="off" autocapitalize="off"></div>
 						</div>
 					</td>
 			  	</tr>

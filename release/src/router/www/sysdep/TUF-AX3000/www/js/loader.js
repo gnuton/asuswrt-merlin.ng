@@ -1,1 +1,1 @@
-../../../GT-AC5300/www/js/loader.js
+../../../FUNCTION/ROG_UI/js/loader.js

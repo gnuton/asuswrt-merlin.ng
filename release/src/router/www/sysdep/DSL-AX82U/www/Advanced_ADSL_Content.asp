@@ -21,7 +21,30 @@
 
 function initial(){
 	show_menu();
+	setTimeout("update_current_SNR_margin();", 1000);
+}
 
+function update_current_SNR_margin(){
+	$.ajax({
+		url: 'ajax_AdslSetting.asp',
+		dataType: 'script',
+		error: function(xhr){
+				setTimeout("update_current_SNR_margin();", 1000);
+			},
+
+		success: function(){
+				if(log_lineState == "up")
+				{
+					document.getElementById("id_sta_adj_xdsl").style.display = "";
+					document.getElementById("id_sta_adj_xdsl").innerHTML = "<#dslsetting_SNR_Margin#>: "+log_SNRMarginDown;
+				}
+				else{
+					document.getElementById("id_sta_adj_xdsl").style.display = "none";
+				}
+
+				setTimeout("update_current_SNR_margin();", 5000);
+			}
+	});
 }
 
 function applyRule(){
@@ -121,19 +144,6 @@ function valid_form(){
 			</tr>
 			<tr>
 				<th>
-					<#dslsetting_disc2#>
-				</th>
-				<td>
-					<select class="input_option" name="dslx_annex">
-						<option value="0" <% nvram_match("dslx_annex", "0", "selected"); %>>ANNEX A</option>
-						<option value="2" <% nvram_match("dslx_annex", "2", "selected"); %>>ANNEX A/L</option>
-						<option value="3" <% nvram_match("dslx_annex", "3", "selected"); %>>ANNEX A/M</option>
-						<option value="4" <% nvram_match("dslx_annex", "4", "selected"); %>>ANNEX A/L/M</option>
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
 					<a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,2);"><#dslsetting_SRA#></a>
 				</th>
 				<td>
@@ -194,6 +204,28 @@ function valid_form(){
 						<option value="304" <% nvram_match("dslx_snrm_offset", "304", "selected"); %>>+13 dB</option>
 						<option value="320" <% nvram_match("dslx_snrm_offset", "320", "selected"); %>>+14 dB</option>
 					</select>
+					<span id="id_sta_adj_xdsl" style="display:none;margin-left:10px;"></span>
+				</td>
+			</tr>
+		</table>
+
+		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="margin-top:10px;">
+			<thead>
+			<tr>
+				<td colspan="2">ADSL Settings</td>
+			</tr>
+			</thead>
+			<tr>
+				<th>
+					<#dslsetting_disc2#>
+				</th>
+				<td>
+					<select class="input_option" name="dslx_annex">
+						<option value="0" <% nvram_match("dslx_annex", "0", "selected"); %>>ANNEX A</option>
+						<option value="2" <% nvram_match("dslx_annex", "2", "selected"); %>>ANNEX A/L</option>
+						<option value="3" <% nvram_match("dslx_annex", "3", "selected"); %>>ANNEX A/M</option>
+						<option value="4" <% nvram_match("dslx_annex", "4", "selected"); %>>ANNEX A/L/M</option>
+					</select>
 				</td>
 			</tr>
 		</table>
@@ -204,6 +236,14 @@ function valid_form(){
 				<td colspan="2">VDSL Settings</td>
 			</tr>
 			</thead>
+			<tr>
+				<th>
+					<#dslsetting_disc2#>
+				</th>
+				<td>
+					<span style="margin-left:4px;color:#FFF;">ANNEX A/B</span>
+				</td>
+			</tr>
 			<tr>
 				<th>
 					VDSL Profile

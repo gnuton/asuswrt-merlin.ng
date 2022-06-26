@@ -1,1 +1,0 @@
-../../TUF-AX3000/www/GameProfile.asp
