@@ -1,1 +1,1 @@
-../../GT-AC5300/www/Main_TrafficMonitor_realtime.asp
+../../FUNCTION/ROG_UI/Main_TrafficMonitor_realtime.asp

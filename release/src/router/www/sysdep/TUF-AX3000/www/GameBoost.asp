@@ -743,7 +743,7 @@ function redirectSite(url){
 													<div style="height: 85px;background-image: url('images/outfox_dark.png');background-size: 90%;background-repeat: no-repeat; background-position: center;"></div>
 												</td>
 												<td style="width:400px;height:120px;">
-													<div style="font-size:16px;color:#949393;padding-left:10px; padding-top: 5px; padding-bottom: 10px;">An optimized gaming network that improves performance by routing your traffic to provide a faster, more stable path to your game’s server. To get an exclusive, free 90-day trial simply register for Outfox and download the application to your PC.</div>
+													<div style="font-size:16px;color:#949393;padding-left:10px; padding-top: 5px; padding-bottom: 10px;"><#Game_Boost_outfox_trial#></div>
 												</td>
 												<td>
 													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="redirectSite(outfox_site)"><#btn_go#></div>
