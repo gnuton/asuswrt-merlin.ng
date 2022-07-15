@@ -19358,6 +19358,15 @@ void setup_leds()
 			eval("wl", "-i", "eth7", "ledbh", "9", "7");
 #elif defined(GTAX6000)
 			eval("wl", "-i", "eth7", "ledbh", "13", "7");
+#elif defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO)
+				eval("wl", "-i", "eth4", "ledbh", "10", "7");
+#elif defined(BCM6750)
+#if defined(RTAX82U) && !defined(RTCONFIG_BCM_MFG)
+				if (!nvram_get_int("LED_order"))
+					eval("wl", "-i", "eth5", "ledbh", "0", "1");
+				else
+#endif
+				eval("wl", "-i", "eth5", "ledbh", "0", "25");
 #endif
 		}
 
