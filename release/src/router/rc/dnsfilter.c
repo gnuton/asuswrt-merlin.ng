@@ -85,10 +85,12 @@ int get_dns_filter(int proto, int mode, dnsf_srv_entry_t *dnsfsrv)
 				strlcpy(dnsfsrv->server1, nvram_safe_get("dnsfilter_custom63"), 46);
 				dnsfsrv->server2[0] = '\0';
 				break;
+#if defined(BCM4912)	// Causes kernel checksum errors on HND 5.02
 			case DNSF_SRV_ROUTER:
 				strlcpy(dnsfsrv->server1, nvram_safe_get("ipv6_rtr_addr"), 46);
 				dnsfsrv->server2[0] = '\0';
 				break;
+#endif
 			default:
 				strlcpy(dnsfsrv->server1, server6_table[mode][0], 46);
 				strlcpy(dnsfsrv->server2, server6_table[mode][1], 46);
@@ -204,7 +206,7 @@ void dnsfilter_settings(FILE *fp) {
 #ifdef RTCONFIG_IPV6
 
 #ifdef HND_ROUTER
-void dnsfilter6_settings(FILE *fp) {
+void dnsfilter6_settings_dnat(FILE *fp) {
 	char *name, *mac, *mode;
 	unsigned char ea[ETHER_ADDR_LEN];
 	char *nv, *nvp, *rule;
@@ -228,9 +230,7 @@ void dnsfilter6_settings(FILE *fp) {
 				continue;
 			dnsmode = atoi(mode);
 			if (dnsmode == DNSF_SRV_UNFILTERED) {
-				fprintf(fp,
-					"-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
-					mac);
+				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j RETURN\n", mac);
 			} else if (get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {
 					fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination [%s]\n",
 						mac, dnsfsrv.server1);
@@ -239,26 +239,25 @@ void dnsfilter6_settings(FILE *fp) {
 
 		free(nv);
 
-		/* Send other queries to the default server */
+		/* Default behaviour */
 		dnsmode = nvram_get_int("dnsfilter_mode");
-		if ((dnsmode != DNSF_SRV_UNFILTERED) && get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {
+		if (dnsmode == DNSF_SRV_UNFILTERED) {
+			return;
+		} else if (get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {	// Default server (if one exists)
 			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination [%s]\n", dnsfsrv.server1);
 		}
 	}
 }
+#endif
 
-#else // Non-HND, so block instead of redirecting
-
-void dnsfilter6_settings(FILE *fp) {
+void dnsfilter6_settings_mangle(FILE *fp) {
 	char *nv, *nvp, *rule;
 	char *name, *mac, *mode;
 	unsigned char ea[ETHER_ADDR_LEN];
 	int dnsmode, count;
 	dnsf_srv_entry_t dnsfsrv;
 
-	fprintf(fp, "-A INPUT -i br+ -p udp -m udp --dport 53 -j DNSFILTERI\n"
-		    "-A INPUT -i br+ -p tcp -m tcp --dport 53 -j DNSFILTERI\n"
-		    "-A FORWARD -i br+ -p udp -m udp --dport 53 -j DNSFILTERF\n"
+	fprintf(fp, "-A FORWARD -i br+ -p udp -m udp --dport 53 -j DNSFILTERF\n"
 		    "-A FORWARD -i br+ -p tcp -m tcp --dport 53 -j DNSFILTERF\n");
 
 #ifdef HND_ROUTER
@@ -274,9 +273,7 @@ void dnsfilter6_settings(FILE *fp) {
 		if (!*mac || !ether_atoe(mac, ea))
 			continue;
 		if (dnsmode == DNSF_SRV_UNFILTERED) {
-			fprintf(fp, "-A DNSFILTERI -m mac --mac-source %s -j ACCEPT\n"
-				    "-A DNSFILTERF -m mac --mac-source %s -j ACCEPT\n",
-					mac, mac);
+			fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -j ACCEPT\n", mac);
 		} else {	// Filtered
 			count = get_dns_filter(AF_INET6, dnsmode, &dnsfsrv);
 			if (count) {
@@ -286,9 +283,7 @@ void dnsfilter6_settings(FILE *fp) {
 				fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -d %s -j ACCEPT\n", mac, dnsfsrv.server2);
 			}
 			// Reject other dnsfsrv for that client
-			fprintf(fp, "-A DNSFILTERI -m mac --mac-source %s -j DROP\n"
-			            "-A DNSFILTERF -m mac --mac-source %s -j DROP\n",
-			            mac, mac);
+			fprintf(fp, "-A DNSFILTERF -m mac --mac-source %s -j DROP\n", mac);
 		}
 	}
 	free(nv);
@@ -298,18 +293,13 @@ void dnsfilter6_settings(FILE *fp) {
 		/* Allow other queries to the default server, and drop the rest */
 		count = get_dns_filter(AF_INET6, dnsmode, &dnsfsrv);
 		if (count) {
-			fprintf(fp, "-A DNSFILTERI -d %s -j ACCEPT\n"
-				    "-A DNSFILTERF -d %s -j ACCEPT\n",
-				dnsfsrv.server1, dnsfsrv.server1);
+			fprintf(fp, "-A DNSFILTERF -d %s -j ACCEPT\n", dnsfsrv.server1);
 		}
 		if (count == 2) {
-			fprintf(fp, "-A DNSFILTERI -d %s -j ACCEPT\n"
-				    "-A DNSFILTERF -d %s -j ACCEPT\n",
-				dnsfsrv.server2, dnsfsrv.server2);
+			fprintf(fp, "-A DNSFILTERF -d %s -j ACCEPT\n", dnsfsrv.server2);
 		}
-		fprintf(fp, "-A DNSFILTERI -j %s\n"
-			    "-A DNSFILTERF -j DROP\n",
-		            (dnsmode == DNSF_SRV_ROUTER ? "ACCEPT" : "DROP"));
+
+		fprintf(fp, "-A DNSFILTERF -j DROP\n");
 	}
 }
 
@@ -366,7 +356,6 @@ void dnsfilter_setup_dnsmasq(FILE *fp) {
 	}
 	free(nv);
 }
-#endif	// HND_ROUTER
 
 
 // Block DOT if the configured server isn't known to support DOT, to prevent bypassing dnsfilter with DOT
