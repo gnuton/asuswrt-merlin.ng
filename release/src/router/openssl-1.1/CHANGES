@@ -7,18 +7,57 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1p and 1.1.1q [5 Jul 2022]
+
+  *) AES OCB mode for 32-bit x86 platforms using the AES-NI assembly optimised
+     implementation would not encrypt the entirety of the data under some
+     circumstances.  This could reveal sixteen bytes of data that was
+     preexisting in the memory that wasn't written.  In the special case of
+     "in place" encryption, sixteen bytes of the plaintext would be revealed.
+
+     Since OpenSSL does not support OCB based cipher suites for TLS and DTLS,
+     they are both unaffected.
+     (CVE-2022-2097)
+     [Alex Chernyakhovsky, David Benjamin, Alejandro Sedeño]
+
+ Changes between 1.1.1o and 1.1.1p [21 Jun 2022]
+
+  *) In addition to the c_rehash shell command injection identified in
+     CVE-2022-1292, further bugs where the c_rehash script does not
+     properly sanitise shell metacharacters to prevent command injection have been
+     fixed.
+
+     When the CVE-2022-1292 was fixed it was not discovered that there
+     are other places in the script where the file names of certificates
+     being hashed were possibly passed to a command executed through the shell.
+
+     This script is distributed by some operating systems in a manner where
+     it is automatically executed.  On such operating systems, an attacker
+     could execute arbitrary commands with the privileges of the script.
+
+     Use of the c_rehash script is considered obsolete and should be replaced
+     by the OpenSSL rehash command line tool.
+     (CVE-2022-2068)
+     [Daniel Fiala, Tomáš Mráz]
+
+  *) When OpenSSL TLS client is connecting without any supported elliptic
+     curves and TLS-1.3 protocol is disabled the connection will no longer fail
+     if a ciphersuite that does not use a key exchange based on elliptic
+     curves can be negotiated.
+     [Tomáš Mráz]
+
  Changes between 1.1.1n and 1.1.1o [3 May 2022]
 
   *) Fixed a bug in the c_rehash script which was not properly sanitising shell
-    metacharacters to prevent command injection.  This script is distributed by
-    some operating systems in a manner where it is automatically executed.  On
-    such operating systems, an attacker could execute arbitrary commands with the
-    privileges of the script.
+     metacharacters to prevent command injection.  This script is distributed
+     by some operating systems in a manner where it is automatically executed.
+     On such operating systems, an attacker could execute arbitrary commands
+     with the privileges of the script.
 
-    Use of the c_rehash script is considered obsolete and should be replaced
-    by the OpenSSL rehash command line tool.
-    (CVE-2022-1292)
-    [Tomáš Mráz]
+     Use of the c_rehash script is considered obsolete and should be replaced
+     by the OpenSSL rehash command line tool.
+     (CVE-2022-1292)
+     [Tomáš Mráz]
 
  Changes between 1.1.1m and 1.1.1n [15 Mar 2022]
 
