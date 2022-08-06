@@ -2,9 +2,12 @@ Asuswrt-Merlin 386/NG Changelog
 ===============================
 
 
-386.07_2-gnuton0 (xx-xxx-xxxx)
+386.07_2-gnuton1 (6-Aug-2022)
   - NEW: Added support for TUF-AX3000
-
+  - UPDATED: Merged with 386_48966 GPL for all models
+  - FIXED: CPU freq in tool page for TUF-AX5400 and RT-AX95Q
+  - FIXED: WiFi insight page for TUF models
+  
 386.7_2 (24-July-2022)
   - UPDATED: openssl to 1.1.1q.
   - UPDATED: RT-AX86U driver + SDK updated to latest upstream version
