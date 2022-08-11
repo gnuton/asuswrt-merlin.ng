@@ -1781,13 +1781,23 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	/* ASUSWRT Parental Control */
 	pc_s *pc_list = NULL;
 	int pc_count;
+	int pc_count2;
 
 	get_all_pc_list(&pc_list);
 	pc_count = count_pc_rules(pc_list, 1);
+	pc_count2 = count_pc_rules(pc_list, 2);
 	free_pc_list(&pc_list);
 	pc_list = NULL;
 
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0){
+	/* pc_block - 20220615
+		1. time-scheduling - BLOCK ALL DEVICES
+		2. time-scheduling - BLOCK
+		3. time-scheduling - TIME
+	*/
+	if (nvram_get_int("MULTIFILTER_BLOCK_ALL") == 1
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count2 > 0)
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0)
+		) {
 		config_blocking_redirect(fp);
 	}
 #endif
@@ -2240,13 +2250,23 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	/* ASUSWRT Parental Control */
 	pc_s *pc_list = NULL;
 	int pc_count;
+	int pc_count2;
 
 	get_all_pc_list(&pc_list);
 	pc_count = count_pc_rules(pc_list, 1);
+	pc_count2 = count_pc_rules(pc_list, 2);
 	free_pc_list(&pc_list);
 	pc_list = NULL;
 
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0){
+	/* pc_block - 20220615
+		1. time-scheduling - BLOCK ALL DEVICES
+		2. time-scheduling - BLOCK
+		3. time-scheduling - TIME
+	*/
+	if (nvram_get_int("MULTIFILTER_BLOCK_ALL") == 1
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count2 > 0)
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0)
+		) {
 		config_blocking_redirect(fp);
 	}
 #endif
@@ -6287,6 +6307,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 		fp = fopen("/tmp/mangle_rules_ipv6.dnsfilter", "w");
 		if (fp != NULL) {
 			fprintf(fp, "*mangle\n"
+			    ":DNSFILTERI - [0:0]\n"
 			    ":DNSFILTERF - [0:0]\n"
 			    ":DNSFILTER_DOT - [0:0]\n");
 
@@ -6496,6 +6517,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		fp = fopen("/tmp/mangle_rules_ipv6.dnsfilter", "w");
 		if (fp != NULL) {
 			fprintf(fp, "*mangle\n"
+				":DNSFILTERI - [0:0]\n"
 				":DNSFILTERF - [0:0]\n"
 				":DNSFILTER_DOT - [0:0]\n");
 
@@ -6835,7 +6857,7 @@ int start_firewall(int wanunit, int lanunit)
 	DIR *dir;
 	struct dirent *file;
 	FILE *fp;
-	char name[NAME_MAX];
+	char name[NAME_MAX * 2];
 	//char logaccept[32], logdrop[32];
 	//oleg patch ~
 	char logaccept[32], logdrop[32];
@@ -6917,7 +6939,7 @@ int start_firewall(int wanunit, int lanunit)
 		while ((file = readdir(dir)) != NULL) {
 			if (strncmp(file->d_name, ".", NAME_MAX) != 0 &&
 			    strncmp(file->d_name, "..", NAME_MAX) != 0) {
-				sprintf(name, "/proc/sys/net/ipv4/conf/%s/rp_filter", file->d_name);
+				snprintf(name, sizeof(name), "/proc/sys/net/ipv4/conf/%s/rp_filter", file->d_name);
 				f_write_string(name, mcast_ifname &&
 					strncmp(file->d_name, mcast_ifname, NAME_MAX) == 0 ? "0" :
 					strncmp(file->d_name, "all", NAME_MAX) == 0 ? "-1" : "1", 0, 0);

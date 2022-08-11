@@ -1293,11 +1293,11 @@ enum led_id {
 	IND_BT,
 	IND_PA,
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	LED_GROUP1_RED,
 	LED_GROUP1_GREEN,
 	LED_GROUP1_BLUE,
-#ifndef TUFAX5400
+#if !defined(TUFAX5400) && !defined(TUFAX5400_V2)
 	LED_GROUP2_RED,
 	LED_GROUP2_GREEN,
 	LED_GROUP2_BLUE,
@@ -1797,7 +1797,8 @@ static inline int dpsta_mode()
 
 static inline int rp_mode()
 {
-	return ((sw_mode() == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 2) && (nvram_get_int("wlc_dpsta") == 1));
+	return ((sw_mode() == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 2) && 
+		(nvram_get_int("wlc_dpsta") == 1 || nvram_get("wlc_dpsta") == NULL));
 }
 
 static inline int is_rp_unit(int unit)
@@ -2325,6 +2326,11 @@ extern void check_mssid_prelink_reset(uint32_t sf);
 extern void unset_selected_channel_info();
 extern int get_unit_by_wlc_bandindex(int bandindex);
 extern int get_wlc_bandindex_by_unit(int unit);
+extern double get_wifi_5G_maxpower();
+extern double get_wifi_5GH_maxpower();
+extern double get_wifi_6G_maxpower();
+extern double get_wifi_maxpower(int band_type);
+extern double get_wifi_tx_maxpower(int band_type);
 #if defined(RTCONFIG_BCMWL6)
 extern int get_wl_sta_list(void);
 extern int get_maxassoc(char *ifname);
@@ -2995,6 +3001,7 @@ extern int is_valid_domainname(const char *name);
 extern char *get_ddns_hostname(void);
 extern int get_ispctrl();
 extern unsigned short get_extend_cap();
+extern void wl_vif_to_subnet(const char *ifname, char *net, int len);
 
 #ifdef RTCONFIG_TOR
 /* scripts.c */
@@ -3812,6 +3819,9 @@ enum {
 	BCM_CLED_BLUE,
 	BCM_CLED_YELLOW,
 	BCM_CLED_WHITE,
+#ifdef RPAX58
+	BCM_CLED_PURPLE,
+#endif
 	BCM_CLED_OFF,
 	BCM_CLED_END
 };
@@ -3835,7 +3845,7 @@ extern void firmware_downgrade_check(uint32_t sf);
 #define ANTLED_SCHEME_RSSI              2
 #endif
 
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 #define LEDG_OFF			0
 #define LEDG_STEADY_MODE		1
 #define LEDG_FADING_REVERSE_MODE	2

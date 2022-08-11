@@ -391,7 +391,7 @@ function initial(){
 	}
 	else{
 
-		if(wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1){
+		if(wan_proto=="v6plus" && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
 			$(".setup_info_icon.https").show();
 			$(".setup_info_icon.https").click(
 				function() {
@@ -416,7 +416,7 @@ function initial(){
 		check_sshd_enable('<% nvram_get("sshd_enable"); %>');
 		document.form.sshd_authkeys.value = document.form.sshd_authkeys.value.replace(/>/gm,"\r\n");
 
-		if(wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1){
+		if(wan_proto=="v6plus" && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
 			$(".setup_info_icon.ssh").show();
 			$(".setup_info_icon.ssh").click(
 				function() {
@@ -532,7 +532,7 @@ function initial(){
 		show_boostkey_desc(<% nvram_get("turbo_mode"); %>);
 	}
 
-	if (based_modelid == "XT12" || based_modelid == "GT-AX6000") {
+	if (based_modelid == "XT12" || based_modelid == "GT-AX6000" || based_modelid == "GT-AXE16000" || based_modelid == "GT-AX11000_PRO") {
 		document.getElementById("jffs_format_tr").style.display = "none";
 /*		document.getElementById("ubifs_format_tr").style.display = ""; */
 	}
@@ -839,7 +839,7 @@ function validForm(){
 			return false;
 		}
 
-		if(wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1 && document.form.sshd_enable.value == 1){
+		if(wan_proto=="v6plus" && s46_ports_check_flag && array_ipv6_s46_ports.length > 1 && document.form.sshd_enable.value == 1){
 			if (!validator.range_s46_ports(document.form.sshd_port, "none")){
 				if(!confirm("The following port related settings may not work properly since the port is not available in current v6plus usable port range. Do you want to continue?")){
 					document.form.sshd_port.focus();
@@ -868,7 +868,7 @@ function validForm(){
 			if (!validator.range(document.form.misc_httpsport_x, 1024, 65535))
 				return false;
 
-			if (wan_proto=="v6plus" && array_ipv6_s46_ports.length > 1){
+			if (wan_proto=="v6plus" && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
 				if (!validator.range_s46_ports(document.form.misc_httpsport_x, "none")){
 					if(!confirm("The following port related settings may not work properly since the port is not available in current v6plus usable port range. Do you want to continue?")){
 						document.form.misc_httpsport_x.focus();
@@ -1013,6 +1013,7 @@ var timezones = [
 	["UTC4_1",	"(GMT-04:00) <#TZ18#>"],
 	["UTC4_2",	"(GMT-04:00) <#TZ18_1#>"],
 	["UTC4DST_2",	"(GMT-04:00) <#TZ19#>"],
+	["UTC4DST_3",	"(GMT-04:00) <#TZ19_1#>"],
 	["NST3.30DST",	"(GMT-03:30) <#TZ20#>"],
 	["EBST3",	"(GMT-03:00) <#TZ21#>"],	//EBST3DST_1
 	["UTC3",	"(GMT-03:00) <#TZ22#>"],

@@ -79,6 +79,11 @@
 #include <lp5523led.h>
 #endif
 
+#ifdef RTCONFIG_BSC_SR
+#include <bcmparams.h>
+#include <wlioctl.h>
+#endif
+
 #ifdef RTCONFIG_CFGSYNC
 #include <cfg_event.h>
 #endif
@@ -215,7 +220,7 @@ static int wifi_sw_old = -1;
 #if defined(RTCONFIG_TURBO_BTN)
 static int g_boost_status[BOOST_MODE_MAX] = { 0 };
 #endif
-#if (defined(RTCONFIG_LED_BTN) || (!defined(RTCONFIG_WIFI_TOG_BTN) && !defined(RTCONFIG_QCA) && !defined(RTCONFIG_WPS_ALLLED_BTN))) && !defined(RTAX82U) && !defined(DSL_AX82U) && !defined(GSAX3000) && !defined(GSAX5400) && !defined(TUFAX5400) && !defined(GTAX6000) && !defined(GT10) && !defined(RTAX82U_V2)
+#if (defined(RTCONFIG_LED_BTN) || (!defined(RTCONFIG_WIFI_TOG_BTN) && !defined(RTCONFIG_QCA) && !defined(RTCONFIG_WPS_ALLLED_BTN))) && !defined(RTAX82U) && !defined(DSL_AX82U) && !defined(GSAX3000) && !defined(GSAX5400) && !defined(TUFAX5400) && !defined(GTAX6000) && !defined(GT10) && !defined(RTAX82U_V2) && !defined(TUFAX5400_V2)
 #if defined(RTCONFIG_QCA)
 static int LED_status_old = 0;
 static int LED_status = 0;
@@ -520,6 +525,7 @@ int init_toggle(void)
 		case MODEL_CTAX56_XD4:
 		case MODEL_RTAX58U:
 		case MODEL_RTAX82U_V2:
+		case MODEL_TUFAX5400_V2:
 		case MODEL_RTAX82_XD6S:
 		case MODEL_RTAX58U_V2:
 		case MODEL_GT10:
@@ -2324,6 +2330,91 @@ void qca_wps_state_check(void)
 #endif /* RTCONFIG_CONCURRENTREPEATER */
 #endif /* RTCONFIG_REALTEK */
 
+#ifdef RTCONFIG_BSC_SR
+int
+wl_sr_config(char *ifname)
+{
+	FILE *fp;
+	int sz = 0;
+        char cmd[32], *ptr = NULL, *val = NULL;
+	char buf[16] = {0};
+	int bsc_dbg = nvram_get_int("bsc_dbg");
+
+        snprintf(cmd, sizeof(cmd), "wl -i %s sr_config options", ifname);
+	//_dprintf("%s, ifname is %s\n", __func__, ifname);
+
+        fp = popen(cmd, "r");
+        if (fp == NULL) {
+                dprintf("Err: shared %s failed to open cmd = [%s] \n", __func__, cmd);
+                return -1;
+        }
+
+ 	sz = sizeof(buf) - 1;
+	if (!fgets(buf, sz, fp)) {
+		if(bsc_dbg) _dprintf("set sr_config option as 1\n");
+		eval("wl", "-i", ifname, "sr_config", "options", "1");
+	} else {
+		buf[strcspn(buf, "\r\n")] = 0;
+		if(*buf && bsc_dbg)
+			_dprintf("sr_config:[%s]\n", buf);
+	} 
+
+        pclose(fp);
+
+        return 1;
+}
+
+#define BSC_INTERVAL 	8
+
+void bsc_sr_check(void)
+{
+        char lan_ifname[16], *lan_ifnames, *ifname, *p;
+        int unit, subunit;
+        char tmp[100], tmp2[100], prefix[] = "wlXXXXXXXXXXXXXX";
+	static int chki = 0;
+	int bsc_interval = nvram_get_int("bsc_interval")?:BSC_INTERVAL;
+	int bsc_dbg = nvram_get_int("bsc_dbg");
+
+	if(chki++ == bsc_interval) {
+		chki = 0;	
+	} else
+		return 0;
+
+        if(bsc_dbg) _dprintf("%s.....(c:%d)\n", __func__, client_mode());
+        snprintf(lan_ifname, sizeof(lan_ifname), "%s", nvram_safe_get("lan_ifname"));
+        if ((lan_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) {
+                p = lan_ifnames;
+                while ((ifname = strsep(&p, " ")) != NULL) {
+                        while (*ifname == ' ') ++ifname;
+                        if (*ifname == 0) break;
+
+                        unit = -1; subunit = -1;
+
+                        // ignore disabled wl vifs
+                        if (strncmp(ifname, "wl", 2) == 0) {
+                                if (get_ifname_unit(ifname, &unit, &subunit) < 0) {
+                                        continue;
+				}
+                        }
+                        // get the instance number of the wl i/f
+                        else if (wl_ioctl(ifname, WLC_GET_INSTANCE, &unit, sizeof(unit))) {
+                                continue;
+			}
+
+			if(nvram_match("disable_sr", "1")) {
+        			if(bsc_dbg) _dprintf("%s disable reset sr conifg\n", __func__);	
+			} else
+                        	wl_sr_config(ifname);
+
+			if(nvram_match("disable_bsc", "1")) {
+        			if(bsc_dbg) _dprintf("%s disable sync bsscolor\n", __func__);	
+			} else
+				record_bsscolor(ifname, unit, subunit, client_mode());
+                }
+        }
+}
+#endif
+
 void service_check(void)
 {
 	static int boot_ready = 0;
@@ -3658,7 +3749,7 @@ void btn_check(void)
 	handle_turbo_button();
 	handle_led_onoff_button();
 
-#if (((defined(RTCONFIG_LED_BTN) || !defined(RTCONFIG_WIFI_TOG_BTN)) && !defined(RTCONFIG_QCA)) && !defined(RTAX82U) && !defined(DSL_AX82U) && !defined(GSAX3000) && !defined(GSAX5400) && !defined(TUFAX5400)) && !defined(GTAX6000) && !defined(GT10) && !defined(RTAX82U_V2)
+#if (((defined(RTCONFIG_LED_BTN) || !defined(RTCONFIG_WIFI_TOG_BTN)) && !defined(RTCONFIG_QCA)) && !defined(RTAX82U) && !defined(DSL_AX82U) && !defined(GSAX3000) && !defined(GSAX5400) && !defined(TUFAX5400)) && !defined(GTAX6000) && !defined(GT10) && !defined(RTAX82U_V2) && !defined(TUFAX5400_V2)
 	LED_status_old = LED_status;
 #if !defined(RTCONFIG_LED_BTN) && !defined(RTCONFIG_WIFI_TOG_BTN)
 	LED_status = nvram_match("btn_ez_radiotoggle", "0") && nvram_match("btn_ez_mode", "1") &&
@@ -3763,12 +3854,15 @@ void btn_check(void)
 		if (LED_status_on)
 #endif
 		{
+#if defined(RTAX86U_PRO)
+			setAllLedNormal();
+#else
 			led_control(LED_POWER, LED_ON);
 
 #if defined(RTAC3200) || defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER)
 #ifdef HND_ROUTER
 #ifndef GTAC2900
-#if defined(RTAX58U_V2) || defined(GTAX6000) || defined(RTAXE7800) || defined(RTAX3000N) || defined(RTAX82U_V2)
+#if defined(RTAX58U_V2) || defined(GTAX6000) || defined(RTAXE7800) || defined(RTAX3000N) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 #ifdef RTAXE7800
 			if (nvram_get_int("wans_extwan"))
 #endif
@@ -3787,10 +3881,10 @@ void btn_check(void)
 #if defined(TUFAX3000_V2) || defined(RTAXE7800)
 			bcm53134_led_control(2);
 #endif
-#ifdef RTCONFIG_FAKE_ETLAN_LED
-			nvram_set_int("etlan_led_reset", 1);
-#else
+#if !defined(RTCONFIG_FAKE_ETLAN_LED) || defined(RTAX86U)
 			setLANLedOn();
+#else
+			nvram_set_int("etlan_led_reset", 1);
 #endif
 #endif
 #else
@@ -3818,8 +3912,6 @@ void btn_check(void)
 				eval("wl", "-i", "eth6", "ledbh", "13", "7");
 #elif defined(GTAXE16000)
 				eval("wl", "-i", "eth7", "ledbh", "13", "7");
-#elif defined(RTAX86U_PRO)
-				eval("wl", "-i", "eth6", "ledbh", "7", "7");
 #elif defined(RTAX92U)
 				eval("wl", "-i", "eth5", "ledbh", "10", "7");
 #elif defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO)
@@ -3878,15 +3970,13 @@ void btn_check(void)
 #elif defined(TUFAX3000_V2)
 				eval("wl", "-i", "eth6", "ledbh", "0", "25");
 #elif defined(RTAXE7800)
-				eval("wl", "-i", "eth7", "ledbh", "13", "7");
+				eval("wl", "-i", "eth7", "ledbh", "15", "7");
 #elif defined(GTAX6000)
 				eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #elif defined(GTAX11000_PRO)
 				eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #elif defined(GTAXE16000)
 				eval("wl", "-i", "eth8", "ledbh", "13", "7");
-#elif defined(RTAX86U_PRO)
-				eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #elif defined(RTAX82_XD6S)
 				eval("wl", "-i", "eth3", "ledbh", "15", "7");
 #elif defined(BCM6750)
@@ -3896,7 +3986,7 @@ void btn_check(void)
 					kill_pidfile_s("/var/run/ledbtn.pid", SIGUSR1);
 				} else
 #endif
-#ifdef RTAX82U_V2
+#if defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 				eval("wl", "-i", "eth6", "ledbh", "13", "7");
 #else
 				eval("wl", "-i", "eth6", "ledbh", "15", "7");
@@ -3964,7 +4054,7 @@ void btn_check(void)
 			led_control(LED_LOGO, LED_ON);
 #endif
 			kill_pidfile_s("/var/run/usbled.pid", SIGTSTP); // inform usbled to reset status
-#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 			kill_pidfile_s("/var/run/ledg.pid", SIGTSTP);
 #endif
 #ifdef GTAX6000
@@ -3982,6 +4072,7 @@ void btn_check(void)
 #if defined(XT12) || defined(ET12)
 			bcm_cled_ctrl_single_white(BCM_CLED_WHITE, BCM_CLED_STEADY_NOBLINK);
 #endif
+#endif // RTAX86U_PRO
 		}
 		else
 			setAllLedOff();
@@ -4808,7 +4899,7 @@ end_of_wl_sched:
 			if (expire)
 			{
 #if defined(RTCONFIG_AMAS_WGN) && defined(RTCONFIG_QCA)
-				clear_wgn_wloff_vifs(word);
+				clear_wgn_wloff_vifs(wif_to_vif(word));
 #endif				
 				if (expire <= 30)
 				{
@@ -4846,7 +4937,7 @@ end_of_wl_sched:
 					}
 #endif
 #ifdef RTCONFIG_AMAS_WGN
-					p_vifs += snprintf(p_vifs, sizeof(wloff_vifs) - (p_vifs - wloff_vifs), "%s ", word);
+					p_vifs += snprintf(p_vifs, sizeof(wloff_vifs) - (p_vifs - wloff_vifs), "%s ", wif_to_vif(word));
 #endif						
 				}
 				else
@@ -4867,12 +4958,14 @@ end_of_wl_sched:
 #ifdef RTCONFIG_AMAS_WGN
 		if (strlen(wloff_vifs) > 0)
 		{
+			if (wloff_vifs[strlen(wloff_vifs)-1] == ' ')
+				wloff_vifs[strlen(wloff_vifs)-1] = '\0';
 			nvram_set("wgn_wloff_vifs", wloff_vifs);
-	        	/* update cfg_ver info */
-	        	srand(time(NULL));
-	        	snprintf(cfgVer, sizeof(cfgVer), "%d%d", rand(), rand());
-	        	nvram_set("cfg_ver", cfgVer);
-	        	nvram_commit();
+	        /* update cfg_ver info */
+	        srand(time(NULL));
+	        snprintf(cfgVer, sizeof(cfgVer), "%d%d", rand(), rand());
+	        nvram_set("cfg_ver", cfgVer);
+	        nvram_commit();
 			kill_pidfile_s("/var/run/cfg_server.pid", SIGUSR2);			
 		}		
 #endif
@@ -6180,6 +6273,7 @@ void led_check(int sig)
 		case MODEL_CTAX56_XD4:
 		case MODEL_RTAX58U:
 		case MODEL_RTAX82U_V2:
+		case MODEL_TUFAX5400_V2:
 		case MODEL_RTAX58U_V2:
 		case MODEL_GT10:
 		case MODEL_RTAXE7800:
@@ -9482,6 +9576,9 @@ void watchdog(int sig)
 #endif
 	}
 
+#ifdef RTCONFIG_BSC_SR
+	bsc_sr_check();
+#endif
 #ifdef RTAC88U
 	rtkl_check();
 #endif
@@ -9880,13 +9977,18 @@ watchdog_main(int argc, char *argv[])
 	if(ATE_BRCM_FACTORY_MODE()) {
 		_dprintf("watchdog turn on factory mode led\n");
 #ifdef RPAX58
-                eval("sw", "0xff803014", "0x58a0");
+                eval("sw", "0xff803014", "0xd8a0");
 #else
                 eval("sw", "0xff803014", "0xffffa75f");
 #endif
                 eval("sw", "0xff803018", "0x00001000");
 		_bcm_cled_ctrl(BCM_CLED_BLUE, BCM_CLED_STEADY_NOBLINK);
+#ifdef RPAX58
+                eval("sw", "0xFF80301c", "0xd8a0");
+#else
                 eval("sw", "0xFF80301c", "0x58a0");
+#endif
+
 	}
 #endif
 

@@ -384,7 +384,7 @@ export SRCBASE_FW := $(SRCBASE)/../../43684/src
 export SRCBASE_SYS := $(SRCBASE_DHD)
 export DHDAP_BUILD_TYPE := ram
 export CONFIG_MBO_AP=y
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AX11000 GT-AXE11000 RT-AX95Q DSL-AX82U))
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AX11000 GT-AXE11000 RT-AX95Q DSL-AX82U RT-AX88U))
 export BUILD_43684_COMBO := y
 else ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-AX86U))
 export BUILD_43684b0 := y
@@ -1641,6 +1641,7 @@ obj-$(HND_ROUTER) += bpmctl
 obj-$(HND_ROUTER) += dnsspoof
 ifeq ($(RTCONFIG_HND_ROUTER_AX_6756),y)
 obj-$(RTCONFIG_SECUREBOOT) += sotpctl
+obj-$(RTCONFIG_SECUREBOOT) += fscryptctl
 endif
 obj-$(HND_ROUTER) += ethctl
 obj-$(HND_ROUTER) += ethctl_lib
@@ -4434,7 +4435,7 @@ inadyn/Makefile: inadyn/configure
 		confuse_LIBS="-L$(STAGEDIR)/usr/lib -lconfuse" \
 		OpenSSL_CFLAGS="-I$(STAGEDIR)/usr/include" \
 		OpenSSL_LIBS="-L$(STAGEDIR)/usr/lib -lcrypto -lssl $(if $(RTCONFIG_OPENSSL11),-lpthread,)" \
-		CFLAGS="-Wall -Os -I$(TOP)/shared -I$(SRCBASE)/include -DASUSWRT $(if $(RTCONFIG_IPV6_DISABLED),-DUSE_IPV6,) $(if $(RTCONFIG_LETSENCRYPT),-DASUSWRT_LE,)  $(if $(RTCONFIG_ASUSDDNS_ACCOUNT_BASE),-DRTCONFIG_ASUSDDNS_ACCOUNT_BASE,) \
+		CFLAGS="-Wall -Os -I$(TOP)/shared -I$(SRCBASE)/include -DASUSWRT $(if $(RTCONFIG_IPV6),-DUSE_IPV6,) $(if $(RTCONFIG_LETSENCRYPT),-DASUSWRT_LE,)  $(if $(RTCONFIG_ASUSDDNS_ACCOUNT_BASE),-DRTCONFIG_ASUSDDNS_ACCOUNT_BASE,) \
 			-I$(STAGEDIR)/usr/include  -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
 		LDFLAGS="-L$(TOP_PLATFORM)/nvram$(BCMEX)$(EX7) -L$(TOP)/shared $(EXTRA_NV_LDFLAGS) $(if $(BCM_502L07P2),-L$(TOP_PLATFORM)/ethctl_lib) \
 			 -L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(LDFLAGS) $(EXTRALDFLAGS)" \
@@ -6515,7 +6516,7 @@ libssh2-stage:
 	@$(SEP)
 	@$(MAKE) libssh2-1.9.0-stage
 
-libssh2/Makefile:
+libssh2-1.9.0/Makefile:
 	@$(SEP)
 	cd libssh2-1.9.0 && autoreconf -fi && $(CONFIGURE) --prefix=/usr CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) --enable-shared --enable-static \
 	$(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),--with-libssl-prefix=$(STAGEDIR)/usr,--without-openssl) \
@@ -6526,7 +6527,7 @@ libssh2/Makefile:
 	LDFLAGS="-ldl -Wl,-rpath=$(STAGEDIR)/usr/lib,--gc-sections $(LDFLAGS) -L$(STAGEDIR)/usr/lib -lz -L$(SRCBASE)/router/openssl -lcrypto -L$(TOP)/libgcrypt-1.5.1/src/.libs" && \
 	LIBS="-lcrypto (if $(RTCONFIG_OPENSSL11),-lpthread,) -fPIC" 
 
-libssh2: libgcrypt-1.5.1 zlib libssh2/Makefile
+libssh2: libgcrypt-1.5.1 zlib libssh2-1.9.0/Makefile
 	@$(SEP)
 	$(MAKE) -j 8 -C libssh2-1.9.0 && $(MAKE) $@-stage
 
@@ -6539,7 +6540,7 @@ libssh2-install:
 	rm -f libssh2.so.1 && ln -sf libssh2.so.1.0.1 libssh2.so.1
 
 libssh2-clean:
-	cd libssh2-1.9.0 && make clean
+	cd libssh2-1.9.0 && make distclean
 
 #libcurl
 curl/configure:
@@ -6565,8 +6566,10 @@ curl/Makefile: curl/configure
 		--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
 		CFLAGS="-Os -Wall -ffunction-sections -fdata-sections" \
 		CPPFLAGS="-I$(STAGEDIR)/usr/include" \
-		LDFLAGS="-Wl$(if $(RTCONFIG_TR069),$(comma)-rpath=$(STAGEDIR)/usr/lib,),--gc-sections $(LDFLAGS) -L$(STAGEDIR)/usr/lib \
-		$(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),-L$(TOP)/openssl,)" \
+		comma="," \
+		LDFLAGS="-Wl$(if $(RTCONFIG_TR069),$(comma)-rpath-link=$(STAGEDIR)/usr/lib,),--gc-sections \
+			   -Wl$(if $(RTCONFIG_TR069),$(comma)-rpath=$(STAGEDIR)/usr/lib,),--gc-sections \
+			   $(LDFLAGS) -L$(STAGEDIR)/usr/lib" \
 		LIBS="-ldl $(if $(RTCONFIG_OPENSSL11),-lpthread,) \
 			   $(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),-lcrypto -lssl,) \
 			   $(if $(RTCONFIG_MBEDTLS),-lmbedcrypto -lmbedx509 -lmbedtls,) \
@@ -7653,7 +7656,7 @@ libical-2.0.0: libical-2.0.0/Makefile
 	$(MAKE) -C $@ && $(MAKE) $@-stage
 ifeq ($(MUSL64),y)
 	@install -d $(STAGEDIR)/usr/lib
-	@cp -af $(STAGEDIR)/usr/lib64/* $(STAGEDIR)/usr/lib
+	-@cp -af $(STAGEDIR)/usr/lib64/* $(STAGEDIR)/usr/lib
 endif
 
 libical-2.0.0-clean:
@@ -8738,6 +8741,15 @@ endif
 
 .PHONY : sotpctl
 
+ifneq ($(PREBUILT_BCMBIN),1)
+fscryptctl:
+else
+fscryptctl:
+endif
+	$(eval TOPX_DIR:=$(firstword $(wildcard $(TOP_PLATFORM)/$@) $(wildcard $@)))
+	$(MAKE) -C $(TOPX_DIR)
+
+.PHONY : fscryptctl
 
 ifneq ($(PREBUILT_BCMBIN),1)
 fcctl: fcctl_lib

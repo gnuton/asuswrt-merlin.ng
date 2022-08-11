@@ -1612,9 +1612,14 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 			update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_SYSTEM_ERR);
 			return;
 		}
-#if defined(TUFAX3000_V2)
+#if defined(TUFAX3000_V2) || defined(RTAXE7800)
 		if (!strcmp(wan_ifname, "eth1"))
 			doSystem("ethswctl -c wan -i %s -o %s", wan_ifname, "enable");
+#endif
+#if defined(XT8PRO) || defined(ET8PRO) || defined(XT8_V2)
+		if (!strcmp(wan_ifname, "eth3")){
+			doSystem("ethswctl -c wan -i %s -o %s", wan_ifname, "enable");
+		}
 #endif
 #ifdef RTCONFIG_IPV6
 #if (defined(RTAX82_XD6) || defined(RTAX82_XD6S))
@@ -2604,11 +2609,6 @@ int update_resolvconf(void)
 #endif
 	}
 
-/* Add DNS from VPN clients - add at the end since config is read backward by dnsmasq */
-#if defined(RTCONFIG_OPENVPN) && !defined(RTCONFIG_VPN_FUSION)
-	write_ovpn_resolv_dnsmasq(fp_servers);
-#endif
-
 #ifdef RTCONFIG_YANDEXDNS
 	if (yadns_mode != YADNS_DISABLED) {
 		char *server[2];
@@ -2617,15 +2617,21 @@ int update_resolvconf(void)
 			fprintf(fp_servers, "server=%s\n", server[unit]);
 			fprintf(fp_servers, "server=%s#%u\n", server[unit], YADNS_DNSPORT);
 		}
-	} else
+	}
 #endif
 #ifdef RTCONFIG_DNSPRIVACY
 	if (dnspriv_enable) {
 		if (!nvram_get_int("dns_local_cache"))
 			fprintf(fp, "nameserver %s\n", "127.0.1.1");
 		fprintf(fp_servers, "server=%s\n", "127.0.1.1");
-	} else
+	}
 #endif
+
+/* Add DNS from VPN clients - add at the end since config is read backward by dnsmasq */
+#if defined(RTCONFIG_OPENVPN) && !defined(RTCONFIG_VPN_FUSION)
+	write_ovpn_resolv_dnsmasq(fp_servers);
+#endif
+
 #if (defined(RTAX82_XD6) || defined(RTAX82_XD6S))
 NOIP:
 #endif

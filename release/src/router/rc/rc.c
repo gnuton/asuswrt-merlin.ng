@@ -68,6 +68,11 @@ typedef enum cmds_e {
 extern uint64_t hnd_ethswctl(ecmd_t act, unsigned int val, int len, int wr, unsigned long long regdata);
 #endif
 
+#if defined(CONFIG_BCMWL5)
+double wl_get_txpwr_target_max(char *name);
+double get_wifi_maxpower(int target_unit);
+#endif
+
 // led_str_ctrl
 enum led_id get_led_id(const char *led_str)
 {
@@ -906,7 +911,7 @@ static int rctest_main(int argc, char *argv[])
 		else if (strcmp(argv[1], "gpior") == 0) {
 			printf("%d\n", get_gpio(atoi(argv[2])));
 		}
-#if defined(RTCONFIG_HND_ROUTER_AX_6710) || defined(RTAX58U) || defined(TUFAX3000) || defined(TUFAX5400) || defined(RTAX82U) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(GSAX3000) || defined(GSAX5400) || defined(BCM6756) || defined(GTAX6000) || defined(RTAX86U_PRO) || defined(BCM6855) || defined(RTAX82U_V2)
+#if defined(RTCONFIG_HND_ROUTER_AX_6710) || defined(RTAX58U) || defined(TUFAX3000) || defined(TUFAX5400) || defined(RTAX82U) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(GSAX3000) || defined(GSAX5400) || defined(BCM6756) || defined(GTAX6000) || defined(RTAX86U_PRO) || defined(BCM6855) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 		else if (strcmp(argv[1], "gpio2r") == 0) {
 			printf("%d\n", get_gpio2(atoi(argv[2])));
 		}
@@ -972,17 +977,15 @@ static int rctest_main(int argc, char *argv[])
 			}
 		}
 #endif
+#ifdef RTCONFIG_COMFW
 		else if (strcmp(argv[1], "dump_models") == 0) {
 			int i, cfd = 0;
-#ifdef RTCONFIG_COMFW
 			cfd = argv[2]?atoi(argv[2]):0;
-#endif
 
 			for(i=1; i<MODEL_MAX; ++i) {
 				_dprintf("%s: %d : %d\n", asus_models_str[i], i, cfd ? get_cf_id(i, NULL) : 0);
 			}		
 		}
-#ifdef RTCONFIG_COMFW
 		else if (strcmp(argv[1], "dump_cfid_byname") == 0) {
 			dump_cfid_from_modellist();
 		}
@@ -1000,6 +1003,24 @@ static int rctest_main(int argc, char *argv[])
 
 			if(target)
 				_dprintf("chk target(%d)'s cfid=%d\n", target, get_cf_id(target, NULL));
+		}
+#endif
+#if defined(CONFIG_BCMWL5)
+		else if (strcmp(argv[1], "txpwr_max") == 0) {
+			char *wlif = argv[2];
+			double max_txpwr;
+
+			max_txpwr = (double)wl_get_txpwr_target_max(wlif);
+
+			_dprintf("Chk txpwr_target_max w/ %s is %f .\n", wlif, max_txpwr);
+		}
+		else if (strcmp(argv[1], "txpwr_max_band") == 0) {
+			int unit = atoi(argv[2]);
+			double max_txpwr;
+
+			max_txpwr = (double)get_wifi_maxpower(unit);
+
+			_dprintf("chk txpwr_target_max of unit-%d is %f ...\n", unit, max_txpwr);
 		}
 #endif
 		else {
@@ -1794,7 +1815,7 @@ static const applets_t applets[] = {
 	{ "firmware_enc_crc",		firmware_enc_crc_main		},
 	{ "fw_check",			fw_check_main			},
 #endif
-#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	{ "ledg",			ledg_main			},
 	{ "ledbtn",			ledbtn_main			},
 #endif
