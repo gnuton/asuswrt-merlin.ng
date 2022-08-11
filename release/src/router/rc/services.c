@@ -4095,6 +4095,7 @@ ddns_updated_main(int argc, char *argv[])
 	nvram_set("ddns_updated", "1");
 
 //	logmessage("ddns", "ddns update ok");
+	nvram_set("ddns_check_retry", "10"); //Reset DDNS Retry
 
 #ifdef RTCONFIG_LETSENCRYPT
 	if (nvram_match("le_rc_notify", "1")) {
@@ -4176,7 +4177,7 @@ start_ddns(char *caller)
 	FILE *fp;
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_ip, *wan_ifname;
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 	char ip6_addr[INET6_ADDRSTRLEN] = {0};
 #endif
 	char *server, *user, *passwd, *host, *service;
@@ -4186,9 +4187,10 @@ start_ddns(char *caller)
 	int realip;
 #endif
 	char cache_path[512] = {0};
-	int wild, ret = -1;
+	int wild, ret = -1, wan_public = 0;
 	int unit, asus_ddns = 0;
 	pid_t pid;
+	int ddns_check_retry = nvram_get_int("ddns_check_retry");
 
 	if (!is_routing_enabled())
 		return 0;
@@ -4211,32 +4213,13 @@ start_ddns(char *caller)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
+				logmessage("ddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
 				return -2;
 			}
 			unit = u;
 		}
 	}
 #endif
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
-	wan_ifname = get_wan_ifname(unit);
-
-	if (!wan_ip || inet_addr_(wan_ip) == INADDR_ANY) {
-		logmessage("ddns", "WAN IP is empty.");
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code_chk", "ddns_query");
-		return -1;
-	}
-#ifdef RTCONFIG_IPV6_DISABLED
-	if (ipv6_enabled()) {
-		if (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0) {
-			logmessage("start_ddns", "%s has not yet obtained an ipv6 address", wan_ifname);
-		}
-	}
-#endif
-
 	server = nvram_safe_get("ddns_server_x");
 	user = nvram_safe_get("ddns_username_x");
 	passwd = nvram_safe_get("ddns_passwd_x");
@@ -4246,25 +4229,65 @@ start_ddns(char *caller)
 	realip = nvram_get_int("ddns_realip_x");
 #endif
 
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+#if defined(RTCONFIG_INADYN) && defined(RTCONFIG_GETREALIP)
+	if (realip && (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2)) {
+		wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+	}
+	else
+#endif
+	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+	wan_ifname = get_wan_ifname(unit);
+
+	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
+		logmessage("ddns", "WAN IP is empty.(%d)", ddns_check_retry);
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.(%d)", wan_ifname, ddns_check_retry);
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#endif
+
+	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
+	if (
+#ifdef RTCONFIG_INADYN
+		realip == 0 &&
+#endif
+		wan_public && !nvram_get_int("ddns_ipv6_update")) {
+		logmessage("ddns", "use Private WAN IP (%s).(%d)", wan_ip, ddns_check_retry);
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "299");
+		nvram_set("ddns_return_code_chk", "299");
+		return -1;
+	}
+
 #ifndef RTCONFIG_INADYN
 	snprintf(cache_path, sizeof(cache_path), "/tmp/ddns.cache");
 #else
 	snprintf(cache_path, sizeof(cache_path), "/var/cache/inadyn/%s.cache", host);
 #endif
 
-	if (
-#ifdef RTCONFIG_INADYN
-		!realip &&
-#endif
-		inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
+	if (inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
 	) {
-		logmessage("start_ddns", "IP address, server and hostname have not changed since the last update.");
+		logmessage("ddns", "IP address, server and hostname have not changed since the last update.");
 		return -1;
 	}
 
@@ -4346,7 +4369,7 @@ start_ddns(char *caller)
 	else if (strcmp(server, "WWW.ORAY.COM") == 0) {
 		service = "peanuthull", asus_ddns = 2;
 	} else {
-		logmessage("start_ddns", "Error ddns server name: %s\n", server);
+		logmessage("ddns", "Error ddns server name: %s\n", server);
 		return 0;
 	}
 
@@ -4356,11 +4379,11 @@ start_ddns(char *caller)
 
 	/* Show WAN unit used by ddns client to console and syslog. */
 	_dprintf("start_ddns update %s %s, wan_unit %d\n", server, service, unit);
-	logmessage("start_ddns", "update %s %s, wan_unit %d\n", server, service, unit);
+	logmessage("ddns", "update %s %s, wan_unit %d\n", server, service, unit);
 
 	/* MAX Retry Count mechanism */
 	if (caller == NULL) { // not from watchdog
-		//logmessage("start_ddns", "Reset DDNS Retry.\n");
+		//logmessage("ddns", "Reset DDNS Retry.\n");
 		nvram_set("ddns_check_retry", "10");
 	}
 
@@ -4384,17 +4407,17 @@ start_ddns(char *caller)
 	unlink(cache_path);
 	nvram_unset("ddns_cache");
 	nvram_unset("ddns_ipaddr");
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 	nvram_unset("ddns_ipv6_ipaddr");
 #endif
 	nvram_unset("ddns_status");
 	nvram_unset("ddns_updated");
-	logmessage("start_ddns", "Clear ddns cache.");
+	logmessage("ddns", "Clear ddns cache.");
 #else
 	if ((!nvram_match("ddns_server_x_old", "") && strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) != 0)
 		|| (!nvram_match("ddns_hostname_old", "") && strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) != 0)
 		|| (inet_addr_(wan_ip) != inet_addr_(nvram_safe_get("ddns_ipaddr")))
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		|| (!nvram_match("ddns_ipv6_ipaddr", ip6_addr))
 #endif
 		|| (!f_exists(cache_path)) /* Forced to restart DDNS */
@@ -4402,12 +4425,12 @@ start_ddns(char *caller)
 		system("rm -f /var/cache/inadyn/*.cache");
 		nvram_unset("ddns_cache");
 		nvram_unset("ddns_ipaddr");
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		nvram_unset("ddns_ipv6_ipaddr");
 #endif
 		nvram_unset("ddns_status");
 		nvram_unset("ddns_updated");
-		logmessage("start_ddns", "Clear ddns cache.");
+		logmessage("ddns", "Clear ddns cache.");
 	}
 #endif
 
@@ -4522,8 +4545,7 @@ start_ddns(char *caller)
 				unlink(cache_path);
 				nvram_set("ddns_act", "update");
 			}
-			int ddns_check_retry = nvram_get_int("ddns_check_retry");
-			logmessage("start_ddns", "Start Inadyn(%d).\n", ddns_check_retry);
+			logmessage("ddns", "Start Inadyn(%d).\n", ddns_check_retry);
 			ret = _eval(inadyn_argv, NULL, 0, &pid);
 		}
 	} else {	// Custom DDNS
@@ -4570,7 +4592,7 @@ asusddns_reg_domain(int reg)
 	FILE *fp;
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_ip, *wan_ifname;
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 	char ip6_addr[INET6_ADDRSTRLEN] = {0};
 #endif
 #ifndef RTCONFIG_INADYN
@@ -4580,7 +4602,7 @@ asusddns_reg_domain(int reg)
 	int realip;
 #endif
 	char cache_path[512] = {0};
-	int unit, ret = -1;
+	int unit, ret = -1, wan_public = 0;
 
 	if (!is_routing_enabled())
 		return 0;
@@ -4601,7 +4623,7 @@ asusddns_reg_domain(int reg)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
+				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
 				return -2;
 			}
 
@@ -4610,32 +4632,52 @@ asusddns_reg_domain(int reg)
 	}
 #endif
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
-	wan_ifname = get_wan_ifname(unit);
-
-	if (!wan_ip || inet_addr_(wan_ip) == INADDR_ANY) {
-		logmessage("ddns", "WAN IP is empty.");
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code_chk", "ddns_query");
-		return -1;
-	}
-#ifdef RTCONFIG_IPV6_DISABLED
-	if (ipv6_enabled()) {
-		if (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0) {
-			logmessage("asusddns", "%s has not yet obtained an ipv6 address", wan_ifname);
-			/* Trigger watchdog when start fails */
-			nvram_unset("ddns_updated");
-			nvram_set("ddns_return_code_chk", "ddns_query");
-			return -1;
-		}
-	}
-#endif
-
 #ifdef RTCONFIG_INADYN
 	realip = nvram_get_int("ddns_realip_x");
 #endif
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+#if defined(RTCONFIG_INADYN) && defined(RTCONFIG_GETREALIP)
+	if (realip && (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2))
+		wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+	else
+#endif
+	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+	wan_ifname = get_wan_ifname(unit);
+
+	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
+		logmessage("asusddns", "WAN IP is empty.");
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("asusddns", "%s has not yet obtained an WAN IPv6 address", wan_ifname);
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#endif
+
+	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
+	if (
+#ifdef RTCONFIG_INADYN
+		realip == 0 &&
+#endif
+		wan_public && !nvram_get_int("ddns_ipv6_update")) {
+		logmessage("asusddns", "use Private WAN IP (%s).", wan_ip);
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "299");
+		nvram_set("ddns_return_code_chk", "299");
+		return -1;
+	}
 
 #ifndef RTCONFIG_INADYN
 	snprintf(cache_path, sizeof(cache_path), "/tmp/ddns.cache");
@@ -4647,14 +4689,10 @@ asusddns_reg_domain(int reg)
 	// update when ipaddr!= ipaddr in cache.
 	// nvram ddns_cache, the same with /tmp/ddns.cache
 
-	if (
-#ifdef RTCONFIG_INADYN
-		!realip &&
-#endif
-		inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
+	if (inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
@@ -4683,7 +4721,7 @@ asusddns_reg_domain(int reg)
 	if ((!nvram_match("ddns_server_x_old", "") && strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) != 0)
 		|| (!nvram_match("ddns_hostname_old", "") && strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) != 0)
 		|| (inet_addr_(wan_ip) != inet_addr_(nvram_safe_get("ddns_ipaddr")))
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		|| (!nvram_match("ddns_ipv6_ipaddr", ip6_addr))
 #endif
 	) {
@@ -4805,7 +4843,7 @@ asusddns_unregister(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
+				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
 				return -2;
 			}
 			unit = u;
@@ -5320,7 +5358,7 @@ mcpd_conf(void)
 	   to enable mcpd bring up							*/
 	if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") > 0 &&
 		nvram_get_int("switch_stb_x") <= 6 && !nvram_match("switch_wantag", "free")) {
-		if (model == MODEL_RTAX58U || model == MODEL_RTAX82U_V2)
+		if (model == MODEL_RTAX58U || model == MODEL_RTAX82U_V2 || model == MODEL_TUFAX5400_V2)
 			proxy_ifname = "eth4.v0";
 		else if (model == MODEL_RTAX82_XD6S)
 			proxy_ifname = "eth1.v0";
@@ -10441,7 +10479,7 @@ start_services(void)
 #else
 	start_haveged();
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	start_ledg();
 	start_ledbtn();
 #endif
@@ -11105,7 +11143,7 @@ stop_services(void)
 #ifdef GTAX6000
 	stop_antled();
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	stop_ledg();
 	stop_ledbtn();
 #endif
@@ -11212,7 +11250,7 @@ stop_services_mfg(void)
 #ifdef GTAX6000
 	stop_antled();
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	stop_ledg();
 	stop_ledbtn();
 #endif
@@ -11389,6 +11427,12 @@ stop_services_mfg(void)
 #endif
 #ifdef RTCONFIG_NETOOL
 	stop_netool();
+#endif
+#ifdef HND_ROUTER
+	//stop_jitterentropy();
+#endif
+#ifdef RTCONFIG_CONNDIAG
+	stop_conn_diag();
 #endif
 }
 
@@ -12182,7 +12226,7 @@ void restore_config_before_firmware_downgrade()
 #endif
 }
 
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 int
 start_ledg(void)
 {
@@ -13450,7 +13494,8 @@ script_allnet:
 #ifdef RTCONFIG_CONNDIAG
 			stop_conn_diag();
 #endif
-			stop_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				stop_cfgsync();
 #endif
 #ifdef RTCONFIG_CAPTIVE_PORTAL
 			stop_chilli();
@@ -13597,7 +13642,8 @@ script_allnet:
 #endif
 #endif
 #ifdef RTCONFIG_CFGSYNC
-			start_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				start_cfgsync();
 #ifdef RTCONFIG_CONNDIAG
 			start_conn_diag();
 #endif
@@ -13681,7 +13727,8 @@ script_allnet:
 #ifdef RTCONFIG_CONNDIAG
 			stop_conn_diag();
 #endif
-			stop_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				stop_cfgsync();
 #endif
 			stop_wan();
 			stop_lan();
@@ -13809,7 +13856,8 @@ script_allnet:
 #endif
 #endif
 #ifdef RTCONFIG_CFGSYNC
-			start_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				start_cfgsync();
 #ifdef RTCONFIG_CONNDIAG
 			start_conn_diag();
 #endif
@@ -13933,7 +13981,8 @@ script_allnet:
 #ifdef RTCONFIG_CONNDIAG
 			stop_conn_diag();
 #endif
-			stop_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				stop_cfgsync();
 #endif
 #if defined(RTCONFIG_AMAS)
 			stop_amas_lib();
@@ -14080,7 +14129,8 @@ script_allnet:
 			start_plchost();
 #endif
 #ifdef RTCONFIG_CFGSYNC
-			start_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				start_cfgsync();
 #ifdef RTCONFIG_CONNDIAG
 			start_conn_diag();
 #endif
@@ -14625,6 +14675,17 @@ check_ddr_done:
 		}
 	}
 #endif
+#ifdef RTCONFIG_TUNNEL
+	else if (strcmp(script, "aae") == 0 || strcmp(script, "mastiff") == 0)
+	{
+		if(action&RC_SERVICE_STOP){
+			stop_mastiff();
+		}
+		if(action&RC_SERVICE_START) {
+			start_mastiff();
+		}
+	}
+#endif
 #ifdef RTCONFIG_USB
 	else if (strcmp(script, "nasapps") == 0)
 	{
@@ -14825,17 +14886,6 @@ check_ddr_done:
 		start_upnp();
 
 	}
-#ifdef RTCONFIG_TUNNEL
-	else if (strcmp(script, "aae") == 0 || strcmp(script, "mastiff") == 0)
-	{
-		if(action&RC_SERVICE_STOP){
-			stop_mastiff();
-		}
-		if(action&RC_SERVICE_START) {
-			start_mastiff();
-		}
-	}
-#endif
 
 //#endif
 //#ifdef RTCONFIG_CLOUDSYNC
@@ -15954,6 +16004,8 @@ check_ddr_done:
 #endif
 			) {
 				nvram_set_int("amesh_wps_enr", 1);
+				snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+				nvram_set(strcat_r(prefix, "mfp", tmp), "1");
 #ifdef RTCONFIG_HND_ROUTER_AX
 				stop_acsd();
 				stop_wps();
@@ -15970,7 +16022,6 @@ check_ddr_done:
 #else
 				char ifname[IFNAMSIZ] = { 0 };
 
-				snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #if defined(RTCONFIG_BCM4708) || defined(RTCONFIG_BCM_7114)  || defined(RTCONFIG_HND_ROUTER)
 				nvram_set(strcat_r(prefix, "mode", tmp), "wet");
 #else
@@ -17384,6 +17435,14 @@ start_write_smb_conf();
 		}
         }
 #endif
+#ifdef RTAXE7800
+	else if (strcmp(script, "addif_extwan") == 0)
+	{
+#ifndef RTCONFIG_BCM_MFG
+		eval("brctl", "addif", nvram_safe_get("lan_ifname"), "eth1");
+#endif
+	}
+#endif
 #if defined(RTCONFIG_HND_ROUTER_AX)
 	else if (strcmp(script, "cable_media") == 0)
         {
@@ -17452,7 +17511,7 @@ start_write_smb_conf();
 		if (action & RC_SERVICE_STOP) stop_watchdog();
 		if (action & RC_SERVICE_START) start_watchdog();
 	}
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	else if (strcmp(script, "ledg") == 0)
 	{
 		if (action & RC_SERVICE_STOP) stop_ledg();
@@ -19021,7 +19080,14 @@ void start_pc_block(void)
 
 	get_all_pc_list(&pc_list);
 
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules(pc_list, 1) > 0)
+	/* pc_block - 20220615
+		1. time-scheduling - BLOCK ALL DEVICES
+		2. time-scheduling - BLOCK
+		3. time-scheduling - TIME
+	*/
+	if (nvram_get_int("MULTIFILTER_BLOCK_ALL") == 1
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules(pc_list, 2))
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules(pc_list, 1)))
 		_eval(pc_block_argv, NULL, 0, &pid);
 
 	free_pc_list(&pc_list);
@@ -19274,19 +19340,20 @@ void setup_leds()
 		eval("et", "robowr", "0", "0x1a", "0x01ff");
 #endif
 
-#if defined(GTAX11000) || defined(GTAXE11000)
 #ifdef RTCONFIG_EXTPHY_BCM84880
-		eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x7fff0", "0x1");
-		eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a832", "0x6");
-#endif
-#elif defined(GTAX6000)
-		if (nvram_get_int("ext_phy_model") == EXT_PHY_GPY211)
-			eval("ethctl", "phy", "ext", EXTPHY_GPY_ADDR_STR, "0x1e0001", "0x3f0");
-		else
-		{
+#if defined(RTAX86U) || defined(GTAX11000) || defined(GTAX6000)
+		int ext_phy_model = nvram_get_int("ext_phy_model");
+
+		if(!strcmp(get_productid(), "RT-AX86S")) ;
+		else if(ext_phy_model == EXT_PHY_GPY211)
+				eval("ethctl", "phy", "ext", EXTPHY_GPY_ADDR_STR, "0x1e0001", "0x3f0");
+		else if(ext_phy_model == EXT_PHY_RTL8226)
+			eval("ethctl", "phy", "ext", EXTPHY_RTL_ADDR_STR, "0x1fd032", "0x0027");        // RTL LCR2 LED Control Reg
+		else if(ext_phy_model == EXT_PHY_BCM54991){
 			eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a832", "0x6");        // default. CTL LED3 MASK LOW
 			eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a835", "0x40");       // default. CTL LED4 MASK LOW
 		}
+#endif
 #endif
 
 #ifdef RTCONFIG_LAN4WAN_LED
@@ -19325,6 +19392,10 @@ void setup_leds()
 #elif defined(GTAXE11000)
 			eval("wl", "-i", "eth6", "ledbh", "9", "7");
 #elif defined(GTAX6000)
+			eval("wl", "-i", "eth6", "ledbh", "13", "7");
+#elif defined(GTAXE16000)
+			eval("wl", "-i", "eth7", "ledbh", "13", "7");
+#elif defined(GTAX11000_PRO)
 			eval("wl", "-i", "eth6", "ledbh", "13", "7");
 #endif
 		}
@@ -19369,10 +19440,14 @@ void setup_leds()
 				else
 #endif
 				eval("wl", "-i", "eth5", "ledbh", "0", "25");
+#elif defined(GTAXE16000)
+			eval("wl", "-i", "eth8", "ledbh", "13", "7");
+#elif defined(GTAX11000_PRO)
+			eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #endif
 		}
 
-#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAX11000) || defined(GTAXE11000)
+#if defined(RTAC3200) || defined(RTCONFIG_HAS_5G_2)
 		if (nvram_match("wl2_radio", "1")) {
 #if defined(RTAC3200)
 			eval("wl", "-i", "eth3", "ledbh", "10", "7");
@@ -19382,6 +19457,18 @@ void setup_leds()
 			eval("wl", "-i", "eth8", "ledbh", "15", "7");
 #elif defined(GTAXE11000)
 			eval("wl", "-i", "eth8", "ledbh", "9", "7");
+#elif defined(GTAXE16000)
+			eval("wl", "-i", "eth9", "ledbh", "13", "7");
+#elif defined(GTAX11000_PRO)
+			eval("wl", "-i", "eth8", "ledbh", "13", "7");
+#endif
+		}
+#endif
+
+#ifdef RTCONFIG_QUADBAND
+		if (nvram_match("wl3_radio", "1")) {
+#if defined(GTAXE16000)
+			eval("wl", "-i", "eth10", "ledbh", "13", "7");
 #endif
 		}
 #endif
@@ -19389,6 +19476,14 @@ void setup_leds()
 #ifdef RTCONFIG_LOGO_LED
 		led_control(LED_LOGO, LED_ON);
 #endif
+
+#if defined(RTAX82U) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000)
+		kill_pidfile_s("/var/run/ledg.pid", SIGTSTP);
+#endif
+#if defined(XT12) || defined(ET12)
+		bcm_cled_ctrl_single_white(BCM_CLED_WHITE, BCM_CLED_STEADY_NOBLINK);
+#endif
+
 #ifdef GTAX6000
 		AntennaGroupReset(LED_ON);
 		setAntennaGroupOn();
@@ -19403,6 +19498,9 @@ void setup_leds()
 
 		start_ledg();
 		start_antled();
+#endif
+#if defined(GTAXE16000) || defined(GTAX11000_PRO)
+		notify_rc("restart_ledg");
 #endif
 
 	}

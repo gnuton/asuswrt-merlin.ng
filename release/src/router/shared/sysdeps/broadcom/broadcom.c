@@ -682,6 +682,22 @@ void set_wlan_service_status(int bssidx, int vifidx, int enabled)
 
 	dbg("set bss to %d on %s\n", val, ifname);
 
+#if defined(RTAC86U) || defined(GTAC2900)
+	int isup = 0;
+	char buf[16] = { 0 };
+	int bsscfg_idx = htod32(vifidx);
+
+	if (!wl_iovar_getbuf(ifname, "bss", &bsscfg_idx, sizeof(bsscfg_idx), buf, sizeof(buf))) {
+		isup = *(int *) buf;
+		isup = dtoh32(isup);
+		dbg("ifname %s bsscfg_idx %d bss %s\n", ifname, bsscfg_idx, isup ? "up" : "down");
+		if (!isup) {
+			dbg("reinit ifname %s\n", ifname);
+			doSystem("wl -i %s reinit", ifname);
+		}
+	}
+#endif
+
 	ret = wl_iovar_set(ifname, "bss", &setbuf, sizeof(setbuf));
 	if (ret) {
 		dbg("failed to set bss to %d on %s\n", val, ifname);
@@ -926,12 +942,9 @@ get_uplinkports_linkrate(char *ifname)
 		} else{
 			ret = hnd_get_phy_speed(word);
 			len += sprintf(out_buf + len, "L%d=%s;", i,
-#ifdef RTCONFIG_EXTPHY_BCM84880
-					(ret == 2500)? "Q" :
-#endif
-							(ret == 1000) ? "G" : "M");
+					(ret == 10000) ? "T" : ((ret == 5000) ? "H" : ((ret == 2500)? "Q" :((ret == 1000) ? "G" : "M"))));
 			lret |= 1 << i;
-			lrate[i] = (ret == 2500)? 2500 : (ret == 1000) ? 1000 : 100;
+			lrate[i] = (ret == 10000) ? 10000 : ((ret == 5000) ? 5000 : ((ret == 2500) ? 2500 : ((ret == 1000) ? 1000 : 100)));
 		}
 
 		++i;
@@ -1237,6 +1250,7 @@ get_uplinkports_linkrate(char *ifname)
 		break;
 	case MODEL_RTAX58U:
 	case MODEL_RTAX82U_V2:
+	case MODEL_TUFAX5400_V2:
 #ifdef RTAX82_XD6
 		/* WAN L1 L2 L3 */
 		ports[0]=4; ports[1]=2; ports[2]=1; ports[3]=0;
@@ -2064,7 +2078,7 @@ phy_port_mapping get_phy_port_mapping(void)
 		.port[5] = { .phy_port_id = 6, .label_name = "L5", .cap = PHY_PORT_CAP_LAN, .max_rate = 2500, .ifname = "eth5" },
 #endif
 #else //#ifndef RTCONFIG_HND_ROUTER_AX_675X
-#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(GT10)
+#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO)
 		.count = 4,
 		.port[0] = { .phy_port_id = 0, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 2500, .ifname = "eth0" },
 		.port[1] = { .phy_port_id = 1, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
@@ -2127,11 +2141,12 @@ phy_port_mapping get_phy_port_mapping(void)
 		.port[3] = { .phy_port_id = 3, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
 		.port[4] = { .phy_port_id = 4, .label_name = "L4", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth4" }
 #elif defined(GT10)
-		.count = 4,
+		.count = 5,
 		.port[0] = { .phy_port_id = 0, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 2500, .ifname = "eth0" },
 		.port[1] = { .phy_port_id = 1, .label_name = "L1", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth1" },
 		.port[2] = { .phy_port_id = 2, .label_name = "L2", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth2" },
 		.port[3] = { .phy_port_id = 3, .label_name = "L3", .cap = PHY_PORT_CAP_LAN, .max_rate = 1000, .ifname = "eth3" },
+		.port[4] = { .phy_port_id = -1, .label_name = "U1", .cap = PHY_PORT_CAP_USB, .max_rate = 5000, .ifname = NULL }
 #elif defined(RTAX56U)
 		.count = 5,
 		.port[0] = { .phy_port_id = 0, .label_name = "W0", .cap = PHY_PORT_CAP_WAN, .max_rate = 1000, .ifname = "eth0" },
