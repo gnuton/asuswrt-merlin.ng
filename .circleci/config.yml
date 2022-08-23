@@ -99,8 +99,8 @@ jobs:
               cp ${IMAGE_PATH}/*.trx workspace/release/
               cp ${IMAGE_PATH}/DSL*DSL*.md5 workspace/release/ || :
             else
-              cp ${IMAGE_PATH}/*_puresqubi.md5 workspace/release
-              cp ${IMAGE_PATH}/*_puresqubi.w   workspace/release || :
+              cp ${IMAGE_PATH}/*ubi.md5 workspace/release
+              cp ${IMAGE_PATH}/*ubi.w   workspace/release || :
             fi
             cp /tmp/build.log workspace/release/${MODEL}-build.log
             if [ -z "${CIRCLE_TAG}" ]; then
@@ -264,6 +264,19 @@ workflows:
               ignore:
                 - master
                 - mainline
+      - build:
+          name: "build_rt-ax92u"
+          model: "rt-ax92u"
+          release_dir: "src-rt-5.02axhnd"
+          requires:
+            - getcode
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
       - request-testing:
           type: approval
           filters:
@@ -277,7 +290,8 @@ workflows:
             - build_rt-ax82u
             - build_tuf-ax5400
             - build_tuf-ax3000
-            - build_rt-ax95q  
+            - build_rt-ax95q
+            - build_rt-ax92u
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -310,6 +324,7 @@ workflows:
             - build_tuf-ax5400
             - build_tuf-ax3000
             - build_rt-ax95q
+            - build_rt-ax92u
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
