@@ -1,7 +1,7 @@
 #!/bin/sh
 
-MODEL=TUF-AX3000
-SDK=arm_6750hnd
+MODEL=RT-AX92U
+SDK=arm_axhnd
 
 # Set to 1 to create NEW SDK directories
 CREATESDK=0
