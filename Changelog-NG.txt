@@ -1,9 +1,11 @@
 Asuswrt-Merlin 386/NG Changelog
 ===============================
 
-386.08_0-gnuton0 (xx-xxx-xxxx)
-  - NOTE: This release is only available for the DSL-AX82U  
-
+386.08_0-gnuton1 (8-Oct-2022)
+  - NOTE: This release is only available for the DSL-AX82U and RT-AX92U.
+  - NEW: Added support for the RT-AX92U.
+  - FIX: FlexQOS for TUF devices.
+  
 386.8 (13-Aug-2022)
   - NOTE: This release is only available for the RT-AX88U as
           well as the two new models listed below.
