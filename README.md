@@ -67,7 +67,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/)
 * [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 * [RT-AX82U](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
-* [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/) 🔥 New! - [Follow the development here](https://github.com/gnuton/asuswrt-merlin.ng/issues/236)
+* [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/) 🔥 New!
 * [TUF-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX5400/) 
 * [TUF-AX3000](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX3000/)
 * [ZenWiFi AX (X8) / RT-AX95Q](https://www.asus.com/Networking-IoT-Servers/Whole-Home-Mesh-WiFi-System/ZenWiFi-WiFi-Systems/ASUS-ZenWiFi-AX-XT8/) 
