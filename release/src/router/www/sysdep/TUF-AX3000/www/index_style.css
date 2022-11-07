@@ -732,8 +732,7 @@ width:122px;
 	font-family: Lucida Console;
 	background: #090909;
 	border: 1px solid #474747;
-	border-radius: 15px;
-	border-width:0;
+	border-radius: 12px;
 	color:#FFFFFF;
 }
 .bottom_help_FAQ_icon{
@@ -748,7 +747,30 @@ width:122px;
   background: url(images/New_ui/bottom_search.png);
   background-position: -0px -64px; width: 32px; height: 32px;
 }
-
+.faq-filter-block{
+	position: absolute;
+	margin: -200px 100px 0 0;
+	width: 300px;
+	border: 1px solid #474747;
+	height: 200px;
+	box-sizing: border-box;
+	text-align: left;
+	overflow: auto;
+	background-color: rgba(0,0,0,.8);
+	right: 0;
+}
+.faq-filter-block > div{
+	padding: 6px 12px;
+	border-bottom: 1px solid #474747;
+	line-height: 18px;
+	cursor: pointer;
+}
+.faq-filter-block > div > a{
+	display: block;
+}
+.faq-filter-block > div:hover{
+	background-color: #D97F00;
+}
 .block_filter{
 	background: #2A2A2A; /* Old browsers */
 	background: -moz-linear-gradient(top, rgba(255,255,255,0.80) 0%, rgba(255,255,255,0.10) 55%, rgba(0,0,0,0.10) 100%); /* FF3.6+ */
@@ -832,6 +854,8 @@ width:122px;
 	height:54px;
 }
 .menu_Desc{
+	word-break: keep-all;
+	font-weight: bold;
 }
 .menu_Split{
 	margin-top:10px;

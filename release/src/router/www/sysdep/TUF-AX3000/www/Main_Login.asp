@@ -42,8 +42,10 @@ body{
 }
 .main-field-bg{
 	margin:20px auto 0;
-	width: 887px;
+	width: 100%;
 	height: 849px;
+	display: flex;
+	justify-content: center;
 }
 .main-field-bg-odm{
 	margin:20px auto 0;
@@ -52,7 +54,6 @@ body{
 	background: url('./images/New_ui/COD_rog_bg_login.png') no-repeat;
 }
 .main-field-padding{
-	width: 887px;
 	margin: 0 auto;	
 }
 .logo-rog{
@@ -66,7 +67,6 @@ body{
 	height: 191px;
 }
 .model-name{
-	width: 420px;
 	height: 100%;
 	font-size: 48px;
 	font-weight: bold;
@@ -104,6 +104,14 @@ body{
 	display: flex;
 	justify-content: center;
 	margin: 0 0 20px 0;
+}
+.warming_desc{
+	margin:0px 30px 0px 185px;
+	font-size: 14px;
+	align-items: center;
+	color:#FC0;
+	line-height:20px;
+	width: 520px;
 }
 .error-hint-bg{
 	width: 537px;
@@ -447,10 +455,11 @@ var odm_support = isSupport("odm");
 var captcha_support = isSupport("captcha");
 var captcha_enable = htmlEnDeCode.htmlEncode(decodeURIComponent('<% nvram_char_to_ascii("", "captcha_enable"); %>'));
 if(captcha_support && captcha_enable != "0")
-	var captcha_on = (login_info.error_num >= 2 && login_info.error_status != "7")? true : false;
+	var captcha_on = (login_info.error_num >= 2 && login_info.error_status != "7" && login_info.error_status != "11")? true : false;
 else
 	var captcha_on = false;
 
+var faq_href = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=SG_TeleStand&lang=&kw=&num=";
 function initial(){
 	/*handle sysdep for ROG or ODM product*/
 	if(odm_support){
@@ -470,6 +479,11 @@ function initial(){
 	if(isIE8 || isIE9){
 		document.getElementById("name_title_ie").style.display ="";
 		document.getElementById("password_title_ie").style.display ="";
+	}
+
+	if(flag != 11 && login_info.last_time_lock_warning){
+		document.getElementById("last_time_lock_warning").style.display ="";
+		document.getElementById("last_time_lock_warning").innerHTML ="You have entered an incorrect username or password 9 times. If there's one more failed account or password attempt, your router will be blocked from accessing, and need to be reset to factory setting.";
 	}
 
 	if(flag != ""){
@@ -534,6 +548,13 @@ function initial(){
 		else if(flag == 10){
 			document.getElementById("error_status_field").style.display ="none";
 			document.getElementById("error_captcha_field").style.display ="";
+		}
+		else if(flag == 11){
+			document.getElementById("error_status_field").innerHTML ="For security reasons, this router has been locked out because of 10 times of incorrect username and password attempts.<br>To unlock, please manually reset your router to factory setting by pressing the reset button on the back.<br>Click <a id=\"faq_SG\" href=\"\" target=\"_blank\" style=\"color:#FC0;text-decoration:underline;\">here</a> for more details.";
+			document.getElementById("faq_SG").href = faq_href;
+			document.getElementById("error_status_field").className = "error_hint error_hint1";
+			disable_input(1);
+			disable_button(1);
 		}
 		else{
 			document.getElementById("error_status_field").style.display ="none";
@@ -686,7 +707,7 @@ function login(){
 			|| redirect_page.indexOf(" ") != -1 
 			|| redirect_page.indexOf("//") != -1 
 			|| redirect_page.indexOf("http") != -1
-			|| (redirect_page.indexOf(".asp") == -1 && redirect_page.indexOf(".htm") == -1 && redirect_page != "send_IFTTTPincode.cgi" && redirect_page != "cfg_onboarding.cgi")
+			|| (redirect_page.indexOf(".asp") == -1 && redirect_page.indexOf(".htm") == -1 && redirect_page != "send_IFTTTPincode.cgi" && redirect_page != "cfg_onboarding.cgi" && redirect_page != "ig_s2s_link.cgi")
 		){
 			document.form.next_page.value = "";
 		}
@@ -773,6 +794,7 @@ function regen_captcha(){
 						<input type="password" name="login_passwd" tabindex="2" class="form-input" maxlength="128" placeholder="<#HSDPAConfig_Password_itemname#>" autocapitalize="off" autocomplete="off">
 					</div>
 					<div id="error_status_field" class="error-hint-bg" style="display: none;" ></div>
+					<div id="last_time_lock_warning" class="warming_desc" style="display:none;" ></div>
 					<div class="input-container">
 						<div id="captcha_field" style="display: none;">
 							<div id="captcha_input_div"><input id ="captcha_text" name="captcha_text" tabindex="3" maxlength="5" autocapitalize="off" autocomplete="off"></div>
