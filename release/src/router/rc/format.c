@@ -5,10 +5,6 @@
 #ifdef RTCONFIG_OPENVPN
 #include <openvpn_config.h>
 #endif
-#if defined(RTCONFIG_VPN_FUSION)
-#include <vpnc_fusion.h>
-extern int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int prof_ver);
-#endif
 #if defined(RTCONFIG_NOTIFICATION_CENTER)
 #include <libnt.h>
 #endif
@@ -23,7 +19,7 @@ void adjust_merlin_config(void)
 	int unit;
 	char varname_ori[32], varname_ori2[32], varname_new[32];
 	int rgw, plan, converted;
-	char *desc, *source, *dest, *iface, newiface[8];
+	char *source, *dest, *iface, newiface[8];
 #endif
 	char buffer[65536];
 	char *dhcp_hostnames;
@@ -33,6 +29,8 @@ void adjust_merlin_config(void)
 	char tmp[100];
 	int count, len = 0, found;
 	int need_commit = 0;
+	char *desc, *proto, *server, *username, *passwd, *active, *vpnc_idx, *region, *conntype;
+
 
 #ifdef RTCONFIG_OPENVPN
 /* Migrate OVPN RGW + clientlist rules to VPN Director (386.3) */
@@ -87,7 +85,7 @@ void adjust_merlin_config(void)
 	}
 
 	if (*buffer)
-		ovpn_set_policy_rules(buffer);
+		amvpn_set_policy_rules(buffer);
 
 
 /* Migrate OVPN custom settings, either from stock _custom, or previous AM _custom2 and _cust2 (386.3) */
@@ -334,6 +332,36 @@ void adjust_merlin_config(void)
 			nvram_unset("sshd_dsskey");
 		if (nvram_get_file("sshd_ecdsakey", "/jffs/.ssh/dropbear_ecdsa_host_key", 2048))
 			nvram_unset("sshd_ecdsakey");
+	}
+#endif
+
+
+/* Remove unsupported vpnc_clientlist proto from stock firmware (388.1) */
+#if RTCONFIG_VPNC
+	converted = 0;
+	nv = nvp = strdup(nvram_safe_get("vpnc_clientlist"));
+
+	if (nv && *nv) {
+		buffer[0] = '\0';
+
+		while (nv && (entry = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(entry, ">", &desc, &proto, &server, &username, &passwd, &active, &vpnc_idx, &region, &conntype) < 9)
+				continue;
+
+			if (!strcmp(proto, "OpenVPN") || !strcmp(proto,"WireGuard")) {
+				converted = 1;
+				continue;
+			}
+
+			snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "<%s>%s>%s>%s>%s>%s>%s>%s>%s",
+				desc, proto, server, username, passwd, active, vpnc_idx, region, conntype);
+		}
+	}
+	if(nv) free(nv);
+
+	if (converted) {
+		need_commit = 1;
+		nvram_set("vpnc_clientlist", buffer);
 	}
 #endif
 
@@ -587,40 +615,5 @@ void adjust_vpnc_config(void)
 		nvram_set("vpnc_dev_policy_list", buf);
 	}
 	
-}
-#endif
-
-#if defined(RTCONFIG_NOTIFICATION_CENTER)
-void force_off_push_msg(void)
-{
-	char *nv, *nvp, *b;
-	char *eID, *eAct, *eType;
-	char  replacebox[4096], rerule[256];
-	int   action;
-	int   RESAVE = OFF;
-	
-	/* force disable push msg. 
-	Format:[<eID>eAction>eType]
-	*/
-	memset(replacebox, 0, sizeof(replacebox));
-	nv = nvp = strdup(nvram_safe_get("nc_setting_conf"));
-	while(nvp)
-	{
-		if ((b = strsep(&nvp, "<")) == NULL) break;
-		if ((vstrsep(b, ">", &eID, &eAct, &eType)) != 3) continue;
-			
-			memset(rerule, 0, sizeof(rerule));
-			action = atoi(eAct);
-			if ((action & ACTION_NOTIFY_APP)) {
-				RESAVE = ON;
-			}
-			NC_ACTION_CLR(action, NC_ACT_APP_BIT);
-			snprintf(rerule, sizeof(rerule), "<%s>%d>%s", eID, action, eType);
-			//dbg("[%s(%d)] %s\n", __FUNCTION__, __LINE__, rerule);
-			strcat(replacebox, rerule);
-	}		
-	if (RESAVE) 
-		nvram_set("nc_setting_conf", replacebox);
-	if(nv) free(nv);
 }
 #endif

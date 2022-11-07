@@ -141,6 +141,8 @@ function switchPage(page){
 		return false;
 	else if(page == "2")
 		location.href = "/Main_TrafficMonitor_last24.asp";
+	else if(page == "4")
+		location.href = "/Main_TrafficMonitor_monthly.asp";
 	else
 		location.href = "/Main_TrafficMonitor_daily.asp";
 }
@@ -206,6 +208,7 @@ function setUnit(unit){
 									<option value="1" selected><#menu4_2_1#></option>
 									<option value="2"><#menu4_2_2#></option>
 									<option value="3"><#menu4_2_3#></option>
+									<option value="4">Monthly</option>
 								</select>	    
 							</div>
 							</td></tr></table>
@@ -264,7 +267,7 @@ function setUnit(unit){
         			<tr>
         				<td>
 							<span id="tab-area"></span>
-							<span id="iftitle" style="font-weight: bold; color: #91071F; position: absolute; top: 372px; left: 45%; min-width: 180px;"></span>
+							<span id="iftitle" class="iftitle"></span>
 							<!--========= svg =========-->
 							<!--[if IE]>
 								<div id="svg-table" align="left" class="IE8HACK">
