@@ -667,7 +667,7 @@ function initial(){
 		$("#fw_note2").html("The firmware of ISP (Internet Service Provider) project is not compatible with the ASUS retail models, and also it’s unavailable for firmware manual update.");	//Untranslated
 	}
 	
-	if(isSupport("is_ax5400_i1"))
+	/*if(isSupport("is_ax5400_i1"))
 	{
 		$("#fw_note3").show();
 		$("#fw_note3").html("Firmware upgrade is only accessible through Optus server.");	//Untranslated
