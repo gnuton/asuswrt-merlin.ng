@@ -302,6 +302,11 @@ function add_pvc() {
 	change_dsl_type(document.form.dsl_proto.value);
 	fixed_change_dsl_type(document.form.dsl_proto.value);
 	document.form.dsl_link_enable[0].checked = true;	//Add to enable it
+
+	if (avail_pvc != 0) {	//useless setup
+		inputCtrl(document.form.dsl_upnp_enable[0], 0);
+		inputCtrl(document.form.dsl_upnp_enable[1], 0);
+	}
 }
 
 function del_pvc(pvc_to_del) {
@@ -332,17 +337,12 @@ function showDSLWANList(){
 		}
 	}
 	if(config_num == 0){
-		addRow = document.getElementById('DSL_WAN_table').insertRow(2);
-		for (var i = 0; i <= 7; i++) {
-			cell[i] = addRow.insertCell(i);
-			if (i==3) cell[i].innerHTML = "<#IPConnection_VSList_Norule#>";
-			else cell[i].innerHTML = "&nbsp";
-			cell[i].style.color = "white";
-		}
 		if(!isSupport("is_ax5400_i1")){
-			cell[8] = addRow.insertCell(8);
-			cell[8].innerHTML = '<center><input class="add_btn" onclick="add_pvc();" value=""/></center>';
-			cell[8].style.color = "white";
+			addRow = document.getElementById('DSL_WAN_table').insertRow(2);
+			cell[0] = addRow.insertCell(0);
+			cell[0].colSpan = "9";
+			cell[0].style.color = "white";
+			cell[0].innerHTML = '<center><input class="add_btn" onclick="add_pvc();" value=""/></center>';
 		}
 	}
 	else{
@@ -404,15 +404,10 @@ function showDSLWANList(){
 		if (row_count <= 7) {
 			if(!isSupport("is_ax5400_i1")){
 				addRow = document.getElementById('DSL_WAN_table').insertRow(row_count+2);
-				for (var i = 0; i <= 7; i++) {
-					cell[i] = addRow.insertCell(i);
-					cell[i].innerHTML = "&nbsp";
-					cell[i].style.color = "white";
-				}
-			
-				cell[8] = addRow.insertCell(8);
-				cell[8].innerHTML = '<center><input class="add_btn" onclick="add_pvc();" value=""/></center>';
-				cell[8].style.color = "white";
+				cell[0] = addRow.insertCell(0);
+				cell[0].colSpan = "9";
+				cell[0].style.color = "white";
+				cell[0].innerHTML = '<center><input class="add_btn" onclick="add_pvc();" value=""/></center>';
 			}
 		}
 	}
@@ -1608,7 +1603,7 @@ function showDiableDHCPclientID(clientid_enable){
 												<th style="width: 10%;"><center><#Internet#></center></th>
 												<th style="width: 10%;"><center><#menu_dsl_iptv#></center></th>
 												<th style="width: 15%;"><center><#PVC_edit#></center></th>
-												<th style="width: 15%;" id="DSL_WAN_add_del"><center><#list_add_delete#></center></th>
+												<th style="width: 15%;" id="DSL_WAN_add_del"><center><#CTL_del#></center></th>
 											</tr>
 									</table>
 
@@ -1878,13 +1873,13 @@ function showDiableDHCPclientID(clientid_enable){
 											<tr><td colspan="2"><#ipv6_6rd_dhcp_option#></td></tr>
 										</thead>
 										<tr>
-											<th width="40%">Class-identifier (option 60):</th>
+											<th width="40%"><#DHCPoption_Class#> (<#NetworkTools_option#> 60):</th>
 											<td>
 												<input type="text" name="dsl_dhcp_vendorid" class="input_25_table" value="<% nvram_get("dsl_dhcp_vendorid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
 											</td>
 										</tr>
 										<tr>
-											<th width="40%">Client-identifier (option 61):</th>
+											<th width="40%"><#DHCPoption_Client#> (<#NetworkTools_option#> 61):</th>
 											<td>
 												<input type="checkbox" id="tmp_dhcp_clientid_type" name="tmp_dhcp_clientid_type" onclick="showDiableDHCPclientID(this);" <% nvram_match("dsl_dhcp_clientid_type", "1", "checked"); %>>IAID/DUID<br>
 												<input type="text" name="dsl_dhcp_clientid" class="input_25_table" value="<% nvram_get("dsl_dhcp_clientid"); %>" maxlength="126" autocapitalization="off" autocomplete="off">
@@ -1969,7 +1964,7 @@ function showDiableDHCPclientID(clientid_enable){
 												<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,18);">Host-Uniq (<#Hexadecimal#>)</a>
 											</th>
 											<td align="left">
-												<input type="text" maxlength="32" class="input_32_table" name="dsl_pppoe_hostuniq" value="<% nvram_get("dsl_pppoe_hostuniq"); %>" onkeypress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
+												<input type="text" maxlength="256" class="input_32_table" name="dsl_pppoe_hostuniq" value="<% nvram_get("dsl_pppoe_hostuniq"); %>" onkeypress="return validator.isString(this, event);" autocorrect="off" autocapitalize="off"/>
 											</td>
 										</tr>
 										<tr>
