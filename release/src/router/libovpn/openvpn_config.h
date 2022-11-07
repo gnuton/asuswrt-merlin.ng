@@ -3,6 +3,7 @@
 
 #define OVPN_SERVER_MAX	2
 #define OVPN_CLIENT_MAX	5
+#define WG_CLIENT_MAX 5
 
 #define PUSH_LAN_METRIC 500
 
@@ -90,6 +91,15 @@ typedef enum ovpn_auth{
 	OVPN_AUTH_TLS
 }ovpn_auth_t;
 
+
+// Rule priority reservations, 200 rules for 5 clients each (OVPN and WG)
+#define VPNDIR_PRIO_MAX_RULES 200
+#define VPNDIR_PRIO_ALL 10000
+#define VPNDIR_PRIO_WAN (VPNDIR_PRIO_ALL + OVPN_CLIENT_MAX + WG_CLIENT_MAX)
+#define VPNDIR_PRIO_OPENVPN (VPNDIR_PRIO_WAN + VPNDIR_PRIO_MAX_RULES)
+#define VPNDIR_PRIO_WIREGUARD (VPNDIR_PRIO_OPENVPN + (VPNDIR_PRIO_MAX_RULES * OVPN_CLIENT_MAX))
+
+
 typedef struct ovpn_cconf {
 	int enable;
 // Tunnel options
@@ -122,7 +132,7 @@ typedef struct ovpn_cconf {
 	int reneg;	//TLS Renegotiation Time
 	int tlscrypt;	//Encrypt and authenticate all control channel packets.
 	int verify_x509_type;	//TYPE of verify-x509-name
-	char verify_x509_name[32];	//NAME of verify-x509-name
+	char verify_x509_name[256];	//NAME of verify-x509-name
 
 //Router options and info
 	int fw;		//Block inbound connections
@@ -202,6 +212,4 @@ extern int ovpn_write_key(ovpn_type_t type, int unit, ovpn_key_t key_type);
 extern ovpn_cconf_t *ovpn_get_cconf(int unit);
 extern ovpn_sconf_t *ovpn_get_sconf(int unit);
 extern char *get_ovpn_custom_old(ovpn_type_t type, int unit, char* buffer, int bufferlen);
-extern char *ovpn_get_policy_rules(int unit, char *buffer, int bufferlen);
-extern int ovpn_set_policy_rules(char *buffer);
 #endif

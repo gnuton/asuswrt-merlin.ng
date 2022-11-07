@@ -79,7 +79,7 @@ var classObj= {
         UnHexCode:function(str){
 		return str.replace(/(?:\\x[\da-fA-F]{2})+/g, m =>
 decodeURIComponent(m.replace(/\\x/g, '%'))).replace(/\\n/g,
-'<br>').replace(/\\/g, '');
+'<br>');
         }
 }
 
@@ -101,7 +101,7 @@ function GenContent(){
 		},
 
 		success: function(resp){
-			content = decodeURI(resp);
+			content = decodeURIComponent(resp);
 			content = classObj.UnHexCode(content);
 			content = htmlEnDeCode.htmlEncode(content);
 			if(content.length > 10){
@@ -392,7 +392,7 @@ function hide_details_window(){
 }
 </script>
 </head>
-<body onload="initial();">
+<body onload="initial();" class="bg">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>

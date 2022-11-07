@@ -77,7 +77,6 @@ function customize_speedTestBtn(){
 }
 
 function init(){
-	build_interface_list();
 	customize_speedTestBtn();
 	get_speedTest_history();
 	if(!internetSpeed_lite_support)
@@ -239,8 +238,7 @@ function do_speedTest_exe(exe_type, server_id){
 		type: "POST",
 		data: {
 			"type": type,
-			"id": id,
-			"iface": document.getElementById("iface").value
+			"id": id
 		},
 		error: function(){
 			console.log("do_speedTest_exe error");
@@ -302,6 +300,8 @@ function check_duplicate_result(result_obj){
 	return duplicate;
 }
 
+var LEVEL_ERR_MAX = 50;
+var level_err_cnt = 0;
 function get_speedTest_result(){
 	speedTest_result = httpApi.hookGet("ookla_speedtest_get_result", true);
 	var result_time = {};
@@ -318,11 +318,20 @@ function get_speedTest_result(){
 		setTimeout("get_speedTest_result();", 200);
 	}
 	else{
-		if((typeof speedTest_result[speedTest_result.length - 2].error != "undefined") ||
-		   (typeof speedTest_result[speedTest_result.length - 2].level != "undefined" && speedTest_result[speedTest_result.length - 2].level == "error"))
+		if(typeof speedTest_result[speedTest_result.length - 2].error != "undefined")
 		{
 			error_handling(ookla_states.ERR_TERMINATE);
 			return;
+		}
+		else if(typeof speedTest_result[speedTest_result.length - 2].level != "undefined" && speedTest_result[speedTest_result.length - 2].level == "error"){
+			if(level_err_cnt < LEVEL_ERR_MAX){
+				level_err_cnt++;
+			}
+			else{
+				error_handling(ookla_states.ERR_TERMINATE);
+				level_err_cnt = 0;
+				return;
+			}
 		}
 
 		for(var i = 0; i < speedTest_result.length - 1; i++){
@@ -385,6 +394,7 @@ function get_speedTest_result(){
 
 				change_speedTestBtn('go');
 				setTimeout("check_wan_status()", 3000);
+				level_err_cnt = 0;
 			}
 		}
 
@@ -1057,27 +1067,6 @@ function close_info(){
 	$(".function_desc").fadeOut(300);
 	$("#hiddenMask").css("display", "none");
 }
-
-function build_interface_list(){
-	var obj = document.getElementById("iface");
-
-	add_option(obj, "WAN", "", 1);
-
-	if ("<% nvram_get("vpn_client1_state"); %>" == "2")
-		add_option(obj, "<% nvram_get("vpn_client1_desc"); %>", "tun11", 0);
-	if ("<% nvram_get("vpn_client2_state"); %>" == "2")
-		add_option(obj, "<% nvram_get("vpn_client2_desc"); %>", "tun12", 0);
-	if ("<% nvram_get("vpn_client3_state"); %>" == "2")
-		add_option(obj, "<% nvram_get("vpn_client3_desc"); %>", "tun13", 0);
-	if ("<% nvram_get("vpn_client4_state"); %>" == "2")
-		add_option(obj, "<% nvram_get("vpn_client4_desc"); %>", "tun14", 0);
-	if ("<% nvram_get("vpn_client5_state"); %>" == "2")
-		add_option(obj, "<% nvram_get("vpn_client5_desc"); %>", "tun15", 0);
-
-	if (obj.length > 1)
-		document.getElementById("iface_div").style.display = "";
-}
-
 </script>
 <div id="hiddenMask" class="speed_level_mask"></div>
 <div class="bg">
@@ -1099,11 +1088,6 @@ function build_interface_list(){
 					<div class="speedtest_logo"></div>
 				</div>
 			</div>
-		</div>
-		<div id="iface_div" style="display:none; margin-top: 25px; margin-left:10px;">
-			<label>Select interface to test:</label>
-			<select name="iface" id="iface" class="input_option">
-			</select>
 		</div>
 		<div class="normal_show">
 			<div id="notification_str" class="wan_notice">
@@ -1160,22 +1144,22 @@ function build_interface_list(){
 				</div>
 				<div class="download_upload_container">
 					<div class="speedResult_container">
-						<div style="width: 60%; height: 15px;">
+						<div class="result_title_container">
 							<div class="download_result_icon">
 								<span class="download_upload_text"><#InternetSpeed_Download#></span>
 							</div>
 						</div>
 						<div class="test_result"><div id="download_test_result">--</div></div>
-						<div style="width: 60%;  height: 15px; color:#B2BBC1"><#InternetSpeed_Mbps#></div>
+						<div class="result_unit"><#InternetSpeed_Mbps#></div>
 					</div>
 					<div class="speedResult_container">
-						<div style="width: 60%; height: 15px;">
+						<div class="result_title_container">
 							<div class="upload_result_icon">
 								<span class="download_upload_text"><#InternetSpeed_Upload#></span>
 							</div>
 						</div>
 						<div class="test_result"><div id="upload_test_result">--</div></div>
-						<div style="width: 60%; height: 15px; color:#B2BBC1"><#InternetSpeed_Mbps#></div>
+						<div class="result_unit"><#InternetSpeed_Mbps#></div>
 					</div>
 				</div>
 			</div>
