@@ -2615,6 +2615,14 @@ define RouterOptions
 	else \
 		echo "# RTCONFIG_ROG_UI is not set" >>$(1); \
 	fi;
+	sed -i "/RTCONFIG_TUF_UI/d" $(1); \
+	if [ "$(TUF_UI)" = "y" ]; then \
+		echo "RTCONFIG_TUF_UI=y" >>$(1); \
+		sed -i "/RTCONFIG_OPEN_NAT/d" $(1); \
+		echo "RTCONFIG_OPEN_NAT=y" >>$(1); \
+	else \
+		echo "# RTCONFIG_TUF_UI is not set" >>$(1); \
+	fi;
 	if [ "$(GEOIP)" = "y" ]; then \
 		sed -i "/RTCONFIG_GEOIP/d" $(1); \
 		echo "RTCONFIG_GEOIP=y" >>$(1); \
