@@ -60,6 +60,8 @@ then
     git add -f $REPO/release/src/router/dsl_diag/
     git add -f $REPO/release/src/router/tr069/
     git add -f $REPO/release/src/router/spectrum/*
+    git add -f $REPO/release/src/router/dns_ping/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/fsmd/prebuild/$BUILD_NAME/
 
 elif [ "$BUILD_NAME" == "DSL-AC68U" ]
 then
@@ -164,6 +166,8 @@ then
 
     git add -f $REPO/release/src-rt-5.02axhnd.675x/router-sysdep.dsl-ax82u/
     git add -f $REPO/src/router/infosvr/prebuild/DSL-AX82U/
+    git add -f $REPO/release/src/router/dns_ping/prebuild/$BUILD_NAME/
+    git add -f $REPO/release/src/router/fsmd/prebuild/$BUILD_NAME/
 else
     echo "Unrecognized BUILD_NAME!"
     exit

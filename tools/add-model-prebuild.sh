@@ -20,6 +20,8 @@ mkdir -p ahs/prebuild/$MODEL
 mkdir -p amas-utils/prebuild/$MODEL
 mkdir -p asd/prebuild/$MODEL
 mkdir -p libasc/prebuild/$MODEL
+mkdir -p dns_ping/prebuild/$MODEL
+mkdir -p fsmd/prebuild/$MODEL
 
 if [ "$CREATESDK" = "1" ]; then
 # SDK dirs
