@@ -371,17 +371,19 @@ static void _wg_client_nf_add(char* prefix, char* ifname)
 {
 	FILE* fp;
 	char path[128] = {0};
+	int fw;
 
 	snprintf(path, sizeof(path), "%s/fw_%s.sh", WG_DIR_CONF, ifname);
 	fp = fopen(path, "w");
 	if (fp)
 	{
+		fw = nvram_pf_get_int(prefix, "fw");
 		fprintf(fp, "#!/bin/sh\n\n");
 
-		fprintf(fp, "iptables -I WGCI -i %s -j ACCEPT\n", ifname);
-		fprintf(fp, "ip6tables -I WGCI -i %s -j ACCEPT\n", ifname);
-		fprintf(fp, "iptables -I WGCF -i %s -j ACCEPT\n", ifname);
-		fprintf(fp, "ip6tables -I WGCF -i %s -j ACCEPT\n", ifname);
+		fprintf(fp, "iptables -I WGCI -i %s -j %s\n", ifname, (fw ? "DROP" : "ACCEPT"));
+		fprintf(fp, "ip6tables -I WGCI -i %s -j %s\n", ifname, (fw ? "DROP" : "ACCEPT"));
+		fprintf(fp, "iptables -I WGCF -i %s -j %s\n", ifname, (fw ? "DROP" : "ACCEPT"));
+		fprintf(fp, "ip6tables -I WGCF -i %s -j %s\n", ifname, (fw ? "DROP" : "ACCEPT"));
 		fprintf(fp, "iptables -I WGCF -o %s -j ACCEPT\n", ifname);
 		fprintf(fp, "ip6tables -I WGCF -o %s -j ACCEPT\n", ifname);
 		fprintf(fp, "iptables -I WGCF -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", ifname);
@@ -952,6 +954,7 @@ void start_wgs(int unit)
 	char c_path[128] = {0};
 	char cp_path[128] = {0};
 	int c_unit;
+	char tmp[4];
 
 	snprintf(prefix, sizeof(prefix), "%s%d_", WG_SERVER_NVRAM_PREFIX, unit);
 	snprintf(path, sizeof(path), "%s/server%d.conf", WG_DIR_CONF, unit);
@@ -999,6 +1002,9 @@ void start_wgs(int unit)
 	/// sysdeps
 	_wg_config_sysdeps(1);
 
+	snprintf(tmp, sizeof(tmp), "%d", unit);
+	run_custom_script("wgserver-start", 0, tmp, NULL);
+
 	logmessage("WireGuard", "Starting server.");
 }
 
@@ -1006,6 +1012,10 @@ void stop_wgs(int unit)
 {
 	char ifname[8] = {0};
 	int wg_enable = is_wg_enabled();
+	char tmp[4];
+
+	snprintf(tmp, sizeof(tmp), "%d", unit);
+	run_custom_script("wgserver-stop", 0, tmp, NULL);
 
 	snprintf(ifname, sizeof(ifname), "%s%d", WG_SERVER_IF_PREFIX, unit);
 
@@ -1032,6 +1042,7 @@ void start_wgc(int unit)
 	char ifname[8] = {0};
 	int table = 0;
 	char ep_addr_r[1024] = {0};
+	char tmp[4];
 
 	_dprintf("%s %d\n", __FUNCTION__, unit);
 
@@ -1090,6 +1101,9 @@ void start_wgc(int unit)
 	/// sysdeps
 	_wg_config_sysdeps(1);
 
+	snprintf(tmp, sizeof(tmp), "%d", unit);
+	run_custom_script("wgclient-start", 0, tmp, NULL);
+
 	logmessage("WireGuard", "Starting client %d.", unit);
 }
 
@@ -1101,8 +1115,12 @@ void stop_wgc(int unit)
 	int table = 0;
 	int wg_enable = is_wg_enabled();
 	char buffer[64];
+	char tmp[4];
 
 	_dprintf("%s %d\n", __FUNCTION__, unit);
+
+	snprintf(tmp, sizeof(tmp), "%d", unit);
+	run_custom_script("wgclient-stop", 0, tmp, NULL);
 
 	snprintf(prefix, sizeof(prefix), "%s%d_", WG_CLIENT_NVRAM_PREFIX, unit);
 	snprintf(ifname, sizeof(ifname), "%s%d", WG_CLIENT_IF_PREFIX, unit);
@@ -1207,9 +1225,12 @@ void run_wgc_fw_scripts()
 	int unit;
 	char buf[128] = {0};
 
-	for(unit = 1; unit <= WG_CLIENT_MAX; unit++)
-	{
+	for (unit = WG_CLIENT_MAX; unit > 0; unit--) {
 		snprintf(buf, sizeof(buf), "%s/fw_%s%d.sh", WG_DIR_CONF, WG_CLIENT_IF_PREFIX, unit);
+		if(f_exists(buf))
+			eval(buf);
+
+		snprintf(buf, sizeof(buf), "%s/dns%d.sh", WG_DIR_CONF, unit);
 		if(f_exists(buf))
 			eval(buf);
 	}
