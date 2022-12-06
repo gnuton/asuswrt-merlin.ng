@@ -27,7 +27,7 @@ jobs:
       ui:
         type: string
     docker:
-      - image: gnuton/asuswrt-merlin-toolchains-docker:latest-ubuntu-20_04
+      - image: gnuton/asuswrt-merlin-toolchains-docker:latest
         environment:
           PROJECT_DIR: "/home/docker/project"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
@@ -84,6 +84,8 @@ jobs:
               echo $BWDPI_KEYS_RTAX95Q | base64 -d > /tmp/keys.tgz
               tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/RT-AX95Q
             fi
+            source /home/docker/envs/bcm-hnd.sh
+            env
             echo "------UI=$UI---------"
             if [[ ${UI} == "tuf" ]]; then
               echo "Enabling TUF UI"
