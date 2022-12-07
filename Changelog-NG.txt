@@ -1,5 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
+388.1_0-gnuton1 (xx-xxx-xxxx)
+  - NEW: TUF image now comes with and without TUF UI
 
 388.1 (3-Dec-2022)
   - NOTE: This release is only available for AX models.
