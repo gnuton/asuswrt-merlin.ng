@@ -4,19 +4,25 @@
        Copyright (c) 2013 Broadcom 
        All Rights Reserved
     
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License, version 2, as published by
-    the Free Software Foundation (the "GPL").
+    Unless you and Broadcom execute a separate written software license
+    agreement governing use of this software, this software is licensed
+    to you under the terms of the GNU General Public License version 2
+    (the "GPL"), available at http://www.broadcom.com/licenses/GPLv2.php,
+    with the following added to such license:
     
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+       As a special exception, the copyright holders of this software give
+       you permission to link this software with independent modules, and
+       to copy and distribute the resulting executable under terms of your
+       choice, provided that you also meet, for each linked independent
+       module, the terms and conditions of the license of that module.
+       An independent module is a module which is not derived from this
+       software.  The special exception does not apply to any modifications
+       of the software.
     
-    
-    A copy of the GPL is available at http://www.broadcom.com/licenses/GPLv2.php, or by
-    writing to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-    Boston, MA 02111-1307, USA.
+    Not withstanding the above, under no circumstances may you combine
+    this software in any way with any other Broadcom software provided
+    under a license other than the GPL, without Broadcom's express prior
+    written consent.
     
     :> 
 
@@ -651,38 +657,38 @@ static void moca_hw_init(struct moca_priv_data *priv, int action)
 				/* 50MHz clock change only */
 				MOCA_WR(priv->base + priv->regs->host2moca_mmp_outbox_0_offset, 0);
 				//Note: The re-configuration is in NDIV_INT, not PDIV.
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_DIV (32'h10100058) [09:00] = 10’d48
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_DIV (32'h10100058) [09:00] = 10ï¿½d48
 				temp = MOCA_RD(0x10100058);
 				temp = (temp & 0xFFFFFC00) + 48;
 				MOCA_WR(0x10100058, temp);
 
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS0_PLL_DIV (32'h10100018) [09:00] = 10’d40
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS0_PLL_DIV (32'h10100018) [09:00] = 10ï¿½d40
 				temp = MOCA_RD(0x10100018);
 				temp = (temp & 0xFFFFFC00) + 40;
 				MOCA_WR(0x10100018, temp);
 
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_CHANNEL_CTRL_CH_4 (32'h1010004C) [08:01] = 8’d48
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_CHANNEL_CTRL_CH_4 (32'h1010004C) [08:01] = 8ï¿½d48
 				temp = MOCA_RD(0x1010004c);
 				temp = (temp & 0xFFFFFE01) + (48 << 1);
 				MOCA_WR(0x1010004c, temp);
 
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_CHANNEL_CTRL_CH_5 (32'h10100050) [08:01] = 8’d48
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_CHANNEL_CTRL_CH_5 (32'h10100050) [08:01] = 8ï¿½d48
 				temp = MOCA_RD(0x10100050);
 				temp = (temp & 0xFFFFFE01) + (48 << 1);
 				MOCA_WR(0x10100050, temp);
 
 				// Then Restart the PLL.
 
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS0_PLL_RESET (32'h1010002C) [0] = 1’b1
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS0_PLL_RESET (32'h1010002C) [0] = 1ï¿½b1
 				MOCA_SET(0x1010002c, 1);
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_RESET (32'h1010006C) [0] = 1’b1
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_RESET (32'h1010006C) [0] = 1ï¿½b1
 				MOCA_SET(0x1010006c, 1);
 
 				udelay(1);
 
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS0_PLL_RESET (32'h1010002C) [0] = 1’b0
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS0_PLL_RESET (32'h1010002C) [0] = 1ï¿½b0
 				MOCA_UNSET(0x1010002c, 1);
-				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_RESET (32'h1010006C) [0] = 1’b0
+				//`CLKGEN_REG_START + `CLKGEN_PLL_SYS1_PLL_RESET (32'h1010006C) [0] = 1ï¿½b0
 				MOCA_UNSET(0x1010006c, 1);
 			}
 		}
