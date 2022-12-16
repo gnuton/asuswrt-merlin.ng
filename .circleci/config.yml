@@ -102,7 +102,7 @@ jobs:
             export IMAGE_PATH=${PROJECT_DIR}/release/${RELEASE_DIR}/image/
 
             rm -rf ${IMAGE_PATH}/*cferom*
-            for f in ./*.w; do  md5sum "$f" > "$f.md5" ; done
+            for f in ${IMAGE_PATH}/*.w; do  md5sum "$f" > "${IMAGE_PATH}/$f.md5" ; done
 
             cp ${IMAGE_PATH}/*.md5 workspace/release
             cp ${IMAGE_PATH}/*ubi.w   workspace/release || :
