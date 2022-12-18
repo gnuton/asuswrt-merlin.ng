@@ -206,7 +206,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax82u"
-          model: "rt-ax82u"
+          model: "Xrt-ax82u"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -220,7 +220,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax95q"
-          model: "rt-ax95q"
+          model: "Xrt-ax95q"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -234,7 +234,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax5400"
-          model: "tuf-ax5400"
+          model: "Xtuf-ax5400"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -248,7 +248,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax3000"
-          model: "tuf-ax3000"
+          model: "Xtuf-ax3000"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -262,7 +262,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax5400_tuf"
-          model: "tuf-ax5400"
+          model: "Xtuf-ax5400"
           ui: "tuf"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -276,7 +276,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax3000_tuf"
-          model: "tuf-ax3000"
+          model: "Xtuf-ax3000"
           ui: "tuf"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -290,7 +290,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax92u"
-          model: "rt-ax92u"
+          model: "Xrt-ax92u"
           ui: "none"
           release_dir: "src-rt-5.02axhnd"
           requires:
