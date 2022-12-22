@@ -144,12 +144,14 @@ jobs:
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
             echo "Generating manifest file..."
-            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  > ${UPDATE_DIR}/manifest.txt
-            echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" >> ${UPDATE_DIR}/manifest.txt
-            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
-            echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#" >> ${UPDATE_DIR}/manifest.txt
-            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
-            echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >>  ${UPDATE_DIR}/manifest.txt
+            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    > ${UPDATE_DIR}/manifest.txt
+            echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"   >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    >> ${UPDATE_DIR}/manifest.txt
+            echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >> ${UPDATE_DIR}/manifest.txt
+            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"   >> ${UPDATE_DIR}/manifest.txt
+
             cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
@@ -221,6 +223,20 @@ workflows:
       - build:
           name: "build_rt-ax95q"
           model: "rt-ax95q"
+          ui: "none"
+          release_dir: "src-rt-5.02axhnd.675x"
+          requires:
+            - getcode
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore:
+                - master
+                - mainline
+      - build:
+          name: "build_rt-axe95q"
+          model: "rt-axe95q"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -317,6 +333,7 @@ workflows:
             - build_tuf-ax5400_tuf
             - build_tuf-ax3000_tuf
             - build_rt-ax95q
+            - build_rt-axe95q
             - build_rt-ax92u
       - publish-manifest-and-notes:
           filters:
@@ -349,6 +366,7 @@ workflows:
             - build_tuf-ax5400
             - build_tuf-ax3000
             - build_rt-ax95q
+            - build_rt-axe95q
             - build_rt-ax92u
 notify:
   webhooks:
