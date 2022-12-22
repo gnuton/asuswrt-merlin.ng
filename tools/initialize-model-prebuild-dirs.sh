@@ -1,10 +1,12 @@
 #!/bin/sh
 
-MODEL=RT-AX92U
-SDK=arm_axhnd
+MODEL=RT-AXE95Q
+SDK=arm_6750hnd
 
 # Set to 1 to create NEW SDK directories
 CREATESDK=0
+
+cd ./release/src/router/
 
 # Model Dirs
 mkdir -p bwdpi_source/asus/prebuild/$MODEL
