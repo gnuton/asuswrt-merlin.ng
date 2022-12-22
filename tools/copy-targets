@@ -1,0 +1,2 @@
+#!/bin/bash
+cp -a release/src-rt-5.02axhnd.675x/targets/* $REPO/release/src-rt-5.02axhnd.675x/targets/
