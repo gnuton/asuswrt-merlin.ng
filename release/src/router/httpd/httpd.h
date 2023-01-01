@@ -136,6 +136,11 @@ struct REPLACE_PRODUCTID_S {
 };
 #endif
 
+struct REPLACE_TAG_S {
+        char *org_name;
+        char *replace_name;
+};
+
 #define MIME_EXCEPTION_NOAUTH_ALL 	1<<0
 #define MIME_EXCEPTION_NOAUTH_FIRST	1<<1
 #define MIME_EXCEPTION_NORESETTIME	1<<2
@@ -161,6 +166,7 @@ struct REPLACE_PRODUCTID_S {
 #ifdef RTCONFIG_CAPTCHA
 #define WRONGCAPTCHA   10
 #endif
+#define FORCELOCK       11
 
 /* image path for app */
 #define IMAGE_MODEL_PRODUCT	"/Model_product.png"
@@ -342,7 +348,7 @@ extern struct ej_handler ej_handlers[];
 #define LOCK_LOGIN_LAN 	0x01
 #define LOCK_LOGIN_WAN 	0x02
 
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) || defined(GTAX11000_PRO) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) || defined(GTAX11000_PRO) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 enum {
         LEDG_QIS_RUN = 1,
         LEDG_QIS_FINISH
@@ -493,6 +499,13 @@ extern int check_user_agent(char* user_agent);
 #if defined(RTCONFIG_IFTTT) || defined(RTCONFIG_ALEXA) || defined(RTCONFIG_GOOGLE_ASST)
 extern void add_ifttt_flag(void);
 #endif
+extern char HTTPD_LOGIN_FAIL_LAN[32];
+extern char HTTPD_LOGIN_FAIL_WAN[32];
+extern char HTTPD_LAST_LOGIN_TS[32];
+extern char HTTPD_LAST_LOGIN_TS_W[32];
+extern char CAPTCHA_FAIL_NUM[32];
+extern char HTTPD_LOCK_NUM[32];
+extern char cloud_file[256];
 
 #ifdef RTCONFIG_HTTPS
 extern int gen_ddns_hostname(char *ddns_hostname);
@@ -522,13 +535,13 @@ extern unsigned int login_try_wan;
 extern time_t auth_check_dt;
 extern int lock_flag;
 extern int max_lock_time;
-extern int add_try;
+extern int login_error_status;
 extern char* ipisdomain(char* hostname, char* str);
 #ifdef RTCONFIG_AMAS
 extern char* iscap(char* str);
 #endif
 extern int referer_check(char* referer, int fromapp_flag);
-extern int auth_check(char* url, char* file, char* cookies, int fromapp_flag);
+extern int auth_check(char* url, char* file, char* cookies, int fromapp_flag, int *add_count);
 extern int check_noauth_referrer(char* referer, int fromapp_flag);
 extern char current_page_name[128];
 extern int gen_guestnetwork_pass(char *key, size_t size);
@@ -562,7 +575,7 @@ extern void do_get_eptoken_cgi(char *url, FILE *stream);
 extern unsigned int login_fail_num;
 extern int is_captcha_match(char *catpch);
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) || defined(GTAX11000_PRO) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) || defined(GTAX11000_PRO) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 extern void switch_ledg(int action);
 #endif
 extern int get_external_ip(void);
@@ -574,4 +587,7 @@ extern void slow_post_read_check();
 extern int check_chpass_auth(char *cur_username, char *cur_passwd);
 extern void reg_default_final_token();
 extern int get_wl_nband_list();
+extern int last_time_lock_warning(void);
+extern int check_lock_status(time_t *dt);
+extern char *wl_nband_to_wlx(char *nv_name, char *wl_name, size_t len);
 #endif /* _httpd_h_ */

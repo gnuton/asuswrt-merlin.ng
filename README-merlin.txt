@@ -28,7 +28,10 @@ performance, and performance over features.
 
 Supported Devices
 -----------------
+
 Fully supported devices:
+
+386.x:
  * RT-AC66U_B1 (use the RT-AC68U firmware)
  * RT-AC68U, RT-AC68P, RT-AC68UF (including HW revision C1 and E1)
  * RT-AC68U V3 (use the RT-AC68U firmware)
@@ -39,9 +42,11 @@ Fully supported devices:
  * RT-AC5300
  * RT-AC86U
  * RT-AC2900 (use the RT-AC86U firmware)
+
+388.x:
  * RT-AX88U
  * RT-AX56U
- * RT-AX58U & RT-AX3000
+ * RT-AX58U & RT-AX3000 (V1 only)
  * RT-AX86U & RT-AX86S
  * GT-AC2900
  * GT-AX11000
@@ -49,6 +54,9 @@ Fully supported devices:
  * GT-AXE11000
  * GT-AX6000
  * ZenWifi Pro XT12
+ * GT-AX11000_Pro
+ * GT-AXE16000
+ * RT-AX86U_Pro
 
 No longer supported:
  * RT-N16
@@ -72,71 +80,53 @@ firmware.
 
 (Note: HND platform = newer Broadcom models starting with RT-AC86U):
 
+
 System:
-   - Various bugfixes and optimizations
-   - Some components were updated to newer versions, for improved
-     stability and security
-   - User scripts that run on specific events
-   - Cron jobs
-   - Ability to customize the config files used by the router services
-   - Ability to turn off router LEDs
-   - Entware easy setup script (alternative to Optware - the two are 
-     mutually exclusive)
-   - SNMP support (except for HND devices)
+   - Various bugfixes
+   - Performance optimizations to some CPU-bound components like OpenVPN
+   - Some components were updated to their latest versions, for improved stability and security
+   - User scripts that run on specific events such as firewall restart
+   - Cron jobs for scheduled tasks
+   - Customizable config files for router services
+   - Third party software through Entware, with an easy setup script
+   - SNMP support (some models)
    - Nano text editor (for more user-friendly script editing)
    - NTP daemon, which can synchronize your client devices
-
+   - Third-party addons, with a management interface (AMTM)
+ 
 
 Disk sharing:
-   - Enable/disable the use of shorter share names
-   - NFS sharing (through webui)
-   - Allow or disable WAN access to the FTP server
-   - TLS support for the FTP server
+   - Optionally use shorter share names (folder name only)
+   - NFS exporting of USB drives
 
 
 Networking:
-   - Force acting as a Master Browser
+   - Act as a SMB Master Browser
    - Act as a WINS server
-   - SSHD support for key-based authentication
    - Allows tweaking TCP/UDP connection tracking timeouts
    - CIFS client support (for mounting remote SMB share on the router)
-   - User-defined options for WAN DHCP queries (required by some ISPs)
-   - Advanced OpenVPN client and server support
-   - Support for new OpenVPN 2.4 features like NCP and LZ4
+   - Advanced OpenVPN client and server.
    - Netfilter ipset module, for efficient blacklist implementation
-   - Configurable min/max UPNP ports
-   - DNS-based Filtering, can be applied globally or per client
-   - Custom DDNS (through user script or custom config file)
-   - TOR support, individual client control (based on experimental code
-     from Asus)
-   - Policy routing for the OpenVPN client (based on source or
-     destination IPs), sometimes referred to as "selective routing")
-   - DNSSEC support
-   - fq_codel queue discipline for Traditional QoS
-   - Full cone NAT support (HND devices only)
-   - Detailed wireless troubleshooting information (HND devices
-     only)
-   - Modern DDNS client (In-a-Dyn), with HTTPS support
-   - DNS-over-TLS
+   - DNS Director - enforcing the use of a specific DNS server, can be applied globally or per client
+   - Wireless site survey page
+   - Custom DDNS (through a user script)
+   - TOR support, individual client access control
+   - VPN Director - Policy-based routing for OpenVPN and WireGUard clients (based on source or destination IPs)
+   - Detailed wireless troubleshooting information (on some models)
    - Redirect NTP client queries to the router's own NTP daemon
-   - WS-Discovery support (alternative to SMBv1 network discovery)
-   - Cake QoS (HND devices only)
-
+   - Cake SQM QoS (on newer HND models)
+ 
 
 Web interface:
    - Performance improvements
    - Optionally save traffic stats to disk (USB or JFFS partition)
-   - Enhanced traffic monitoring with graphical reports of
-     historical data
-   - Traffic report per IP (except on HND devices)
-   - Hostname field on the DHCP reservation page
-   - System information summary page
-   - Wifi icon reports the state of all radios
-   - Wireless site survey
-   - Advanced Wireless client list display, including automated refresh
+   - Enhanced traffic monitoring: adding graphical charts, and traffic monitoring per client IP
+   - Hostname field on the DHCP reservation list and Wireless ACL list
+   - System info summary page
+   - Wifi icon reports the state of both radios
+   - Advanced wireless client list display, including automated refresh
    - Redesigned layout of the various System Log sections
-   - Editable fields for some pages
-   - Advanced traffic classification report
+   - Editable entries (on some pages)
 
 
 Note that a number of features which first appeared in Asuswrt-Merlin

@@ -189,10 +189,16 @@ function wl_chanspec_list_change(){
 					document.getElementById('wl_nctrlsb_field').style.display = "";
 					if(amesh_support && httpApi.hasAiMeshNode() && !wl_info.band5g_2_support){
 						var _wl_channel = new Array();
+						var _unii4 = false;
 						for(j=1; j<mesh_5g.auto.chanspec.length; j++){
 							_wl_channel.push(mesh_5g.auto.chanspec[j]);
+
+							if(parseInt(mesh_5g.auto.chanlist[j]) > 165){
+								_unii4 = true;
+							}
 						}
 
+						unii4Support = _unii4;
 						wl_channel_list_5g = _wl_channel;	
 					}
 					else{
@@ -440,7 +446,7 @@ function wl_chanspec_list_change(){
 			if(band6g_support){		// due to GT-AXE11000 does not support
 				if(document.getElementById('psc6g_checkbox').checked){
 					wl_channel_list_5g_2 = ['37', '53', '69', '85', '101', '117', '133', '149', '165', '181', '197', '213'];
-					if(is_EU_sku){
+					if(is_EU_sku || ttc.indexOf('AU') != -1 || ttc.indexOf('AA') != -1){
 						wl_channel_list_5g_2 = ['5', '21', '37', '53', '69', '85'];
 					}
 				}
@@ -465,6 +471,7 @@ function wl_chanspec_list_change(){
 				document.getElementById('wl_nctrlsb_field').style.display = "";
 				if(amesh_support && httpApi.hasAiMeshNode()){
 					var _wl_channel = new Array();
+					var _unii4 = false;
 					for(j=1; j<mesh_5g2.auto.chanspec.length; j++){
 						if(band6g_support && document.getElementById('psc6g_checkbox').checked){
                             for(var k=wl_channel_list_5g_2.length-1; k>=0; k--){
@@ -478,8 +485,13 @@ function wl_chanspec_list_change(){
                         else{
                             _wl_channel.push(mesh_5g2.auto.chanspec[j]);
                         }
+
+						if(parseInt(mesh_5g2.auto.chanlist[j]) > 165){
+							_unii4 = true;
+						}
 					}
 
+					unii4Support = _unii4
 					wl_channel_list_5g_2 = _wl_channel;	
 				}
 				else{
@@ -956,6 +968,16 @@ function change_channel(obj){
 			}
 		}
 
+		if(unii4Support){
+			if(document.form.wl_channel.value  == 0){
+				document.getElementById('acs_unii4_field').style.display = "";
+				document.getElementById('acs_unii4_checkbox').disabled = false;
+			}
+			else{
+				document.getElementById('acs_unii4_field').style.display = "none";
+				document.getElementById('acs_unii4_checkbox').disabled = true;
+			}
+		}
 		//dwbMode_control_dfs({"band": band, "smart_connect": smart_connect});
 	}
 	else if(band == 0){

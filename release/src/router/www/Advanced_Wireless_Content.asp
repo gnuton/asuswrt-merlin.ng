@@ -14,7 +14,9 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link rel="stylesheet" type="text/css" href="pwdmeter.css">
-<link href="other.css"  rel="stylesheet" type="text/css">
+<link rel="stylesheet" type="text/css" href="other.css">
+<link rel="stylesheet" type="text/css" href="css/confirm_block.css">
+<script type="text/javascript" src="/js/confirm_block.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/general.js"></script>
@@ -68,15 +70,9 @@ var wl_bw_160 = '<% nvram_get("wl_bw_160"); %>';
 var enable_bw_160 = (wl_bw_160 == 1) ? true : false;
 var wl_wpa_psk_org = decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wl_wpa_psk"); %>");
 var faq_fref = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=Faq&lang="+ui_lang+"&kw=&num=150";
+var faq_href_hide_ssid = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=Faq&lang="+ui_lang+"&kw=&num=162";
 
 function initial(){
-	if(smart_connect_support && Qcawifi_support && document.form.smart_connect_x.value === '1'){
-		httpApi.nvramSet({
-			"action_mode":"apply",
-			"smart_connect_x": "0",
-		});
-	}
-
 	show_menu();
 	if (he_frame_support) {
 		$("#he_mode_field").show();
@@ -255,7 +251,7 @@ function initial(){
 		}
 	}
 
-	if(smart_connect_support && !Qcawifi_support && (isSwMode("rt") || isSwMode("ap"))){
+	if(smart_connect_support && (isSwMode("rt") || isSwMode("ap"))){
 		var flag = '<% get_parameter("flag"); %>';		
 		var smart_connect_flag_t;
 		document.getElementById("smartcon_enable_field").style.display = "";
@@ -535,6 +531,8 @@ function add_options_value(o, arr, orig){
 }
 
 function applyRule(){
+	var confirm_flag = 0;
+	var confirm_content = "";
 	if(lantiq_support && wave_ready != 1){
 		alert("Please wait a minute for wireless ready");
 		return false;
@@ -565,22 +563,25 @@ function applyRule(){
 			var radio_value = (document.form.wl_closed[0].checked) ? 1 : 0;
 			if(document.form.wps_enable.value == 1) {
 				if(radio_value) {
-					if(!AiMesh_confirm_msg("Wireless_Hide_WPS", radio_value))
-						return false;
-					document.form.wps_enable.value = "0";
+					//if(!AiMesh_confirm_msg("Wireless_Hide_WPS", radio_value))
+						//return false;
+					confirm_flag=7;
+					confirm_content="<#AiMesh_confirm_msg7#>";
 				}
 			}
 			else {
-				if(!AiMesh_confirm_msg("Wireless_Hide", radio_value))
-					return false;
+				if(radio_value) {
+					//if(!AiMesh_confirm_msg("Wireless_Hide", radio_value))
+						//return false;
+					confirm_flag=6;
+					confirm_content="<#AiMesh_confirm_msg6#>";
+				}
 			}
 		}
 		else {
 			if(document.form.wl_closed[0].checked && document.form.wps_enable.value == 1 && (isSwMode("rt") || isSwMode("ap"))){
-				if(confirm("<#wireless_JS_Hide_SSID#>"))
-					document.form.wps_enable.value = "0";
-				else
-					return false;
+				confirm_flag=1;
+				confirm_content="<#wireless_JS_Hide_SSID#>";
 			}
 		}
 
@@ -625,7 +626,6 @@ function applyRule(){
 			document.form.wl_bw_160.value = $("#enable_160mhz").prop("checked") ? 1 : 0;
 		}
 
-		showLoading();
 		document.form.wps_config_state.value = "1";		
 		if((auth_mode == "shared" || auth_mode == "wpa" || auth_mode == "wpa2"  || auth_mode == "wpawpa2" || auth_mode == "radius" ||
 				((auth_mode == "open") && !(document.form.wl_wep_x.value == "0")))
@@ -690,7 +690,58 @@ function applyRule(){
 			}
 		}
 
-		document.form.submit();
+		if(confirm_flag==1 || confirm_flag==7 || confirm_flag==6){
+			if($(".confirm_block").length > 0){
+				$(".confirm_block").remove();
+			}
+			if(window.scrollTo)
+				window.scrollTo(0,0);
+			htmlbodyforIE = document.getElementsByTagName("html");
+			htmlbodyforIE[0].style.overflow = "hidden";
+
+			$("#Loading").css('visibility', 'visible');
+			$("#loadingBlock").css('visibility', 'hidden');
+
+			confirm_asus({
+				title: "<#WLANConfig11b_x_BlockBCSSID_itemname#>",
+				contentA: confirm_content+"<br><br><#AiMesh_confirm_msg13#> <#AiMesh_confirm_msg0#>",
+				contentC: "",
+				left_button: "<#CTL_ok#>",
+				left_button_callback: function(){
+					if(confirm_flag==1 || confirm_flag==7){
+						document.form.wps_enable.value = "0";
+					}
+					confirm_cancel();
+					htmlbodyforIE = document.getElementsByTagName("html");
+					htmlbodyforIE[0].style.overflow = "";
+					$("#loadingBlock").css('visibility', 'visible');
+					showLoading();
+					document.form.submit();
+				},
+				left_button_args: {},
+				right_button: "<#CTL_Cancel#>",
+				right_button_callback: function(){
+					confirm_cancel();
+					htmlbodyforIE = document.getElementsByTagName("html");
+					htmlbodyforIE[0].style.overflow = "";
+					$("#Loading").css('visibility', 'hidden');
+					return false;
+				},
+				right_button_args: {},
+				iframe: "",
+				margin: "100px 0px 0px 25px",
+				note_display_flag: 0
+			});
+			$(".confirm_block").css( "zIndex", 10001 );
+			$("#ssid_hide_faq").attr('target', '_blank')
+							.attr('style', 'color:#FFCC00;text-decoration:underline;')
+							.attr("href", faq_href_hide_ssid);
+
+		}
+		else{
+			showLoading();
+			document.form.submit();
+		}
 	}
 }
 

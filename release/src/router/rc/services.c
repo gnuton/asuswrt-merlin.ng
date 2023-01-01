@@ -451,7 +451,7 @@ int build_temp_rootfs(const char *newroot)
 	char d1[PATH_MAX], d2[PATH_MAX];
 	struct utsname u;
 	const char *mdir[] = { "/proc", "/tmp", "/sys", "/usr", "/var", "/var/lock" };
-	const char *bin = "ash busybox cat cp dd df echo grep iwpriv kill ls ps mkdir mount nvram ping sh tar umount uname rm chmod mv"
+	const char *bin = "ash busybox cat cp dd df echo grep iwpriv kill ls ps mkdir mount nvram ping sh tar umount uname rm chmod mv klogd syslogd"
 #if defined(RTCONFIG_HND_ROUTER_AX)
 			" bcm_flasher chroot pivot_root bcm_bootstate bash vi ubinfo"			
 			" ash bash cat chmod chown cp date dd df dmesg echo egrep false fatattr fgrep fsync grep gunzip gzip ln login mkdir mknod more netsta nice pidof ping ping6i ps pwd rm rmdir"
@@ -461,6 +461,12 @@ int build_temp_rootfs(const char *newroot)
 	const char *sbin = "init rc hotplug2 insmod lsmod modprobe reboot rmmod rtkswitch"
 #if defined(RTCONFIG_BWDPI)
 		" bwdpi* rsasign_sig_check"
+#endif
+#if defined(RTCONFIG_HW_DOG)
+		" hwdog"
+#endif
+#if defined(RTCONFIG_SCHED_DAEMON)
+		" sched_daemon"
 #endif
 		;
 	const char *lib = "librt*.so* libnsl* libdl* libm* ld-* libiw* libgcc* libpthread* libdisk* libc*"
@@ -1420,12 +1426,23 @@ void start_dnsmasq(void)
 
 		/* default names */
 		fprintf(fp, "%s %s\n", lan_ipaddr, DUT_DOMAIN_NAME);
-		fprintf(fp, "%s %s\n", lan_ipaddr, OLD_DUT_DOMAIN_NAME1);
-		fprintf(fp, "%s %s\n", lan_ipaddr, OLD_DUT_DOMAIN_NAME2);
-#if defined(RTAC68U) || defined(RPAX56) || defined(RPAX58)
-		if ((is_dpsta_repeater()||dpsr_mode()) && nvram_get_int("re_mode") == 0)
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusrouter.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "www.asusrepeater.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusrepeater.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "www.asusap.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusap.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "www.asusswitch.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusswitch.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "router.asus.com");
 		fprintf(fp, "%s %s\n", lan_ipaddr, "repeater.asus.com");
-#endif
+		fprintf(fp, "%s %s\n", lan_ipaddr, "ap.asus.com");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "www.asusnetwork.net");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusswitch.net");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusrepeater.net");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "asusap.net");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "zenwifi.net");
+		fprintf(fp, "%s %s\n", lan_ipaddr, "expertwifi.net");
+
 	nv = nvp = strdup(nvram_safe_get("dhcp_staticlist"));
 	if (nv)
 	{
@@ -2514,6 +2531,7 @@ void start_s46_tunnel(int unit)
 		snprintf(draft, sizeof(draft), "OFF");
 		break;
 	case WAN_V6PLUS:
+	case WAN_OCNVC:
 		snprintf(draft, sizeof(draft), "ON");
 		break;
 	default:
@@ -2623,6 +2641,7 @@ void stop_s46_tunnel(int unit, int unload)
 	case WAN_LW4O6:
 	case WAN_MAPE:
 	case WAN_V6PLUS:
+	case WAN_OCNVC:
 		break;
 	default:
 		return;
@@ -2653,35 +2672,66 @@ void stop_s46_tunnel(int unit, int unload)
 #endif
 }
 void
-start_s46map_rptd(void)
+start_v6plusd(void)
 {
-        char *s46map_rptd_argv[] = {"s46map_rptd", NULL};
+        char *v6plusd_argv[] = {"v6plusd", NULL};
         pid_t pid;
 
         if(getpid()!=1) {
-                notify_rc("start_s46map_rptd");
+                notify_rc("start_v6plusd");
                 return;
         }
 
-        killall("s46map_rptd", SIGTERM);
+        killall("v6plusd", SIGTERM);
 
-        _eval(s46map_rptd_argv, NULL, 0, &pid);
+        _eval(v6plusd_argv, NULL, 0, &pid);
 }
 
-void stop_s46map_rptd(void)
+void stop_v6plusd(void)
 {
         if(getpid()!=1) {
-                notify_rc("stop_s46map_rptd");
+                notify_rc("stop_v6plusd");
                 return;
         }
 
-        killall("s46map_rptd", SIGTERM);
+        killall("v6plusd", SIGTERM);
 }
 
-void restart_s46map_rptd(void)
+void restart_v6plusd(void)
 {
-	stop_s46map_rptd();
-	start_s46map_rptd();
+	stop_v6plusd();
+	start_v6plusd();
+}
+
+start_ocnvcd(void)
+{
+        char *ocnvcd_argv[] = {"ocnvcd", NULL};
+        pid_t pid;
+
+        if(getpid()!=1) {
+                notify_rc("start_ocnvcd");
+                return;
+        }
+
+        killall("ocnvcd", SIGTERM);
+
+        _eval(ocnvcd_argv, NULL, 0, &pid);
+}
+
+void stop_ocnvcd(void)
+{
+        if(getpid()!=1) {
+                notify_rc("stop_ocnvcd");
+                return;
+        }
+
+        killall("ocnvcd", SIGTERM);
+}
+
+void restart_ocnvcd(void)
+{
+	stop_ocnvcd();
+	start_ocnvcd();
 }
 #endif
 
@@ -3050,6 +3100,11 @@ check_wps_enable()
 {
 	int wps_enable = nvram_get_int("wps_enable_x");
 	int unit = nvram_get_int("wps_band_x");
+
+#ifdef RTCONFIG_AMAS
+	if (nvram_get_int("re_mode") == 1)
+		return;
+#endif
 
 	if (no_need_to_start_wps() ||
 		wps_band_ssid_broadcast_off(get_radio_band(unit))) {
@@ -4095,6 +4150,7 @@ ddns_updated_main(int argc, char *argv[])
 	nvram_set("ddns_updated", "1");
 
 //	logmessage("ddns", "ddns update ok");
+	nvram_set("ddns_check_retry", "10"); //Reset DDNS Retry
 
 #ifdef RTCONFIG_LETSENCRYPT
 	if (nvram_match("le_rc_notify", "1")) {
@@ -4176,19 +4232,20 @@ start_ddns(char *caller)
 	FILE *fp;
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_ip, *wan_ifname;
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 	char ip6_addr[INET6_ADDRSTRLEN] = {0};
 #endif
 	char *server, *user, *passwd, *host, *service;
 #ifndef RTCONFIG_INADYN
 	char usrstr[32 + 32 + sizeof(":")];
 #else
-	int realip;
+	int realip = 0; // use Internal WAN IP
 #endif
 	char cache_path[512] = {0};
-	int wild, ret = -1;
+	int wild, ret = -1, wan_public = 0;
 	int unit, asus_ddns = 0;
 	pid_t pid;
+	int ddns_check_retry = nvram_get_int("ddns_check_retry");
 
 	if (!is_routing_enabled())
 		return 0;
@@ -4211,40 +4268,79 @@ start_ddns(char *caller)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
+				logmessage("ddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
 				return -2;
 			}
 			unit = u;
 		}
 	}
 #endif
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
-	wan_ifname = get_wan_ifname(unit);
-
-	if (!wan_ip || inet_addr_(wan_ip) == INADDR_ANY) {
-		logmessage("ddns", "WAN IP is empty.");
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code_chk", "ddns_query");
-		return -1;
-	}
-#ifdef RTCONFIG_IPV6_DISABLED
-	if (ipv6_enabled()) {
-		if (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0) {
-			logmessage("start_ddns", "%s has not yet obtained an ipv6 address", wan_ifname);
-		}
-	}
-#endif
-
 	server = nvram_safe_get("ddns_server_x");
+#ifdef RTCONFIG_INADYN
+	if (strcmp(server, "DNS.HE.NET") == 0)
+		user = nvram_safe_get("ddns_hostname_x"); /* The username is also the hostname in HE.NET */
+	else
+#endif
 	user = nvram_safe_get("ddns_username_x");
 	passwd = nvram_safe_get("ddns_passwd_x");
 	host = nvram_safe_get("ddns_hostname_x");
 	wild = nvram_get_int("ddns_wildcard_x");
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+	wan_ifname = get_wan_ifname(unit);
+	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
 #ifdef RTCONFIG_INADYN
-	realip = nvram_get_int("ddns_realip_x");
+	if (wan_public) { // private WAN IP
+		/* use External WAN IP */
+		nvram_set_int("ddns_realip_x", 1);
+		realip = 1;
+#ifdef RTCONFIG_GETREALIP
+		if (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2) {
+			wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+		}
 #endif
+	} else {
+		/* use Internal WAN IP */
+		nvram_set_int("ddns_realip_x", 0);
+	}
+#endif
+
+	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
+		logmessage("ddns", "WAN IP is empty.(%d)", ddns_check_retry);
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("ddns", "%s has not yet obtained an WAN IPv6 address.(%d)", wan_ifname, ddns_check_retry);
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#endif
+
+	if (
+#ifdef RTCONFIG_INADYN
+		realip == 0 &&
+#endif
+#ifdef RTCONFIG_IPV6
+		!nvram_get_int("ddns_ipv6_update") &&
+#endif
+		wan_public) { // private WAN IP
+		logmessage("ddns", "use Private WAN IP (%s).(%d)", wan_ip, ddns_check_retry);
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "299");
+		nvram_set("ddns_return_code_chk", "299");
+		return -1;
+	}
 
 #ifndef RTCONFIG_INADYN
 	snprintf(cache_path, sizeof(cache_path), "/tmp/ddns.cache");
@@ -4252,19 +4348,15 @@ start_ddns(char *caller)
 	snprintf(cache_path, sizeof(cache_path), "/var/cache/inadyn/%s.cache", host);
 #endif
 
-	if (
-#ifdef RTCONFIG_INADYN
-		!realip &&
-#endif
-		inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
+	if (inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
 	) {
-		logmessage("start_ddns", "IP address, server and hostname have not changed since the last update.");
+		logmessage("ddns", "IP address, server and hostname have not changed since the last update.");
 		return -1;
 	}
 
@@ -4285,6 +4377,8 @@ start_ddns(char *caller)
 		service = "easydns";
 	else if (strcmp(server, "WWW.DNSOMATIC.COM")==0)
 		service = "dnsomatic";
+	else if (strcmp(server, "DNS.HE.NET") == 0)
+		service = "dyndns@he.net";
 	else if (strcmp(server, "WWW.TUNNELBROKER.NET")==0) {
 		service = "heipv6tb";
 		eval("iptables", "-t", "filter", "-D", "INPUT", "-p", "icmp", "-s", "66.220.2.74", "-j", "ACCEPT");
@@ -4311,6 +4405,8 @@ start_ddns(char *caller)
 		service = "default@easydns.com";
 	else if (strcmp(server, "WWW.DNSOMATIC.COM") == 0)
 		service = "default@dnsomatic.com";
+	else if (strcmp(server, "DNS.HE.NET") == 0)
+		service = "dyndns@he.net";
 	else if (strcmp(server, "WWW.TUNNELBROKER.NET") == 0) {
 		service = "default@tunnelbroker.net";
 		eval("iptables", "-t", "filter", "-D", "INPUT", "-p", "icmp", "-s", "66.220.2.74", "-j", "ACCEPT");
@@ -4330,8 +4426,10 @@ start_ddns(char *caller)
 	else if (strcmp(server, "WWW.SELFHOST.DE") == 0)
 		service = "default@selfhost.de";
 	else if (strncmp(server, "WWW.ASUS.COM", 12) == 0) { /* WWW.ASUS.COM or WWW.ASUS.COM.CN */
-#ifdef RTCONFIG_ASUSDDNS_ACCOUNT_BASE		
-		if(strlen(nvram_safe_get("oauth_dm_refresh_ticket")) > 0)
+#ifdef RTCONFIG_ACCOUNT_BINDING
+		if(nvram_match("oauth_auth_status", "2") && nvram_match("ddns_replace_status", "1") &&
+			((strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.com") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.com")))
+			|| (strstr(nvram_safe_get("aae_ddnsinfo"), ".asuscomm.cn") && (strstr(nvram_safe_get("ddns_hostname_x"), ".asuscomm.cn")))))
 			service = "updatev2@asus.com";
 		else
 #endif			
@@ -4346,7 +4444,7 @@ start_ddns(char *caller)
 	else if (strcmp(server, "WWW.ORAY.COM") == 0) {
 		service = "peanuthull", asus_ddns = 2;
 	} else {
-		logmessage("start_ddns", "Error ddns server name: %s\n", server);
+		logmessage("ddns", "Error ddns server name: %s\n", server);
 		return 0;
 	}
 
@@ -4356,11 +4454,11 @@ start_ddns(char *caller)
 
 	/* Show WAN unit used by ddns client to console and syslog. */
 	_dprintf("start_ddns update %s %s, wan_unit %d\n", server, service, unit);
-	logmessage("start_ddns", "update %s %s, wan_unit %d\n", server, service, unit);
+	logmessage("ddns", "update %s %s, wan_unit %d\n", server, service, unit);
 
 	/* MAX Retry Count mechanism */
 	if (caller == NULL) { // not from watchdog
-		//logmessage("start_ddns", "Reset DDNS Retry.\n");
+		//logmessage("ddns", "Reset DDNS Retry.\n");
 		nvram_set("ddns_check_retry", "10");
 	}
 
@@ -4384,17 +4482,17 @@ start_ddns(char *caller)
 	unlink(cache_path);
 	nvram_unset("ddns_cache");
 	nvram_unset("ddns_ipaddr");
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 	nvram_unset("ddns_ipv6_ipaddr");
 #endif
 	nvram_unset("ddns_status");
 	nvram_unset("ddns_updated");
-	logmessage("start_ddns", "Clear ddns cache.");
+	logmessage("ddns", "Clear ddns cache.");
 #else
 	if ((!nvram_match("ddns_server_x_old", "") && strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) != 0)
 		|| (!nvram_match("ddns_hostname_old", "") && strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) != 0)
 		|| (inet_addr_(wan_ip) != inet_addr_(nvram_safe_get("ddns_ipaddr")))
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		|| (!nvram_match("ddns_ipv6_ipaddr", ip6_addr))
 #endif
 		|| (!f_exists(cache_path)) /* Forced to restart DDNS */
@@ -4402,12 +4500,12 @@ start_ddns(char *caller)
 		system("rm -f /var/cache/inadyn/*.cache");
 		nvram_unset("ddns_cache");
 		nvram_unset("ddns_ipaddr");
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		nvram_unset("ddns_ipv6_ipaddr");
 #endif
 		nvram_unset("ddns_status");
 		nvram_unset("ddns_updated");
-		logmessage("start_ddns", "Clear ddns cache.");
+		logmessage("ddns", "Clear ddns cache.");
 	}
 #endif
 
@@ -4480,17 +4578,15 @@ start_ddns(char *caller)
 			if (wild)
 				fprintf(fp, "wildcard = true\n");
 
-#if 0	// Rely on DDNS provider instead of stun
 #ifdef RTCONFIG_GETREALIP
-			if (realip)
+			if (realip == 1 && asus_ddns == 1)	// Private IP and Asus DDNS - override iface
 				fprintf(fp, "checkip-command = '%s'\n", "getrealip.sh");
-#endif
 #endif
 			fprintf(fp, "}\n");
 
 			fprintf(fp, "iterations = 1\n");
-			if (!realip)
-				fprintf(fp, "iface = %s\n", wan_ifname);
+			if (!realip || asus_ddns == 1)
+				fprintf(fp, "iface = %s\n", wan_ifname); /* External WAN IP also need: Private IPv4 + Public IPv6 */
 			fprintf(fp, "ca-trust-file = /etc/ssl/certs/ca-certificates.crt\n");
 			if (!nvram_get_int("ntp_ready"))
 				fprintf(fp, "broken-rtc = true\n");
@@ -4522,8 +4618,7 @@ start_ddns(char *caller)
 				unlink(cache_path);
 				nvram_set("ddns_act", "update");
 			}
-			int ddns_check_retry = nvram_get_int("ddns_check_retry");
-			logmessage("start_ddns", "Start Inadyn(%d).\n", ddns_check_retry);
+			logmessage("ddns", "Start Inadyn(%d).\n", ddns_check_retry);
 			ret = _eval(inadyn_argv, NULL, 0, &pid);
 		}
 	} else {	// Custom DDNS
@@ -4570,7 +4665,7 @@ asusddns_reg_domain(int reg)
 	FILE *fp;
 	char tmp[100], prefix[sizeof("wanXXXXXXXXXX_")];
 	char *wan_ip, *wan_ifname;
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 	char ip6_addr[INET6_ADDRSTRLEN] = {0};
 #endif
 #ifndef RTCONFIG_INADYN
@@ -4580,7 +4675,7 @@ asusddns_reg_domain(int reg)
 	int realip;
 #endif
 	char cache_path[512] = {0};
-	int unit, ret = -1;
+	int unit, ret = -1, wan_public = 0;
 
 	if (!is_routing_enabled())
 		return 0;
@@ -4601,7 +4696,7 @@ asusddns_reg_domain(int reg)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
+				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
 				return -2;
 			}
 
@@ -4610,32 +4705,55 @@ asusddns_reg_domain(int reg)
 	}
 #endif
 
-	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
-	wan_ifname = get_wan_ifname(unit);
-
-	if (!wan_ip || inet_addr_(wan_ip) == INADDR_ANY) {
-		logmessage("ddns", "WAN IP is empty.");
-		/* Trigger watchdog when start fails */
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code_chk", "ddns_query");
-		return -1;
-	}
-#ifdef RTCONFIG_IPV6_DISABLED
-	if (ipv6_enabled()) {
-		if (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0) {
-			logmessage("asusddns", "%s has not yet obtained an ipv6 address", wan_ifname);
-			/* Trigger watchdog when start fails */
-			nvram_unset("ddns_updated");
-			nvram_set("ddns_return_code_chk", "ddns_query");
-			return -1;
-		}
-	}
-#endif
-
 #ifdef RTCONFIG_INADYN
 	realip = nvram_get_int("ddns_realip_x");
 #endif
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+#if defined(RTCONFIG_INADYN) && defined(RTCONFIG_GETREALIP)
+	if (realip && (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2))
+		wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
+	else
+#endif
+	wan_ip = nvram_safe_get(strcat_r(prefix, "ipaddr", tmp));
+	wan_ifname = get_wan_ifname(unit);
+
+	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
+		logmessage("asusddns", "WAN IP is empty.");
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#ifdef RTCONFIG_IPV6
+	if (nvram_get_int("ddns_ipv6_update")
+		&& ipv6_enabled() && (_get_ipv6_addr(wan_ifname, ip6_addr, sizeof(ip6_addr)) != 0))
+	{
+		logmessage("asusddns", "%s has not yet obtained an WAN IPv6 address", wan_ifname);
+		/* Trigger watchdog when start fails */
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
+		nvram_set("ddns_return_code_chk", "-1");
+		return -1;
+	}
+#endif
+
+	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
+	if (
+#ifdef RTCONFIG_INADYN
+		realip == 0 &&
+#endif
+#ifdef RTCONFIG_IPV6
+		!nvram_get_int("ddns_ipv6_update") &&
+#endif
+		wan_public) { // private WAN IP
+		logmessage("asusddns", "use Private WAN IP (%s).", wan_ip);
+		nvram_unset("ddns_updated");
+		nvram_set("ddns_return_code", "299");
+		nvram_set("ddns_return_code_chk", "299");
+		return -1;
+	}
 
 #ifndef RTCONFIG_INADYN
 	snprintf(cache_path, sizeof(cache_path), "/tmp/ddns.cache");
@@ -4647,14 +4765,10 @@ asusddns_reg_domain(int reg)
 	// update when ipaddr!= ipaddr in cache.
 	// nvram ddns_cache, the same with /tmp/ddns.cache
 
-	if (
-#ifdef RTCONFIG_INADYN
-		!realip &&
-#endif
-		inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
+	if (inet_addr_(wan_ip) == inet_addr_(nvram_safe_get("ddns_ipaddr")) &&
 		strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) == 0 &&
 		strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) == 0
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		&& nvram_match("ddns_ipv6_ipaddr", ip6_addr)
 #endif
 		&& f_exists(cache_path) /* Not forced to restart DDNS */
@@ -4683,7 +4797,7 @@ asusddns_reg_domain(int reg)
 	if ((!nvram_match("ddns_server_x_old", "") && strcmp(nvram_safe_get("ddns_server_x"), nvram_safe_get("ddns_server_x_old")) != 0)
 		|| (!nvram_match("ddns_hostname_old", "") && strcmp(nvram_safe_get("ddns_hostname_x"), nvram_safe_get("ddns_hostname_old")) != 0)
 		|| (inet_addr_(wan_ip) != inet_addr_(nvram_safe_get("ddns_ipaddr")))
-#ifdef RTCONFIG_IPV6_DISABLED
+#ifdef RTCONFIG_IPV6
 		|| (!nvram_match("ddns_ipv6_ipaddr", ip6_addr))
 #endif
 	) {
@@ -4743,8 +4857,7 @@ asusddns_reg_domain(int reg)
 			fprintf(fp, "}\n");
 
 			fprintf(fp, "iterations = 1\n");
-			if (!realip)
-				fprintf(fp, "iface = %s\n", wan_ifname);
+			fprintf(fp, "iface = %s\n", wan_ifname); /* External WAN IP also need: Private IPv4 + Public IPv6 */
 			fprintf(fp, "ca-trust-file = /etc/ssl/certs/ca-certificates.crt\n");
 			if (!nvram_get_int("ntp_ready"))
 				fprintf(fp, "broken-rtc = true\n");
@@ -4790,7 +4903,7 @@ asusddns_unregister(void)
 #ifndef RTCONFIG_INADYN
 	char *nserver;
 #else
-	int realip;
+	int realip = 0; // use Internal WAN IP
 #endif
 	int unit, ret = -1;
 
@@ -4805,7 +4918,7 @@ asusddns_unregister(void)
 			int u = get_first_connected_public_wan_unit();
 			if (u < WAN_UNIT_FIRST || u >= WAN_UNIT_MAX)
 			{
-				logmessage("DDNS", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
+				logmessage("asusddns", "[%s] dual WAN load balance DDNS cannot succeed to work, because none of wan is public IP.", __FUNCTION__);
 				return -2;
 			}
 			unit = u;
@@ -4867,8 +4980,7 @@ _dprintf("%s: do ez-ipupdate to unregister! unit = %d wan_ifname = %s nserver = 
 			fprintf(fp, "}\n");
 
 			fprintf(fp, "iterations = 1\n");
-			if (!realip)
-				fprintf(fp, "iface = %s\n", wan_ifname);
+			fprintf(fp, "iface = %s\n", wan_ifname); /* External WAN IP also need: Private IPv4 + Public IPv6 */
 			fprintf(fp, "ca-trust-file = /etc/ssl/certs/ca-certificates.crt\n");
 			if (!nvram_get_int("ntp_ready"))
 				fprintf(fp, "broken-rtc = true\n");
@@ -5320,13 +5432,13 @@ mcpd_conf(void)
 	   to enable mcpd bring up							*/
 	if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") > 0 &&
 		nvram_get_int("switch_stb_x") <= 6 && !nvram_match("switch_wantag", "free")) {
-		if (model == MODEL_RTAX58U || model == MODEL_RTAX82U_V2)
+		if (model == MODEL_RTAX58U || model == MODEL_RTAX82U_V2 || model == MODEL_TUFAX5400_V2 || model == MODEL_XD6_V2 || model == MODEL_RTAX5400)
 			proxy_ifname = "eth4.v0";
 		else if (model == MODEL_RTAX82_XD6S)
 			proxy_ifname = "eth1.v0";
 		else
 			proxy_ifname = "eth0.v0";
-#if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N)
+#if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N) || defined(BR63)
 		/* Adjust mcast interface for bcm + rtkswtch */
 		if (nvram_get_int("switch_wan1tagid")) {
 			if(nvram_get_int("switch_stb_x") == 6)
@@ -5355,23 +5467,23 @@ mcpd_conf(void)
 	fprintf(fp, "igmp-admission-required 0\n");
 	fprintf(fp, "igmp-admission-bridging-filter 0\n");
 #ifdef RTCONFIG_MULTISERVICE_WAN
-	fprintf(fp, "igmp-proxy-interfaces %s\n", proxy_ifname);
+	fprintf(fp, "igmp-proxy-interfaces %s\n", is_router_mode() ? proxy_ifname : "");
 	fprintf(fp, "igmp-snooping-interfaces %s\n", nvram_safe_get("lan_ifname"));
-	fprintf(fp, "igmp-mcast-interfaces %s\n", proxy_ifname);
+	fprintf(fp, "igmp-mcast-interfaces %s\n", is_router_mode() ? proxy_ifname : "");
 #else
 	/* Do not set igmp proxy in IPTV bridge case */
 	if (nvram_get_int("switch_stb_x") == 0 || nvram_get_int("switch_stb_x") > 6) {
 		if (nvram_match("switch_wantag", "movistar"))
-			fprintf(fp, "igmp-proxy-interfaces %s\n", "vlan2");
+			fprintf(fp, "igmp-proxy-interfaces %s\n", is_router_mode() ? "vlan2" : "");
 		else if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") == 0 && nvram_get_int("switch_wan0tagid") > 0)
-			fprintf(fp, "igmp-proxy-interfaces %s\n", nvram_safe_get("wan0_ifname"));
+			fprintf(fp, "igmp-proxy-interfaces %s\n", is_router_mode() ? nvram_safe_get("wan0_ifname") : "");
 		else
-			fprintf(fp, "igmp-proxy-interfaces %s\n", proxy_ifname);
+			fprintf(fp, "igmp-proxy-interfaces %s\n", is_router_mode() ? proxy_ifname : "");
 	}
 	/* set downstream interface to vlan bridge to enable mcast traffic passthrough */
 	if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") > 0 &&
 		nvram_get_int("switch_stb_x") <= 6) {
-#if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N)
+#if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N) || defined(BR63)
 		/* Adjust snooping interface for bcm + rtkswtch */
 		if (nvram_get_int("switch_wan1tagid")) {
 			if (nvram_match("switch_wantag", "unifi_home"))
@@ -5390,17 +5502,17 @@ mcpd_conf(void)
 	else
 		fprintf(fp, "igmp-snooping-interfaces %s\n", nvram_safe_get("lan_ifname"));
 	if(nvram_match("switch_wantag", "movistar"))
-		fprintf(fp, "igmp-mcast-interfaces %s\n", "vlan2");
-#if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N)
+		fprintf(fp, "igmp-mcast-interfaces %s\n", is_router_mode() ? "vlan2" : "");
+#if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N) || defined(BR63)
 	else if (nvram_match("switch_wantag", "unifi_home"))
-		fprintf(fp, "igmp-mcast-interfaces %s\n", "eth0.600");
+		fprintf(fp, "igmp-mcast-interfaces %s\n", is_router_mode() ? "eth0.600" : "");
 #endif
 	else if (!nvram_match("switch_wantag", "") && nvram_get_int("switch_stb_x") == 0 && nvram_get_int("switch_wan0tagid") > 0)
-		fprintf(fp, "igmp-mcast-interfaces %s\n", nvram_safe_get("wan0_ifname"));
+		fprintf(fp, "igmp-mcast-interfaces %s\n", is_router_mode() ? nvram_safe_get("wan0_ifname") : "");
 	else if (nvram_match("switch_wantag", "free"))
-		fprintf(fp, "igmp-mcast-interfaces %s\n", "eth0.100");
+		fprintf(fp, "igmp-mcast-interfaces %s\n", is_router_mode() ? "eth0.100" : "");
 	else
-		fprintf(fp, "igmp-mcast-interfaces %s\n", proxy_ifname);
+		fprintf(fp, "igmp-mcast-interfaces %s\n", is_router_mode() ? proxy_ifname : "");
 #endif
 
 #ifdef RTCONFIG_IPV6
@@ -5421,9 +5533,9 @@ mcpd_conf(void)
 	fprintf(fp, "mld-admission-bridging-filter %d\n", 0);
 	fprintf(fp, "mld-proxy-enable %d\n", 1);
 	fprintf(fp, "mld-snooping-enable %d\n", 1);
-	fprintf(fp, "mld-proxy-interfaces %s\n", proxy_ifname);
+	fprintf(fp, "mld-proxy-interfaces %s\n", is_router_mode() ? proxy_ifname : "");
 	fprintf(fp, "mld-snooping-interfaces %s\n", "br0");
-	fprintf(fp, "mld-mcast-interfaces %s\n", proxy_ifname);
+	fprintf(fp, "mld-mcast-interfaces %s\n", is_router_mode() ? proxy_ifname : "");
 	fprintf(fp, "#\n");
 	fprintf(fp, "#End MLD configuration\n");
 	fprintf(fp, "#\n");
@@ -5878,6 +5990,23 @@ stop_misc(void)
 	stop_conn_diag();
 #endif
 #endif
+	stop_pppoe_relay();
+	if (pids("igmpproxy"))
+		killall_tk("igmpproxy");
+	if (pids("telnetd"))
+		killall_tk("telnetd");
+	if (pids("dropbear"))
+		killall_tk("dropbear");
+	if (pids("alt_watchdog"))
+		killall_tk("alt_watchdog");
+#if defined(RTCONFIG_AWSIOT)
+	if (pids("awsiot"))
+		killall_tk("awsiot");
+#endif
+#ifdef RTCONFIG_FSMD
+	if (pids("fsmd"))
+		killall_tk("fsmd");
+#endif
 #ifdef RTCONFIG_AMAS
 	stop_amas_lib();
 	stop_amas_bhctrl();
@@ -6114,7 +6243,7 @@ start_httpd(void)
 		_eval(https_argv, NULL, 0, &pid);
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled() && nvram_get_int("misc_http_x")
-			&& is_intf_up(https_ipv6_argv[3])) {
+			&& is_intf_up(https_ipv6_argv[3]) > 0) {
 			pid = nvram_get_int("misc_httpsport_x") ? : 8443;
 			https_ipv6_argv[https_ipv6_index++] = "-p";
 			https_ipv6_argv[https_ipv6_index++] = ((pid == 8443) ? "8443" : nvram_safe_get("misc_httpsport_x"));
@@ -6409,7 +6538,7 @@ void start_upnp(void)
 					"serial=%s\n"
 					"uuid=%s\n"
 					"lease_file=%s\n",
-					get_wan_ifname(wan_primary_ifunit()),
+					get_wan_ifname(unit),
 					nvram_safe_get("lan_ifname"),
 					upnp_port,
 					run_upnpd ? "yes" : "no",	// upnp enable
@@ -6625,6 +6754,10 @@ void reload_upnp(void)
 		return;
 
 	unit = wan_primary_ifunit();
+#ifdef RTCONFIG_DUALWAN
+	if (nvram_match("wans_mode", "lb") && !is_phy_connect(unit))
+		unit = 1 - unit;
+#endif
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 
 	if (nvram_get_int(strcat_r(prefix, "upnp_enable", tmp)))
@@ -6661,7 +6794,7 @@ stop_ntpc(void)
 #else
 	if (pids("ntpclient"))
 		killall_tk("ntpclient");
-#if defined(RTAX82_XD6) || defined(RTAX82_XD6S)
+#if defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(XD6_V2)
 	if (pids("ntpdate"))
 		killall_tk("ntpdate");
 #endif
@@ -7663,7 +7796,7 @@ int check_bluetooth_device(const char *bt_dev)
 	return ret;
 }
 
-#if (defined(RTAX82_XD6) || defined(RTAX82_XD6S)) && !defined(RTCONFIG_BCM_MFG)
+#if (defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(XD6_V2)) && !defined(RTCONFIG_BCM_MFG)
 static inline int hci_test_bit(int nr, void *addr)
 {
 	return *((uint32_t *) addr + (nr >> 5)) & (1 << (nr & 31));
@@ -7826,7 +7959,7 @@ static void _get_ble_name(char* name, size_t len)
 	strlcat(name, tmp, len);
 
 	/* Bundle flag */
-#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12)
+#if defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12) || defined(XD6_V2)
 	amas_bdl_val = strtol(cfe_nvram_safe_get_raw("amas_bdl"), NULL, 10);
 	if (amas_bdl_val == 0)
 		amas_bdl_val = 1; /* single pack case */
@@ -7868,13 +8001,16 @@ static void _write_bluetoothd_conf()
 	switch (model) {
 		case MODEL_RTAX95Q:
 		case MODEL_XT8PRO:
+		case MODEL_BM68:
 		case MODEL_XT8_V2:
 		case MODEL_RTAXE95Q:
 		case MODEL_ET8PRO:
+		case MODEL_ET8_V2:
 		case MODEL_RTAX56_XD4:
 		case MODEL_XD4PRO:
 		case MODEL_RTAX58U:
 		case MODEL_RTAX82_XD6S:
+		case MODEL_XD6_V2:
 		case MODEL_ET12:
 		case MODEL_XT12:
 			dualmode = 1;
@@ -7937,7 +8073,7 @@ void ble_rename_ssid(void)
 	char hci_ssid[32] = {0};
 	char *ble_rename_argv[] = {"hciconfig", hci_inf, "name", hci_ssid, NULL};
 	char *ble_ifdownup_argv[] = {"hciconfig", hci_inf, "down", "up", NULL};
-#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12)
+#if defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12) || defined(XD6_V2)
 	char *ble_leadv_argv[] = {"hciconfig", hci_inf, "leadv", "0", NULL};
 #endif
 
@@ -7968,7 +8104,7 @@ void ble_rename_ssid(void)
 #if defined(ET12) || defined(XT12)
 	bt_add_ble_uuid();
 #endif
-#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12)
+#if defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12) || defined(XD6_V2)
 	_eval(ble_leadv_argv, NULL, 0, NULL);
 #endif
 }
@@ -8018,7 +8154,7 @@ void start_bluetooth_service(void)
 		sleep(2);	// wait a minute for device ready
 #endif
 
-#if !defined(BLUECAVE) && !defined(RTAX95Q) && !defined(XT8PRO) && !defined(XT8_V2) && !defined(RTAXE95Q) && !defined(ET8PRO) && !defined(RTAX56_XD4) && !defined(XD4PRO) && !defined(RTAX82_XD6) && !defined(RTAX82_XD6S) && !defined(ET12) && !defined(XT12)
+#if !defined(BLUECAVE) && !defined(RTAX95Q) && !defined(XT8PRO) && !defined(BM68) && !defined(XT8_V2) && !defined(RTAXE95Q) && !defined(ET8PRO) && !defined(ET8_V2) && !defined(RTAX56_XD4) && !defined(XD4PRO) && !defined(RTAX82_XD6) && !defined(RTAX82_XD6S) && !defined(ET12) && !defined(XT12) && !defined(XD6_V2)
 	while (!check_bluetooth_device(str_inf)) {
 		sleep(1);
 		_dprintf("Failed to get HCI Device! Retry after 1 sec!\n");
@@ -8030,7 +8166,7 @@ void start_bluetooth_service(void)
 #endif
 	if (pids("bluetoothd")) killall_tk("bluetoothd");
 
-#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12)
+#if defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(ET12) || defined(XT12) || defined(XD6_V2)
 	nvram_set("ble_init", "1");
 	system("hciconfig hci0 up");
 	doSystem("btconfig wba %s", get_label_mac());
@@ -10441,7 +10577,7 @@ start_services(void)
 #else
 	start_haveged();
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	start_ledg();
 	start_ledbtn();
 #endif
@@ -11105,7 +11241,7 @@ stop_services(void)
 #ifdef GTAX6000
 	stop_antled();
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	stop_ledg();
 	stop_ledbtn();
 #endif
@@ -11212,7 +11348,7 @@ stop_services_mfg(void)
 #ifdef GTAX6000
 	stop_antled();
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	stop_ledg();
 	stop_ledbtn();
 #endif
@@ -11389,6 +11525,12 @@ stop_services_mfg(void)
 #endif
 #ifdef RTCONFIG_NETOOL
 	stop_netool();
+#endif
+#ifdef HND_ROUTER
+	//stop_jitterentropy();
+#endif
+#ifdef RTCONFIG_CONNDIAG
+	stop_conn_diag();
 #endif
 }
 
@@ -11634,7 +11776,7 @@ start_sw_devled(void)
 	char *sw_devled_argv[] = {"sw_devled", NULL};
 	pid_t whpid;
 
-#if defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(RTAX56U) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(CTAX56_XD4) || defined(ET12) || defined(XT12)
+#if defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2) || defined(RTAX56U) || defined(RTAX56_XD4) || defined(XD4PRO) || defined(CTAX56_XD4) || defined(ET12) || defined(XT12)
 	return 1;
 #endif
 
@@ -12182,7 +12324,7 @@ void restore_config_before_firmware_downgrade()
 #endif
 }
 
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 int
 start_ledg(void)
 {
@@ -12355,7 +12497,7 @@ void factory_reset(void)
 	nvram_commit();
 #endif
 #ifdef RTCONFIG_DSL_REMOTE
-	eval("adslate", "sysdefault");
+	system("adslate sysdefault &");
 #endif
 	stop_wan();
 #ifdef RTCONFIG_NOTIFICATION_CENTER
@@ -13314,10 +13456,16 @@ again:
 	}
 	else if(strcmp(script, "mfgmode") == 0) {
 		nvram_set("asus_mfg", "2");
+#ifdef RTCONFIG_ASD
+		no_asd();
+#endif
 		stop_services_mfg();
 	}
 	else if(strcmp(script, "wltest") == 0) {
 		nvram_set("asus_mfg", "3");
+#ifdef RTCONFIG_ASD
+		no_asd();
+#endif
 		stop_check_watchdog();
 		stop_watchdog();
 		stop_infosvr();
@@ -13325,6 +13473,9 @@ again:
 	}
 	else if(strcmp(script, "ethtest") == 0) {
 		nvram_set("asus_mfg", "3");
+#ifdef RTCONFIG_ASD
+		no_asd();
+#endif
 		stop_check_watchdog();
 		stop_watchdog();
 		stop_infosvr();
@@ -13450,7 +13601,8 @@ script_allnet:
 #ifdef RTCONFIG_CONNDIAG
 			stop_conn_diag();
 #endif
-			stop_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				stop_cfgsync();
 #endif
 #ifdef RTCONFIG_CAPTIVE_PORTAL
 			stop_chilli();
@@ -13597,7 +13749,8 @@ script_allnet:
 #endif
 #endif
 #ifdef RTCONFIG_CFGSYNC
-			start_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				start_cfgsync();
 #ifdef RTCONFIG_CONNDIAG
 			start_conn_diag();
 #endif
@@ -13681,7 +13834,8 @@ script_allnet:
 #ifdef RTCONFIG_CONNDIAG
 			stop_conn_diag();
 #endif
-			stop_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				stop_cfgsync();
 #endif
 			stop_wan();
 			stop_lan();
@@ -13809,7 +13963,8 @@ script_allnet:
 #endif
 #endif
 #ifdef RTCONFIG_CFGSYNC
-			start_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				start_cfgsync();
 #ifdef RTCONFIG_CONNDIAG
 			start_conn_diag();
 #endif
@@ -13933,7 +14088,8 @@ script_allnet:
 #ifdef RTCONFIG_CONNDIAG
 			stop_conn_diag();
 #endif
-			stop_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				stop_cfgsync();
 #endif
 #if defined(RTCONFIG_AMAS)
 			stop_amas_lib();
@@ -14080,7 +14236,8 @@ script_allnet:
 			start_plchost();
 #endif
 #ifdef RTCONFIG_CFGSYNC
-			start_cfgsync();
+			if (!strstr(nvram_safe_get("rc_service"), "start_cfgsync"))
+				start_cfgsync();
 #ifdef RTCONFIG_CONNDIAG
 			start_conn_diag();
 #endif
@@ -14563,6 +14720,14 @@ check_ddr_done:
 			char *current_ifname = get_wan_ifname(wan_unit);
 
 			wan_up(current_ifname);
+#ifdef DSL_AX82U
+			if (is_custom_i2()) {
+				update_iptv_ifname(wan_unit);
+				start_igmpproxy(current_ifname);
+			}
+#endif
+			stop_upnp();
+			start_upnp();
 		}
 	}
 #ifdef CONFIG_BCMWL5
@@ -14622,6 +14787,17 @@ check_ddr_done:
 #if defined(RTCONFIG_AMAS) && defined(RTCONFIG_VIF_ONBOARDING)
 			set_onboarding_vif_status();
 #endif
+		}
+	}
+#endif
+#ifdef RTCONFIG_TUNNEL
+	else if (strcmp(script, "aae") == 0 || strcmp(script, "mastiff") == 0)
+	{
+		if(action&RC_SERVICE_STOP){
+			stop_mastiff();
+		}
+		if(action&RC_SERVICE_START) {
+			start_mastiff();
 		}
 	}
 #endif
@@ -14825,17 +15001,6 @@ check_ddr_done:
 		start_upnp();
 
 	}
-#ifdef RTCONFIG_TUNNEL
-	else if (strcmp(script, "aae") == 0 || strcmp(script, "mastiff") == 0)
-	{
-		if(action&RC_SERVICE_STOP){
-			stop_mastiff();
-		}
-		if(action&RC_SERVICE_START) {
-			start_mastiff();
-		}
-	}
-#endif
 
 //#endif
 //#ifdef RTCONFIG_CLOUDSYNC
@@ -15954,6 +16119,8 @@ check_ddr_done:
 #endif
 			) {
 				nvram_set_int("amesh_wps_enr", 1);
+				snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+				nvram_set(strcat_r(prefix, "mfp", tmp), "1");
 #ifdef RTCONFIG_HND_ROUTER_AX
 				stop_acsd();
 				stop_wps();
@@ -15970,7 +16137,6 @@ check_ddr_done:
 #else
 				char ifname[IFNAMSIZ] = { 0 };
 
-				snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 #if defined(RTCONFIG_BCM4708) || defined(RTCONFIG_BCM_7114)  || defined(RTCONFIG_HND_ROUTER)
 				nvram_set(strcat_r(prefix, "mode", tmp), "wet");
 #else
@@ -16103,25 +16269,36 @@ retry_wps_enr:
 		char reason_tmp[16];
 		int client_mode = 1;
 		int reload_wait = nvram_get_int("reload_wait")?:5;
+		int pre_auth = nvram_match("x_Setting", "0") && !nvram_match("stop_preauth", "1");
 
 		if(cmd[1])
 			band = atoi(cmd[1]);
 
-		_dprintf("%s wpasupp_qis.. wl%d, cli:%d(%d/%d), reload_wait:%d\n", __func__, band, client_mode, dpsta_mode(), dpsr_mode(), reload_wait);
+		_dprintf("%s wpasupp_qis..pre_auth:%d, wl%d, cli:%d(%d/%d), reload_wait:%d\n", __func__, pre_auth, band, client_mode, dpsta_mode(), dpsr_mode(), reload_wait);
 
-		nvram_set("wpas0_reason", "");
-		nvram_set("wpas1_reason", "");
-		nvram_set("wpas2_reason", "");
-		
+		if (pre_auth == 0) {
+			_dprintf("%s wlc%d stop_preauth due not initial settings\n", __func__, band);
+			nvram_set("wpas0_reason", "completed");
+			nvram_set("wpas1_reason", "completed");
+			nvram_set("wpas2_reason", "completed");
+
+			if(client_mode)
+        			killall("psta_monitor", SIGTERM);
+		} else {
+			nvram_set("wpas0_reason", "");
+			nvram_set("wpas1_reason", "");
+			nvram_set("wpas2_reason", "");
+		}
 
 		if(action & RC_SERVICE_STOP)
 		{
-			stop_wpasupp(band);
+			if(pre_auth)
+				stop_wpasupp(band);
 		}
 
 		if(action & RC_SERVICE_START)
 		{
-			if(client_mode) {
+			if(pre_auth && client_mode) {
         			//killall("psta_monitor", SIGTERM);
 
 				set_wpasupp(band, 1);
@@ -16131,7 +16308,7 @@ retry_wps_enr:
 					if(*nvram_safe_get(strcat_r(prefix, "ssid", tmp)))
 					{
 						if(nvram_match("x_Setting", "1")) {
-							_dprintf("backup current wlc settings\n");
+							_dprintf("backup current wlc%d settings\n", band);
 	
 							snprintf(prefix, sizeof(prefix), "wlr%d_", band);
 							snprintf(prefix_b, sizeof(prefix_b), "wl%d_", band);
@@ -16486,7 +16663,11 @@ retry_wps_enr:
 		int unit, lock;
 
 		if (action & RC_SERVICE_START) {
-			unit = atoi(&script[10]);
+			if (strlen(script) >= 11)
+				unit = atoi(&script[10]);
+			else
+				unit = 0;
+
 			lock = file_lock(VPNROUTING_LOCK);
 			if (unit == 0) {
 				for (i = OVPN_CLIENT_MAX; i > 0; i--) {
@@ -17178,10 +17359,15 @@ start_write_smb_conf();
 	}
 #endif
 #ifdef RTCONFIG_SOFTWIRE46
-	else if (strcmp(script, "s46map_rptd") == 0)
+	else if (strcmp(script, "v6plusd") == 0)
 	{
-		if(action & RC_SERVICE_STOP) stop_s46map_rptd();
-		if(action & RC_SERVICE_START) start_s46map_rptd();
+		if(action & RC_SERVICE_STOP) stop_v6plusd();
+		if(action & RC_SERVICE_START) start_v6plusd();
+	}
+	else if (strcmp(script, "ocnvcd") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_ocnvcd();
+		if(action & RC_SERVICE_START) start_ocnvcd();
 	}
 #endif
 #ifdef RTCONFIG_DISABLE_NETWORKMAP
@@ -17384,6 +17570,14 @@ start_write_smb_conf();
 		}
         }
 #endif
+#ifdef RTAXE7800
+	else if (strcmp(script, "addif_extwan") == 0)
+	{
+#ifndef RTCONFIG_BCM_MFG
+		eval("brctl", "addif", nvram_safe_get("lan_ifname"), "eth1");
+#endif
+	}
+#endif
 #if defined(RTCONFIG_HND_ROUTER_AX)
 	else if (strcmp(script, "cable_media") == 0)
         {
@@ -17452,7 +17646,7 @@ start_write_smb_conf();
 		if (action & RC_SERVICE_STOP) stop_watchdog();
 		if (action & RC_SERVICE_START) start_watchdog();
 	}
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
 	else if (strcmp(script, "ledg") == 0)
 	{
 		if (action & RC_SERVICE_STOP) stop_ledg();
@@ -18416,8 +18610,13 @@ int start_nat_rules(void)
 		return stop_nat_rules();
 
 	nat_state = nvram_get_int("nat_state");
-	if (nat_state == NAT_STATE_NORMAL)
+	if (nat_state == NAT_STATE_NORMAL) {
+#if defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
+		setup_ct_timeout(TRUE);
+		setup_udp_timeout(TRUE);
+#endif
 		return nat_state;
+	}
 
 	retry = 6;
 	while (lstat(NAT_RULES, &s) || (ret = S_ISLNK(s.st_mode) ? readlink(NAT_RULES, ln, sizeof(ln) - 1) : s.st_size) <= 0) {
@@ -19021,7 +19220,14 @@ void start_pc_block(void)
 
 	get_all_pc_list(&pc_list);
 
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules(pc_list, 1) > 0)
+	/* pc_block - 20220615
+		1. time-scheduling - BLOCK ALL DEVICES
+		2. time-scheduling - BLOCK
+		3. time-scheduling - TIME
+	*/
+	if (nvram_get_int("MULTIFILTER_BLOCK_ALL") == 1
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules(pc_list, 2))
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && count_pc_rules(pc_list, 1)))
 		_eval(pc_block_argv, NULL, 0, &pid);
 
 	free_pc_list(&pc_list);
@@ -19274,19 +19480,20 @@ void setup_leds()
 		eval("et", "robowr", "0", "0x1a", "0x01ff");
 #endif
 
-#if defined(GTAX11000) || defined(GTAXE11000)
 #ifdef RTCONFIG_EXTPHY_BCM84880
-		eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x7fff0", "0x1");
-		eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a832", "0x6");
-#endif
-#elif defined(GTAX6000)
-		if (nvram_get_int("ext_phy_model") == EXT_PHY_GPY211)
-			eval("ethctl", "phy", "ext", EXTPHY_GPY_ADDR_STR, "0x1e0001", "0x3f0");
-		else
-		{
+#if defined(RTAX86U) || defined(GTAX11000) || defined(GTAX6000)
+		int ext_phy_model = nvram_get_int("ext_phy_model");
+
+		if(!strcmp(get_productid(), "RT-AX86S")) ;
+		else if(ext_phy_model == EXT_PHY_GPY211)
+				eval("ethctl", "phy", "ext", EXTPHY_GPY_ADDR_STR, "0x1e0001", "0x3f0");
+		else if(ext_phy_model == EXT_PHY_RTL8226)
+			eval("ethctl", "phy", "ext", EXTPHY_RTL_ADDR_STR, "0x1fd032", "0x0027");        // RTL LCR2 LED Control Reg
+		else if(ext_phy_model == EXT_PHY_BCM54991){
 			eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a832", "0x6");        // default. CTL LED3 MASK LOW
 			eval("ethctl", "phy", "ext", EXTPHY_ADDR_STR, "0x1a835", "0x40");       // default. CTL LED4 MASK LOW
 		}
+#endif
 #endif
 
 #ifdef RTCONFIG_LAN4WAN_LED
@@ -19326,6 +19533,10 @@ void setup_leds()
 			eval("wl", "-i", "eth6", "ledbh", "9", "7");
 #elif defined(GTAX6000)
 			eval("wl", "-i", "eth6", "ledbh", "13", "7");
+#elif defined(GTAXE16000)
+			eval("wl", "-i", "eth7", "ledbh", "13", "7");
+#elif defined(GTAX11000_PRO)
+			eval("wl", "-i", "eth6", "ledbh", "13", "7");
 #endif
 		}
 
@@ -19360,19 +19571,14 @@ void setup_leds()
 			eval("wl", "-i", "eth7", "ledbh", "9", "7");
 #elif defined(GTAX6000)
 			eval("wl", "-i", "eth7", "ledbh", "13", "7");
-#elif defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO)
-				eval("wl", "-i", "eth4", "ledbh", "10", "7");
-#elif defined(BCM6750)
-#if defined(RTAX82U) && !defined(RTCONFIG_BCM_MFG)
-				if (!nvram_get_int("LED_order"))
-					eval("wl", "-i", "eth5", "ledbh", "0", "1");
-				else
-#endif
-				eval("wl", "-i", "eth5", "ledbh", "0", "25");
+#elif defined(GTAXE16000)
+			eval("wl", "-i", "eth8", "ledbh", "13", "7");
+#elif defined(GTAX11000_PRO)
+			eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #endif
 		}
 
-#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAX11000) || defined(GTAXE11000)
+#if defined(RTAC3200) || defined(RTCONFIG_HAS_5G_2)
 		if (nvram_match("wl2_radio", "1")) {
 #if defined(RTAC3200)
 			eval("wl", "-i", "eth3", "ledbh", "10", "7");
@@ -19382,6 +19588,18 @@ void setup_leds()
 			eval("wl", "-i", "eth8", "ledbh", "15", "7");
 #elif defined(GTAXE11000)
 			eval("wl", "-i", "eth8", "ledbh", "9", "7");
+#elif defined(GTAXE16000)
+			eval("wl", "-i", "eth9", "ledbh", "13", "7");
+#elif defined(GTAX11000_PRO)
+			eval("wl", "-i", "eth8", "ledbh", "13", "7");
+#endif
+		}
+#endif
+
+#ifdef RTCONFIG_QUADBAND
+		if (nvram_match("wl3_radio", "1")) {
+#if defined(GTAXE16000)
+			eval("wl", "-i", "eth10", "ledbh", "13", "7");
 #endif
 		}
 #endif
@@ -19389,6 +19607,14 @@ void setup_leds()
 #ifdef RTCONFIG_LOGO_LED
 		led_control(LED_LOGO, LED_ON);
 #endif
+
+#if defined(RTAX82U) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000)
+		kill_pidfile_s("/var/run/ledg.pid", SIGTSTP);
+#endif
+#if defined(XT12) || defined(ET12)
+		bcm_cled_ctrl_single_white(BCM_CLED_WHITE, BCM_CLED_STEADY_NOBLINK);
+#endif
+
 #ifdef GTAX6000
 		AntennaGroupReset(LED_ON);
 		setAntennaGroupOn();
@@ -19403,6 +19629,9 @@ void setup_leds()
 
 		start_ledg();
 		start_antled();
+#endif
+#if defined(GTAXE16000) || defined(GTAX11000_PRO)
+		notify_rc("restart_ledg");
 #endif
 
 	}

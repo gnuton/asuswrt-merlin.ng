@@ -1689,7 +1689,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 			char *nv, *nvp, *item, *nextp, *ptr;
 			char proto[16], *next;
 		case WAN_V6PLUS:
-			if (nvram_get_int("s46_hgw_case") == S46_CASE_MAP_HGW_ON)
+			if (nvram_get_int("s46_hgw_case") <= S46_CASE_MAP_HGW_ON)
 				break;
 			fprintf(fp, "-A PREROUTING -i %s -d %s -j MAPE\n", lan_if, wan_ip);
 			foreach(proto, "tcp udp", next) {
@@ -1757,6 +1757,18 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 #ifdef RTCONFIG_NTPD
 	if (nvram_get_int("ntpd_enable") && nvram_get_int("ntpd_server_redir")) {
 		fprintf(fp, "-A PREROUTING -i %s -p udp -m udp --dport 123 -j REDIRECT --to-port 123\n", lan_if);
+
+#if defined(RTCONFIG_AMAS_WGN)
+		char wgn_ifnames[6 * IFNAMSIZ];
+		char *next, iface[IFNAMSIZ];
+
+		strlcpy(wgn_ifnames, nvram_safe_get("wgn_ifnames"), sizeof(wgn_ifnames));
+		foreach(iface, wgn_ifnames, next) {
+			if (!iface_exist(iface))
+				continue;
+			fprintf(fp, "-A PREROUTING -i %s -p udp -m udp --dport 123 -j REDIRECT --to-port 123\n", iface);
+		}
+#endif
 	}
 #endif
 
@@ -1781,13 +1793,23 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	/* ASUSWRT Parental Control */
 	pc_s *pc_list = NULL;
 	int pc_count;
+	int pc_count2;
 
 	get_all_pc_list(&pc_list);
 	pc_count = count_pc_rules(pc_list, 1);
+	pc_count2 = count_pc_rules(pc_list, 2);
 	free_pc_list(&pc_list);
 	pc_list = NULL;
 
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0){
+	/* pc_block - 20220615
+		1. time-scheduling - BLOCK ALL DEVICES
+		2. time-scheduling - BLOCK
+		3. time-scheduling - TIME
+	*/
+	if (nvram_get_int("MULTIFILTER_BLOCK_ALL") == 1
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count2 > 0)
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0)
+		) {
 		config_blocking_redirect(fp);
 	}
 #endif
@@ -1911,6 +1933,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				char proto[16], *next;
 				int offset, psidlen, psid;
 			case WAN_V6PLUS:
+			case WAN_OCNVC:
 				if (nvram_get_int("s46_hgw_case") == S46_CASE_MAP_HGW_ON)
 					break;
 			case WAN_LW4O6:
@@ -1922,7 +1945,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				    offset + psidlen == 0 || offset + psidlen > 16)
 					break;
 
-#ifdef BCM_KF_NETFILTER
+#if defined(BCM_KF_NETFILTER) && !defined(BCM4912)
 				foreach(proto, "tcp udp icmp", next) {
 					fprintf(fp, "-A POSTROUTING -p %s -o %s -j MASQUERADE --mode %s --psid %d,%d,%d\n",
 						proto, wan_if, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"),
@@ -1937,7 +1960,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				break;
 			}
 #endif
-#ifdef BCM_KF_NETFILTER
+#if defined(BCM_KF_NETFILTER) && !defined(BCM4912)
 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE --mode %s\n", p, wan_if, wan_ip, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"));
 #else
 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wan_if, wan_ip);
@@ -1946,7 +1969,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 
 		/* masquerade physical WAN port connection */
 		if (strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
-#ifdef BCM_KF_NETFILTER
+#if defined(BCM_KF_NETFILTER) && !defined(BCM4912)
 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE --mode %s\n", p, wanx_if, wanx_ip, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"));
 #else
 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wanx_if, wanx_ip);
@@ -2127,6 +2150,10 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 					":CLIENT_TO_INTERNET - [0:0]\n");
 			}
 #endif
+#ifdef RTCONFIG_VPN_FUSION
+			fprintf(fp,
+				":VPN_FUSION - [0:0]\n");
+#endif
 		}
 
 		_dprintf("writting prerouting 2 %s %s %s %s %s %s\n", wan_if, wan_ip, wanx_if, wanx_ip, lan_if, lan_ip);
@@ -2202,6 +2229,10 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				":CLIENT_TO_INTERNET - [0:0]\n");
 		}
 #endif
+#ifdef RTCONFIG_VPN_FUSION
+		fprintf(fp,
+				":VPN_FUSION - [0:0]\n");
+#endif
 	}
 
 #ifdef RTCONFIG_YANDEXDNS
@@ -2216,6 +2247,18 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 #ifdef RTCONFIG_NTPD
 	if (nvram_get_int("ntpd_enable") && nvram_get_int("ntpd_server_redir")) {
 		fprintf(fp, "-A PREROUTING -i %s -p udp -m udp --dport 123 -j REDIRECT --to-port 123\n", lan_if);
+#if defined(RTCONFIG_AMAS_WGN)
+		char wgn_ifnames[6 * IFNAMSIZ];
+		char *next, iface[IFNAMSIZ];
+
+		strlcpy(wgn_ifnames, nvram_safe_get("wgn_ifnames"), sizeof(wgn_ifnames));
+		foreach(iface, wgn_ifnames, next) {
+			if (!iface_exist(iface))
+				continue;
+			fprintf(fp, "-A PREROUTING -i %s -p udp -m udp --dport 123 -j REDIRECT --to-port 123\n", iface);
+		}
+#endif
+
 	}
 #endif
 
@@ -2240,13 +2283,23 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	/* ASUSWRT Parental Control */
 	pc_s *pc_list = NULL;
 	int pc_count;
+	int pc_count2;
 
 	get_all_pc_list(&pc_list);
 	pc_count = count_pc_rules(pc_list, 1);
+	pc_count2 = count_pc_rules(pc_list, 2);
 	free_pc_list(&pc_list);
 	pc_list = NULL;
 
-	if(nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0){
+	/* pc_block - 20220615
+		1. time-scheduling - BLOCK ALL DEVICES
+		2. time-scheduling - BLOCK
+		3. time-scheduling - TIME
+	*/
+	if (nvram_get_int("MULTIFILTER_BLOCK_ALL") == 1
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count2 > 0)
+		|| (nvram_get_int("MULTIFILTER_ALL") != 0 && pc_count > 0)
+		) {
 		config_blocking_redirect(fp);
 	}
 #endif
@@ -2416,7 +2469,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 			wanx_ip = nvram_safe_get(strcat_r(prefix, "xipaddr", tmp));
 
 			if(inet_addr_(wan_ip))
-#ifdef BCM_KF_NETFILTER
+#if defined(BCM_KF_NETFILTER) && !defined(BCM4912)
 				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE --mode %s\n", p, wan_if, wan_ip, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"));
 #else
 				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wan_if, wan_ip);
@@ -2424,7 +2477,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 
 			/* masquerade physical WAN port connection */
 			if (dualwan_unit__nonusbif(unit) && strcmp(wan_if, wanx_if) && inet_addr_(wanx_ip))
-#ifdef BCM_KF_NETFILTER
+#if defined(BCM_KF_NETFILTER) && !defined(BCM4912)
 				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE --mode %s\n", p, wanx_if, wanx_ip, (nvram_get_int("nat_type") ? "fullcone" : "symmetric"));
 #else
 				fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wanx_if, wanx_ip);
@@ -3764,6 +3817,7 @@ TRACE_PT("writing Parental Control\n");
 		case WAN_LW4O6:
 		case WAN_MAPE:
 		case WAN_V6PLUS:
+		case WAN_OCNVC:
 #endif
 		case WAN_DISABLED:
 			break;
@@ -3902,6 +3956,7 @@ TRACE_PT("writing Parental Control\n");
 			case WAN_LW4O6:
 			case WAN_MAPE:
 			case WAN_V6PLUS:
+			case WAN_OCNVC:
 				fprintf(fp_ipv6, "-A INPUT -p 4 -j %s\n", "ACCEPT");
 				break;
 			}
@@ -4043,7 +4098,7 @@ TRACE_PT("writing Parental Control\n");
 	    dualwan_unit__usbif(wan_unit) ||
 #endif
 #ifdef RTCONFIG_SOFTWIRE46
-	    wan_proto == WAN_LW4O6 || wan_proto == WAN_MAPE || wan_proto == WAN_V6PLUS ||
+	    wan_proto == WAN_LW4O6 || wan_proto == WAN_MAPE || wan_proto == WAN_V6PLUS || wan_proto == WAN_OCNVC ||
 #endif
 	    wan_proto == WAN_PPPOE || wan_proto == WAN_PPTP || wan_proto == WAN_L2TP) {
 		fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
@@ -5189,6 +5244,7 @@ TRACE_PT("writing Parental Control\n");
 			case WAN_LW4O6:
 			case WAN_MAPE:
 			case WAN_V6PLUS:
+			case WAN_OCNVC:
 #endif
 			case WAN_DISABLED:
 				continue;
@@ -5309,6 +5365,7 @@ TRACE_PT("writing Parental Control\n");
 				case WAN_LW4O6:
 				case WAN_MAPE:
 				case WAN_V6PLUS:
+				case WAN_OCNVC:
 					fprintf(fp_ipv6, "-A INPUT -p 4 -j %s\n", "ACCEPT");
 					break;
 				default:
@@ -5456,7 +5513,7 @@ TRACE_PT("writing Parental Control\n");
 		    dualwan_unit__usbif(unit) ||
 #endif
 #ifdef RTCONFIG_SOFTWIRE46
-		    wan_proto == WAN_LW4O6 || wan_proto == WAN_MAPE || wan_proto == WAN_V6PLUS ||
+		    wan_proto == WAN_LW4O6 || wan_proto == WAN_MAPE || wan_proto == WAN_V6PLUS || wan_proto == WAN_OCNVC ||
 #endif
 		    wan_proto == WAN_PPPOE || wan_proto == WAN_PPTP || wan_proto == WAN_L2TP) {
 		clamp_mss:
@@ -6287,6 +6344,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 		fp = fopen("/tmp/mangle_rules_ipv6.dnsfilter", "w");
 		if (fp != NULL) {
 			fprintf(fp, "*mangle\n"
+			    ":DNSFILTERI - [0:0]\n"
 			    ":DNSFILTERF - [0:0]\n"
 			    ":DNSFILTER_DOT - [0:0]\n");
 
@@ -6423,6 +6481,7 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 		case WAN_LW4O6:
 		case WAN_MAPE:
 		case WAN_V6PLUS:
+		case WAN_OCNVC:
 #ifdef RTCONFIG_BCMARM
 #ifdef HND_ROUTER
 			if (!nvram_match("fc_pt_war", "1"))
@@ -6496,6 +6555,7 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 		fp = fopen("/tmp/mangle_rules_ipv6.dnsfilter", "w");
 		if (fp != NULL) {
 			fprintf(fp, "*mangle\n"
+				":DNSFILTERI - [0:0]\n"
 				":DNSFILTERF - [0:0]\n"
 				":DNSFILTER_DOT - [0:0]\n");
 
@@ -6835,7 +6895,7 @@ int start_firewall(int wanunit, int lanunit)
 	DIR *dir;
 	struct dirent *file;
 	FILE *fp;
-	char name[NAME_MAX];
+	char name[NAME_MAX * 2];
 	//char logaccept[32], logdrop[32];
 	//oleg patch ~
 	char logaccept[32], logdrop[32];
@@ -6844,6 +6904,7 @@ int start_firewall(int wanunit, int lanunit)
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32];
 	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
 	int lock;
+	char rp_if[32] = {0};
 
 	if (!is_routing_enabled())
 		return -1;
@@ -6917,7 +6978,7 @@ int start_firewall(int wanunit, int lanunit)
 		while ((file = readdir(dir)) != NULL) {
 			if (strncmp(file->d_name, ".", NAME_MAX) != 0 &&
 			    strncmp(file->d_name, "..", NAME_MAX) != 0) {
-				sprintf(name, "/proc/sys/net/ipv4/conf/%s/rp_filter", file->d_name);
+				snprintf(name, sizeof(name), "/proc/sys/net/ipv4/conf/%s/rp_filter", file->d_name);
 				f_write_string(name, mcast_ifname &&
 					strncmp(file->d_name, mcast_ifname, NAME_MAX) == 0 ? "0" :
 					strncmp(file->d_name, "all", NAME_MAX) == 0 ? "-1" : "1", 0, 0);
@@ -6926,6 +6987,23 @@ int start_firewall(int wanunit, int lanunit)
 		closedir(dir);
 	} else
 		perror("/proc/sys/net/ipv4/conf");
+
+#if defined(RTCONFIG_MULTICAST_IPTV) && defined(RTCONFIG_HND_ROUTER_AX_6756)
+	/*
+		Movistar IPTV mcast issue :
+		vlan2 can't receive igmp packets with multi-routing, need to enable rp_filter = 2.
+		In SDK 5.02, BRCM add bypass igmp in fib_validate_source() to let packets go to ip_route_input_mc().
+		In Kernel 4.X, BRCM uses proc instead of kernel modifcation. 
+	*/
+	snprintf(rp_if, sizeof(rp_if), "%s", nvram_safe_get("wan10_ifname"));
+
+	if (nvram_get_int("switch_stb_x") > 6 && nvram_match("switch_wantag", "movistar")) {
+		if (strcmp(rp_if, "")) {
+			snprintf(name, sizeof(name), "/proc/sys/net/ipv4/conf/%s/rp_filter", rp_if);
+			f_write_string(name, "2", 0, 0);
+		}
+	}
+#endif
 
 	/* Determine the log type */
 	if (nvram_match("fw_log_x", "accept") || nvram_match("fw_log_x", "both"))
@@ -6941,11 +7019,11 @@ int start_firewall(int wanunit, int lanunit)
 		if (!f_exists("/proc/sys/net/netfilter/nf_conntrack_frag6_timeout"))
 			modprobe("nf_conntrack_ipv6");
 #ifndef HND_ROUTER
-		modprobe("ip6t_REJECT");
-		modprobe("ip6t_ROUTE");
-		modprobe("ip6t_LOG");
+		modprobe_q("ip6t_REJECT");
+		modprobe_q("ip6t_ROUTE");
+		modprobe_q("ip6t_LOG");
 #endif
-		modprobe("xt_length");
+		modprobe_q("xt_length");
 	} else {
 		modprobe_r("xt_length");
 #ifndef HND_ROUTER

@@ -398,7 +398,7 @@ void stop_wlc_connect(int band) {
 	else if(mediabridge_mode())
 		ifname = get_wififname(band);
 
-	if (is_intf_up(ifname))
+	if (is_intf_up(ifname) > 0)
 		eval("ifconfig", ifname, "down");
 }
 
@@ -420,7 +420,7 @@ int get_wlan_status(int band) {
 	int length =sizeof(tmp);
 
 	char* ifname = get_wififname(band);
-	if(is_intf_up(ifname)){
+	if(is_intf_up(ifname) > 0){
 		getmibInfo(ifname, tmp, &length);
 		//*tmp = 0 normal mode 1 is wlan off
 #if defined(RPAC92)
@@ -468,5 +468,24 @@ phy_port_mapping get_phy_port_mapping(void)
 #endif
 	};
 	return port_mapping;
+}
+#endif
+
+#ifdef RTCONFIG_AMAS
+double get_wifi_maxpower(int band_type)
+{
+	return 0;
+} 
+double get_wifi_5G_maxpower()
+{
+	return 0;
+}
+double get_wifi_5GH_maxpower()
+{
+	return 0;
+}
+double get_wifi_6G_maxpower()
+{
+	return 0;
 }
 #endif

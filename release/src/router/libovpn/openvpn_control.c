@@ -159,11 +159,6 @@ void ovpn_run_fw_scripts(){
 		snprintf(buffer, sizeof(buffer), "/etc/openvpn/client%d/dns.sh", unit);
 		if (f_exists(buffer))
 			eval(buffer);
-
-		snprintf(buffer, sizeof(buffer), "/etc/openvpn/client%d/qos.sh", unit);
-		if (f_exists(buffer))
-			eval(buffer);
-
 	}
 }
 
@@ -235,13 +230,6 @@ void ovpn_client_down_handler(int unit)
 
 	sprintf(dirname, "/etc/openvpn/client%d", unit);
 
-	snprintf(buffer, sizeof(buffer), "%s/qos.sh", dirname);
-	if (f_exists(buffer)) {
-		eval("sed", "-i", "s/-A/-D/g", buffer);
-		eval(buffer);
-		unlink(buffer);
-	}
-
 	snprintf(buffer, sizeof(buffer), "%s/client.resolv", dirname);
 	if (f_exists(buffer))
 		unlink(buffer);
@@ -307,21 +295,6 @@ void ovpn_client_up_handler(int unit)
 
 	snprintf(prefix, sizeof(prefix), "vpn_client%d_", unit);
 	sprintf(dirname, "/etc/openvpn/client%d", unit);
-
-	// tQOS fix
-	if ((nvram_pf_get_int(prefix, "rgw") >= 1) &&
-	    (nvram_get_int("qos_enable") == 1) &&
-	    (nvram_get_int("qos_type") == 1)) {
-		sprintf(buffer, "%s/qos.sh", dirname);
-		fp_qos = fopen(buffer, "w");
-		if (fp_qos) {
-			fprintf(fp_qos, "#!/bin/sh\n"
-				        "/usr/sbin/iptables -t mangle -A POSTROUTING -o br0 -m mark --mark 0x40000000/0xc0000000 -j MARK --set-xmark 0x80000000/0xC0000000\n");
-			fclose(fp_qos);
-			chmod(buffer, 0755);
-			eval(buffer);
-		}
-	}
 
 	verb = nvram_pf_get_int(prefix, "verb");
 
@@ -472,7 +445,8 @@ exit:
 		fclose(fp_resolv);
 
 		// Set exclusive DNS iptables
-		if ((nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_POLICY) && (nvram_pf_get_int(prefix, "adns") == OVPN_DNSMODE_EXCLUSIVE)) {
+		if (((nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_POLICY) || (nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_ALL)) &&
+		     (nvram_pf_get_int(prefix, "adns") == OVPN_DNSMODE_EXCLUSIVE)) {
 			lock = file_lock(VPNROUTING_LOCK);
 			ovpn_set_exclusive_dns(unit);
 			// Refresh prerouting rules to ensure correct order
@@ -671,6 +645,7 @@ void ovpn_set_exclusive_dns(int unit) {
 	char *src, *dst, *iface, *desc, *enable, *netptr;
 	struct in_addr addr;
 	int mask;
+	char prefix[32];
 
 	FILE *fp_resolv, *fp_dns;
 
@@ -691,54 +666,72 @@ void ovpn_set_exclusive_dns(int unit) {
 	                "/usr/sbin/iptables -t nat -N DNSVPN%d\n",
 	                 unit);
 
-	ovpn_get_policy_rules(unit, rules, sizeof (rules));
-	ovpn_get_policy_rules(0, wanrules, sizeof (wanrules));
-	strlcat(rules, wanrules, sizeof (rules));
+	sprintf(prefix, "vpn_client%d_", unit);
 
-	nvp = rules;
+	if (nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_ALL) {
+		// Iterate through servers
+		while (fgets(buffer2, sizeof(buffer2), fp_resolv) != NULL) {
+			if (sscanf(buffer2, "server=%16s", server) != 1)
+				continue;
 
-	snprintf(iface_match, sizeof (iface_match), "OVPN%d", unit);
+			if (!inet_aton(server, &addr))
+				continue;
 
-	while ((entry = strsep(&nvp, "<")) != NULL) {
-		if (vstrsep(entry, ">", &enable, &desc, &src, &dst, &iface) != 5)
-			continue;
+			fprintf(fp_dns, "/usr/sbin/iptables -t nat -A DNSVPN%d -j DNAT --to-destination %s\n", unit, server);
+			logmessage("openvpn", "Forcing all to use DNS server %s (OpenVPN client %d is set to Exclusive DNS mode)", server, unit);
+			// Only configure first server found, as others would never get used
+			break;
+		}
+	} else if (nvram_pf_get_int(prefix, "rgw") == OVPN_RGW_POLICY) {
+		ovpn_get_policy_rules(unit, rules, sizeof (rules));
+		ovpn_get_policy_rules(0, wanrules, sizeof (wanrules));
+		strlcat(rules, wanrules, sizeof (rules));
 
-		if (atoi(&enable[0]) == 0)
-			continue;
+		nvp = rules;
 
-		if (*src && !*dst) {
-			strlcpy(buffer, src, sizeof(buffer));
+		snprintf(iface_match, sizeof (iface_match), "OVPN%d", unit);
 
-			if ((netptr = strchr(buffer, '/'))) {
-				*netptr = '\0';
-				mask = atoi(&netptr[1]);
-			} else {
-				mask = 32;
-			}
+		while ((entry = strsep(&nvp, "<")) != NULL) {
+			if (vstrsep(entry, ">", &enable, &desc, &src, &dst, &iface) != 5)
+				continue;
 
-			if ((mask >= 0) &&
-			    (mask <= 32) &&
-			    (inet_aton(buffer, &addr))) {
-				if (!strcmp(iface, iface_match)) {
+			if (atoi(&enable[0]) == 0)
+				continue;
 
-					// Iterate through servers
-					rewind(fp_resolv);
-					while (fgets(buffer2, sizeof(buffer2), fp_resolv) != NULL) {
-						if (sscanf(buffer2, "server=%16s", server) != 1)
-							continue;
+			if (*src && !*dst) {
+				strlcpy(buffer, src, sizeof(buffer));
 
-						if (!inet_aton(server, &addr))
-							continue;
+				if ((netptr = strchr(buffer, '/'))) {
+					*netptr = '\0';
+					mask = atoi(&netptr[1]);
+				} else {
+					mask = 32;
+				}
 
-		                                fprintf(fp_dns, "/usr/sbin/iptables -t nat -A DNSVPN%d -s %s -j DNAT --to-destination %s\n", unit, src, server);
-		                                logmessage("openvpn", "Forcing %s to use DNS server %s", src, server);
-						// Only configure first server found, as others would never get used
-						break;
-					}
-	                        } else if (!strcmp(iface, "WAN")) {
-	                                fprintf(fp_dns, "/usr/sbin/iptables -t nat -I DNSVPN%d -s %s -j RETURN\n", unit, src);
-	                                logmessage("openvpn", "Excluding %s from forced DNS routing", src);
-	                        }
+				if ((mask >= 0) &&
+				    (mask <= 32) &&
+				    (inet_aton(buffer, &addr))) {
+					if (!strcmp(iface, iface_match)) {
+
+						// Iterate through servers
+						rewind(fp_resolv);
+						while (fgets(buffer2, sizeof(buffer2), fp_resolv) != NULL) {
+							if (sscanf(buffer2, "server=%16s", server) != 1)
+								continue;
+
+							if (!inet_aton(server, &addr))
+								continue;
+
+			                                fprintf(fp_dns, "/usr/sbin/iptables -t nat -A DNSVPN%d -s %s -j DNAT --to-destination %s\n", unit, src, server);
+			                                logmessage("openvpn", "Forcing %s to use DNS server %s", src, server);
+							// Only configure first server found, as others would never get used
+							break;
+						}
+		                        } else if (!strcmp(iface, "WAN")) {
+		                                fprintf(fp_dns, "/usr/sbin/iptables -t nat -I DNSVPN%d -s %s -j RETURN\n", unit, src);
+		                                logmessage("openvpn", "Excluding %s from forced DNS routing", src);
+		                        }
+				}
 			}
 		}
 	}

@@ -208,16 +208,6 @@ function control_category_block(_category){
 			break;
 	}
 }
-var location_array = [
-	{value:"Home",text:"<#AiMesh_NodeLocation01#>"}, {value:"Living Room",text:"<#AiMesh_NodeLocation02#>"}, {value:"Dining Room",text:"<#AiMesh_NodeLocation03#>"},
-	{value:"Bedroom",text:"<#AiMesh_NodeLocation04#>"}, {value:"Office",text:"<#AiMesh_NodeLocation05#>"}, {value:"Stairwell",text:"<#AiMesh_NodeLocation06#>"},
-	{value:"Hall",text:"<#AiMesh_NodeLocation07#>"}, {value:"Kitchen",text:"<#AiMesh_NodeLocation08#>"}, {value:"Attic",text:"<#AiMesh_NodeLocation09#>"},
-	{value:"Basement",text:"<#AiMesh_NodeLocation10#>"}, {value:"Yard",text:"<#AiMesh_NodeLocation11#>"}, {value:"Master Bedroom",text:"<#AiMesh_NodeLocation12#>"},
-	{value:"Guest Room",text:"<#AiMesh_NodeLocation13#>"}, {value:"Kids Room",text:"<#AiMesh_NodeLocation14#>"}, {value:"Study Room",text:"<#AiMesh_NodeLocation15#>"},
-	{value:"Hallway",text:"<#AiMesh_NodeLocation16#>"}, {value:"Walk-in Closet",text:"<#AiMesh_NodeLocation17#>"}, {value:"Bathroom",text:"<#AiMesh_NodeLocation18#>"},
-	{value:"Second Floor",text:"<#AiMesh_NodeLocation19#>"}, {value:"Third Floor",text:"<#AiMesh_NodeLocation20#>"}, {value:"Storage",text:"<#AiMesh_NodeLocation21#>"},
-	{value:"Balcony",text:"<#AiMesh_NodeLocation22#>"}, {value:"Meeting Room",text:"<#AiMesh_NodeLocation23#>"}, {value:"Garage",text:"<#AiMesh_NodeLocation25#>"},
-	{value:"Custom",text:"<#AiMesh_NodeLocation24#>"}];
 
 function gen_custom_select(_location){
 	$(".custom_select .custom_select_selected").remove();
@@ -225,16 +215,16 @@ function gen_custom_select(_location){
 	$(".custom_select #sel_location").find("option").remove();
 	$(".location_info_bg .location_hint").hide();
 
-	for(var i = 0; i < location_array.length; i += 1) {
+	for(var i = 0; i < aimesh_location_arr.length; i += 1) {
 		$("#sel_location").append($('<option>', {
-			value: location_array[i].value,
-			text: location_array[i].text,
+			value: aimesh_location_arr[i].value,
+			text: aimesh_location_arr[i].text,
 		}));
 	}
 
 	var location_text = "<#AiMesh_NodeLocation01#>";
 	var location_active = "Home";
-	var specific_location = location_array.filter(function(item, index, _array){
+	var specific_location = aimesh_location_arr.filter(function(item, index, _array){
 		return (item.value == _location);
 	})[0];
 	if(specific_location != undefined){
@@ -342,7 +332,7 @@ function gen_custom_select(_location){
 	var $selectListHide = $("<div>");
 	$selectListHide.addClass("custom_select_items custom_select_hide");
 	$selectListHide.appendTo($(".custom_select"));
-	location_array.forEach(function(item) {
+	aimesh_location_arr.forEach(function(item) {
 		var each_location = item;
 		var $selectItem = $("<div>");
 		var each_css = each_location.value.replace(/\s/g,'_');
@@ -416,7 +406,7 @@ function set_custom_select_value(_location){
 	var location_text = "<#AiMesh_NodeLocation01#>";
 	var location_active = "Home";
 
-	var specific_location = location_array.filter(function(item, index, _array){
+	var specific_location = aimesh_location_arr.filter(function(item, index, _array){
 		return (item.value == _location);
 	})[0];
 	if(specific_location != undefined){
@@ -1835,6 +1825,29 @@ function network_set_fronthaul_info(_node_info){
 	if(isReNode)
 		wifi_radio_control = manage_get_wifi_radio_control(_node_info, select_node_capability);
 
+	var band_info = "";
+	if(_node_info.band_info != undefined){
+		band_info = JSON.parse(JSON.stringify(_node_info.band_info));
+		$.each(band_info, function(index, item){
+			switch(index){
+				case "0":
+					item.ap_name = "ap2g";
+					break;
+				case "1":
+					item.ap_name = "ap5g";
+					break;
+				case "2":
+					item.ap_name = "ap5g";
+					break;
+				case "3":
+					item.ap_name = "ap5g1";
+					break;
+				case "4":
+					item.ap_name = "ap6g";
+					break;
+			}
+		});
+	}
 	cfg_clientlist_ap_list.forEach(function(item, index, array){
 		var specific_data = "";
 		if(wifi_radio_control.length > 0){
@@ -1869,18 +1882,30 @@ function network_set_fronthaul_info(_node_info){
 			}();
 			ap_info["is_dwb"] = function(){
 				var result = false;
-				if(dwb_info.mode == "1" && ap_list_idx == dwb_info.band){
-					var wl_closed = httpApi.nvramGet(["wl" + dwb_info.band + "_closed"])["wl" + dwb_info.band + "_closed"];
-					if(isSupport("amas_fronthaul_network")){
-						var fh_ap_enabled = httpApi.nvramGet(["fh_ap_enabled"]).fh_ap_enabled;
-						if(fh_ap_enabled == "0"){
+				if(dwb_info.mode == "1"){
+					var cur_ap_unit = "";
+					$.each(band_info, function(band_idx, band_item){
+						if(band_item.ap_name == item){
+							cur_ap_unit = band_item.unit;
+							return false;
+						}
+					});
+					if(cur_ap_unit === ""){
+						cur_ap_unit = ap_list_idx;
+					}
+					if(cur_ap_unit == dwb_info.band){
+						var wl_closed = httpApi.nvramGet(["wl" + dwb_info.band + "_closed"])["wl" + dwb_info.band + "_closed"];
+						if(isSupport("amas_fronthaul_network")){
+							var fh_ap_enabled = httpApi.nvramGet(["fh_ap_enabled"]).fh_ap_enabled;
+							if(fh_ap_enabled == "0"){
+								if(wl_closed == "1")
+									result = true;
+							}
+						}
+						else{
 							if(wl_closed == "1")
 								result = true;
 						}
-					}
-					else{
-						if(wl_closed == "1")
-							result = true;
 					}
 				}
 				return result;
@@ -3448,7 +3473,7 @@ function jstree_re_draw_connect_line(){
 function aimesh_introduction_control(){
 	var all_node = $('#jstree').jstree(true).get_json("#", {flat:true});
 	$(".aimesh_introduction").hide();
-	if(all_node.length < 4)
+	if(all_node.length < 2)
 		$(".aimesh_introduction").show();
 }
 function client_list_refresh(){
@@ -3693,8 +3718,9 @@ function initial_AiMesh(){
 		})[0];
 		if(specific_node_data != undefined){
 			change_node(specific_node_data);
-			if(jstree_load_ready)
-				update_model_icon(specific_node_data);
+			if(jstree_load_ready){
+				setTimeout(function(){update_model_icon(specific_node_data);}, 1000);
+			}
 		}
 	});
 	$('#jstree').on("ready.jstree", function(e, data) {
@@ -3867,7 +3893,7 @@ function transform_location(_nodeMac, _node_info){
 		if(alias != _nodeMac)
 			node_location_text = alias;
 	}
-	var specific_location = location_array.filter(function(item, index, _array){
+	var specific_location = aimesh_location_arr.filter(function(item, index, _array){
 		return (item.value == node_location_text);
 	})[0];
 	if(specific_location != undefined){
@@ -4015,8 +4041,6 @@ function gen_conn_priority_select_option(_node_info, _eap_flag){
 					option_text = option_text.replace("#CONNPRIOTYPE", conn_prio_type);
 					var option_conn_type = conn_type;
 					if(_eap_flag && conn_type == "wifi")
-						return true;
-					if(conn_type == "plc" && !isSupport("qca_plc2"))
 						return true;
 					option_array.push(gen_option_attr(option_value, option_text, option_conn_type));
 				});

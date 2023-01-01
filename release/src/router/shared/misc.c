@@ -1466,6 +1466,7 @@ int get_wan_proto(char *prefix)
 		{ "lw4o6",	WAN_LW4O6 },
 		{ "map-e",	WAN_MAPE },
 		{ "v6plus",	WAN_V6PLUS },
+		{ "ocnvc",	WAN_OCNVC },
 #endif
 		{ NULL }
 	};
@@ -2054,6 +2055,11 @@ const char *getifaddr(const char *ifname, int family, int flags)
 	return _getifaddr(ifname, family, flags, buf, sizeof(buf));
 }
 
+/**
+ *  1: interface exist and up
+ *  0: interface exist and down
+ * -1: interface not exist, NULL or empty
+ */
 int is_intf_up(const char* ifname)
 {
 	struct ifreq ifr;
@@ -2061,7 +2067,7 @@ int is_intf_up(const char* ifname)
 	int ret = 0;
 
 	if (!ifname || !strlen(ifname))
-		return 0;
+		return -1;
 
 	if (!((sfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0))
 	{
@@ -3221,7 +3227,11 @@ int is_dpsr(int unit)
 	char ifname[32];
 
 	if (dpsr_mode()) {
+#ifdef GT10
+		if ((num_of_wl_if() == 2) || (unit == 2) || unit == nvram_get_int("dpsta_band"))
+#else
 		if ((num_of_wl_if() == 2) || !unit || unit == nvram_get_int("dpsta_band"))
+#endif
 			return 1;
 
 		if (strlen(nvram_safe_get("dpsr_ifnames"))) {
@@ -3562,7 +3572,9 @@ int get_upstream_wan_unit(void)
 }
 
 /* Return WiFi unit number in accordance with interface name.
- * @wif:	pointer to WiFi interface name.
+ * @wif:	pointer to WiFi interface name. VAP interfaces for guest network is support.
+ * 		VLAN interface that derived from VAP interfaces for guest network is considered as invalid unit.
+ * 		See fec2ddeebe5d8d024c853d0d6eec3943430c8b20.
  * @return:
  * 	< 0:	invalid
  *  otherwise:	unit
@@ -3582,7 +3594,7 @@ int get_wifi_unit(char *wif)
 		if (strncmp(word, wif, strlen(word)))
 			continue;
 #if defined(RTCONFIG_AMAS_WGN) && defined(RTCONFIG_QCA) 
-		if (strlen(word)!=strlen(wif))
+		if (strchr(wif, '.') && strlen(word)!=strlen(wif))
 			continue;
 #endif
 		for (i = 0; i <= MAX_NR_WL_IF; ++i) {
@@ -5955,6 +5967,121 @@ int is_passwd_default(){
 	return 0;
 }
 
+int find_clientlist_groupid(char *groupid_list, char *groupname, char *groupid, size_t groupid_len) {
+
+	int have_data = 0;
+	char *buf, *g, *p;
+	char *groupname_t, *groupid_t;
+
+	g = buf = strdup(groupid_list);
+
+	if(strcmp(buf, "") != 0) {
+		while (buf) {
+			if ((p = strsep(&g, "<")) == NULL) break;
+
+			if((vstrsep(p, ">", &groupname_t, &groupid_t)) != 2)
+				continue;
+
+			if(!strcmp(groupname_t, groupname)){
+				strlcpy(groupid, groupid_t, groupid_len);
+				have_data = 1;
+				break;
+			}
+		}
+	}
+	free(buf);
+	return have_data;
+}
+
+int gen_random_num(int max, int seed_ext)
+{
+	int i, ret;
+
+	srand(uptime() + seed_ext);
+	ret = rand() % max;
+
+        printf("%d\n", ret);
+
+	return ret;
+}
+
+void gen_random_string(char *out, size_t len)
+{
+	int i = 0;
+	FILE *fp = NULL;
+	char *rand_buf = NULL, *rand_str = NULL;
+
+	rand_buf = malloc(sizeof(char) * (len/2 + 1));
+	rand_str = malloc(sizeof(char) * (len + 2));
+
+	if ((fp = fopen("/dev/urandom", "r")) != NULL) {
+		fread(rand_buf, 1, len/2 + 1, fp);
+		fclose(fp);
+	}
+
+	for(i=0;i<len/2+1;i++)
+		snprintf(&rand_str[i*2], len + 2, "%02x", rand_buf[i]);
+
+	strlcpy(out, rand_str, len);
+	free(rand_buf);
+	free(rand_str);
+}
+
+void gen_custom_clientlist_groupid(void) {
+	int data_count = 0, isfirst = 1, tmp_len = 0;
+	char custom_clientlist[CKN_STR_MAX]={0}, init_str[1] = {0}, client_buf[256] = {0}, gen_groupid[11] = {0};
+	char *buf, *g, *p, *gvalue;
+	char *name, *mac, *group, *type, *callback, *keeparp, *groupname, *age, *groupid;
+	g = buf = strdup(nvram_safe_get("custom_clientlist"));
+	tmp_len = strlen(buf) + 1;
+	gvalue = malloc(tmp_len);
+
+	if(strcmp(buf, "") != 0) {
+		while (buf) {
+			if ((p = strsep(&g, "<")) == NULL) break;
+
+			data_count = vstrsep(p, ">", &name, &mac, &group, &type, &callback, &keeparp, &groupname, &age, &groupid);
+			switch(data_count) {
+				case 6:
+					groupname = init_str;
+				case 7:
+					age = init_str;
+				case 8:
+					groupid = init_str;
+				case 9:
+					break;
+				default:
+					continue;
+			}
+
+			if(*groupname != '\0' && *groupid == '\0'){
+				memset(client_buf, 0, sizeof(client_buf));
+				memset(gen_groupid, 0, sizeof(gen_groupid));
+				if(find_clientlist_groupid(gvalue, groupname, gen_groupid, sizeof(gen_groupid)) == 0)
+					gen_random_string(gen_groupid, sizeof(gen_groupid));
+
+				groupid = gen_groupid;
+				snprintf(client_buf, sizeof(client_buf), "<%s>%s", groupname, groupid);
+				strlcat(gvalue, client_buf, tmp_len);
+			}
+
+			memset(client_buf, 0, sizeof(client_buf));
+			if(isfirst == 0)
+				strlcat(custom_clientlist, "<", sizeof(custom_clientlist));
+			else
+				isfirst = 0;
+
+			snprintf(client_buf, sizeof(client_buf), "%s>%s>%s>%s>%s>%s>%s>%s>%s", name, mac, group, type, callback, keeparp, groupname, age, groupid);
+			strlcat(custom_clientlist, client_buf, sizeof(custom_clientlist));
+		}
+	}
+
+	nvram_set("custom_clientlist", custom_clientlist);
+
+	free(buf);
+	free(gvalue);
+}
+
 #if defined(RTCONFIG_AMAS) && defined(RTCONFIG_PSR_GUEST)
 void update_wlx_psr_mbss(void)
 {
@@ -5966,7 +6093,7 @@ void update_wlx_psr_mbss(void)
 
 	for (unit=0; unit<num_of_wl_if(); unit++) {
 		wlx_psr_mbss = 0;
-		for (subunit=2; subunit<num_of_mssid_support(unit); subunit++) {
+		for (subunit=2; subunit<=num_of_mssid_support(unit); subunit++) {
 			memset(nv, 0, sizeof(nv));
 			snprintf(nv, sizeof(nv), "wl%d.%d_bss_enabled", unit, subunit);
 			if (nvram_get_int(nv) == 1) {
@@ -6082,4 +6209,69 @@ unsigned short get_extend_cap()
 		extend_cap |= __cpu_to_le16(EXTEND_CAP_ISPCTRL_LOGIN);
 
        return extend_cap;
+}
+
+void wl_vif_to_subnet(const char *ifname, char *net, int len)
+{
+	int i, found = 0;
+	char word[64];
+	char *next = NULL;
+	char nv[64];
+	char br_name[64];
+	char *br_ifnames = NULL;
+	char ipaddr[32], ipmask[32];
+
+ 	int fd;
+	struct ifreq ifr;
+	
+
+	if (!ifname || strlen(ifname) <= 0)
+		return;
+
+	if (!net || len <= 0)
+		return;
+
+	for (found=0, i=0; i<256; i++) {
+		memset(nv, 0, sizeof(nv));
+		snprintf(nv, sizeof(nv), "br%d_ifnames", i);
+		if ((br_ifnames = strdup(nvram_safe_get(nv)))) {
+			foreach (word, br_ifnames, next) {
+				if ((found = !strcmp(word, ifname)))
+					break;
+			}
+			
+			free(br_ifnames);
+		}
+
+		if (found)
+			break;
+	}
+
+	if (found) {
+		memset(nv, 0, sizeof(nv));
+		snprintf(nv, sizeof(nv), "br%d_ifname", i);
+		memset(br_name, 0, sizeof(br_name));
+		strlcpy(br_name, nvram_safe_get(nv), sizeof(br_name));
+
+		memset(&ifr, 0, sizeof(struct ifreq));
+		if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
+			ifr.ifr_addr.sa_family = AF_INET;
+			strlcpy(ifr.ifr_name, br_name, IFNAMSIZ-1);
+
+			memset(ipaddr, 0, sizeof(ipaddr));
+			if (ioctl(fd, SIOCGIFADDR, &ifr) >= 0)
+				snprintf(ipaddr, sizeof(ipaddr)-1, "%s", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+
+			memset(ipmask, 0, sizeof(ipmask));
+			if (ioctl(fd, SIOCGIFNETMASK, &ifr) >= 0)
+				snprintf(ipmask, sizeof(ipmask)-1, "%s", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+
+			if (strlen(ipaddr)>0 && strlen(ipmask)>0)
+				snprintf(net, len, "%s/%s", ipaddr, ipmask);
+			close(fd);
+		}
+	}
+
+	return;
+
 }

@@ -26,7 +26,7 @@ echo "0.commonName_value=$LANIP" >> $OPENSSL_CONF
 echo "0.organizationName=O" >> $OPENSSL_CONF
 echo "0.organizationName_value=$(uname -o)" >> $OPENSSL_CONF
 echo "0.emailAddress=E" >> $OPENSSL_CONF
-echo "0.emailAddress_value=admin@router.asus.com" >> $OPENSSL_CONF
+echo "0.emailAddress_value=admin@www.asusrouter.com" >> $OPENSSL_CONF
 
 # Required extension
 sed -i "/\[ v3_ca \]/aextendedKeyUsage = serverAuth" $OPENSSL_CONF
@@ -43,7 +43,7 @@ echo "DNS.1 = $LANIP" >> $OPENSSL_CONF # For broken clients like IE
 I=$(($I + 1))
 
 # DUT
-echo "DNS.$I = router.asus.com" >> $OPENSSL_CONF
+echo "DNS.$I = www.asusrouter.com" >> $OPENSSL_CONF
 I=$(($I + 1))
 
 # User-defined SANs (if we have any)
@@ -103,10 +103,12 @@ then
 fi
 
 # create the key and certificate request
-OPENSSL_CONF="/etc/openssl.config" $OPENSSL req -new -out /tmp/cert.csr -keyout /tmp/privkey.pem -newkey rsa:2048 -passout pass:password
+#OPENSSL_CONF="/etc/openssl.config" $OPENSSL req -new -out /tmp/cert.csr -keyout /tmp/privkey.pem -newkey rsa:2048 -passout pass:password
+#OPENSSL_CONF="/etc/openssl.config" $OPENSSL rsa -in /tmp/privkey.pem -out key.pem -passin pass:password
+OPENSSL_CONF="/etc/openssl.config" $OPENSSL ecparam -out key.pem -name prime256v1 -genkey
+OPENSSL_CONF="/etc/openssl.config" $OPENSSL req -new -key key.pem -out /tmp/cert.csr
 
-# import the self-certificate
-OPENSSL_CONF="/etc/openssl.config" $OPENSSL rsa -in /tmp/privkey.pem -out key.pem -passin pass:password
+# Import the self-certificate
 OPENSSL_CONF="/etc/openssl.config" RANDFILE=/dev/urandom $OPENSSL req -x509 -new -nodes -in /tmp/cert.csr -key key.pem -days 3653 -sha256 -out cert.pem
 
 # server.pem for WebDav SSL
