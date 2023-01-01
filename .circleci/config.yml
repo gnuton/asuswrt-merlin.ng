@@ -199,71 +199,6 @@ workflows:
               ignore:
                 - master
                 - mainline
-      - build:
-          name: "build_dsl-ax82u"
-          model: "dsl-ax82u"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
-      - build:
-          name: "build_rt-ax82u"
-          model: "rt-ax82u"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
-      - build:
-          name: "build_rt-ax95q"
-          model: "rt-ax95q"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
-      - build:
-          name: "build_tuf-ax5400"
-          model: "tuf-ax5400"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
-      - build:
-          name: "build_tuf-ax3000"
-          model: "tuf-ax3000"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
       - request-testing:
           type: approval
           filters:
@@ -272,12 +207,7 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build_dsl-ax82u
             - build_dsl-ac68u
-            - build_rt-ax82u
-            - build_tuf-ax5400
-            - build_tuf-ax3000
-            - build_rt-ax95q  
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -304,12 +234,7 @@ workflows:
             branches:
               ignore: /.*/
           requires:
-            - build_dsl-ax82u
             - build_dsl-ac68u
-            - build_rt-ax82u
-            - build_tuf-ax5400
-            - build_tuf-ax3000
-            - build_rt-ax95q
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9
