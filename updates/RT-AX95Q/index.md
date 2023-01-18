@@ -1,4 +1,4 @@
-# A new GNUton's ASUS Merlin build is available for your ZenWiFi X8 (RT-AX95Q)!
+# A new GNUton's ASUS Merlin build is available for your ZenWiFi XT8 (RT-AX95Q)!
 <p align="center">
   <img src="logo.jpg">
 </p>  
