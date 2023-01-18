@@ -1,6 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
-388.1_0-gnuton1 (xx-xxx-xxxx)
+
+388.1_0-gnuton1 (18-Jan-2023)
   - NEW: TUF images with and without TUF UI
   - NEW: Add RT-AXE95Q ZenWifi ET8 support.
 
