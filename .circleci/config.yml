@@ -106,7 +106,11 @@ jobs:
 
             cp ${IMAGE_PATH}/*.md5 workspace/release
             cp ${IMAGE_PATH}/*ubi.w   workspace/release || :
-            cp /tmp/build.log workspace/release/${MODEL}-build.log
+            if [[ ${UI} == "none" ]]; then
+              cp /tmp/build.log workspace/release/${MODEL}-build.log
+            else
+              cp /tmp/build.log workspace/release/${MODEL}_${UI}-build.log
+            fi
             if [ -z "${CIRCLE_TAG}" ]; then
               echo "No CHANGELOG to copy. Not a release build."
             else
