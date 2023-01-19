@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: January 19, 2023
+Release: 388.1_0-gnuton1
+
+  - NEW: TUF images with and without TUF UI
+  - NEW: Add RT-AXE95Q ZenWifi ET8 support.
+
+
