@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: January 19, 2023
+Release: 386.9_0-gnuton1
+
+ - NOTE: 386_xx release are only for Wifi 5 (802.11ac) models.
+ - NEW: Merged with GPL 386_50757.
+
+
