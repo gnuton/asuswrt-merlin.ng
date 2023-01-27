@@ -102,5 +102,7 @@ Do you love this project? All kinds of contributions are welcome 🙌!
 <p align="center">
   <a href="https://www.paypal.me/gnuton"><img src="donate.png" alt="donate" /></a>
   <br/>  
+  or 
+  <br/>
   ₿itcoin: 3GMqBLaLvH4c6d1bNd35NDjiqDv4pApKpi
 </p>
