@@ -100,7 +100,7 @@ Do you love this project? All kinds of contributions are welcome 🙌!
  * 💰 donations.
 
 <p align="center">
-    <a href="https://www.paypal.me/gnuton">
-        <img src="donate.png" alt="donate" width="220" height="220"/>
-    </a>
+  <a href="https://www.paypal.me/gnuton"><img src="donate.png" alt="donate" /></a>
+  <br/>  
+  ₿itcoin: 3GMqBLaLvH4c6d1bNd35NDjiqDv4pApKpi
 </p>
