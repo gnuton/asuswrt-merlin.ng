@@ -6,7 +6,7 @@
 #include <vpn_utils.h>
 #include <openvpn_config.h>
 
-#if defined(RTCONFIG_VPN_FUSION)
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) || defined(RTCONFIG_IG_SITE2SITE) || defined(RTCONFIG_WIREGUARD)
 /*******************************************************************
  * NAME: vpnc_set_basic_conf
  * AUTHOR: Andy Chiu
@@ -80,6 +80,7 @@ int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int prof_ve
 	int cnt = 0, i;
 	char *desc, *proto, *server, *username, *passwd, *active, *vpnc_idx;
 	char *region, *conntype;
+	char *wan_idx, *caller, *tunnel;
 
 	if (!list || list_size <= 0)
 		return -1;
@@ -94,7 +95,7 @@ int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int prof_ve
 		if (VPNC_PROFILE_VER1 == prof_ver)
 		{
 			// proto, server, active and vpnc_idx are mandatory
-			if (vstrsep(b, ">", &desc, &proto, &server, &username, &passwd, &active, &vpnc_idx, &region, &conntype) < 4)
+			if (vstrsep(b, ">", &desc, &proto, &server, &username, &passwd, &active, &vpnc_idx, &region, &conntype, &tunnel, &wan_idx, &caller) < 4)
 				continue;
 
 			if (!active || !vpnc_idx)
@@ -129,7 +130,7 @@ int vpnc_load_profile(VPNC_PROFILE *list, const int list_size, const int prof_ve
 				_update_ovpn_client_enable(list[cnt].config.ovpn.ovpn_idx, list[cnt].active);
 			}
 #ifdef RTCONFIG_WIREGUARD
-			else if (!strcmp(proto, PROTO_WG))
+			else if (!strcmp(proto, PROTO_WG) || !strcmp(proto, PROTO_SURFSHARK))
 			{
 				char prefix[16] = {0};
 				list[cnt].protocol = VPNC_PROTO_WG;
@@ -309,6 +310,7 @@ int read_wgc_config_file(const char* file_path, int wgc_unit)
 	{
 		while (fgets(buf, sizeof(buf), fp))
 		{
+			strtok(buf, "\r\n");
 			if (buf[0] == '[' || buf[0] == '#' || buf[0] == '\n')
 				continue;
 			else if (!strncmp(buf, "PrivateKey", 10))
@@ -374,3 +376,103 @@ int is_wgc_connected(int unit)
 		return 0;
 }
 #endif
+
+
+// Imported from rc/wireguard.c, for use in libovpn
+#ifdef RTCONFIG_WIREGUARD
+
+#ifdef RTCONFIG_HND_ROUTER
+#define BLOG_SKIP_PORT "/proc/blog/skip_wireguard_port"
+#define BLOG_SKIP_NET "/proc/blog/skip_wireguard_network"
+#define WG_NAME_SKIP_NET "hndnet"
+#endif
+
+
+#if defined(RTCONFIG_HND_ROUTER_AX_6756) || defined(RTCONFIG_BCM_502L07P2) || defined(RTCONFIG_HND_ROUTER_AX_675X)
+int _wg_check_same_port(wg_type_t type, int unit, int port)
+{
+	int i;
+	char prefix[16] = {0};
+
+	for (i = 1; i <= WG_SERVER_MAX; i++) {
+		if (type == WG_TYPE_SERVER && unit == i)
+			continue;
+		snprintf(prefix, sizeof(prefix), "%s%d_", WG_SERVER_NVRAM_PREFIX, i);
+		if (nvram_pf_get_int(prefix, "enable") && port == nvram_pf_get_int(prefix, "port"))
+			return 1;
+	}
+	for (i = 1; i <= WG_CLIENT_MAX; i++) {
+		if (type == WG_TYPE_CLIENT && unit == i)
+			continue;
+		snprintf(prefix, sizeof(prefix), "%s%d_", WG_CLIENT_NVRAM_PREFIX, i);
+		if (nvram_pf_get_int(prefix, "enable") && port == nvram_pf_get_int(prefix, "ep_port"))
+			return 1;
+	}
+	return 0;
+}
+
+void hnd_skip_wg_port(int add, int port, wg_port_t type)
+{
+	char buf[64] = {0};
+	char *ctrl = (add) ? "add" : "del";
+	char *port_type[] = {"dport", "sport", "either"};
+
+	snprintf(buf, sizeof(buf), "%s %d %s", ctrl, port, port_type[type]);
+	f_write_string(BLOG_SKIP_PORT, buf, 0, 0);
+}
+
+void hnd_skip_wg_network(int add, const char* net)
+{
+	char buf[64] = {0};
+	char *ctrl = (add) ? "add" : "del";
+	int ret;
+
+	if (!net || !*net)
+		return;
+
+	if (strchr(net, '/'))
+		snprintf(buf, sizeof(buf), "%s %s", ctrl, net);
+	else {
+		ret = is_valid_ip(net);
+		if (ret > 1)
+			snprintf(buf, sizeof(buf), "%s %s/128", ctrl, net);
+		else if (ret > 0)
+			snprintf(buf, sizeof(buf), "%s %s/32", ctrl, net);
+	}
+	_dprintf("[%s] > %s\n", buf, BLOG_SKIP_NET);
+	f_write_string(BLOG_SKIP_NET, buf, 0, 0);
+}
+
+void hnd_skip_wg_all_lan(int add)
+{
+	char path[128] = {0};
+	char buf[512] = {0};
+	char net[64] = {0}, *next = NULL;
+
+	snprintf(path, sizeof(path), "%s/all_%s", WG_DIR_CONF, WG_NAME_SKIP_NET);
+
+	f_read_string(path, buf, sizeof(buf));
+	foreach_44(net, buf, next) {
+		hnd_skip_wg_network(0, net);
+	}
+	unlink(path);
+
+	if (add) {
+		get_network_addr_by_ip_prefix(nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), buf, sizeof(buf));
+		hnd_skip_wg_network(add, buf);
+		f_write_string(path, buf, 0, 0);
+
+#if 0//RTCONFIG_IPV6
+		int v6_service = get_ipv6_service();
+		int dhcp_pd = nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"));
+		if ((v6_service == IPV6_NATIVE_DHCP && dhcp_pd)
+		 || v6_service == IPV6_6IN4 || v6_service == IPV6_MANUAL) {
+			snprintf(buf, sizeof(buf), ",%s/%d", nvram_safe_get(ipv6_nvname("ipv6_prefix")), nvram_get_int(ipv6_nvname("ipv6_prefix_length")));
+			f_write_string(path, buf, FW_APPEND, 0);
+		}
+#endif
+	}
+}
+#endif
+#endif
+

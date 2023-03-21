@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include <cmocka.h>
 
 static int
@@ -38,6 +39,7 @@ int_test_success(void **state)
     assert_int_equal(*answer, 42);
 }
 
+__attribute__((unused))
 static void
 failing_test(void **state)
 {
