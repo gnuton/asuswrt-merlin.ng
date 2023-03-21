@@ -95,20 +95,6 @@ ifeq ($(RTCONFIG_TUF_UI), y)
 	cp -rL $(TOP)/www/sysdep/FUNCTION/TUF_UI/* $(INSTALLDIR)/www/
 endif
 
-
-ifeq ($(RTCONFIG_AMAS),y)
-ifneq ($(BUILD_NAME),DSL-AC68U)
-	cp $(TOP)/www/sysdep/BLUECAVE/www/Advanced_Wireless_Survey.asp $(INSTALLDIR)/www/Advanced_Wireless_Survey.asp
-	cp $(TOP)/www/sysdep/BLUECAVE/www/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
-	cp $(TOP)/www/sysdep/BLUECAVE/www/mobile $(INSTALLDIR)/www/ -rf
-	cp $(TOP)/www/sysdep/BLUECAVE/www/require/modules/modem.js $(INSTALLDIR)/www/require/modules/ -rf
-	rm -rf $(INSTALLDIR)/www/images/New_ui/smart_connect_concept.gif
-ifneq ($(RTCONFIG_WIFI_SON),y)
-	rm -rf $(INSTALLDIR)/www/images/qis
-endif
-	rm -rf $(INSTALLDIR)/www/images/rog_feature*
-	rm -rf $(INSTALLDIR)/www/qis
-endif
 ifeq ($(HND_ROUTER),y)
 	cp $(TOP)/www/sysdep/FUNCTION/SITE_SURVEY/* $(INSTALLDIR)/www/ -rf
 endif
