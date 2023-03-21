@@ -4,7 +4,7 @@ dnl             session authentication and key exchange,
 dnl             packet encryption, packet authentication, and
 dnl             packet compression.
 dnl
-dnl  Copyright (C) 2002-2022 OpenVPN Inc <sales@openvpn.net>
+dnl  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
 dnl  Copyright (C) 2006-2012 Alon Bar-Lev <alon.barlev@gmail.com>
 dnl
 dnl  This program is free software; you can redistribute it and/or modify
@@ -54,9 +54,22 @@ m4_define([serial_tests], [
                 awk '{split ($NF,a,"."); if (a[1] == 1 && a[2] >= 12) { print "serial-tests" }}'
     ])
 ])
+
+dnl Automake 1.14+ warns if sources are in sub-directories but subdir-objects
+dnl options is not enabled. However, automake before 1.15a has a bug that causes
+dnl variable expansion to fail in foo_SOURCES when this option is used.
+dnl As most of our build systems are now likely to use automake 1.16+ add a
+dnl work around to conditionally add subdir-objects option.
+m4_define([subdir_objects], [
+    m4_esyscmd([automake --version |
+                head -1 |
+                awk '{split ($NF,a,"."); if (a[1] == 1 && a[2] >= 16) { print "subdir-objects" }}'
+    ])
+])
+
 # This foreign option prevents autoreconf from overriding our COPYING and
 # INSTALL targets:
-AM_INIT_AUTOMAKE(foreign serial_tests 1.9) dnl NB: Do not [quote] this parameter.
+AM_INIT_AUTOMAKE(foreign serial_tests subdir_objects 1.9) dnl NB: Do not [quote] this parameter.
 AC_CANONICAL_HOST
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -67,14 +80,16 @@ AC_ARG_ENABLE(
 	[enable_lzo="yes"]
 )
 
-AC_ARG_ENABLE(lz4,
-	[  --disable-lz4           Disable LZ4 compression support],
+AC_ARG_ENABLE(
+	[lz4],
+	[AS_HELP_STRING([--disable-lz4], [disable LZ4 compression support @<:@default=yes@:>@])],
 	[enable_lz4="$enableval"],
 	[enable_lz4="yes"]
 )
 
-AC_ARG_ENABLE(comp-stub,
-	[  --enable-comp-stub      Don't compile compression support but still allow limited interoperability with compression-enabled peers],
+AC_ARG_ENABLE(
+	[comp-stub],
+	[AS_HELP_STRING([--enable-comp-stub], [disable compression support but still allow limited interoperability with compression-enabled peers @<:@default=no@:>@])],
 	[enable_comp_stub="$enableval"],
 	[enable_comp_stub="no"]
 )
@@ -122,13 +137,6 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
-	[multihome],
-	[AS_HELP_STRING([--disable-multihome], [disable multi-homed UDP server support (--multihome) @<:@default=yes@:>@])],
-	,
-	[enable_multihome="yes"]
-)
-
-AC_ARG_ENABLE(
 	[port-share],
 	[AS_HELP_STRING([--disable-port-share], [disable TCP server port-share support (--port-share) @<:@default=yes@:>@])],
 	,
@@ -150,24 +158,30 @@ AC_ARG_ENABLE(
 )
 
 AC_ARG_ENABLE(
+	[dco],
+	[AS_HELP_STRING([--disable-dco], [disable data channel offload support using the ovpn-dco kernel module @<:@default=yes@:>@ on Linux/FreeBSD, can't disable on Windows])],
+	,
+	[
+		case "$host" in
+			*-*-linux*)
+				enable_dco="auto"
+			;;
+			*-*-freebsd*)
+				enable_dco="auto"
+			;;
+			*)
+				# note that this does not disable it for Windows
+				enable_dco="no"
+			;;
+		esac
+	]
+)
+
+AC_ARG_ENABLE(
 	[iproute2],
-	[AS_HELP_STRING([--enable-iproute2], [enable support for iproute2 @<:@default=no@:>@])],
+	[AS_HELP_STRING([--enable-iproute2], [enable support for iproute2 (disables DCO) @<:@default=no@:>@])],
 	,
 	[enable_iproute2="no"]
-)
-
-AC_ARG_ENABLE(
-	[def-auth],
-	[AS_HELP_STRING([--disable-def-auth], [disable deferred authentication @<:@default=yes@:>@])],
-	,
-	[enable_def_auth="yes"]
-)
-
-AC_ARG_ENABLE(
-	[pf],
-	[AS_HELP_STRING([--disable-pf], [disable internal packet filter @<:@default=yes@:>@])],
-	,
-	[enable_pf="yes"]
 )
 
 AC_ARG_ENABLE(
@@ -271,14 +285,21 @@ AC_ARG_WITH(
 
 AC_ARG_WITH(
 	[crypto-library],
-	[AS_HELP_STRING([--with-crypto-library=library], [build with the given crypto library, TYPE=openssl|mbedtls @<:@default=openssl@:>@])],
+	[AS_HELP_STRING([--with-crypto-library=library], [build with the given crypto library, TYPE=openssl|mbedtls|wolfssl @<:@default=openssl@:>@])],
 	[
 		case "${withval}" in
-			openssl|mbedtls) ;;
+			openssl|mbedtls|wolfssl) ;;
 			*) AC_MSG_ERROR([bad value ${withval} for --with-crypto-library]) ;;
 		esac
 	],
 	[with_crypto_library="openssl"]
+)
+
+AC_ARG_ENABLE(
+	[wolfssl-options-h],
+	[AS_HELP_STRING([--disable-wolfssl-options-h], [Disable including options.h in wolfSSL @<:@default=yes@:>@])],
+	,
+	[enable_wolfssl_options_h="yes"]
 )
 
 AC_ARG_WITH(
@@ -335,6 +356,7 @@ case "$host" in
 		;;
 	*-mingw*)
 		AC_DEFINE([TARGET_WIN32], [1], [Are we running WIN32?])
+		AC_DEFINE([ENABLE_DCO], [1], [DCO is always enabled on Windows])
 		AC_DEFINE_UNQUOTED([TARGET_PREFIX], ["W"], [Target prefix])
 		CPPFLAGS="${CPPFLAGS} -DWIN32_LEAN_AND_MEAN"
 		CPPFLAGS="${CPPFLAGS} -DNTDDI_VERSION=NTDDI_VISTA -D_WIN32_WINNT=_WIN32_WINNT_VISTA"
@@ -356,6 +378,8 @@ case "$host" in
 		have_tap_header="yes"
 		;;
 esac
+
+AM_CONDITIONAL([CROSS_COMPILING], test "${cross_compiling}" = "yes")
 
 PKG_PROG_PKG_CONFIG
 AC_PROG_CPP
@@ -421,44 +445,29 @@ AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
-AC_TYPE_INT8_T
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_INT64_T
-AC_TYPE_UINT8_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT64_T
 AC_TYPE_SIGNAL
-AX_CPP_VARARG_MACRO_ISO
-AX_CPP_VARARG_MACRO_GCC
 AX_TYPE_SOCKLEN_T
-AX_EMPTY_ARRAY
 AC_CHECK_SIZEOF([unsigned int])
 AC_CHECK_SIZEOF([unsigned long])
 AC_CHECK_HEADERS([ \
-	stdio.h stdarg.h limits.h \
-	time.h errno.h fcntl.h io.h direct.h \
-	ctype.h sys/types.h sys/socket.h \
-	signal.h unistd.h dlfcn.h \
+	fcntl.h io.h \
+	sys/types.h sys/socket.h \
+	unistd.h dlfcn.h \
 	netinet/in.h netinet/in_systm.h \
 	netinet/tcp.h arpa/inet.h netdb.h \
-	windows.h winsock2.h ws2tcpip.h \
 	versionhelpers.h \
 ])
 AC_CHECK_HEADERS([ \
 	sys/time.h sys/ioctl.h sys/stat.h \
 	sys/mman.h sys/file.h sys/wait.h \
-	unistd.h signal.h libgen.h stropts.h \
-	syslog.h pwd.h grp.h \
+	unistd.h libgen.h stropts.h \
+	syslog.h pwd.h grp.h termios.h \
 	sys/sockio.h sys/uio.h linux/sockios.h \
 	linux/types.h linux/errqueue.h poll.h sys/epoll.h err.h \
 ])
 
 SOCKET_INCLUDES="
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -471,13 +480,13 @@ SOCKET_INCLUDES="
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#ifdef HAVE_WINDOWS_H
+#ifdef _WIN32
 #include <windows.h>
 #endif
-#ifdef HAVE_WINSOCK2_H
+#ifdef _WIN32
 #include <winsock2.h>
 #endif
-#ifdef HAVE_WS2TCPIP_H
+#ifdef _WIN32
 #include <ws2tcpip.h>
 #endif
 #ifdef HAVE_NETINET_IN_SYSTM_H
@@ -555,7 +564,7 @@ AC_CHECK_DECLS(
 	,
 	[[${SOCKET_INCLUDES}]]
 )
-AC_CHECKING([anonymous union support])
+AC_MSG_CHECKING([anonymous union support])
 AC_COMPILE_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[
@@ -608,9 +617,7 @@ AC_CHECK_DECLS(
 	,
 	[AC_DEFINE([SIGHUP], [1], [SIGHUP replacement])],
 	[[
-		#ifdef HAVE_SIGNAL_H
 		#include <signal.h>
-		#endif
 	]]
 )
 AC_CHECK_DECLS(
@@ -618,9 +625,7 @@ AC_CHECK_DECLS(
 	,
 	[AC_DEFINE([SIGINT], [2], [SIGINT replacement])],
 	[[
-		#ifdef HAVE_SIGNAL_H
 		#include <signal.h>
-		#endif
 	]]
 )
 AC_CHECK_DECLS(
@@ -628,9 +633,7 @@ AC_CHECK_DECLS(
 	,
 	[AC_DEFINE([SIGUSR1], [10], [SIGUSR1 replacement])],
 	[[
-		#ifdef HAVE_SIGNAL_H
 		#include <signal.h>
-		#endif
 	]]
 )
 AC_CHECK_DECLS(
@@ -638,9 +641,7 @@ AC_CHECK_DECLS(
 	,
 	[AC_DEFINE([SIGUSR2], [12], [SIGUSR2 replacement])],
 	[[
-		#ifdef HAVE_SIGNAL_H
 		#include <signal.h>
-		#endif
 	]]
 )
 AC_CHECK_DECLS(
@@ -648,21 +649,18 @@ AC_CHECK_DECLS(
 	,
 	[AC_DEFINE([SIGTERM], [15], [SIGTERM replacement])],
 	[[
-		#ifdef HAVE_SIGNAL_H
 		#include <signal.h>
-		#endif
 	]]
 )
 
 AC_FUNC_FORK
 
 AC_CHECK_FUNCS([ \
-	daemon chroot getpwnam setuid nice system getpid dup dup2 \
-	getpass syslog openlog mlockall getgrnam setgid \
-	setgroups stat flock readv writev time gettimeofday \
-	ctime memset vsnprintf strdup \
-	setsid chdir putenv getpeername unlink \
-	chsize ftruncate execve getpeereid umask basename dirname access \
+	daemon chroot getpwnam setuid nice system dup dup2 \
+	syslog openlog mlockall getrlimit getgrnam setgid \
+	setgroups flock readv writev time gettimeofday \
+	setsid chdir \
+	chsize ftruncate execve getpeereid basename dirname access \
 	epoll_create strsep \
 ])
 
@@ -693,53 +691,7 @@ AC_SUBST([SOCKETS_LIBS])
 old_LIBS="${LIBS}"
 LIBS="${LIBS} ${SOCKETS_LIBS}"
 AC_CHECK_FUNCS([sendmsg recvmsg])
-# Windows use stdcall for winsock so we cannot auto detect these
-m4_define(
-	[SOCKET_FUNCS],
-[socket recv recvfrom send sendto listen dnl
-accept connect bind select gethostbyname inet_ntoa]dnl
-)
-m4_define(
-	[SOCKET_OPT_FUNCS],
-	[setsockopt getsockopt getsockname poll]dnl
-)
-if test "${WIN32}" = "yes"; then
-# normal autoconf function checking does not find inet_ntop/inet_pton
-# because they need to include the actual header file and link ws2_32.dll
-	LIBS="${LIBS} -lws2_32"
-	AC_MSG_CHECKING([for MinGW inet_ntop()/inet_pton()])
-	AC_LINK_IFELSE(
-		[AC_LANG_PROGRAM(
-			[[
-#include <ws2tcpip.h>
-			]],
-			[[
-int r = (int) inet_ntop (0, NULL, NULL, 0);
-    r += inet_pton(AF_INET, NULL, NULL);
-return r;
-			]]
-		)],
-		[AC_MSG_RESULT([OK])
-		 AC_DEFINE([HAVE_INET_NTOP],[1],[MinGW inet_ntop])
-		 AC_DEFINE([HAVE_INET_PTON],[1],[MinGW inet_pton])
-		],
-		[AC_MSG_RESULT([not found])]
-	)
-	m4_foreach(
-		[F],
-		m4_split(SOCKET_FUNCS SOCKET_OPT_FUNCS),
-			m4_define([UF], [[m4_join([_], [HAVE], m4_toupper(F))]])
-			AC_DEFINE([UF], [1], [Win32 builtin])
-	)
-else
-	AC_CHECK_FUNCS([inet_ntop inet_pton])
-	AC_CHECK_FUNCS(
-		SOCKET_FUNCS,
-		,
-		[AC_MSG_ERROR([Required library function not found])]
-	)
-	AC_CHECK_FUNCS(SOCKET_OPT_FUNCS)
-fi
+
 LIBS="${old_LIBS}"
 
 # we assume res_init() always exist, but need to find out *where*...
@@ -846,6 +798,87 @@ PKG_CHECK_MODULES(
 	[]
 )
 
+
+if test "$enable_dco" != "no"; then
+	enable_dco_arg="$enable_dco"
+	if test "${enable_iproute2}" = "yes"; then
+		AC_MSG_WARN([DCO cannot be enabled when using iproute2])
+		enable_dco="no"
+	fi
+	case "$host" in
+		*-*-linux*)
+			if test "$enable_dco" = "no"; then
+				if test "$enable_dco_arg" = "auto"; then
+					AC_MSG_WARN([DCO support disabled])
+				else
+					AC_MSG_ERROR([DCO support can't be enabled])
+				fi
+			else
+				dnl
+				dnl Include generic netlink library used to talk to ovpn-dco
+				dnl
+				PKG_CHECK_MODULES([LIBNL_GENL],
+					  [libnl-genl-3.0 >= 3.4.0],
+					  [have_libnl="yes"],
+					  [
+					   AC_MSG_ERROR([libnl-genl-3.0 package not found or too old. Is the development package and pkg-config installed? Must be version 3.4.0 or newer for DCO])
+					  ]
+				)
+				CFLAGS="${CFLAGS} ${LIBNL_GENL_CFLAGS}"
+				LIBS="${LIBS} ${LIBNL_GENL_LIBS}"
+
+				AC_DEFINE(ENABLE_DCO, 1, [Enable shared data channel offload])
+				AC_MSG_NOTICE([Enabled ovpn-dco support for Linux])
+			fi
+			;;
+		*-*-freebsd*)
+			AC_CHECK_HEADERS([net/if_ovpn.h],
+				[
+				 LIBS="${LIBS} -lnv"
+				 AC_DEFINE(ENABLE_DCO, 1, [Enable data channel offload for FreeBSD])
+				 AC_MSG_NOTICE([Enabled ovpn-dco support for FreeBSD])
+				],
+				[
+				 enable_dco="no"
+				 AC_MSG_WARN([DCO header not found.])
+				]
+			)
+			if test "$enable_dco" = "no"; then
+				if test "$enable_dco_arg" = "auto"; then
+					AC_MSG_WARN([DCO support disabled])
+				else
+					AC_MSG_ERROR([DCO support can't be enabled])
+				fi
+			fi
+			;;
+		*-mingw*)
+			AC_MSG_NOTICE([NOTE: --enable-dco ignored on Windows because it's always enabled])
+			;;
+		*)
+			AC_MSG_NOTICE([Ignoring --enable-dco on non supported platform])
+			;;
+	esac
+fi
+
+dnl
+dnl Depend on libcap-ng on Linux
+dnl
+case "$host" in
+	*-*-linux*)
+		PKG_CHECK_MODULES([LIBCAPNG],
+				  [libcap-ng],
+				  [],
+				  [AC_MSG_ERROR([libcap-ng package not found. Is the development package and pkg-config installed?])]
+		)
+		AC_CHECK_HEADER([sys/prctl.h],,[AC_MSG_ERROR([sys/prctl.h not found!])])
+
+		CFLAGS="${CFLAGS} ${LIBCAPNG_CFALGS}"
+		LIBS="${LIBS} ${LIBCAPNG_LIBS}"
+		AC_DEFINE(HAVE_LIBCAPNG, 1, [Enable libcap-ng support])
+	;;
+esac
+
+
 if test "${with_crypto_library}" = "openssl"; then
 	AC_ARG_VAR([OPENSSL_CFLAGS], [C compiler flags for OpenSSL])
 	AC_ARG_VAR([OPENSSL_LIBS], [linker flags for OpenSSL])
@@ -887,7 +920,7 @@ if test "${with_crypto_library}" = "openssl"; then
 		)
 	fi
 
-	AC_CHECK_FUNCS([SSL_CTX_new EVP_CIPHER_CTX_set_key_length],
+	AC_CHECK_FUNCS([SSL_CTX_new],
 				   ,
 				   [AC_MSG_ERROR([openssl check failed])]
 	)
@@ -944,50 +977,6 @@ if test "${with_crypto_library}" = "openssl"; then
 	# All supported OpenSSL version (>= 1.0.2)
 	# have this feature
 	have_export_keying_material="yes"
-
-	AC_CHECK_FUNCS(
-		[ \
-			HMAC_CTX_new \
-			HMAC_CTX_free \
-			HMAC_CTX_reset \
-			EVP_MD_CTX_new \
-			EVP_MD_CTX_free \
-			EVP_MD_CTX_reset \
-			EVP_CIPHER_CTX_reset \
-			OpenSSL_version \
-			SSL_CTX_get_default_passwd_cb \
-			SSL_CTX_get_default_passwd_cb_userdata \
-			SSL_CTX_set1_groups \
-			SSL_CTX_set_security_level \
-			X509_get0_notBefore \
-			X509_get0_notAfter \
-			X509_get0_pubkey \
-			X509_STORE_get0_objects \
-			X509_OBJECT_free \
-			X509_OBJECT_get_type \
-			EVP_PKEY_get0_RSA \
-			EVP_PKEY_get0_DSA \
-			EVP_PKEY_get0_EC_KEY \
-			RSA_set_flags \
-			RSA_bits \
-			RSA_get0_key \
-			RSA_set0_key \
-			DSA_get0_pqg \
-			DSA_bits \
-			RSA_meth_new \
-			RSA_meth_free \
-			RSA_meth_set_pub_enc \
-			RSA_meth_set_pub_dec \
-			RSA_meth_set_priv_enc \
-			RSA_meth_set_priv_dec \
-			RSA_meth_set_init \
-			RSA_meth_set_sign \
-			RSA_meth_set_finish \
-			RSA_meth_set0_app_data \
-			RSA_meth_get0_app_data \
-			EC_GROUP_order_bits
-		]
-	)
 
 	CFLAGS="${saved_CFLAGS}"
 	LIBS="${saved_LIBS}"
@@ -1049,11 +1038,76 @@ elif test "${with_crypto_library}" = "mbedtls"; then
 		[have_export_keying_material="no"]
 	)
 
+	AC_CHECK_FUNC(
+		[mbedtls_ctr_drbg_update_ret],
+		AC_DEFINE([HAVE_CTR_DRBG_UPDATE_RET], [1],
+			  [Use mbedtls_ctr_drbg_update_ret from mbed TLS]),
+	)
+
 	CFLAGS="${saved_CFLAGS}"
 	LIBS="${saved_LIBS}"
 	AC_DEFINE([ENABLE_CRYPTO_MBEDTLS], [1], [Use mbed TLS library])
 	CRYPTO_CFLAGS="${MBEDTLS_CFLAGS}"
 	CRYPTO_LIBS="${MBEDTLS_LIBS}"
+
+elif test "${with_crypto_library}" = "wolfssl"; then
+	AC_ARG_VAR([WOLFSSL_CFLAGS], [C compiler flags for wolfssl. The include directory should
+								  contain the regular wolfSSL header files but also the
+								  wolfSSL OpenSSL header files. Ex: -I/usr/local/include
+								  -I/usr/local/include/wolfssl])
+	AC_ARG_VAR([WOLFSSL_LIBS], [linker flags for wolfssl])
+
+	saved_CFLAGS="${CFLAGS}"
+	saved_LIBS="${LIBS}"
+
+	if test -z "${WOLFSSL_CFLAGS}" -a -z "${WOLFSSL_LIBS}"; then
+		# if the user did not explicitly specify flags, try to autodetect
+		PKG_CHECK_MODULES(
+			[WOLFSSL],
+			[wolfssl],
+			[],
+			[AC_MSG_ERROR([Could not find wolfSSL.])]
+		)
+		PKG_CHECK_VAR(
+			[WOLFSSL_INCLUDEDIR],
+			[wolfssl],
+			[includedir],
+			[],
+			[AC_MSG_ERROR([Could not find wolfSSL includedir variable.])]
+		)
+		WOLFSSL_CFLAGS="${WOLFSSL_CFLAGS} -I${WOLFSSL_INCLUDEDIR}/wolfssl"
+	fi
+	saved_CFLAGS="${CFLAGS}"
+	saved_LIBS="${LIBS}"
+	CFLAGS="${CFLAGS} ${WOLFSSL_CFLAGS}"
+	LIBS="${LIBS} ${WOLFSSL_LIBS}"
+
+	AC_CHECK_LIB(
+		[wolfssl],
+		[wolfSSL_Init],
+		[],
+		[AC_MSG_ERROR([Could not link wolfSSL library.])]
+	)
+	AC_CHECK_HEADER([wolfssl/options.h],,[AC_MSG_ERROR([wolfSSL header wolfssl/options.h not found!])])
+
+	# wolfSSL signal EKM support
+	have_export_keying_material="yes"
+
+	if test "${enable_wolfssl_options_h}" = "yes"; then
+		AC_DEFINE([EXTERNAL_OPTS_OPENVPN], [1], [Include options.h from wolfSSL library])
+	else
+		AC_DEFINE([WOLFSSL_USER_SETTINGS], [1], [Use custom user_settings.h file for wolfSSL library])
+	fi
+
+	have_export_keying_material="yes"
+
+	CFLAGS="${saved_CFLAGS}"
+	LIBS="${saved_LIBS}"
+
+	AC_DEFINE([ENABLE_CRYPTO_WOLFSSL], [1], [Use wolfSSL crypto library])
+	AC_DEFINE([ENABLE_CRYPTO_OPENSSL], [1], [Use wolfSSL openssl compatibility layer])
+	CRYPTO_CFLAGS="${WOLFSSL_CFLAGS}"
+	CRYPTO_LIBS="${WOLFSSL_LIBS}"
 else
 	AC_MSG_ERROR([Invalid crypto library: ${with_crypto_library}])
 fi
@@ -1145,7 +1199,7 @@ if test "$enable_lz4" = "yes" && test "$enable_comp_stub" = "no"; then
 		    AC_MSG_RESULT([ok])
 		    have_lz4="yes"
 		],
-		[AC_MSG_RESULT([system LZ4 library is too old])]
+		[AC_MSG_ERROR([system LZ4 library is too old])]
 	    )
 	fi
     fi
@@ -1163,8 +1217,7 @@ if test "$enable_lz4" = "yes" && test "$enable_comp_stub" = "no"; then
     fi
 
     if test "${have_lz4}" != "yes" ; then
-	AC_MSG_RESULT([		usable LZ4 library or header not found, using version in src/compat/compat-lz4.*])
-	AC_DEFINE([NEED_COMPAT_LZ4], [1], [use copy of LZ4 source in compat/])
+	AC_MSG_ERROR([No compatible LZ4 compression library found. Consider --disable-lz4])
 	LZ4_LIBS=""
     fi
     OPTIONAL_LZ4_CFLAGS="${LZ4_CFLAGS}"
@@ -1225,14 +1278,6 @@ if test -n "${GIT}" -a -d "${srcdir}/.git"; then
 fi
 AC_MSG_RESULT([${GIT_CHECKOUT}])
 
-if test -n "${SP_PLATFORM_WINDOWS}"; then
-	AC_DEFINE_UNQUOTED([PATH_SEPARATOR], ['\\\\'], [Path separator]) #"
-	AC_DEFINE_UNQUOTED([PATH_SEPARATOR_STR], ["\\\\"], [Path separator]) #"
-else
-	AC_DEFINE_UNQUOTED([PATH_SEPARATOR], ['/'], [Path separator])
-	AC_DEFINE_UNQUOTED([PATH_SEPARATOR_STR], ["/"], [Path separator])
-fi
-
 dnl enable --x509-username-field feature if requested
 if test "${enable_x509_alt_username}" = "yes"; then
 	if test "${with_crypto_library}" = "mbedtls" ; then
@@ -1242,16 +1287,11 @@ if test "${enable_x509_alt_username}" = "yes"; then
 	AC_DEFINE([ENABLE_X509ALTUSERNAME], [1], [Enable --x509-username-field feature])
 fi
 
-test "${ac_cv_header_sys_uio_h}" = "yes" && AC_DEFINE([HAVE_IOVEC], [1], [struct iovec needed for IPv6 support])
 test "${enable_management}" = "yes" && AC_DEFINE([ENABLE_MANAGEMENT], [1], [Enable management server capability])
-test "${enable_multihome}" = "yes" && AC_DEFINE([ENABLE_MULTIHOME], [1], [Enable multi-homed UDP server capability])
 test "${enable_debug}" = "yes" && AC_DEFINE([ENABLE_DEBUG], [1], [Enable debugging support])
 test "${enable_small}" = "yes" && AC_DEFINE([ENABLE_SMALL], [1], [Enable smaller executable size])
 test "${enable_fragment}" = "yes" && AC_DEFINE([ENABLE_FRAGMENT], [1], [Enable internal fragmentation support])
 test "${enable_port_share}" = "yes" && AC_DEFINE([ENABLE_PORT_SHARE], [1], [Enable TCP Server port sharing])
-test "${enable_def_auth}" = "yes" && AC_DEFINE([ENABLE_DEF_AUTH], [1], [Enable deferred authentication])
-test "${enable_pf}" = "yes" && AC_DEFINE([ENABLE_PF], [1], [Enable internal packet filter])
-test "${enable_strict_options}" = "yes" && AC_DEFINE([ENABLE_STRICT_OPTIONS_CHECK], [1], [Enable strict options check between peers])
 
 test "${enable_crypto_ofb_cfb}" = "yes" && AC_DEFINE([ENABLE_OFB_CFB_MODE], [1], [Enable OFB and CFB cipher modes])
 if test "${have_export_keying_material}" = "yes"; then
@@ -1274,6 +1314,7 @@ fi
 AM_CONDITIONAL([HAVE_SITNL], [false])
 
 if test "${enable_iproute2}" = "yes"; then
+	test "${enable_dco}" = "yes" && AC_MSG_ERROR([iproute2 support cannot be enabled when using DCO])
 	test -z "${IPROUTE}" && AC_MSG_ERROR([ip utility is required but missing])
 	AC_DEFINE([ENABLE_IPROUTE], [1], [enable iproute2 support])
 else if test "${have_sitnl}" = "yes"; then

@@ -156,6 +156,24 @@ void ovpn_run_fw_scripts(){
 		snprintf(buffer, sizeof(buffer), "/etc/openvpn/client%d/fw.sh", unit);
 		if (f_exists(buffer))
 			eval(buffer);
+	}
+}
+
+void ovpn_run_fw_nat_scripts(){
+	char buffer[64];
+	int unit;
+
+	for (unit = 1; unit <= OVPN_SERVER_MAX; unit++) {
+		snprintf(buffer, sizeof(buffer), "/etc/openvpn/server%d/fw_nat.sh", unit);
+		if (f_exists(buffer))
+			eval(buffer);
+	}
+
+	// Reverse order because of DNSVPN rules
+	for (unit = OVPN_CLIENT_MAX; unit > 0; unit--) {
+		snprintf(buffer, sizeof(buffer), "/etc/openvpn/client%d/fw_nat.sh", unit);
+		if (f_exists(buffer))
+			eval(buffer);
 
 		snprintf(buffer, sizeof(buffer), "/etc/openvpn/client%d/dns.sh", unit);
 		if (f_exists(buffer))
@@ -246,7 +264,7 @@ void ovpn_client_up_handler(int unit)
 	char buffer[128], buffer2[128], buffer3[128];
 	char dirname[64];
 	char prefix[32];
-	FILE *fp_resolv = NULL, *fp_conf = NULL, *fp_qos = NULL, *fp_route = NULL;;
+	FILE *fp_resolv = NULL, *fp_conf = NULL, *fp_route = NULL;;
 	int i, j, verb, rgw, lock;
 	char *option, *option2;
 	char *network_env, *netmask_env, *gateway_env, *metric_env, *remotegw_env, *dev_env;
@@ -625,7 +643,13 @@ void ovpn_stop_client(int unit) {
 	// Remove firewall rules after VPN exit
 	sprintf(buffer, "/etc/openvpn/client%d/fw.sh", unit);
 	if (f_exists(buffer)) {
-		if (!eval("sed", "-i", "s/-A/-D/g;s/-I/-D/g", buffer))
+		if (!eval("sed", "-i", "s/-[AI]/-D/g", buffer))
+			eval(buffer);
+	}
+
+	sprintf(buffer, "/etc/openvpn/client%d/fw_nat.sh", unit);
+	if (f_exists(buffer)) {
+		if (!eval("sed", "-i", "s/-[AI]/-D/g", buffer))
 			eval(buffer);
 	}
 
@@ -669,7 +693,10 @@ void ovpn_stop_server(int unit) {
 
 	// Remove firewall rules
 	sprintf(buffer, "/etc/openvpn/server%d/fw.sh", unit);
-	if (!eval("sed", "-i", "s/-A/-D/g;s/-I/-D/g", buffer))
+	if (!eval("sed", "-i", "s/-[AI]/-D/g", buffer))
+		eval(buffer);
+	sprintf(buffer, "/etc/openvpn/server%d/fw_nat.sh", unit);
+	if (!eval("sed", "-i", "s/-[AI]/-D/g", buffer))
 		eval(buffer);
 
 	// Delete all files for this server

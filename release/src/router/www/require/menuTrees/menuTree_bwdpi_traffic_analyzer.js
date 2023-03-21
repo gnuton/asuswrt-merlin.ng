@@ -138,7 +138,7 @@ define(function(){
 					{url: "Main_TrafficMonitor_devmonthly.asp", tabName: "__INHERIT__"},
 					{url: "TrafficAnalyzer_Statistic.asp", tabName: "<#Statistic#>"},
 					{url: "AdaptiveQoS_TrafficLimiter.asp", tabName: "Traffic Limiter"},
-					{url: "NULL", tabName: "__INHERIT__"}
+                                        {url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
 			{
@@ -224,8 +224,6 @@ define(function(){
 					{url: "Advanced_WAdvanced_Content.asp", tabName: "<#menu5_1_6#>"},
 					{url: "Advanced_WProxy_Content.asp", tabName: "<#WiFi_Proxy_item#>"},
 					{url: "Advanced_Roaming_Block_Content.asp", tabName: "<#WiFi_Roaming_Block_List#>"},
-					{url: "Advanced_Wireless_Survey.asp", tabName: "Site Survey"},
-					{url: "WiFi_Insight.asp", tabName: "<#WiFi_radar#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
@@ -351,6 +349,8 @@ define(function(){
 					{url: "Main_WOL_Content.asp", tabName: "<#NetworkTools_WOL#>"},
 					// {url: "Main_ChkSta_Content.asp", tabName: "<#NetworkTools_ChkSta#>"},
 					{url: "Advanced_Smart_Connect.asp", tabName: "<#smart_connect_rule#>"},
+					{url: "Advanced_Wireless_Survey.asp", tabName: "Site Survey"},
+					{url: "WiFi_Insight.asp", tabName: "<#WiFi_radar#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			}
@@ -535,7 +535,6 @@ define(function(){
 					retArray.push("AiProtection_AdBlock.asp");
 					retArray.push("AiProtection_Key_Guard.asp");
 					retArray.push("AiProtection_AdBlock.asp");
-					retArray.push("TrafficAnalyzer_Statistic.asp");
 				}
 
 				if(!bwdpi_mals_support){
@@ -596,14 +595,14 @@ define(function(){
 					retArray.push("AdaptiveQoS_Bandwidth_Monitor.asp");
 				}
 
-				if(!traffic_analyzer_support){
+				if(!traffic_analyzer_support && !dns_dpi_support){
 					retArray.push("TrafficAnalyzer_Statistic.asp");		
 				}
 
 				if(!traffic_limiter_support){
 					retArray.push("AdaptiveQoS_TrafficLimiter.asp");		
 				}
-
+                                
 				if(downsize_4m_support){
 					retArray.push("Main_ConnStatus_Content.asp");
 					retArray.push("Main_TrafficMonitor_realtime.asp");
@@ -884,10 +883,7 @@ define(function(){
 					retArray.push("Advanced_IPTV_Content.asp");
 				}
 
-				if(hnd_support){
-					retArray.push("Advanced_Wireless_Survey.asp");
-				}
-				else{
+				if(!hnd_support){
 					retArray.push("WiFi_Insight.asp");
 				}
 

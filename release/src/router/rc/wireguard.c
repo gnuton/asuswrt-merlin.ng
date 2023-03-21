@@ -16,6 +16,24 @@
 #define WG_PRG_CRU     "/usr/sbin/cru"
 #define WG_WAIT_SYNC   5
 
+#if 0	// Moved to vpn_utils.c
+typedef enum wg_type{
+	WG_TYPE_SERVER = 0,
+	WG_TYPE_CLIENT
+}wg_type_t;
+
+enum {
+	WG_NF_DEL = 0,
+	WG_NF_ADD
+};
+#endif
+
+#ifdef RTCONFIG_HND_ROUTER
+#define BLOG_SKIP_PORT "/proc/blog/skip_wireguard_port"
+#define BLOG_SKIP_NET "/proc/blog/skip_wireguard_network"
+#define WG_NAME_SKIP_NET "hndnet"
+#endif
+
 static int _wg_if_exist(char *ifname)
 {
 #if 1
@@ -74,8 +92,11 @@ static int _wg_resolv_ep(const char* ep_addr, char* buf, size_t len)
 
 	for(p = servinfo; p != NULL; p = p->ai_next)
 	{
-		if (p->ai_family == AF_INET6)
-			addr = inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)(p->ai_addr))->sin6_addr), tmp, INET6_ADDRSTRLEN);
+		addr = NULL;
+		if (p->ai_family == AF_INET6) {
+			if (ipv6_enabled())
+				addr = inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)(p->ai_addr))->sin6_addr), tmp, INET6_ADDRSTRLEN);
+		}
 		else
 			addr = inet_ntop(AF_INET, &(((struct sockaddr_in *)(p->ai_addr))->sin_addr), tmp, INET_ADDRSTRLEN);
 		if (addr)
@@ -184,7 +205,7 @@ static void _wg_client_check_conf(char* prefix)
 
 static void _wg_config_route(char* prefix, char* ifname, int table)
 {
-	char aips[1024] = {0};
+	char aips[4096] = {0};
 	char buf[128] = {0};
 	char *p = NULL;
 	char table_str[8] = {0};
@@ -256,17 +277,161 @@ static void _wg_config_route(char* prefix, char* ifname, int table)
 	}
 }
 
-static void _wg_config_sysdeps(int wg_enable)
+#if 0	// Moved to vpn_utils.c
+#if defined(RTCONFIG_HND_ROUTER_AX_6756) || defined(RTCONFIG_BCM_502L07P2) || defined(RTCONFIG_HND_ROUTER_AX_675X)
+static int _wg_check_same_port(wg_type_t type, int unit, int port)
 {
-#ifdef RTCONFIG_HND_ROUTER
-	if (wg_enable)
-	{
-		nvram_set_int("fc_disable", 1);
-		fc_fini();
+	int i;
+	char prefix[16] = {0};
+
+	for (i = 1; i <= WG_SERVER_MAX; i++) {
+		if (type == WG_TYPE_SERVER && unit == i)
+			continue;
+		snprintf(prefix, sizeof(prefix), "%s%d_", WG_SERVER_NVRAM_PREFIX, i);
+		if (nvram_pf_get_int(prefix, "enable") && port == nvram_pf_get_int(prefix, "port"))
+			return 1;
 	}
-	else
+	for (i = 1; i <= WG_CLIENT_MAX; i++) {
+		if (type == WG_TYPE_CLIENT && unit == i)
+			continue;
+		snprintf(prefix, sizeof(prefix), "%s%d_", WG_CLIENT_NVRAM_PREFIX, i);
+		if (nvram_pf_get_int(prefix, "enable") && port == nvram_pf_get_int(prefix, "ep_port"))
+			return 1;
+	}
+	return 0;
+}
+
+void hnd_skip_wg_port(int add, int port, wg_port_t type)
+{
+	char buf[64] = {0};
+	char *ctrl = (add) ? "add" : "del";
+	char *port_type[] = {"dport", "sport", "either"};
+
+	snprintf(buf, sizeof(buf), "%s %d %s", ctrl, port, port_type[type]);
+	f_write_string(BLOG_SKIP_PORT, buf, 0, 0);
+}
+
+void hnd_skip_wg_network(int add, const char* net)
+{
+	char buf[64] = {0};
+	char *ctrl = (add) ? "add" : "del";
+	int ret;
+
+	if (!net || !*net)
+		return;
+
+	if (strchr(net, '/'))
+		snprintf(buf, sizeof(buf), "%s %s", ctrl, net);
+	else {
+		ret = is_valid_ip(net);
+		if (ret > 1)
+			snprintf(buf, sizeof(buf), "%s %s/128", ctrl, net);
+		else if (ret > 0)
+			snprintf(buf, sizeof(buf), "%s %s/32", ctrl, net);
+	}
+	_dprintf("[%s] > %s\n", buf, BLOG_SKIP_NET);
+	f_write_string(BLOG_SKIP_NET, buf, 0, 0);
+}
+
+void hnd_skip_wg_all_lan(int add)
+{
+	char path[128] = {0};
+	char buf[512] = {0};
+	char net[64] = {0}, *next = NULL;
+
+	snprintf(path, sizeof(path), "%s/all_%s", WG_DIR_CONF, WG_NAME_SKIP_NET);
+
+	f_read_string(path, buf, sizeof(buf));
+	foreach_44(net, buf, next) {
+		hnd_skip_wg_network(0, net);
+	}
+	unlink(path);
+
+	if (add) {
+		get_network_addr_by_ip_prefix(nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), buf, sizeof(buf));
+		hnd_skip_wg_network(add, buf);
+		f_write_string(path, buf, 0, 0);
+
+#if 0//RTCONFIG_IPV6
+		int v6_service = get_ipv6_service();
+		int dhcp_pd = nvram_get_int(ipv6_nvname("ipv6_dhcp_pd"));
+		if ((v6_service == IPV6_NATIVE_DHCP && dhcp_pd)
+		 || v6_service == IPV6_6IN4 || v6_service == IPV6_MANUAL) {
+			snprintf(buf, sizeof(buf), ",%s/%d", nvram_safe_get(ipv6_nvname("ipv6_prefix")), nvram_get_int(ipv6_nvname("ipv6_prefix_length")));
+			f_write_string(path, buf, FW_APPEND, 0);
+		}
+#endif
+	}
+}
+#endif
+#endif  // Moved to vpn_utils.c
+
+static void _wg_client_config_sysdeps(int wg_enable, int unit, const char* prefix)
+{
+#if defined(RTCONFIG_HND_ROUTER_AX_6756) || defined(RTCONFIG_BCM_502L07P2) || defined(RTCONFIG_HND_ROUTER_AX_675X)
+	int port = 0;
+
+	/// skip port
+	port = nvram_pf_get_int(prefix, "ep_port");
+	if (wg_enable || !_wg_check_same_port(WG_TYPE_CLIENT, unit, port))
+		hnd_skip_wg_port(wg_enable, port, WG_PORT_BOTH);
+
+	/// skip network
+	// handle by vpn fusion policy
+#endif
+}
+
+static void _wg_server_config_sysdeps_client(const char* c_prefix)
+{
+#if defined(RTCONFIG_HND_ROUTER_AX_6756) || defined(RTCONFIG_BCM_502L07P2) || defined(RTCONFIG_HND_ROUTER_AX_675X)
+	char path[128] = {0};
+	char aips[4096] = {0};
+	char net[64] = {0};
+	char *next = NULL;
+
+	// delete old rules
+	snprintf(path, sizeof(path), "%s/%s%s", WG_DIR_CONF, c_prefix, WG_NAME_SKIP_NET);
+	f_read_string(path, aips, sizeof(aips));
+	foreach_44(net, aips, next) {
+		hnd_skip_wg_network(0, net);
+	}
+
+	// add new rules
+	strlcpy(aips, nvram_pf_safe_get(c_prefix, "aips"), sizeof(aips));
+	f_write_string(path, aips, 0, 0);
+	foreach_44(net, aips, next) {
+		hnd_skip_wg_network(nvram_pf_get_int(c_prefix, "enable"), net);
+	}
+#endif
+}
+
+static void _wg_server_config_sysdeps(int wg_enable, int unit, const char* prefix)
+{
+#if defined(RTCONFIG_HND_ROUTER_AX_6756) || defined(RTCONFIG_BCM_502L07P2) || defined(RTCONFIG_HND_ROUTER_AX_675X)
+	int port = 0;
+	int c_unit = 0;
+	char c_prefix[16] = {0};
+	char aips[4096] = {0};
+	char buf[64] = {0};
+	char *next = NULL;
+
+	/// skip port
+	port = nvram_pf_get_int(prefix, "port");
+	if (wg_enable || !_wg_check_same_port(WG_TYPE_SERVER, unit, port))
+		hnd_skip_wg_port(wg_enable, port, WG_PORT_BOTH);
+
+	/// skip network
+	for (c_unit = 1; c_unit <= WG_SERVER_CLIENT_MAX; c_unit++)
 	{
-		hnd_nat_ac_init(0);
+		snprintf(c_prefix, sizeof(c_prefix), "%sc%d_", prefix, c_unit);
+		if (nvram_pf_get_int(c_prefix, "enable") == 0)
+			continue;
+		strlcpy(aips, nvram_pf_safe_get(c_prefix, "aips"), sizeof(aips));
+		snprintf(buf, sizeof(buf), "%s/%s%s", WG_DIR_CONF, c_prefix, WG_NAME_SKIP_NET);
+		f_write_string(buf, aips, 0, 0);
+		foreach_44(buf, aips, next) {
+			hnd_skip_wg_network(wg_enable, buf);
+		}
 	}
 #endif
 }
@@ -359,6 +524,14 @@ static void _wg_server_nf_add(const char* prefix, const char* ifname)
 			fprintf(fp, "ip6tables -I WGSF -i %s -j ACCEPT\n", ifname);
 			fprintf(fp, "ip6tables -I WGSF -o %s -j ACCEPT\n", ifname);
 		}
+
+#ifdef RTCONFIG_HND_ROUTER
+		fprintf(fp, "iptables -t mangle -I PREROUTING -i %s -j MARK --or 0x1\n", ifname);
+		fprintf(fp, "iptables -t mangle -I POSTROUTING -o %s -j MARK --or 0x1\n", ifname);
+		fprintf(fp, "ip6tables -t mangle -I PREROUTING -i %s -j MARK --or 0x1\n", ifname);
+		fprintf(fp, "ip6tables -t mangle -I POSTROUTING -o %s -j MARK --or 0x1\n", ifname);
+#endif
+
 		fclose(fp);
 		chmod(path, S_IRUSR|S_IWUSR|S_IXUSR);
 		eval(path);
@@ -389,14 +562,31 @@ static void _wg_client_nf_add(char* prefix, char* ifname)
 		fprintf(fp, "iptables -I WGCF -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", ifname);
 		fprintf(fp, "ip6tables -I WGCF -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", ifname);
 
-		if (nvram_pf_get_int(prefix, "nat"))
-		{
-			char addr[64] = {0};
-			char tmp[64] = {0};
-			char *next = NULL;
-			char *p = NULL;
-			int ret = -1;
+#ifdef RTCONFIG_HND_ROUTER
+		fprintf(fp, "iptables -t mangle -I PREROUTING -i %s -j MARK --or 0x1\n", ifname);
+		fprintf(fp, "iptables -t mangle -I POSTROUTING -o %s -j MARK --or 0x1\n", ifname);
+		fprintf(fp, "ip6tables -t mangle -I PREROUTING -i %s -j MARK --or 0x1\n", ifname);
+		fprintf(fp, "ip6tables -t mangle -I POSTROUTING -o %s -j MARK --or 0x1\n", ifname);
+#endif
 
+		fclose(fp);
+		chmod(path, S_IRUSR|S_IWUSR|S_IXUSR);
+		eval(path);
+	}
+
+	if (nvram_pf_get_int(prefix, "nat"))
+	{
+		char addr[64] = {0};
+		char tmp[64] = {0};
+		char *next = NULL;
+		char *p = NULL;
+		int ret = -1;
+
+		snprintf(path, sizeof(path), "%s/fw_%s_nat.sh", WG_DIR_CONF, ifname);
+		fp = fopen(path, "w");
+		if (fp)
+		{
+			fprintf(fp, "#!/bin/sh\n\n");
 			snprintf(addr, sizeof(addr), "%s", nvram_pf_safe_get(prefix, "addr"));
 			foreach_44 (tmp, addr, next)
 			{
@@ -407,11 +597,11 @@ static void _wg_client_nf_add(char* prefix, char* ifname)
 					fprintf(fp, "%s -t nat -I POSTROUTING ! -s %s -o %s -j MASQUERADE\n",
 						(ret > 1) ? "ip6tables" : "iptables", tmp, ifname);
 			}
-		}
 
-		fclose(fp);
-		chmod(path, S_IRUSR|S_IWUSR|S_IXUSR);
-		eval(path);
+			fclose(fp);
+			chmod(path, S_IRUSR|S_IWUSR|S_IXUSR);
+			eval(path);
+		}
 	}
 }
 
@@ -420,6 +610,14 @@ static void _wg_x_nf_del(const char* ifname)
 	char path[128] = {0};
 
 	snprintf(path, sizeof(path), "%s/fw_%s.sh", WG_DIR_CONF, ifname);
+	if(f_exists(path)) {
+		eval("sed", "-i", "s/-I/-D/", path);
+		eval("sed", "-i", "s/-A/-D/", path);
+		eval(path);
+		unlink(path);
+	}
+
+	snprintf(path, sizeof(path), "%s/fw_%s_nat.sh", WG_DIR_CONF, ifname);
 	if(f_exists(path)) {
 		eval("sed", "-i", "s/-I/-D/", path);
 		eval("sed", "-i", "s/-A/-D/", path);
@@ -500,7 +698,7 @@ static void _wg_client_gen_conf(char* prefix, char* path)
 	char priv[WG_KEY_SIZE] = {0};
 	char ppub[WG_KEY_SIZE] = {0};
 	char psk[WG_KEY_SIZE] = {0};
-	char aips[1024] = {0};
+	char aips[4096] = {0};
 	char ep_addr[128] = {0};
 	int alive = nvram_pf_get_int(prefix, "alive");
 	char *p;
@@ -535,7 +733,6 @@ static void _wg_client_gen_conf(char* prefix, char* path)
 			fprintf(fp, "PresharedKey = %s\n", psk);
 		if (alive)
 			fprintf(fp, "PersistentKeepalive = %d\n", alive);
-
 
 		fclose(fp);
 
@@ -647,7 +844,7 @@ static void _wg_server_gen_client_conf(char* s_prefix, char* c_prefix, char* c_p
 	char cpriv[WG_KEY_SIZE] = {0};
 	char spub[WG_KEY_SIZE] = {0};
 	char cpsk[WG_KEY_SIZE] = {0};
-	char caips[1024] = {0};
+	char caips[4096] = {0};
 	char buf[64] = {0};
 	int psk = nvram_pf_get_int(s_prefix, "psk");
 	int dns = nvram_pf_get_int(s_prefix, "dns");
@@ -729,7 +926,7 @@ static void _wg_server_gen_conf(char* prefix, char* path)
 	char priv[WG_KEY_SIZE] = {0};
 	char cpub[WG_KEY_SIZE] = {0};
 	char cpsk[WG_KEY_SIZE] = {0};
-	char caips[1024] = {0};
+	char caips[4096] = {0};
 	int c;
 	char c_prefix[16] = {0};
 	int psk = nvram_pf_get_int(prefix, "psk");
@@ -813,7 +1010,7 @@ void _wg_server_set_peer(char* ifname, const char* s_prefix, const char* c_prefi
 void _wg_server_route_update(char* ifname, const char* c_prefix)
 {
 	char path[128] = {0};
-	char aips[1024] = {0};
+	char aips[4096] = {0};
 	char buf[128] = {0};
 	char *p = NULL;
 
@@ -881,6 +1078,17 @@ static int _wgc_jobs_remove(void)
 		NULL };
 
 	return _eval(argv, NULL, 0, NULL);
+}
+
+static void _wg_server_update_service(const char* prefix)
+{
+#ifdef RTCONFIG_SAMBASRV
+	if (nvram_pf_get_int(prefix, "lanaccess"))
+	{
+		stop_samba(0);
+		start_samba();
+	}
+#endif
 }
 
 void start_wgsall()
@@ -987,6 +1195,9 @@ void start_wgs(int unit)
 
 	unlink(path);
 
+	/// sysdeps
+	_wg_server_config_sysdeps(1, unit, prefix);
+
 	/// netfilter
 	_wg_server_nf_add(prefix, ifname);
 
@@ -999,8 +1210,8 @@ void start_wgs(int unit)
 		_wg_config_route(c_prefix, ifname, 0);
 	}
 
-	/// sysdeps
-	_wg_config_sysdeps(1);
+	/// related services
+	_wg_server_update_service(prefix);
 
 	snprintf(tmp, sizeof(tmp), "%d", unit);
 	run_custom_script("wgserver-start", 0, tmp, NULL);
@@ -1011,6 +1222,7 @@ void start_wgs(int unit)
 void stop_wgs(int unit)
 {
 	char ifname[8] = {0};
+	char prefix[16] = {0};
 	int wg_enable = is_wg_enabled();
 	char tmp[4];
 
@@ -1018,6 +1230,7 @@ void stop_wgs(int unit)
 	run_custom_script("wgserver-stop", 0, tmp, NULL);
 
 	snprintf(ifname, sizeof(ifname), "%s%d", WG_SERVER_IF_PREFIX, unit);
+	snprintf(prefix, sizeof(prefix), "%s%d_", WG_SERVER_NVRAM_PREFIX, unit);
 
 	/// netfilter
 	_wg_x_nf_del(ifname);
@@ -1030,7 +1243,7 @@ void stop_wgs(int unit)
 		eval("modprobe", "-r", "wireguard");
 
 	/// sysdeps
-	_wg_config_sysdeps(wg_enable);
+	_wg_server_config_sysdeps(0, unit, prefix);
 
 	logmessage("WireGuard", "Stopping server.");
 }
@@ -1077,6 +1290,9 @@ void start_wgc(int unit)
 
 	unlink(path);
 
+	/// sysdeps
+	_wg_client_config_sysdeps(1, unit, prefix);
+
 	/// netfilter
 	_wg_client_nf_add(prefix, ifname);
 
@@ -1097,9 +1313,6 @@ void start_wgc(int unit)
 
 	update_resolvconf();
 #endif
-
-	/// sysdeps
-	_wg_config_sysdeps(1);
 
 	snprintf(tmp, sizeof(tmp), "%d", unit);
 	run_custom_script("wgclient-start", 0, tmp, NULL);
@@ -1157,7 +1370,7 @@ void stop_wgc(int unit)
 		eval("modprobe", "-r", "wireguard");
 
 	/// sysdeps
-	_wg_config_sysdeps(wg_enable);
+	_wg_client_config_sysdeps(0, unit, prefix);
 
 	logmessage("WireGuard", "Stopping client %d.", unit);
 }
@@ -1220,6 +1433,19 @@ void run_wgs_fw_scripts()
 	}
 }
 
+void run_wgs_fw_nat_scripts()
+{
+	int unit;
+	char buf[128] = {0};
+
+	for(unit = 1; unit <= WG_CLIENT_MAX; unit++)
+	{
+		snprintf(buf, sizeof(buf), "%s/fw_%s%d_nat6.sh", WG_DIR_CONF, WG_SERVER_IF_PREFIX, unit);
+		if(f_exists(buf))
+			eval(buf);
+	}
+}
+
 void run_wgc_fw_scripts()
 {
 	int unit;
@@ -1231,6 +1457,19 @@ void run_wgc_fw_scripts()
 			eval(buf);
 
 		snprintf(buf, sizeof(buf), "%s/dns%d.sh", WG_DIR_CONF, unit);
+		if(f_exists(buf))
+			eval(buf);
+	}
+}
+
+void run_wgc_fw_nat_scripts()
+{
+	int unit;
+	char buf[128] = {0};
+
+	for(unit = 1; unit <= WG_CLIENT_MAX; unit++)
+	{
+		snprintf(buf, sizeof(buf), "%s/fw_%s%d_nat.sh", WG_DIR_CONF, WG_CLIENT_IF_PREFIX, unit);
 		if(f_exists(buf))
 			eval(buf);
 	}
@@ -1269,6 +1508,12 @@ void update_wgs_client(int s_unit, int c_unit)
 	// netfilter reload for nat66
 	_wg_server_nf_del_nat6(ifname);
 	_wg_server_nf_add_nat6(s_prefix, ifname);
+
+	// sysdeps
+	_wg_server_config_sysdeps_client(c_prefix);
+
+	// related services
+	_wg_server_update_service(s_prefix);
 }
 
 void update_wgs_client_ep()

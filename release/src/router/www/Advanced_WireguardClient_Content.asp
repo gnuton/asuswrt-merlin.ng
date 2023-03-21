@@ -90,6 +90,9 @@ function applyRule(){
 }
 
 function validForm(){
+	if (document.form.wgc_enable[1].checked)
+		return true;
+
 	var ip_RegExp = {
 		"IPv4" : "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$",
 		"IPv4_CIDR" : "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$",
@@ -618,7 +621,7 @@ function show_director_rules(){
 						<tr>
 							<th>Allowed IPs</th>
 							<td>
-								<input type="text" maxlength="1023" name="wgc_aips" id="wgc_aips" class="input_32_table" value="<% nvram_get("wgc_aips"); %>" autocorrect="off" autocapitalize="off"></input>
+								<input type="text" maxlength="4095" name="wgc_aips" id="wgc_aips" class="input_32_table" value="<% nvram_get("wgc_aips"); %>" autocorrect="off" autocapitalize="off"></input>
 							</td>
 						</tr>
 						<tr>

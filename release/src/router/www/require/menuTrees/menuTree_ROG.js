@@ -188,7 +188,6 @@ define(function(){
 					{url: "Advanced_WAdvanced_Content.asp", tabName: "<#menu5_1_6#>"},
 					{url: "Advanced_WProxy_Content.asp", tabName: "<#WiFi_Proxy_item#>"},
 					{url: "Advanced_Roaming_Block_Content.asp", tabName: "<#WiFi_Roaming_Block_List#>"},
-					{url: "Advanced_Wireless_Survey.asp", tabName: "Site Survey"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
@@ -335,6 +334,7 @@ define(function(){
 					{url: "Main_Netstat_Content.asp", tabName: "Netstat"},
 					{url: "Main_WOL_Content.asp", tabName: "<#NetworkTools_WOL#>"},
 					{url: "Advanced_Smart_Connect.asp", tabName: "<#smart_connect_rule#>"},
+					{url: "Advanced_Wireless_Survey.asp", tabName: "Site Survey"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			}
@@ -501,7 +501,6 @@ define(function(){
 					retArray.push("AiProtection_AdBlock.asp");
 					retArray.push("AiProtection_Key_Guard.asp");
 					retArray.push("AiProtection_AdBlock.asp");
-					retArray.push("TrafficAnalyzer_Statistic.asp");
 				}
 
 				if(!bwdpi_mals_support){
@@ -545,7 +544,7 @@ define(function(){
 					retArray.push("AdaptiveQoS_Bandwidth_Monitor.asp");
 				}
 
-				if(!traffic_analyzer_support){
+				if(!traffic_analyzer_support && !dns_dpi_support){
 					retArray.push("TrafficAnalyzer_Statistic.asp");		
 				}
 
@@ -814,9 +813,6 @@ define(function(){
 				else if(based_modelid == "RT-N300"){
 					retArray.push("Advanced_WMode_Content.asp");
 					retArray.push("Advanced_IPTV_Content.asp");
-				}
-				if(hnd_support){
-					retArray.push("Advanced_Wireless_Survey.asp");
 				}
 				if(based_modelid === '4G-AC55U' || based_modelid === '4G-AC68U'){
 					retArray.push("Advanced_Modem_Content.asp");
