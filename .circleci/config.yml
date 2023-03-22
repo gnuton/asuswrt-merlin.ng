@@ -310,7 +310,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax92u"
-          model: "xrt-ax92u"
+          model: "rt-ax92u"
           ui: "none"
           release_dir: "src-rt-5.02axhnd"
           requires:
