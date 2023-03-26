@@ -254,7 +254,7 @@ workflows:
                 - mainline
       - build:
           name: "build_tuf-ax5400"
-          model: "xtuf-ax5400"
+          model: "tuf-ax5400"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
