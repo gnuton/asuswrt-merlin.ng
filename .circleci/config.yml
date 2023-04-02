@@ -198,7 +198,7 @@ workflows:
               only: /.*/
       - build:
           name: "build_dsl-ax82u"
-          model: "xdsl-ax82u"
+          model: "dsl-ax82u"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
