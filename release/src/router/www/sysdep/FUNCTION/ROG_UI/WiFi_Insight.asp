@@ -20,6 +20,7 @@
 function initial(){
 	show_menu();
 }
+:q!
 
 </script>
 </head>
