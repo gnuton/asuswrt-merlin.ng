@@ -225,6 +225,10 @@ CFLAGS  += -I$(TOP)/nt_center/actMail
 CFLAGS  += -DASUSWRT_SDK
 endif
 
+ifeq ($(RTCONFIG_ASD),y)
+CFLAGS  += -I$(TOP)/asd
+endif
+
 ifeq ($(RTCONFIG_PROTECTION_SERVER),y)
 CFLAGS  += -I$(TOP)/protect_srv/include
 endif
@@ -511,9 +515,10 @@ OBJS += dsl_fb.o
 #endif
 #endif
 
-ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
+#ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
+# Link it, private.o needs read_asd_enc_file() from it
 OBJS += frs_service.o
-endif
+#endif
 
 ifeq ($(RTCONFIG_ASUSDDNS_ACCOUNT_BASE),y)
 OBJS += asus_ddns.o
