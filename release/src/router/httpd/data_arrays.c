@@ -680,9 +680,9 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	int ret = 0;
 	char tmp[64];
 	int qos_type;
-	char *wan_ifname = nvram_get("wan_ifname");
-
-	qos_type = nvram_get_int("qos_type");
+    char wan_ifname[16];
+    strlcpy(wan_ifname, get_wan_ifname(wan_primary_ifunit()), sizeof(wan_ifname));
+    qos_type = nvram_get_int("qos_type");
 
 	if (nvram_get_int("qos_enable") == 0) {
 		ret += websWrite(wp, "var tcdata_lan_array = [[]];\nvar tcdata_wan_array = [[]];\n");
