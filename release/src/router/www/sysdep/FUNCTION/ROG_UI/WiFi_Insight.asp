@@ -20,8 +20,6 @@
 function initial(){
 	show_menu();
 }
-:q!
-
 </script>
 </head>
 <body onload="initial();" onunload="unload_body();" class="bg">
