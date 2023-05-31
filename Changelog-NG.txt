@@ -1,6 +1,10 @@
 Asuswrt-Merlin Changelog
 ========================
 
+388.2_2_0-gnuton1 (1-Jun-2023)
+  - UPDATED: Merged GPL 388_22582 for the ZenWifi devices
+  - UPDATED: Merged GPL 388_22525 for all routers but not Zen
+
 388.2_2 (7-May-2023)
   - UPDATED: Merged GPL 388_22668 for the XT12 (only)
   - UPDATED: OpenVPN to 2.6.3.
