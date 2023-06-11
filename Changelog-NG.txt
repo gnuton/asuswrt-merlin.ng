@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-386.10_0-gnuton1 (XX-XX-XXXX)
+386.10_0-gnuton1 (11-Jun-2023)
  - NOTE: 386_xx release are only for Wifi 5 (802.11ac) models.
 
 386.10 (10-Mar-2023)
