@@ -65,7 +65,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 
 ### Supported Models
 
-388.x firmware:
+388.x firmware: ⬇️ Download latest [release](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) or [testing pre-release](https://github.com/gnuton/asuswrt-merlin.ng/releases/) ⬇️
 * [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 * [RT-AX82U v1](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 * [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/)
@@ -75,7 +75,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [ZenWifi ET8 / RT-AXE95Q](https://www.asus.com/networking-iot-servers/whole-home-mesh-wifi-system/zenwifi-wifi-systems/asus-zenwifi-et8/) - 🔥 New!
 
 386.x firmware:
-* [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) Download latest release: [386.10_0-gnuton1](https://github.com/gnuton/asuswrt-merlin.ng/releases/download/388.2_2_0-gnuton1/DSL-AC68U_386.10_0-gnuton1_DSL_1.0.5.3.trx)
+* [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) ⬇️ Download latest release: [386.10_0-gnuton1](https://github.com/gnuton/asuswrt-merlin.ng/releases/download/388.2_2_0-gnuton1/DSL-AC68U_386.10_0-gnuton1_DSL_1.0.5.3.trx) ⬇️
 
 Is your router not in the list yet? Please read [here](https://github.com/gnuton/asuswrt-merlin.ng/issues/140)!
 
