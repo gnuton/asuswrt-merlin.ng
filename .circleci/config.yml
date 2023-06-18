@@ -224,20 +224,20 @@ workflows:
               ignore:
                 - master
                 - mainline
-        - build:
-          name: "build_rt-ax82u_v2"
-          model: "rt-ax82u_v2"
-          ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
+      - build:
+        name: "build_rt-ax82u_v2"
+        model: "rt-ax82u_v2"
+        ui: "none"
+        release_dir: "src-rt-5.04axhnd.675x"
+        requires:
+          - getcode
+        filters:
+          tags:
+            only: /.*/
+          branches:
+            ignore:
+              - master
+              - mainline
       - build:
           name: "build_rt-ax95q"
           model: "Xrt-ax95q"
