@@ -212,7 +212,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax82u"
-          model: "Xrt-ax82u"
+          model: "rt-ax82u"
           ui: "none"
           release_dir: "src-rt-5.02axhnd.675x"
           requires:
@@ -240,9 +240,9 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax95q"
-          model: "Xrt-ax95q"
+          model: "rt-ax88u_pro"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          release_dir: "src-rt-5.04axhnd.675x"
           requires:
             - getcode
           filters:
