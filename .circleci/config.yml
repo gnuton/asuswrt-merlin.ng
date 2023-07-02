@@ -68,20 +68,23 @@ jobs:
             echo "----- Setting toolchains for ${SDK} -----"
             if [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
               source /home/docker/envs/bcm-hnd-ax-4.19.sh
-            elif [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
+            elif [[ ${SDK} == "src-rt-5.02axhnd.675x" ]]; then
+              source /home/docker/envs/bcm-hnd.sh
+            elif [[ ${SDK} == "src-rt-5.02axhnd" ]]; then
               source /home/docker/envs/bcm-hnd.sh
             else
               echo "SDK not supported"
               exit -1
             fi
+            echo "----- Debugging env vars -----"
             env
-            echo "------UI=$UI---------"
+            echo "------ Setting UI as $UI ---------"
             if [[ ${UI} == "tuf" ]]; then
               echo "Enabling TUF UI"
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
             echo "----- BUILD -----"
-            make ${MODEL} | tee "/tmp/build.log"
+            (make ${MODEL} | tee "/tmp/build.log"; exit ${PIPESTATUS[0]})
             echo "------ DONE -----"
       - run:
           name: Prepare workspace
@@ -127,24 +130,27 @@ jobs:
           name: "Publish manifest and release note for the current build"
           command: |
             ssh-keyscan github.com >> ~/.ssh/known_hosts
+            
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
             git clone -b master --single-branch git@github.com:gnuton/asuswrt-merlin.ng.git
+            
             cd asuswrt-merlin.ng
             UPDATE_DIR=updates
             MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
             echo "Generating manifest file..."
-            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    > ${UPDATE_DIR}/manifest.txt
-            echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"   >> ${UPDATE_DIR}/manifest.txt
-            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    >> ${UPDATE_DIR}/manifest.txt
-            echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >> ${UPDATE_DIR}/manifest.txt
-            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"  >> ${UPDATE_DIR}/manifest.txt
-            echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    >> ${UPDATE_DIR}/manifest.txt
-            echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"   >> ${UPDATE_DIR}/manifest.txt
-
+            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"       > ${UPDATE_DIR}/manifest.txt
+            echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"      >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"       >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"    >> ${UPDATE_DIR}/manifest.txt
+            echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"     >> ${UPDATE_DIR}/manifest.txt
+            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"     >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"       >> ${UPDATE_DIR}/manifest.txt
+            echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}#BETAFW0#BETAEXT0#"      >> ${UPDATE_DIR}/manifest.txt
+            
             cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
@@ -313,7 +319,7 @@ workflows:
                 - mainline
       - build:
           name: "build_rt-ax92u"
-          model: "Xrt-ax92u"
+          model: "rt-ax92u"
           ui: "none"
           sdk: "src-rt-5.02axhnd"
           requires:
