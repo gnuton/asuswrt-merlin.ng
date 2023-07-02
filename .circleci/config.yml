@@ -22,7 +22,7 @@ jobs:
     parameters:
       model:
         type: string
-      release_dir:
+      sdk:
         type: string
       ui:
         type: string
@@ -32,10 +32,8 @@ jobs:
           PROJECT_DIR: "/home/docker/project"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
           MODEL: << parameters.model >>
-          RELEASE_DIR: << parameters.release_dir >>
+          SDK: << parameters.sdk >>
           UI: << parameters.ui >>
-          LD_LIBRARY_PATH: "$LD_LIBRARY:~/am-toolchains/brcm-arm-sdk/hndtools-arm-linux-2.6.36-uclibc-4.5.3/lib"
-          PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/brcm-arm/bin:/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.3-linux-4.1-glibc-2.22-binutils-2.25/usr/bin:/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/toolchains/crosstools-aarch64-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/usr/bin:/opt/brcm-arm/bin"
           TERM: "xterm-256color"
     resource_class: large
     steps:
@@ -64,27 +62,18 @@ jobs:
           no_output_timeout: 120m
           command: |
             export MERLINUPDATE=y
-            cd ${PROJECT_DIR}/release/${RELEASE_DIR}
+            cd ${PROJECT_DIR}/release/${SDK}
             echo "----- Files in dir: $(pwd) -----"
             ls -alh
-            echo "----- ENV VARS -----"
-            source  ~/.profile
-            env
-            echo "----- SETTING UP SECRET FILES -----"
-            if [[ ${MODEL} == "dsl-ax82u" ]]; then
-              echo $BWDPI_KEYS_DSLAX82U | base64 -d > /tmp/keys.tgz
-              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/DSL-AX82U
-            elif [[ ${MODEL} == "rt-ax82u" ]]; then
-              echo $BWDPI_KEYS_RTAX82U | base64 -d > /tmp/keys.tgz
-              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/RT-AX82U
-            elif [[ ${MODEL} == "tuf-ax5400" ]]; then
-              echo $BWDPI_KEYS_TUFAX5400 | base64 -d > /tmp/keys.tgz
-              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/TUF-AX5400
-            elif [[ ${MODEL} == "rt-ax95q" ]]; then
-              echo $BWDPI_KEYS_RTAX95Q | base64 -d > /tmp/keys.tgz
-              tar xzf /tmp/keys.tgz --no-same-owner -C ${PROJECT_DIR}/release/${RELEASE_DIR}/router/bwdpi_source/prebuild/RT-AX95Q
+            echo "----- Setting toolchains for ${SDK} -----"
+            if [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
+              source /home/docker/envs/bcm-hnd-ax-4.19.sh
+            elif [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
+              source /home/docker/envs/bcm-hnd.sh
+            else
+              echo "SDK not supported"
+              exit -1
             fi
-            source /home/docker/envs/bcm-hnd.sh
             env
             echo "------UI=$UI---------"
             if [[ ${UI} == "tuf" ]]; then
@@ -99,7 +88,7 @@ jobs:
           shell: /bin/bash
           command: |
             mkdir -p workspace/release/
-            export IMAGE_PATH=${PROJECT_DIR}/release/${RELEASE_DIR}/image/
+            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
 
             rm -rf ${IMAGE_PATH}/*cferom*
             for f in ${IMAGE_PATH}/*.w; do  md5sum "$f" > "$f.md5" ; done
@@ -200,7 +189,7 @@ workflows:
           name: "build_dsl-ax82u"
           model: "Xdsl-ax82u"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -214,7 +203,7 @@ workflows:
           name: "build_rt-ax82u"
           model: "rt-ax82u"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -228,7 +217,7 @@ workflows:
           name: "build_rt-ax82u_v2"
           model: "rt-ax82u_v2"
           ui: "none"
-          release_dir: "src-rt-5.04axhnd.675x"
+          sdk: "src-rt-5.04axhnd.675x"
           requires:
             - getcode
           filters:
@@ -242,7 +231,7 @@ workflows:
           name: "build_rt-ax95q"
           model: "Xrt-ax95q"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -256,7 +245,7 @@ workflows:
           name: "build_rt-axe95q"
           model: "Xrt-axe95q"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -270,7 +259,7 @@ workflows:
           name: "build_tuf-ax5400"
           model: "Xtuf-ax5400"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -284,7 +273,7 @@ workflows:
           name: "build_tuf-ax3000"
           model: "Xtuf-ax3000"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -298,7 +287,7 @@ workflows:
           name: "build_tuf-ax5400_tuf"
           model: "Xtuf-ax5400"
           ui: "tuf"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -312,7 +301,7 @@ workflows:
           name: "build_tuf-ax3000_tuf"
           model: "Xtuf-ax3000"
           ui: "tuf"
-          release_dir: "src-rt-5.02axhnd.675x"
+          sdk: "src-rt-5.02axhnd.675x"
           requires:
             - getcode
           filters:
@@ -326,7 +315,7 @@ workflows:
           name: "build_rt-ax92u"
           model: "Xrt-ax92u"
           ui: "none"
-          release_dir: "src-rt-5.02axhnd"
+          sdk: "src-rt-5.02axhnd"
           requires:
             - getcode
           filters:
