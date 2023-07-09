@@ -1793,8 +1793,8 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 	/* Run user pre-unmount scripts if any. It might be too late if
 	 * the drive has been disconnected, but we'll try it anyway.
  	 */
-	if (nvram_get_int("usb_automount"))
-		run_nvscript("script_usbumount", mnt->mnt_dir, 3);
+	// if (nvram_get_int("usb_automount"))
+		// run_nvscript("script_usbumount", mnt->mnt_dir, 3);
 	/* Run *.autostop scripts located in the root of the partition being unmounted if any. */
 	//run_userfile(mnt->mnt_dir, ".autostop", mnt->mnt_dir, 5);
 	//run_nvscript("script_autostop", mnt->mnt_dir, 5);
@@ -2273,12 +2273,12 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 		if(ret == MOUNT_VAL_RW)
 			test_of_var_files(mountpoint);
 
-		if (nvram_get_int("usb_automount"))
-			run_nvscript("script_usbmount", mountpoint, 3);
+		// if (nvram_get_int("usb_automount"))
+			// run_nvscript("script_usbmount", mountpoint, 3);
 
 		run_custom_script("post-mount", 120, mountpoint, NULL);
 
-#if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
+#if defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;
 		char cloud_setting[2048], *b, *nvp, *nv;
 		int type = 0, rule = 0, enable = 0;
@@ -2745,7 +2745,7 @@ _dprintf("restart_nas_services(%d): test 6.\n", getpid());
 	}
 #endif
 	else if (strncmp(interface ? : "", "8/", 2) == 0) {	/* usb storage */
-		run_nvscript("script_usbhotplug", NULL, 2);
+		// run_nvscript("script_usbhotplug", NULL, 2);
 #ifndef LINUX26
 		hotplug_usb_storage_device(host, add, (add ? EFH_HP_ADD : EFH_HP_REMOVE) | (host < 0 ? EFH_HUNKNOWN : 0));
 #endif
@@ -2755,7 +2755,7 @@ _dprintf("restart_nas_services(%d): test 6.\n", getpid());
 		if (is_block) return;
 #endif
 		/* Do nothing.  The user's hotplug script must do it all. */
-		run_nvscript("script_usbhotplug", NULL, 2);
+		// run_nvscript("script_usbhotplug", NULL, 2);
 	}
 }
 
@@ -2866,6 +2866,7 @@ void write_ftpd_conf()
 #if defined(RTCONFIG_HTTPS) && defined(RTCONFIG_FTP_SSL)
 	if(nvram_get_int("ftp_tls")){
 		fprintf(fp, "ssl_enable=YES\n");
+		fprintf(fp, "ssl_ciphers=HIGH\n");
 		fprintf(fp, "rsa_cert_file=%s\n", HTTPD_CERT);
 		fprintf(fp, "rsa_private_key_file=%s\n", HTTPD_KEY);
 
@@ -3480,7 +3481,7 @@ start_samba(void)
 #ifdef RTCONFIG_NVRAM_ENCRYPT
 			char dec_passwd[64];
 			memset(dec_passwd, 0, sizeof(dec_passwd));
-			pw_dec(tmp_ascii_passwd, dec_passwd, sizeof(dec_passwd));
+			pw_dec(tmp_ascii_passwd, dec_passwd, sizeof(dec_passwd), 1);
 			tmp_ascii_passwd = dec_passwd;
 #endif
 			memset(char_passwd, 0, 64);
@@ -3940,7 +3941,7 @@ write_mt_daapd_conf(char *servername)
 	dec_passwd = malloc(declen);
 	if(dec_passwd){
 		memset(dec_passwd, 0, declen);
-		pw_dec(http_passwd, dec_passwd, declen);
+		pw_dec(http_passwd, dec_passwd, declen, 1);
 		strlcpy(http_passwd, dec_passwd, sizeof(http_passwd));
 	}
 #endif
@@ -4122,7 +4123,7 @@ void write_webdav_permissions()
 			int declen = strlen(tmp_ascii_passwd);
 			char dec_passwd[declen];
 			memset(dec_passwd, 0, sizeof(dec_passwd));
-			pw_dec(tmp_ascii_passwd, dec_passwd, sizeof(dec_passwd));
+			pw_dec(tmp_ascii_passwd, dec_passwd, sizeof(dec_passwd), 1);
 			tmp_ascii_passwd = dec_passwd;
 #endif
 			ascii_to_char_safe(char_passwd, tmp_ascii_passwd, 64);

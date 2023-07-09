@@ -117,7 +117,7 @@ function getScArray(mode){
 			"value": 2
 		},
 		"SC_dwb_mode": {
-			"wlArray": [{"title":"2.4 GHz / 5 GHz-1", "ifname":"0"}, {"title":"5 GHz-2", "ifname":"2"}],
+			"wlArray": [{"title":"2.4 GHz / 5 GHz-1", "ifname":"0"}, {"title":"5 GHz-2", "ifname": get_wl_unit_by_band("5G2")}],
 			"value": 1
 		},
 		"SC_all": {
@@ -399,12 +399,24 @@ String.prototype.strReverse = function() {
 	return newstring;
 };
 
-function chkPass(flag, pwd, idx) {
+function chkPass(pwd, flag, obj, id) {
+	var ttc = '<% nvram_get("territory_code"); %>';
+	var isSku = function(_ptn){
+		return (ttc.search(_ptn) == -1) ? false : true;
+	}
 	var orig_pwd = "";
-	var postfix = (idx == undefined)? "": ("_" + idx);
+	var postfix = (id == undefined)? "": ("_" + id);
+	var oScorebarBorder = document.getElementById("scorebarBorder"+postfix);
 	var oScorebar = document.getElementById("scorebar"+postfix);
+	var oScore = document.getElementById("score"+postfix);
 
-	if(flag == "httpd" && (isSku("KR") || isSku("SG") || isSku("AA"))){
+	if(obj != undefined && (typeof obj == "object")){
+		oScorebarBorder = $(obj)[0];
+		oScorebar = $(obj).find(".strength_color")[0];
+		oScore =$(obj).find(".strength_text")[0];
+	}
+
+	if(flag == "http_passwd" && (isSku("KR") || isSku("SG") || isSku("AA"))){
 		oScorebar.style.display = "none";
 		return;
 	}
@@ -564,19 +576,48 @@ function chkPass(flag, pwd, idx) {
 
 		/* Determine complexity based on overall score */
 		if (nScore > 100) { nScore = 100; } else if (nScore < 0) { nScore = 0; }
-		if (nScore >= 0 && nScore < 20) { sComplexity = "<#AiProtection_scan_rDanger#>"; }
-		else if (nScore >= 20 && nScore < 40) { sComplexity = "<#PASS_score1#>"; }
-		else if (nScore >= 40 && nScore < 60) { sComplexity = "<#PASS_score2#>"; }
-		else if (nScore >= 60 && nScore < 80) { sComplexity = "<#PASS_score3#>"; }
-		else if (nScore >= 80 && nScore <= 100) { sComplexity = "<#PASS_score4#>"; }
+		if(typeof document.forms[0] == "undefined" || (typeof document.forms[0] != "undefined" && document.form.current_page.value != "AiProtection_HomeProtection.asp")){
+			if (nScore >= 0 && nScore < 20) { sComplexity = "<#AiProtection_scan_rDanger#>"; }
+			else if (nScore >= 20 && nScore < 40) { sComplexity = "<#PASS_score1#>"; }
+			else if (nScore >= 40 && nScore < 60) { sComplexity = "<#PASS_score2#>"; }
+			else if (nScore >= 60 && nScore < 80) { sComplexity = "<#PASS_score3#>"; }
+			else if (nScore >= 80 && nScore <= 100) { sComplexity = "<#PASS_score4#>"; }
+		}
+		else{
+			if (nScore >= 0 && nScore < 20) { sComplexity = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score0#></a>"; }
+			else if (nScore >= 20 && nScore < 40) { sComplexity = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score1#></a>"; }
+			else if (nScore >= 40 && nScore < 60) { sComplexity = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score2#></a>"; }
+			else if (nScore >= 60 && nScore < 80) { sComplexity = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score3#></a>"; }
+			else if (nScore >= 80 && nScore <= 100) { sComplexity = "<a href='Advanced_Wireless_Content.asp' target='_blank'><#PASS_score4#></a>"; }
+		}
 
 		/* Display updated score criteria to client */
-		$('#scorebarBorder'+postfix).css("display", "block");
-		oScorebar.style.backgroundPosition = parseInt(nScore) + "%";
-		oScorebar.innerHTML = sComplexity;
+		if(typeof document.forms[0] == "undefined" || (typeof document.forms[0] != "undefined" && document.form.current_page.value != "AiProtection_HomeProtection.asp")){		//for Router weakness status, Jimeing added at 2014/06/07
+			oScorebarBorder.style.display = "flex";
+			oScorebar.style.backgroundPosition = parseInt(nScore) + "%";
+		}
+		else{
+			if(nScore >= 0 && nScore < 40){
+				oScore.className = "status_no";
+			}
+			else if(nScore >= 40 && nScore <= 100){
+				oScore.className = "status_yes";
+			}
+		}
+		if(oScore == null){
+			oScorebar.innerHTML = sComplexity;
+		}
+		else{
+			oScore.innerHTML = sComplexity;
+		}
 	}
-	else{
-		chkPass("", " ", idx);
+	else {
+		/* Display default score criteria to client */
+		if(flag == 'http_passwd'){
+			chkPass(" ", 'http_passwd', obj, id);
+		}
+		else
+			chkPass(" ", "", obj, id);
 	}
 }
 
@@ -839,6 +880,8 @@ var Get_Component_AiMeshOnboarding_List = function(nodeInfo) {
 	if(nodeInfo.source == "2"){
 		if(nodeInfo.type != undefined && nodeInfo.type == "65536")
 			band_icon.addClass("aimesh_band_icon icon_plc");
+		else if(nodeInfo.type != undefined && nodeInfo.type == "131072")
+			band_icon.addClass("aimesh_band_icon icon_moca");
 		else
 			band_icon.addClass("aimesh_band_icon icon_wired");
 	}
@@ -1004,7 +1047,7 @@ var Get_Component_WirelessInput = function(wlArray){
 							apply.wireless();
 						}
 					}
-					chkPass("WiFi", this.value, wl.ifname);
+					chkPass(this.value, "WiFi", "", wl.ifname);
 				})
 				.val(decodeURIComponent(wirelessAP["wl" + wl.ifname + "_wpa_psk"]))
 			)
@@ -1171,6 +1214,8 @@ function handleSysDep(){
 	//$(".forceUpgrade").toggle(isSupport("fupgrade")); 
 	$(".routerSupport").toggle(!isSupport("noRouter"));
 	$(".apSupport").toggle(!isSupport("noAP"));
+	$(".defpassSupport").toggle(isSupport("defpass"));
+	$(".defpskSupport").toggle(isSupport("defpsk"));
 
 	if(systemVariable.forceChangePw){
 		systemVariable.forceChangePw = false;
@@ -1352,14 +1397,29 @@ function handle_ui_model_name(_model_name, _ui_model_name){
 	return result;
 }
 
+var tz_table = new Object;
 function setUpTimeZone(){
 	postDataModel.insert(timeObj);
-
+	getDST_db();
 	require(['/require/modules/timeZone.js'], function(timeZone) {
 		var timeZoneObj = new timeZone.get(systemVariable.uiLanguage);
 		qisPostData.time_zone = timeZoneObj.time_zone;
 		qisPostData.time_zone_dst = (timeZoneObj.hasDst) ? 1 : 0;
 	});
+	setTimeout(function(){
+		if(qisPostData.time_zone_dst){
+			qisPostData.time_zone_dstoff = getTimeZoneOffset(qisPostData.time_zone);
+		}
+	}, 500);
+
+}
+function getDST_db(){
+	$.getJSON("/ajax/tz_db.json", function(data){tz_table = data;
+		$.getJSON("https://nw-dlcdnet.asus.com/plugin/js/tz_db.json", function(data){tz_table = data;});
+	});
+}
+var getTimeZoneOffset = function(tz){
+	return tz_table[tz] ? tz_table[tz] : "M3.2.0/2,M11.1.0/2";
 }
 
 function setupWLCNvram(apProfileID) {
@@ -1536,49 +1596,6 @@ var getRestartService = function(){
 	var current_webs_chg_sku = (httpApi.nvramGet(["webs_chg_sku"], true).webs_chg_sku=="1")? true:false;
 	var current_webs_SG_mode = (httpApi.nvramGet(["webs_SG_mode"], true).webs_SG_mode=="1")? true:false;
 
-	if(isWANChanged()){
-		actionScript.push("restart_wan_if " + systemVariable.ethWanIf);
-	}
-
-	if(systemVariable.detwanResult.isIPConflict){
-		actionScript.push("restart_subnet");
-	}
-
-	if(qisPostData.hasOwnProperty("time_zone")){
-		actionScript.push("restart_time")
-	}
-
-	if(qisPostData.hasOwnProperty("yadns_enable_x")){
-		actionScript.push("restart_yadns");
-	}
-
-	if(qisPostData.hasOwnProperty("ipv6_service")){
-		actionScript.push("restart_net");	
-	}
-
-	if(
-		qisPostData.hasOwnProperty("wl0_ssid") || 
-		qisPostData.hasOwnProperty("wl0.1_ssid") || 
-		qisPostData.hasOwnProperty("wl0_11ax") || 
-		systemVariable.isDefault || 
-		isSmartConnectChanged()
-	){
-		actionScript.push("restart_wireless");
-	}
-
-	if(systemVariable.isDefault && isSupport("lantiq")){
-		actionScript.push("stop_bluetooth_service");
-	}
-
-	if(qisPostData.hasOwnProperty("wrs_protect_enable")){
-		actionScript.push("restart_firewall");
-		actionScript.push("restart_wrs");
-	}
-
-	if(qisPostData.hasOwnProperty("cfg_master")){
-		actionScript.push("restart_cfgsync");
-	}
-
 	if(isSwModeChanged() && isSwMode("RT")){
 		return "restart_all";
 	}
@@ -1599,6 +1616,56 @@ var getRestartService = function(){
 
 	if(current_webs_chg_sku){
 		return "reboot";
+	}
+
+	var restart_net = 0;
+	var restart_wan_if = 0;
+	var restart_firewall = 0;
+
+	if(qisPostData.hasOwnProperty("ipv6_service")){
+		restart_net = 1;
+		actionScript.push("restart_net");
+	}
+
+	if(systemVariable.detwanResult.isIPConflict){
+		actionScript.push("restart_subnet");
+	}
+
+	if(qisPostData.hasOwnProperty("time_zone")){
+		actionScript.push("restart_time")
+	}
+
+	if(qisPostData.hasOwnProperty("yadns_enable_x")){
+		actionScript.push("restart_yadns");
+	}
+
+	if(
+		qisPostData.hasOwnProperty("wl0_ssid") || 
+		qisPostData.hasOwnProperty("wl0.1_ssid") || 
+		qisPostData.hasOwnProperty("wl0_11ax") || 
+		systemVariable.isDefault || 
+		isSmartConnectChanged()
+	){
+		actionScript.push("restart_wireless");
+	}
+
+	if(systemVariable.isDefault && isSupport("lantiq")){
+		actionScript.push("stop_bluetooth_service");
+	}
+
+	if(!restart_net && qisPostData.hasOwnProperty("cfg_master")){
+		actionScript.push("restart_cfgsync");
+	}
+
+	if(!restart_net && isWANChanged()){
+		restart_wan_if = 1;
+		actionScript.push("restart_wan_if " + systemVariable.ethWanIf);
+	}
+
+	if(!restart_net && !restart_wan_if && qisPostData.hasOwnProperty("wrs_protect_enable")){
+		// do not push these if restart_wan_if has been pushed. these are included in restart_wan_if.
+		actionScript.push("restart_firewall");
+		actionScript.push("restart_wrs");
 	}
 
 	return actionScript.join(";")
@@ -1763,6 +1830,9 @@ var isSupport = function(_ptn){
 				matchingResult = true;
 			else
 				matchingResult = false;
+			break;
+		case "defpsk":
+			matchingResult = (ui_support["defpsk"] >= 1 && (httpApi.nvram_match_x("wifi_psk","","1").wifi_psk != "1")) ? true : false;
 			break;
 		default:
 			matchingResult = ((ui_support[_ptn] > 0) || (systemVariable.productid.search(_ptn) !== -1)) ? true : false;
@@ -2265,3 +2335,21 @@ function site2site_handle_wlSet(){
 		$(this).removeClass("ap_ssid_hover")
 	});
 }
+function adjust_popup_container_top(_obj, _offsetHeight){
+	$(_obj).css({top: ""});
+	var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+	var parent_scrollTop = parent.window.pageYOffset || parent.document.documentElement.scrollTop || parent.document.body.scrollTop || 0;
+	if(scrollTop == 0 && parent_scrollTop != 0)
+		parent_scrollTop = parent_scrollTop - 200;
+	var final_scrollTop = Math.max(scrollTop, parent_scrollTop);
+	if(final_scrollTop != 0){
+		$(_obj).css({top: (final_scrollTop + _offsetHeight)});
+	}
+}
+/* String replace &#39; with ' for dict */
+function stringSafeGet(str){
+	return str.replace(new RegExp("&#39;", 'g'), "'");
+}
+var str_local_login_desc = stringSafeGet("<#Local_login_desc#>");
+var str_find_st = stringSafeGet("<#HowFindST#>");
+var str_HowFindPassword = stringSafeGet("<#HowFindPassword#>");

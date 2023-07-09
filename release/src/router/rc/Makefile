@@ -6,7 +6,7 @@ ifeq ($(BRCM_CHIP),$(filter $(BRCM_CHIP),4908 4912))
 CFLAGS += -DBCM49XX
 endif
 endif
-CFLAGS += -Wall -Os $(EXTRACFLAGS)
+CFLAGS += -Wall $(if $(RTCONFIG_DEBUG),-g,-Os) $(EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include -I$(TOP)/networkmap
 ifneq ($(HND_ROUTER),y)
 CFLAGS += -idirafter$(LINUXDIR)/include
@@ -235,7 +235,7 @@ CFLAGS  += -I$(TOP)/protect_srv/include
 endif
 
 ifeq ($(RTCONFIG_BT_CONN),y)
-CFLAGS  += -I$(TOP)/bluez-5.41/lib
+CFLAGS  += -I$(TOP)/bluez-5.56/lib
 endif
 
 #CFLAGS += -DRC_BUILDTIME=$(shell date -d "now" +"%s")
@@ -308,7 +308,11 @@ ifeq ($(and $(BR63),$(NEW_SWITCH_ORDER)),y)
 CFLAGS += -DNEW_SWITCH_ORDER
 endif
 
-OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o
+ifeq ($(or $(HND_ROUTER_AX_6756),$(HND_ROUTER_BE_4916)),y)
+CFLAGS += -DJFFS2_UBI_VOLUME_SIZE=$(JFFS2_UBI_VOLUME_SIZE)
+endif
+
+OBJS := rc.o init.o interface.o lan.o wireless.o $(if $(RTCONFIG_SOFTWIRE46), s46comm.o) wan.o pppd.o auth.o services.o
 OBJS += firewall.o ppp.o services.o common.o
 OBJS += watchdog.o check_watchdog.o fwupg_flashing.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
 OBJS += format.o
@@ -521,6 +525,15 @@ ifeq ($(RTCONFIG_INTERNETCTRL),y)
 OBJS += ic.o
 endif
 
+ifeq ($(RTCONFIG_MXL371X), y)
+CFLAGS += -I$(TOP)/mxl371x_sdk/MxLWare/lib -I$(TOP)/mxl371x_sdk/MxLWare/inc
+LDFLAGS += -lclnkapi -L$(TOP)/mxl371x_sdk/MxLWare/lib
+endif
+
+ifeq ($(RTCONFIG_MOCA), y)
+OBJS += moca.o
+endif
+
 #ifeq ($(RTCONFIG_HTTPS),y)
 #ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix -  https://github.com/gnuton/asuswrt-merlin.ng/issues/86
 OBJS += dsl_fb.o
@@ -703,7 +716,7 @@ endif
 ifeq ($(RTCONFIG_SOFTWIRE46),y)
 CFLAGS += -I$(TOP)/json-c
 LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
-OBJS += s46comm.o v6plusd.o ocnvcd.o
+OBJS += v6plusd.o ocnvcd.o
 endif
 
 ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
@@ -804,6 +817,10 @@ ifeq ($(RTCONFIG_TC_DOWNLOAD), y)
 OBJS += tc_utils.o
 CFLAGS += -D _FILE_OFFSET_BITS=64
 endif
+
+# _FILE_OFFSET_BITS=64 is defined in shared, it must be defined in rc accordingly if shared pass pointer to struct dirent to rc,
+# e.g., readdir_wrapper() v.s. find_uboot_for_next_fw().
+CFLAGS += $(if $(RTCONFIG_QCA),-D _FILE_OFFSET_BITS=64)
 
 ifeq ($(RTCONFIG_HND_ROUTER_AX),y)
 OBJS += gpy211_war.o
@@ -1139,6 +1156,9 @@ endif
 ifeq ($(RTCONFIG_DETWAN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc detwan
 endif
+ifeq ($(RTCONFIG_AUTO_WANPORT),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc autowan
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_updated
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_custom_updated
 
@@ -1196,6 +1216,9 @@ endif
 ifeq ($(RTCONFIG_EXT_RTL8370MB),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 endif
+#ifeq ($(RTCONFIG_EXT_RTL8367S),y)
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
+#endif
 ifeq ($(or $(RTAX55),$(RTAX1800),$(RTAX58U_V2),$(RTAX3000N)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rtkswitch
 endif
@@ -1467,6 +1490,8 @@ ifeq ($(RTCONFIG_LETSENCRYPT),y)
 endif
 
 ifeq ($(RTCONFIG_SOFTWIRE46),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc init_wan46
+	@cd $(INSTALLDIR)/sbin && ln -sf rc auto46det
 	@cd $(INSTALLDIR)/sbin && ln -sf rc s46reset
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mapcalc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc v6plusd
@@ -1527,10 +1552,10 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc collect_debuglog
 
 ifeq ($(RTCONFIG_TPVPN),y)
-ifeq ($(RTCONFIG_OPENVPN),y)
+ifeq ($(RTCONFIG_HMA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hmavpn
 endif
-ifeq ($(RTCONFIG_WIREGUARD),y)
+ifeq ($(RTCONFIG_NORDVPN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc nordvpn
 endif
 endif
@@ -1555,6 +1580,10 @@ endif
 
 ifeq ($(HND_ROUTER),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc gpy211_monitor
+endif
+
+ifeq ($(RTCONFIG_MOCA),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc moca_monitor
 endif
 
 clean:
@@ -1589,6 +1618,13 @@ dsl_fb.o:dsl_fb.c
 #	./dsl_fb_dec.sh
 endif
 #endif
+endif
+
+ifeq ($(RTCONFIG_MOCA),y)
+ifneq ($(wildcard ./prebuild/moca.o),)
+moca.o:
+	@-cp -f ./prebuild/moca.o .
+endif
 endif
 
 ifneq ($(wildcard ./prebuild/frs_service.o),)

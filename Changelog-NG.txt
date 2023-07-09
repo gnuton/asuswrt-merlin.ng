@@ -1,5 +1,23 @@
 Asuswrt-Merlin Changelog
-========================
+
+388.4 (x-xxx-xxxx)
+  - UPDATED: Merged GPL 388_23588.
+  - UPDATED: curl to 8.1.2.
+  - UPDATED: OpenVPN to 2.6.5.
+  - UPDATED: openssl to 1.1.1u.
+  - UPDATED: tor to 0.4.7.13.
+  - CHANGED: FTP server will now only support strong ciphers
+             in TLS mode.
+  - FIXED: QOS Classification showing no Upload data on some
+           WAN configurations.
+  - REMOVED: Ethernet port status from the Tools Sysinfo page
+             (as this is redundant with Asus' own display
+             now available on the networkmap page).
+
+388.3 (9-June-2023)
+  - NOTE: This release is only available for the RT-AX88U_Pro.
+  - NEW: Merged with GPL 388_23110, adding support for a new
+         RT-AX88U PRO hardware revision.
 
 388.2_2_0-gnuton1 (1-Jun-2023)
   - UPDATED: Merged GPL 388_22582 for the ZenWifi devices

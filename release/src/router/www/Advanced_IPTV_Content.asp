@@ -92,7 +92,9 @@ for(var i = 1; i < MSWAN_List_Pri.length; i++){
 
 function initial(){
 	show_menu();
-	get_cloud_profiles();
+	if(!dsl_support) {
+		get_cloud_profiles();
+	}
 	create_stb_select(original_switch_stb_x);
 	if(mswan_support){
 		update_mr_mswan_idx();
@@ -573,6 +575,9 @@ function check_port_conflicts(){
 	var lacp_port_conflict = false;
 	var iptv_port = document.form.switch_stb_x.value;
 	var iptv_port_settings = document.form.iptv_port_settings.value;
+	var autowan_enable = httpApi.nvramGet(["autowan_enable"], true).autowan_enable;
+	var autowan_detected_ifname = httpApi.nvramGet(["autowan_detected_ifname"], true).autowan_detected_ifname;
+	var autowan_detected_label = httpApi.nvramGet(["autowan_detected_label"], true).autowan_detected_label;
 
 	if(dualWAN_support){	// dualwan LAN port should not be equal to IPTV port
 		var tmp_pri_if = wans_dualwan_orig.split(" ")[0].toUpperCase();
@@ -612,7 +617,7 @@ function check_port_conflicts(){
 		}
 	}
 
-	if(based_modelid == "GT10" && wans_extwan == "1"){//Ethernet LAN1
+	if(autowan_enable != "1" && (based_modelid == "GT10" || based_modelid == "RT-AXE7800") && wans_extwan == "1"){//Ethernet LAN1
 		if(iptv_port == "1")
 			wan_port_conflict = true;
 		else{
@@ -624,6 +629,13 @@ function check_port_conflicts(){
 							wan_port_conflict = true;
 					}
 				}
+			}
+		}
+	}
+	else if(autowan_enable == "1" && autowan_detected_ifname != "" && autowan_detected_label != ""){
+		for(var i = 0; i < stbPortMappings.length; i++){
+			if(iptv_port == stbPortMappings[i].value && stbPortMappings[i].name.indexOf(autowan_detected_label) != -1){
+				wan_port_conflict = true;
 			}
 		}
 	}

@@ -47,6 +47,7 @@
 #include "shared.h"
 #include "wlif_utils.h"
 #include "iboxcom.h"
+#include <regex.h>
 
 #ifndef ETHER_ADDR_LEN
 #define	ETHER_ADDR_LEN		6
@@ -64,6 +65,11 @@
 #else
 #include <wlioctl.h>
 #endif
+
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) ||defined(RTCONFIG_IG_SITE2SITE) || defined(RTCONFIG_WIREGUARD)
+#include "vpn_utils.h"
+#endif
+
 #if defined(RTCONFIG_COOVACHILLI)
 #define MAC_FMT "%.2X:%.2X:%.2X:%.2X:%.2X:%.2X"
 #define MAC_ARG(x) (x)[0],(x)[1],(x)[2],(x)[3],(x)[4],(x)[5]
@@ -1447,6 +1453,39 @@ enum wan_unit_e get_first_connected_public_wan_unit(void)
 			continue;
 		wan_unit = i;
 		break;
+	}
+	if(WAN_UNIT_MAX == i)
+		return WAN_UNIT_NONE;
+	else
+		return wan_unit;
+}
+
+enum wan_unit_e get_first_connected_dual_wan_unit(void)
+{
+	int i, wan_unit = WAN_UNIT_MAX;
+	char prefix[sizeof("wanXXXXXX_")], link[sizeof("link_wanXXXXXX")], tmp[100];
+
+	for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; ++i) {
+		if (get_dualwan_by_unit(i) == WANS_DUALWAN_IF_NONE || !is_wan_connect(i))
+			continue;
+
+		/* For LB mode, check link status. */
+		snprintf(prefix, sizeof(prefix), "wan%d_", i);
+		if (!i)
+			strlcpy(link, "link_wan", sizeof(link));
+		else
+			snprintf(link, sizeof(link), "link_wan%d", i);
+
+		if (!nvram_get_int(link))
+			continue;
+
+		if (( nvram_get_int(strlcat_r(prefix, "state_t", tmp, sizeof(tmp)))==2
+				&& nvram_get_int(strlcat_r(prefix, "sbstate_t", tmp, sizeof(tmp)))==0
+				&& nvram_get_int(strlcat_r(prefix, "auxstate_t", tmp, sizeof(tmp)))==0 ))
+		{
+				wan_unit = i;
+				break;
+		}
 	}
 	if(WAN_UNIT_MAX == i)
 		return WAN_UNIT_NONE;
@@ -4337,6 +4376,7 @@ int iwpriv_get_int(const char *iface, char *cmd, int *result)
  * @path:	path to a directory.
  * @keyword:	used to filter specific items to @handler.
  * @handler:	function pointer.
+ *              NOTE: To make sure both readdir_wrapper() and @handler see same struct dirent, @handler must check @de_size and stop if mismatch.
  * @arg:	parameter for @handler.
  * @return:
  * 	0:	success
@@ -4344,7 +4384,7 @@ int iwpriv_get_int(const char *iface, char *cmd, int *result)
  *     -2:	can't open @path
  *     -3:	error reported by @handler
  */
-int readdir_wrapper(const char *path, const char *keyword, int (*handler)(const char *path, const struct dirent *de, void *arg), void *arg)
+int readdir_wrapper(const char *path, const char *keyword, int (*handler)(const char *path, const struct dirent *de, size_t de_size, void *arg), void *arg)
 {
 	int ret = 0;
 	DIR *dir;
@@ -4360,7 +4400,7 @@ int readdir_wrapper(const char *path, const char *keyword, int (*handler)(const 
 		if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
 			continue;
 		if (!keyword || *keyword == '\0' || strstr(de->d_name, keyword) != NULL) {
-			if (handler(path, de, arg))
+			if (handler(path, de, sizeof(*de), arg))
 				ret = -3;
 		}
 	}
@@ -5750,6 +5790,47 @@ int is_valid_domainname(const char *name)
 	return p - name;
 }
 
+int is_valid_oauth_code(char *code)
+{
+	int len;
+
+	len = strlen(code);
+	if (len > 2048) return 0;
+
+	while(*code) {
+		if (isalnum(*code) != 0 || *code == '-' || *code == '.' || *code == '_' || *code == '~' || *code == '+' || *code == '/' || isspace(*code) != 0)
+			code++;
+		else
+			return 0;
+	}
+	return 1;
+}
+int is_valid_email_address(char *address)
+{
+	int status=1, ret=0, rc=0;
+	regex_t preg;
+	const char *reg_exp = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*.\\w+([-.]\\w+)*$";
+
+	rc = regcomp(&preg, reg_exp, REG_EXTENDED);
+
+	if (rc != 0)
+	{
+		dbg("%s: Failed to compile the regular expression:%d\n", __func__, rc);
+		return 4000;
+	}
+
+	status=regexec(&preg,address,0, NULL, 0);
+	if (status == REG_NOMATCH) {
+		dbg("No Match\n");
+	}
+	else if (status == 0) {
+		dbg("Match\n");
+		ret = 1;
+	}
+	regfree(&preg);
+	return ret;
+}
+
 int get_discovery_ssid(char *ssid_g, int size)
 {
 #if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
@@ -6088,7 +6169,7 @@ int is_passwd_default(){
 	char *http_passwd = nvram_safe_get("http_passwd");
 #ifdef RTCONFIG_NVRAM_ENCRYPT
 	char dec_passwd[NVRAM_ENC_LEN];
-	pw_dec(http_passwd, dec_passwd, sizeof(dec_passwd));
+	pw_dec(http_passwd, dec_passwd, sizeof(dec_passwd), 1);
 	http_passwd = dec_passwd;
 #endif
 	if(strcmp(nvram_default_get("http_passwd"), http_passwd) == 0)
@@ -6708,16 +6789,19 @@ void wl_vif_to_subnet(const char *ifname, char *net, int len)
  	int fd;
 	struct ifreq ifr;
 	
-
 	if (!ifname || strlen(ifname) <= 0)
 		return;
 
 	if (!net || len <= 0)
 		return;
 
+	memset(net, 0, len);
 	for (found=0, i=0; i<256; i++) {
 		memset(nv, 0, sizeof(nv));
-		snprintf(nv, sizeof(nv), "br%d_ifnames", i);
+		if (i==0)
+			snprintf(nv, sizeof(nv), "lan_ifnames");
+		else 
+			snprintf(nv, sizeof(nv), "lan%d_ifnames", i);
 		if ((br_ifnames = strdup(nvram_safe_get(nv)))) {
 			foreach (word, br_ifnames, next) {
 				if ((found = !strcmp(word, ifname)))
@@ -6733,7 +6817,10 @@ void wl_vif_to_subnet(const char *ifname, char *net, int len)
 
 	if (found) {
 		memset(nv, 0, sizeof(nv));
-		snprintf(nv, sizeof(nv), "br%d_ifname", i);
+		if (i==0)
+			snprintf(nv, sizeof(nv), "lan_ifname");
+		else
+			snprintf(nv, sizeof(nv), "lan%d_ifname", i);
 		memset(br_name, 0, sizeof(br_name));
 		strlcpy(br_name, nvram_safe_get(nv), sizeof(br_name));
 
@@ -6779,22 +6866,56 @@ get_string_in_62(char *in_list, int idx, char *out, int out_len)
 			find_idx++;
 		}
 	}
+	if(find_idx == idx) // Consider the field is at the end of in_list (no '>' occur anymore).
+		strlcpy(out, g, out_len);
 
 	free(buf);
 
 	return 0;
 }
 
-int vpnc_use_tunnel(void)
+#if defined(RTCONFIG_VPN_FUSION) || defined(RTCONFIG_TPVPN) || defined(RTCONFIG_IG_SITE2SITE)
+#if defined(RTCONFIG_WIREGUARD)
+int is_wgs_use_tunnel(const char *wgs_idx, const char *caller, const char *port) {
+	char wgs_prefix[16];
+	snprintf(wgs_prefix, sizeof(wgs_prefix), "%s_", wgs_idx);
+	if (nvram_pf_get_int(wgs_prefix, "enable") == 1) {
+		int c_unit;
+		char c_prefix[16] = {0};
+		int nv_enable = 0;
+		char nv_caller[16] = {0};
+		char nv_port[16] = {0};
+		if (port)
+			snprintf(nv_port, sizeof(nv_port), "%s", nvram_pf_safe_get(wgs_prefix, "port"));
+		for (c_unit = 1; c_unit <= WG_SERVER_CLIENT_MAX; c_unit++)
+		{
+			snprintf(c_prefix, sizeof(c_prefix), "%sc%d_", wgs_prefix, c_unit);
+			nv_enable = nvram_pf_get_int(c_prefix, "enable");
+			snprintf(nv_caller, sizeof(nv_caller), "%s", nvram_pf_safe_get(c_prefix, "caller"));
+
+			if (!strcmp(nv_caller, caller) && nv_enable == 1) {
+				if (port) {
+					if (!strcmp(nv_port, port)) {
+						return 1;
+					}
+				} else
+					return 1;
+			}
+		}
+	}
+	return 0;
+}
+#endif
+
+int vpns_use_tunnel(void)
 {
 	time_t now = time(NULL);
-	char s2s_oauth_linklist[4096] = {0}, vpnc_clientlist[8192] = {0}, active[8] = {0}, conn_type[8] = {0};
+	char s2s_oauth_linklist[4096] = {0};
 	char word[128] = {0}, *next = NULL;
 	char *link = NULL, *ts = NULL, *vpn = NULL, *conn = NULL;
 
+	// Check for share link server
 	strlcpy(s2s_oauth_linklist, nvram_safe_get("s2s_oauth_linklist"), sizeof(s2s_oauth_linklist));
-	strlcpy(vpnc_clientlist, nvram_safe_get("vpnc_clientlist"), sizeof(vpnc_clientlist));
-
 	foreach_60(word, s2s_oauth_linklist, next){
 		if((vstrsep(word, ">", &link, &ts, &vpn, &conn)) != 4){
 			continue;
@@ -6803,17 +6924,53 @@ int vpnc_use_tunnel(void)
 			return 1;
 		}
 	}
+#if defined(RTCONFIG_WIREGUARD)
+	if (is_wgs_use_tunnel("wgs1", "AMSAPP", NULL))
+		return 1;
+	if (is_wgs_use_tunnel("wgs2", "IG_S2S", NULL))
+		return 1;
+#endif
+	return 0;
+}
 
+int vpnc_use_tunnel(int vpnc_unit, const char* proto)
+{
+	char vpnc_clientlist[8192] = {0}, vpn_type[16] = {0}, vpnc_idx[8] = {0}, active[8] = {0}, tunnel[8] = {0};
+	char word[128] = {0}, *next = NULL;
+
+	// Check for share link client
+	strlcpy(vpnc_clientlist, nvram_safe_get("vpnc_clientlist"), sizeof(vpnc_clientlist));
 	foreach_60(word, vpnc_clientlist, next){
+		memset(vpn_type, 0, sizeof(vpn_type));
+		memset(vpnc_idx, 0, sizeof(vpnc_idx));
 		memset(active, 0, sizeof(active));
-		memset(conn_type, 0, sizeof(conn_type));
-		get_string_in_62(word, 9, active, sizeof(active));
-		get_string_in_62(word, 9, conn_type, sizeof(conn_type));
-		if(!strcmp(active, "1") && !strcmp(conn_type, "1"))
+		memset(tunnel, 0, sizeof(tunnel));
+		if (proto && !strcmp(proto, "WireGuard")) {
+			get_string_in_62(word, 1, vpn_type, sizeof(vpn_type));
+			//_dprintf("vpnc_unit=%d, vpn_type=%s\n", vpnc_unit, vpn_type);
+			if (strcmp(vpn_type, proto))
+				continue;
+			get_string_in_62(word, 2, vpnc_idx, sizeof(vpnc_idx));
+			//_dprintf("vpnc_idx=%s, vpnc_unit=%d\n", vpnc_idx, vpnc_unit);
+			//_dprintf("vpnc_unit=%d, vpnc_idx=%s\n", vpnc_unit + VPNC_UNIT_BASIC, vpnc_idx);
+			if (strtol(vpnc_idx, NULL, 10) != vpnc_unit)
+				continue;
+		} else {
+			get_string_in_62(word, 6, vpnc_idx, sizeof(vpnc_idx));
+			//_dprintf("vpnc_unit=%d, vpnc_idx=%s\n", vpnc_unit + VPNC_UNIT_BASIC, vpnc_idx);
+			if (strtol(vpnc_idx, NULL, 10) != (vpnc_unit + VPNC_UNIT_BASIC))
+				continue;
+		}
+		get_string_in_62(word, 5, active, sizeof(active));
+		//_dprintf("word=%s, active=%s, tunnel=%s\n", word, active, tunnel);
+		get_string_in_62(word, 9, tunnel, sizeof(tunnel));
+		//_dprintf("word=%s, active=%s, tunnel=%s\n", word, active, tunnel);
+		if(!strcmp(active, "1") && !strcmp(tunnel, "1"))
 			return 1;
 	}
 	return 0;
 }
+#endif
 
 #if defined(RTCONFIG_ACCOUNT_BINDING)
 int is_account_bound()
@@ -6827,3 +6984,76 @@ int is_account_bound()
 	return 0;
 }
 #endif
+
+char *make_salt(char *scheme_id, char *buf, size_t size)
+{
+	unsigned char tmp[12];
+	char *p = NULL;
+	int n = 0, tmp_len = 0;
+
+	if (buf == NULL)
+		return NULL;
+
+	if(!strcmp(scheme_id, "1")){
+		n = strlcpy(buf, "$1$", size);
+		tmp_len = 6;
+	}else if(!strcmp(scheme_id, "5")){
+		n = strlcpy(buf, "$5$", size);
+		tmp_len = 12;
+	}else
+		return buf;
+
+	n = (size - n - 1) / 4 * 3;
+	if (n > 0) {
+		if (n > tmp_len)
+			n = tmp_len;
+		f_read("/dev/urandom", tmp, n);
+		n = base64_encode(tmp, buf + 3, n);
+		buf[3 + n] = '\0';
+	}
+
+	for (p = buf; *p; p++) {
+		if (*p == '+')
+			*p = '.';
+	}
+
+	return buf;
+}
+
+int asus_openssl_crypt(char *key, char *salt, char *out, int out_len)
+{
+	dbg("asus_openssl_crypt: check toolchain crypt() support\n");
+	int scheme_id = 0, ret = 0;
+	FILE *p_fp = NULL;
+	char cmd_line[256] = {0}, crypt_buf[256] = {0};
+
+	if(salt && strlen(salt) > 4){
+		if(!strncmp(salt, "$1$", 3))
+			scheme_id = 1;
+		else if(!strncmp(salt, "$5$", 3))
+			scheme_id = 5;
+		else
+			return ret;
+	}else
+		return ret;
+
+	snprintf(cmd_line, sizeof(cmd_line), "openssl passwd -%d -salt %s %s", scheme_id, salt+3, key);
+
+	if((p_fp = popen(cmd_line, "r")) != NULL){
+		if(fgets(crypt_buf, sizeof(crypt_buf), p_fp)){
+			if (strlen(crypt_buf) > 0)
+				crypt_buf[strlen(crypt_buf)-1] = '\0';
+		}
+		pclose(p_fp);
+	}
+
+	if(crypt_buf[0] != '\0'){
+		if(!strncmp(crypt_buf, salt, strlen(salt))){
+			strlcpy(out, crypt_buf, out_len);
+			ret = 1;
+		}
+	}
+
+	return ret;
+}
+

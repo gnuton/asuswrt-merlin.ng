@@ -50,6 +50,7 @@
 #ifdef RTCONFIG_AMAS_SYNC_LEDG
 #define FT_LEDG	BIT(23)
 #endif
+#define FT_MOCA	BIT(25)
 
 /* service */
 #define RESTART_WIRELESS		"restart_wireless"
@@ -82,6 +83,7 @@
 #ifdef RTCONFIG_AMAS_SYNC_LEDG
 #define RESTART_LEDG	"restart_ledg"
 #endif
+#define MOCA_SET_PRIVACY	"moca_set_privacy"
 
 struct feature_mapping_s {
 	char *name;
@@ -133,6 +135,7 @@ static struct feature_mapping_s feature_mapping_list[] __attribute__ ((unused)) 
 #ifdef RTCONFIG_AMAS_SYNC_LEDG
 	{ "ledg", 	FT_LEDG,	RESTART_LEDG },
 #endif
+	{ "moca", 	FT_MOCA,	MOCA_SET_PRIVACY },
 	{ NULL, 0, NULL }
 };
 
@@ -389,6 +392,11 @@ enum {
 	SUBFT_LEDG,
 #endif
 
+	SUBFT_MOCA,
+
+#ifdef RTCONFIG_ROUTERBOOST
+	SUBFT_RB_ENABLE,
+#endif
 	SUBFT_MAX
 };
 
@@ -638,6 +646,13 @@ static struct subfeature_mapping_s subfeature_mapping_list[] __attribute__ ((unu
 	{ "ledg", SUBFT_LEDG, FT_LEDG },
 #endif
 
+	/* moca */
+	{ "moca", SUBFT_MOCA, FT_MOCA },
+
+#ifdef RTCONFIG_ROUTERBOOST
+	/* ledg */
+	{ "re_rb_enable", SUBFT_RB_ENABLE, FT_WIRELESS },
+#endif
 	/* END */
 	{ NULL, 0, 0}
 };
@@ -680,6 +695,10 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl0_radius_key",	FT_WIRELESS,		SUBFT_RADIUS_BAND1,		""},
 	{ "wl0_radius_port",	FT_WIRELESS,		SUBFT_RADIUS_BAND1,		"1812"},
 	{ "wl0_radio",	FT_WIRELESS,		SUBFT_RADIO_BAND1,		"1"},
+#if defined(RTCONFIG_WIFI_QCN5024_QCN5054) || defined(RTCONFIG_QCA_AXCHIP) \
+ || defined(RTCONFIG_MT798X)
+	{ "wl0_mbo_enable",	FT_WIRELESS,		SUBFT_BASIC_BAND1,		"1"},
+#endif
 	{ "wl1_ssid", 		FT_WIRELESS,		SUBFT_BASIC_BAND2,		"ASUS"},
 	{ "wl1_closed", 	FT_WIRELESS, 		SUBFT_BASIC_BAND2,		"0"},
 	{ "wl1_wpa_psk",	FT_WIRELESS,		SUBFT_BASIC_BAND2,		""},
@@ -710,6 +729,10 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl1_radius_key",	FT_WIRELESS,		SUBFT_RADIUS_BAND2,		""},
 	{ "wl1_radius_port",	FT_WIRELESS,		SUBFT_RADIUS_BAND2,		"1812"},
 	{ "wl1_radio",		FT_WIRELESS,		SUBFT_RADIO_BAND2,		"1"},
+#if defined(RTCONFIG_WIFI_QCN5024_QCN5054) || defined(RTCONFIG_QCA_AXCHIP) \
+ || defined(RTCONFIG_MT798X)
+	{ "wl1_mbo_enable",	FT_WIRELESS,		SUBFT_BASIC_BAND2,		"1"},
+#endif
 	{ "wl2_ssid",		FT_WIRELESS,		SUBFT_BASIC_BAND3,		"ASUS"},
 	{ "wl2_closed",	 	FT_WIRELESS, 		SUBFT_BASIC_BAND3,		"0"},
 	{ "wl2_wpa_psk",	FT_WIRELESS,		SUBFT_BASIC_BAND3,		""},
@@ -740,6 +763,10 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl2_radius_key",	FT_WIRELESS,		SUBFT_RADIUS_BAND3,		""},
 	{ "wl2_radius_port",	FT_WIRELESS,		SUBFT_RADIUS_BAND3,		"1812"},
 	{ "wl2_radio",	FT_WIRELESS,		SUBFT_RADIO_BAND3,		"1"},
+#if defined(RTCONFIG_WIFI_QCN5024_QCN5054) || defined(RTCONFIG_QCA_AXCHIP) \
+ || defined(RTCONFIG_MT798X)
+	{ "wl2_mbo_enable",	FT_WIRELESS,		SUBFT_BASIC_BAND3,		"1"},
+#endif
 
 	{ "wl3_ssid",		FT_WIRELESS,		SUBFT_BASIC_BAND4,		"ASUS"},
 	{ "wl3_closed",	 	FT_WIRELESS, 		SUBFT_BASIC_BAND4,		"0"},
@@ -771,6 +798,10 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl3_radius_key",	FT_WIRELESS,		SUBFT_RADIUS_BAND4,		""},
 	{ "wl3_radius_port",	FT_WIRELESS,		SUBFT_RADIUS_BAND4,		"1812"},
 	{ "wl3_radio",	FT_WIRELESS,		SUBFT_RADIO_BAND4,		"1"},
+#if defined(RTCONFIG_WIFI_QCN5024_QCN5054) || defined(RTCONFIG_QCA_AXCHIP) \
+ || defined(RTCONFIG_MT798X)
+	{ "wl3_mbo_enable",	FT_WIRELESS,		SUBFT_BASIC_BAND4,		"1"},
+#endif
 	/* guest network */
 	{ "wl0.1_closed", 	FT_WIRELESS, 		SUBFT_BASIC_BAND1_G1,		"0"},
 	{ "wl0.1_ssid", 	FT_WIRELESS, 		SUBFT_BASIC_BAND1_G1,		"ASUS"},
@@ -892,6 +923,9 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl2.3_maclist_x",	FT_WIRELESS,		SUBFT_MACFILTER_BAND3_G3,		""},
 	{ "wl3.3_macmode",	FT_WIRELESS,		SUBFT_MACFILTER_BAND4_G3,		"disabled"},
 	{ "wl3.3_maclist_x",	FT_WIRELESS,		SUBFT_MACFILTER_BAND4_G3,		""},
+#if defined(RTCONFIG_ROUTERBOOST)
+  { "re_rb_enable",     FT_WIRELESS,    SUBFT_RB_ENABLE,		"0"},
+#endif
 #if defined(RTCONFIG_AMAS_WGN)
     /* bandwidth limiter for guest network */
     { "qos_enable",     FT_BW_LIMIT,    SUBFT_BW_LIMIT,		"0"},
@@ -939,7 +973,10 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "wl2_user_rssi", 		FT_WIRELESS, 		SUBFT_ADVANCED_BAND3,		"-70"},
 	{ "wl3_user_rssi", 		FT_WIRELESS, 		SUBFT_ADVANCED_BAND4,		"-70"},
 #if defined(RTCONFIG_WIFI_QCN5024_QCN5054)
+	/* Extended NSS */
 	{ "wl1_ext_nss", 		FT_WIRELESS, 		SUBFT_ADVANCED_BAND2,		"1"},
+	/* Agile DFS (preCACen) */
+	{ "wl1_precacen",		FT_WIRELESS,		SUBFT_ADVANCED_BAND2,		"1"},
 #endif
 	/* http login */
 	{ "http_username", 	FT_LOGIN,		SUBFT_ROUTER_LOGIN,		"admin"},
@@ -1225,6 +1262,11 @@ static struct param_mapping_s param_mapping_list[] __attribute__ ((unused)) = {
 	{ "ledg_rgb3", FT_LEDG, SUBFT_LEDG,		"128,0,0,128,0,0,128,0,0"},
 	{ "ledg_rgb7", FT_LEDG, SUBFT_LEDG,		"128,0,0,128,0,0,128,0,0"},
 #endif
+
+	{ "moca_privacy_enable", FT_MOCA, SUBFT_MOCA,		"1"},
+	{ "moca_password", FT_MOCA, SUBFT_MOCA,		"12345678901234567"},
+	{ "moca_epassword", FT_MOCA, SUBFT_MOCA,		"12345678901234567"},
+	{ "moca_sceu_mode", FT_MOCA, SUBFT_MOCA,		"7"},
 
 	/* END */
 	{ NULL, 0, 0,		NULL}

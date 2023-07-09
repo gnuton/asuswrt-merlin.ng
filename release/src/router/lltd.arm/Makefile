@@ -92,6 +92,9 @@ else ifeq ($(BUILD_NAME), RT-AX56_XD4)
 else ifeq ($(BUILD_NAME), XD4PRO)
 	install icon.xd4pro.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.xd4pro.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
+else ifeq ($(BUILD_NAME), XC5)
+	install icon.xc5.ico $(INSTALLDIR)/usr/sbin/icon.ico
+	install icon.large.xc5.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else ifeq ($(BUILD_NAME), CT-AX56_XD4)
 	install icon.ctax56_xd4.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.ctax56_xd4.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
@@ -153,7 +156,10 @@ else ifeq ($(BUILD_NAME), GT-AX6000)
 	install icon.large.gtax6000_eva.ico $(INSTALLDIR)/usr/sbin/icon_eva.large.ico
 else ifeq ($(BUILD_NAME), GT10)
 	install icon.gt10.ico $(INSTALLDIR)/usr/sbin/icon.ico
-	install icon.large.gt10.ico $(INSTALLDIR)/usr/sbin/icon.large.ico	
+	install icon.large.gt10.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
+else ifeq ($(BUILD_NAME), RTAX9000)
+	install icon.rtax9000.ico $(INSTALLDIR)/usr/sbin/icon.ico
+	install icon.large.rtax9000.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else
 	install icon.$(modelstr).ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.$(modelstr).ico $(INSTALLDIR)/usr/sbin/icon.large.ico
