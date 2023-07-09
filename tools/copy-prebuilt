@@ -286,7 +286,7 @@ then
 fi
 if [ "$BUILD_NAME" == "RT-AX95Q" ] || [ "$BUILD_NAME" == "RT-AXE95Q" ]
 then
-    cp -a release/src/router/bluez-5.41/prebuild/* $REPO/release/src/router/bluez-5.41/prebuild/$BUILD_NAME/
+    cp -a release/src/router/bluez-5.56/prebuild/* $REPO/release/src/router/bluez-5.56/prebuild/$BUILD_NAME/
 fi
 
 
