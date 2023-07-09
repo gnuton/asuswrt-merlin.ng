@@ -1563,7 +1563,7 @@ void write_port_forwarding(FILE *fp, char *config, char *lan_ip, char *lan_if)
 		}
 	}
 #endif	/* RTCONFIG_MULTIWAN_CFG */
-#if defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAC59_CD6N) || defined(PLAX56_XP4)
+#if defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAC59_CD6N) || defined(PLAX56_XP4) || defined(XC5)
 #if defined(PLAX56_XP4)
 	if(nvram_match("HwId", "B") || nvram_match("HwId", "D"))
 #endif // XP4
@@ -2669,7 +2669,7 @@ void redirect_setting(void)
 	}
 #endif
 
-#if defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAC59_CD6N) || defined(PLAX56_XP4)
+#if defined(RTAX56_XD4) || defined(XD4PRO) || defined(RTAC59_CD6N) || defined(PLAX56_XP4) || defined(XC5)
 #if defined(PLAX56_XP4)
 	if(nvram_match("HwId", "B") || nvram_match("HwId", "D"))
 #endif // XP4
@@ -2785,7 +2785,12 @@ start_default_filter(int lanunit)
 	char *nv, *nvp, *b;
 	char *enable, *srcip, *accessType;
 	char *lan_if = nvram_safe_get("lan_ifname");
-	int evalRet;
+	int evalRet, n;
+#ifdef CONFIG_BCMWL5
+	int debug = factory_debug();
+#else
+	int debug = IS_ATE_FACTORY_MODE();
+#endif
 
 	if (!is_routing_enabled())
 		return;
@@ -2793,13 +2798,16 @@ start_default_filter(int lanunit)
 	if ((fp = fopen("/tmp/filter.default", "w")) == NULL)
 		return;
 	fprintf(fp, "*filter\n"
-		":INPUT DROP [0:0]\n"
-		":FORWARD DROP [0:0]\n"
+		":INPUT %s [0:0]\n"
+		":FORWARD %s [0:0]\n"
 		":OUTPUT ACCEPT [0:0]\n"
 		":FUPNP - [0:0]\n"
 		":ACCESS_RESTRICTION - [0:0]\n"
 		":logaccept - [0:0]\n"
-		":logdrop - [0:0]\n");
+		":logdrop - [0:0]\n",
+		debug ? "ACCEPT" : "DROP",
+		debug ? "ACCEPT" : "DROP");
+
 #ifdef RTCONFIG_PROTECTION_SERVER
 	fprintf(fp, ":%sWAN - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
 	fprintf(fp, ":%sLAN - [0:0]\n", PROTECT_SRV_RULE_CHAIN);
@@ -2916,7 +2924,7 @@ start_default_filter(int lanunit)
 	}
 
 	fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
-	fprintf(fp, "-A INPUT -m state --state INVALID -j DROP\n");
+	fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n", debug ? "ACCEPT" : "DROP");
 
 	/* Specific IP access restriction */
 	write_access_restriction(fp);
@@ -2985,18 +2993,40 @@ start_default_filter(int lanunit)
 	if ((fp = fopen("/tmp/filter_ipv6.default", "w")) == NULL)
 		return;
 	fprintf(fp, "*filter\n"
-		":INPUT DROP [0:0]\n"
-		":FORWARD DROP [0:0]\n"
+		":INPUT %s [0:0]\n"
+		":FORWARD %s [0:0]\n"
 		":OUTPUT %s [0:0]\n"
 		":logaccept - [0:0]\n"
 		":logdrop - [0:0]\n",
+		debug ? "ACCEPT" : "DROP",
+		debug ? "ACCEPT" : "DROP",
 		ipv6_enabled() ? "ACCEPT" : "DROP");
 
 	if (ipv6_enabled()) {
 		fprintf(fp, "-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
-		fprintf(fp, "-A INPUT -m state --state INVALID -j DROP\n");
+		fprintf(fp, "-A INPUT -m state --state INVALID -j %s\n", debug ? "ACCEPT" : "DROP");
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", lan_if);
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j ACCEPT\n", "lo");
+
+#ifdef RTCONFIG_SOFTWIRE46
+		if (!strncmp(nvram_safe_get("territory_code"), "JP", 2)) {
+			fprintf(fp, "-A INPUT -i %s -j ACCEPT\n", lan_if);
+			fprintf(fp, "-A INPUT -i lo -j ACCEPT\n");
+			switch (get_ipv6_service()) {
+#ifdef RTCONFIG_6RELAYD
+			case IPV6_PASSTHROUGH:
+#endif
+			case IPV6_NATIVE_DHCP:
+				/* allow responses from the dhcpv6 server */
+				fprintf(fp, "-A INPUT -p udp --sport 547 --dport 546 -j ACCEPT\n");
+				break;
+			}
+			for (n = 0; n < sizeof(allowed_local_icmpv6)/sizeof(int); n++) {
+				fprintf(fp, "-A INPUT -p ipv6-icmp --icmpv6-type %i -j ACCEPT\n", allowed_local_icmpv6[n]);
+			}
+		}
+#endif
+
 		//fprintf(fp, "-A FORWARD -m state --state INVALID -j DROP\n");
 		fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
 		fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_if, lan_if);

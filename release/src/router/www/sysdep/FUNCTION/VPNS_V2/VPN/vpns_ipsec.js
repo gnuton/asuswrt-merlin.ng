@@ -167,7 +167,7 @@ function Get_Component_Feature_Desc_IPSec(){
 		$("<div>").addClass("desc").html($privateIP_notes.html()).appendTo($feature_desc);
 	}
 
-	$("<div>").addClass("title").html("HOW TO SETUP").appendTo($feature_desc);/* untranslated */
+	$("<div>").addClass("title").html("<#HOWTOSETUP#>").appendTo($feature_desc);
 
 	var $step_text_container = $("<div>").addClass("step_text_container");
 		$step_text_container.appendTo($feature_desc);
@@ -938,7 +938,7 @@ function validate_format_IPSec(_obj, _validField){
 	return true;
 }
 function Update_Profile_Data_IPSec(_obj){
-	var ipsec_profile_1 = (httpApi.nvramGet(["ipsec_profile_1"]).ipsec_profile_1).replace(/&#62/g, ">").replace(/&#60/g, "<");
+	var ipsec_profile_1 = decodeURIComponent(httpApi.nvramCharToAscii(["ipsec_profile_1"]).ipsec_profile_1);
 	ipsec_profile_data = (JSON.parse(JSON.stringify(init_ipsec_profile(ipsec_profile_1))));
 
 	if(!privateIP_flag){
@@ -1117,7 +1117,7 @@ function Get_Component_Setting_Profile_IPSec(_type){
 
 	var $detail_general = $("<div>").attr("detail_mode","1").appendTo($content_container);
 
-	var help_parm = {"title":"How to setup"};/* untranslated */
+	var help_parm = {"title":"<#HOWTOSETUP#>"};
 	Get_Component_Help(help_parm)
 		.appendTo($detail_general)
 		.find(".vpnc_help_icon").unbind("click").click(function(e){

@@ -650,7 +650,9 @@ static int ERP_CHECK_MODEL_LIST()
 		|| model == MODEL_ET8_V2
 		|| model == MODEL_RTAX56_XD4
 		|| model == MODEL_XD4PRO
+		|| model == MODEL_XC5
 		|| model == MODEL_CTAX56_XD4
+		|| model == MODEL_EBA63
 		|| model == MODEL_RTAX58U
 		|| model == MODEL_RTAX82U_V2
 		|| model == MODEL_TUFAX5400_V2
@@ -658,6 +660,7 @@ static int ERP_CHECK_MODEL_LIST()
 		|| model == MODEL_RTAX82_XD6S
 		|| model == MODEL_XD6_V2
 		|| model == MODEL_GT10
+		|| model == MODEL_RTAX9000
 		|| model == MODEL_RTAX58U_V2
 		|| model == MODEL_RTAX3000N
 		|| model == MODEL_BR63
@@ -745,7 +748,9 @@ static void erp_standby_mode(int model)
 			break;
 		case MODEL_RTAX56_XD4:
 		case MODEL_XD4PRO:
+		case MODEL_XC5:
 		case MODEL_CTAX56_XD4:
+		case MODEL_EBA63:
 			eval("wl", "-i", "wl0", "down");
 			eval("wl", "-i", "wl1", "down"); // turn off 5g radio
 			break;
@@ -753,6 +758,11 @@ static void erp_standby_mode(int model)
 			eval("wl", "-i", "eth4", "down");
 			eval("wl", "-i", "eth5", "down");
 			eval("wl", "-i", "eth6", "down");
+			break;
+		case MODEL_RTAX9000:
+			eval("wl", "-i", "eth6", "down");
+			eval("wl", "-i", "eth7", "down");
+			eval("wl", "-i", "eth8", "down");
 			break;
 		case MODEL_RTAX58U:
 		case MODEL_TUFAX3000_V2:
@@ -838,7 +848,7 @@ static void erp_standby_mode(int model)
 		eval("wl", "-i", "eth4", "down"); // turn off 2g radio
 	}
 
-	if (model == MODEL_RTAX56_XD4 || model == MODEL_XD4PRO || model == MODEL_CTAX56_XD4) {
+	if (model == MODEL_RTAX56_XD4 || model == MODEL_XD4PRO || model == MODEL_CTAX56_XD4 || model == MODEL_XC5 || model == MODEL_EBA63) {
 		// triple band
 		eval("wl", "-i", "wl0", "down"); // turn off 2g radio
 	}

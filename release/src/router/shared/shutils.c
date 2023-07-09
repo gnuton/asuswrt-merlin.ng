@@ -271,6 +271,9 @@ int _eval(char *const argv[], const char *path, int timeout, int *ppid)
 		chld = signal(SIGCHLD, SIG_DFL);
 	}
 
+#if defined(RTCONFIG_VALGRIND)
+	setenv("USER", nvram_get("http_username")? : "admin", 1);
+#endif
 #ifdef HND_ROUTER
 	p = nvram_safe_get("env_path");
 	snprintf(s, sizeof(s), "%s%s/sbin:/bin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin", *p ? p : "", *p ? ":" : "");
@@ -2415,14 +2418,14 @@ int num_of_5g_if()
 	}
 #else
 	char word[256], *next;
-	int count = 0;
 	char wl_ifnames[32] = { 0 };
-	int band;
+	char prefix[] = "wlXXXXXXXXXXXX_", tmp[128];
+	int idx = 0, count = 0;
 
 	strlcpy(wl_ifnames, nvram_safe_get("wl_ifnames"), sizeof(wl_ifnames));
 	foreach (word, wl_ifnames, next) {
-		wl_ioctl(word, WLC_GET_BAND, &band, sizeof(band));
-		if(band == WLC_BAND_5G)
+		snprintf(prefix, sizeof(prefix), "wl%d_", idx++);
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "1"))
 			count++;
 	}
 #endif
@@ -3029,4 +3032,56 @@ int ping_target_with_size(char *target, unsigned int pkt_size, unsigned int ping
 			return 0;
 		}
 	}
+}
+
+/*******************************************************************
+* NAME: replace_literal_newline
+* AUTHOR: Renjie Lee
+* CREATE DATE: 2023/03/21
+* DESCRIPTION: Replace literal newline(s) ("\n")  with newline character(s) ('\n').
+*                        That is to say, from "\n" to '\n'.
+* INPUT:  inputstr, the string to be replaced.
+*         output, the replaced string will be stored in 'output'.
+*         buflen, the size of 'output' buffer.
+* OUTPUT: None
+* RETURN: -1 or -2, if something went wrong; 1, function works correctly.
+* NOTE:
+*******************************************************************/
+int replace_literal_newline(char *inputstr, char *output, int buflen)
+{
+	int in = 0;
+	int out = 0;
+	int len = 0;
+
+	if((!inputstr) || (strlen(inputstr) <= 0))
+	{
+		logmessage("replace_literal_newline", "Wrong inputstr.\n");
+		return -1;
+	}
+
+	if((!output) || (buflen == 0))
+	{
+		logmessage("replace_literal_newline", "Wrong output buffer\n");
+		return -2;
+	}
+
+	len = strlen(inputstr);
+	for(in = 0; (in < len) && (out < buflen); in++, out++)
+	{
+		if(in == len -1)
+		{
+			//boundary condition
+			output[out] = inputstr[in];
+		}
+		else if((inputstr[in] == '\\') && (inputstr[in+1] == 'n'))
+		{
+			output[out] = '\n';
+			in++;
+		}
+		else
+		{
+			output[out] = inputstr[in];
+		}
+	}
+	return 1;
 }

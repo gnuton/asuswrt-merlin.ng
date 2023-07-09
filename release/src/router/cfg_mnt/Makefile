@@ -1,6 +1,7 @@
 include ../common.mak
 
-CFLAGS += -Wall -Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections
+CFLAGS += $(if $(KPATH_37_OR_ABOVE),$(if $(and $(RTCONFIG_QCA),$(RTCONFIG_MUSL_LIBC)),,-I$(KDIR)/include),-I$(LINUX_INC_DIR)/include)
+CFLAGS += -Wall $(if $(RTCONFIG_DEBUG),-g,-Os) $(EXTRACFLAGS) -ffunction-sections -fdata-sections
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE) -I$(SRCBASE)/include -I./include -I$(TOP)/networkmap
 CFLAGS += -I./sysdeps
 CFLAGS += -I$(TOP)/openssl/include
@@ -161,6 +162,11 @@ endif
 ifeq ($(RTCONFIG_AMAS_CENTRAL_CONTROL),y)
 CFLAGS += -DUPDATE_COMMON_CONFIG
 endif
+endif
+
+ifeq ($(RTCONFIG_ROUTERBOOST),y)
+CFLAGS += -DROUTERBOOST
+COMMON_OBJS += cfg_routerboost.o
 endif
 
 ifeq ($(RTCONFIG_AMASDB),y)

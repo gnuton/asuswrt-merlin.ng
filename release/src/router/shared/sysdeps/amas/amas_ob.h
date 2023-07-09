@@ -55,6 +55,8 @@ static struct time_mapping_s time_mapping_list[] = {
 	{ "ET8PRO",   50,     120,     60},
 	{ "ZenWiFi_XD4",   50,     120,     60},
 	{ "ZenWiFi_XD4PRO",   50,     120,     60},
+	{ "EBA63",   50,     120,     60},
+	{ "ZenWiFi_XC5",   60,     120,     60},
 	{ "RT-AX56_XD4",   50,     120,     60},
 	{ "CT-AX56_XD4",   50,     60,     60},
 	{ "RT-AX55",    50,     120,     60},
@@ -99,6 +101,7 @@ static struct time_mapping_s time_mapping_list[] = {
 	{ "RT-AX88U_PRO", 50,    120,     60},
 	{ "ET8_V2",   50,     120,     60},
 	{ "RT-AX5400",   50,     120,     60},
+	{ "RT-AX9000",   50,     120,     60},
 	/* END */
 	{ NULL, 0, 0, 0 }
 };
