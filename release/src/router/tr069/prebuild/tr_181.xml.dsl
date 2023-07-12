@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<node name='Device' rw='0' type='node' arg='1.1'>
+<node name='Device' rw='0' type='node' arg='1.15'>
 	<node name='DeviceInfo' rw='0' type='node'>
 		<node acl='' getc='0' name='Manufacturer' noc='0' nocc='' rw='0' type='string'>ASUSTeK Computer Inc.</node>
 		<node acl='' getc='0' name='ManufacturerOUI' noc='0' nocc='' rw='0' type='string' cmd='oui'></node>
 		<node acl='' getc='0' name='ModelName' noc='0' nocc='' rw='0' type='string' cmd='nvram' arg='productid'></node>
-		<node acl='' getc='0' name='ProductClass' noc='0' nocc='' rw='0' type='string' cmd='nvram' arg='productid'></node>
+		<node acl='' getc='0' name='Description' noc='0' nocc='' rw='1' type='string'></node>
+		<node acl='' getc='0' name='ProductClass' noc='0' nocc='' rw='0' type='string' cmd='nvram_productid' arg='productid'></node>
 		<node acl='' getc='0' name='SerialNumber' noc='0' nocc='' rw='0' type='string' cmd='serial'></node>
 		<node acl='' getc='0' name='HardwareVersion' noc='0' nocc='' rw='0' type='string'>1.0</node>
 		<node acl='' getc='0' name='SoftwareVersion' noc='0' nocc='' rw='0' type='string' cmd='firmver'></node>
@@ -87,8 +88,10 @@
 		<node il='4' name='Radio' nin='1' rw='1' type='node'>
 			<node name='template' rw='0' type='node'>
 				<node acl='' getc='0' name='Enable' noc='0' nocc='' rw='1' type='boolean' cmd='wifi_radio_enable' act='restart_wireless'></node>
+				<node acl='' getc='0' name='Status' noc='0' nocc='' rw='0' type='string' cmd='wifi_radio_status' ></node>
 				<node acl='' getc='0' name='Name' noc='0' nocc='' rw='0' type='string' cmd='wifi_radio_name'></node>
 				<node acl='' getc='0' name='Upstream' noc='0' nocc='' rw='0' type='boolean'>false</node>
+				<node acl='' getc='0' name='MaxBitRate' noc='0' nocc='' rw='0' type='string' cmd='wifi_radio_max_bit_rate' ></node>
 				<node acl='' getc='0' name='SupportedFrequencyBands' noc='0' nocc='' rw='0' type='string' cmd='wifi_radio_frequencybands'></node>
 				<node acl='' getc='0' name='SupportedStandards' noc='0' nocc='' rw='0' type='string' cmd='wifi_radio_standards'></node>
 				<node acl='' getc='0' name='PossibleChannels' noc='0' nocc='' rw='0' type='string' cmd='wifi_radio_possiblechannels'></node>
@@ -148,6 +151,8 @@
 				<node il='9' name='AssociatedDevice' nin='1' rw='1' type='node'>
 					<node name='template' rw='0' type='node'>
 						<node acl='' getc='0' name='MACAddress' noc='0' nocc='' rw='0' type='strng'>00:00:00:00:00:00</node>
+						<node acl='' getc='0' name='SignalStrength' noc='0' nocc='' rw='0' type='int'></node>
+						<node acl='' getc='0' name='Retransmissions' noc='0' nocc='' rw='0' type='unsignedInt'></node>
 					</node>
 				</node>
 			</node>
@@ -219,12 +224,19 @@
 	</node>	
 	<node name='Ethernet' rw='0' type='node'>
 		<node acl='' getc='0' name='InterfaceNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+		<node acl='' getc='0' name='LinkNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
 		<node il='3' name='Interface' nin='1' rw='1' type='node'>
 			<node name='template' rw='1' type='node'>
 				<node acl='' getc='0' name='Enable' noc='0' nocc='' rw='1' type='boolean' cmd='eth_if_enable' act='restart_wan_if'>false</node>
 				<node acl='' getc='0' name='Name' noc='0' nocc='' rw='0' type='string' cmd='eth_if_name'></node>
 				<node acl='' getc='0' name='MACAddress' noc='0' nocc='' rw='0' type='string' cmd='eth_if_macaddress'></node>
 				<node acl='' getc='0' name='Upstream' noc='0' nocc='' rw='0' type='boolean'>false</node>
+			</node>
+		</node>
+		<node il='4' name='Link' nin='1' rw='1' type='node'>
+			<node name='template' rw='1' type='node'>
+				<node acl='' getc='0' name='ExternalIPAddress' noc='0' nocc='' rw='0' type='string' cmd='eth_link_address' arg='ipaddr'></node>
+				<node acl='' getc='0' name='MACAddress' noc='0' nocc='' rw='0' type='string' cmd='eth_link_address' arg='hwaddr'></node>
 			</node>
 		</node>
 	</node>
@@ -356,8 +368,16 @@
 				<node acl='' getc='0' name='Interface' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='DownloadURL' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='DownloadTransports' noc='0' nocc='' rw='0' type='string'>HTTP</node>
-				<node acl='' getc='0' name='DSCP' noc='0' nocc='' rw='1' type='unsignedInt'></node>
-				<node acl='' getc='0' name='EthernetPriority' noc='0' nocc='' rw='1' type='unsignedInt'></node>
+				<node acl='' getc='0' name='DSCP' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='EthernetPriority' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='DownloadDiagnosticMaxConnections' noc='0' nocc='' rw='0' type='unsignedInt'>10</node>
+				<node acl='' getc='0' name='DownloadDiagnosticMaxIncrementalResult' noc='0' nocc='' rw='0' type='unsignedInt'>10</node>
+				<node acl='' getc='0' name='TimeBasedTestDuration' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TimeBasedTestMeasurementInterval' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TimeBasedTestMeasurementOffset' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='NumberOfConnections' noc='0' nocc='' rw='1' type='unsignedInt'>1</node>
+				<node acl='' getc='0' name='IPAddressUsed' noc='0' nocc='' rw='1' type='string'></node>
+				<node acl='' getc='0' name='ProtocolVersion' noc='0' nocc='' rw='0' type='string'>IPv4</node>
 				<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='EOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
@@ -365,29 +385,96 @@
 				<node acl='' getc='0' name='TotalBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
 				<node acl='' getc='0' name='TCPOpenRequestTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='TCPOpenResponseTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+				<node acl='' getc='0' name='TotalBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+				<node acl='' getc='0' name='TestBytesReceviedUnderFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TotalBytesReceivedUnderFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TotalBytesSentUnderFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='PeriodOfFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='PerConnectionResultNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='EnablePerConnectionResults' noc='0' nocc='' rw='1' type='boolean'>false</node>
+				<node acl='' getc='0' name='IncrementalResultNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>	
+				<node il='10' name='PerConnectionResult' nin='1' rw='1' type='node'>
+					<node name='template' rw='1' type='node'>
+						<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='EOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='TestBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TCPOpenRequestTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='TCPOpenResponseTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+					</node>
+				</node>
+				<node il='10' name='IncrementalResult' nin='1' rw='1' type='node'>
+					<node name='template' rw='1' type='node'>
+						<node acl='' getc='0' name='StartTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='EndTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='TestBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+					</node>
+				</node>
 			</node>
 			<node name='UploadDiagnostics' rw='0' type='node'>
 				<node acl='' getc='0' name='DiagnosticsState' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='Interface' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='UploadURL' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='UploadTransports' noc='0' nocc='' rw='0' type='string'>HTTP</node>
-				<node acl='' getc='0' name='DSCP' noc='0' nocc='' rw='1' type='unsignedInt'></node>
-				<node acl='' getc='0' name='EthernetPriority' noc='0' nocc='' rw='1' type='unsignedInt'></node>
+				<node acl='' getc='0' name='DSCP' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='EthernetPriority' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
 				<node acl='' getc='0' name='TestFileLength' noc='0' nocc='' rw='1' type='unsignedInt'></node>
+				<node acl='' getc='0' name='UploadDiagnosticMaxConnections' noc='0' nocc='' rw='0' type='unsignedInt'>10</node>
+				<node acl='' getc='0' name='UploadDiagnosticMaxIncrementalResult' noc='0' nocc='' rw='0' type='unsignedInt'>10</node>
+				<node acl='' getc='0' name='TimeBasedTestDuration' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TimeBasedTestMeasurementInterval' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TimeBasedTestMeasurementOffset' noc='0' nocc='' rw='1' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='NumberOfConnections' noc='0' nocc='' rw='1' type='unsignedInt'>1</node>
+				<node acl='' getc='0' name='IPAddressUsed' noc='0' nocc='' rw='1' type='string'></node>
+				<node acl='' getc='0' name='ProtocolVersion' noc='0' nocc='' rw='0' type='string'>IPv4</node>
 				<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='EOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='TotalBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
 				<node acl='' getc='0' name='TCPOpenRequestTime' noc='0' nocc='' rw='0' type='dateTime'></node>
 				<node acl='' getc='0' name='TCPOpenResponseTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+				<node acl='' getc='0' name='TestBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+				<node acl='' getc='0' name='TotalBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+				<node acl='' getc='0' name='TestBytesSentUnderFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TotalBytesReceivedUnderFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='TotalBytesSentUnderFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='PeriodOfFullLoading' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='PerConnectionResultNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>
+				<node acl='' getc='0' name='EnablePerConnectionResults' noc='0' nocc='' rw='1' type='boolean'>false</node>
+				<node acl='' getc='0' name='IncrementalResultNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>0</node>	
+				<node il='10' name='PerConnectionResult' nin='1' rw='1' type='node'>
+					<node name='template' rw='1' type='node'>
+						<node acl='' getc='0' name='ROMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='BOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='EOMTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='TestBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TCPOpenRequestTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='TCPOpenResponseTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+					</node>
+				</node>
+				<node il='10' name='IncrementalResult' nin='1' rw='1' type='node'>
+					<node name='template' rw='1' type='node'>
+						<node acl='' getc='0' name='StartTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='EndTime' noc='0' nocc='' rw='0' type='dateTime'></node>
+						<node acl='' getc='0' name='TestBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+						<node acl='' getc='0' name='TotalBytesSent' noc='0' nocc='' rw='0' type='unsignedInt'></node>
+					</node>
+				</node>
 			</node>
 			<node name='UDPEchoConfig' rw='0' type='node'>
-				<node acl='' getc='0' name='Enable' noc='0' nocc='' rw='1' type='boolean'></node>
+				<node acl='' getc='0' name='Enable' noc='0' nocc='' rw='1' type='boolean'>false</node>
 				<node acl='' getc='0' name='Interface' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='SourceIPAddress' noc='0' nocc='' rw='1' type='string'></node>
 				<node acl='' getc='0' name='UDPPort' noc='0' nocc='' rw='1' type='unsignedInt'></node>
-				<node acl='' getc='0' name='EchoPlusEnabled' noc='0' nocc='' rw='1' type='boolean'></node>
-				<node acl='' getc='0' name='EchoPlusSupported' noc='0' nocc='' rw='0' type='boolean'></node>
+				<node acl='' getc='0' name='EchoPlusEnabled' noc='0' nocc='' rw='1' type='boolean'>false</node>
+				<node acl='' getc='0' name='EchoPlusSupported' noc='0' nocc='' rw='0' type='boolean'>1</node>
 				<node acl='' getc='0' name='PacketsReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
 				<node acl='' getc='0' name='PacketsResponded' noc='0' nocc='' rw='0' type='unsignedInt'></node>
 				<node acl='' getc='0' name='BytesReceived' noc='0' nocc='' rw='0' type='unsignedInt'></node>
@@ -444,11 +531,20 @@
 	</node>
 	<node name='Hosts' rw='0' type='node'>
 		<node acl='' getc='0' name='HostNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>1</node>
-		<node il='32' name='Host' nin='1' rw='1' type='node'>
-			<node name='template' rw='0' type='node'>
+		<node il='64' name='Host' nin='1' rw='1' type='node'>
+			<node name='template' rw='1' type='node'>
 				<node acl='' getc='0' name='IPAddress' noc='0' nocc='' rw='0' type='string'></node>
 				<node acl='' getc='0' name='HostName' noc='0' nocc='' rw='0' type='string'></node>
+				<node acl='' getc='0' name='Active' noc='0' nocc='' rw='0' type='boolean'></node>
+				<node acl='' getc='0' name='PhysAddress' noc='0' nocc='' rw='0' type='string'></node>
+				<node acl='' getc='0' name='AssociatedDevice' noc='0' nocc='' rw='0' type='string'></node>
 				<node acl='' getc='0' name='IPv6AddressNumberOfEntries' noc='0' nocc='' rw='0' type='string'>0</node>
+				<node acl='' getc='0' name='IPv4AddressNumberOfEntries' noc='0' nocc='' rw='0' type='string'>0</node>
+				<node il='9' name='IPv4Address' nin='1' rw='1' type='node'>
+					<node name='template' rw='0' type='node'>
+						<node acl='' getc='0' name='IPAddress' noc='0' nocc='' rw='0' type='string'></node>
+					</node>
+				</node>
 				<node il='9' name='IPv6Address' nin='1' rw='1' type='node'>
 					<node name='template' rw='0' type='node'>
 						<node acl='' getc='0' name='IPAddress' noc='0' nocc='' rw='0' type='string'></node>
@@ -510,6 +606,8 @@
 		<node acl='' getc='0' name='UserNumberOfEntries' noc='0' nocc='' rw='0' type='unsignedInt'>1</node>
 		<node name='User' rw='0' type='node'>
 			<node name='1' rw='0' type='node'>
+				<node acl='' getc='0' name='Enable' noc='0' nocc='' rw='0' type='boolean' cmd='' >true</node>
+				<node acl='' getc='0' name='RemoteAccessCapable' noc='0' nocc='' rw='0' type='boolean' cmd='' >true</node>
 				<node acl='' getc='0' name='Username' noc='0' nocc='' rw='1' type='string' cmd='user_name' act='restart_user'></node>
 				<node acl='' getc='1' name='Password' noc='0' nocc='' rw='1' type='string' cmd='user_passwd' act='restart_user'></node>
 			</node>
