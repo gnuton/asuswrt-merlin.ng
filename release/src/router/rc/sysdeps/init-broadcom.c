@@ -8461,6 +8461,7 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
 				if (model == MODEL_RTAX58U || model == MODEL_RTAX82_XD6S || model == MODEL_RTAX82U_V2 || model == MODEL_TUFAX5400_V2 || model == MODEL_XD6_V2 || model == MODEL_RTAX5400)
 					eval("ethswctl", "-c", "softswitch",  "-i",  ethPort2, "-o", "enable");
 			}
+#ifdef RTCONFIG_MULTICAST_IPTV
 			else if (nvram_match("switch_wantag", "unifi_biz_voip")) {
 				unsigned char eabuf[ETHER_ADDR_LEN];
 				char macaddr[32];
@@ -8505,6 +8506,7 @@ _dprintf("*** Multicast IPTV: config Singtel TR069 on wan port ***\n");
 				eval("brctl", "addif", br_dev, ethPort2);
 				eval("ifconfig", br_dev, "allmulti", "up"); // bridge interface must be up later, or brX can't receive packets
 			}
+#endif
 			else {  /* Nomo case. */
 				sprintf(vlan_entry, "0x%x", voip_vid);
 				_dprintf("vlan entry: %s\n", vlan_entry);
