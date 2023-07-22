@@ -1,5 +1,0 @@
-ELEMENT 'abcäöü'
-  TEXT '
-abcäöü
-'
-END 'abcäöü'
