@@ -291,7 +291,8 @@ fi
 
 if [ "$BUILD_NAME" == "RT-AX82U_V2" ]
 then
-   cp -a ./asuswrt/release/src/router/rom/dhd/6715b0_mfg/RT-AX82U_V2 /home/aaloisio/GITonio/asuswrt-merlin.ng/release/src/router/rom/dhd/6715b0_mfg/RT-AX82U_V2
+   cp -a release/src/router/rom/dhd/6715b0_mfg/$BUILD_NAME $REPO/release/src/router/rom/dhd/6715b0_mfg/$BUILD_NAME
+   cp -a release/src-rt-5.04axhnd.675x/hostTools/prebuilt/* $REPO/release/src-rt-5.04axhnd.675x/hostTools/prebuilt/$BUILD_NAME
 fi
 
 # Anything newer than SDK6
