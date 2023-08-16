@@ -2021,28 +2021,28 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 			}
 #endif
 
-			/* MTU */
-			if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
-				mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
-				if ((mtu < 576) || (mtu > 9000))
-					mtu = 1500;	// Set a sane default value
-
-				ifr.ifr_mtu = mtu;
-				strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
-				if (ioctl(s, SIOCSIFMTU, &ifr)) {
-					perror(wan_ifname);
-					logmessage("start_wan_if()","Error setting MTU on %s to %d", wan_ifname, mtu);
-				}
-				close(s);
-			}
-
 #ifdef RTCONFIG_AUTO_WANPORT
 			if(is_auto_wanport_enabled() == 1){
-				strlcpy(wan_ifname, nvram_safe_get("lan_ifname"), sizeof(wan
+				strlcpy(wan_ifname, nvram_safe_get("lan_ifname"), sizeof(wan_ifname));
 
 				/* Bring up WAN interface */
 				dbG("AUTO_WANPORT ifup:%s\n", wan_ifname);
 				ifconfig(wan_ifname, IFUP, NULL, NULL);
+
+				/* MTU */
+				if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+					mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
+					if ((mtu < 576) || (mtu > 9000))
+						mtu = 1500;     // Set a sane default value
+
+					ifr.ifr_mtu = mtu;
+					strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
+					if (ioctl(s, SIOCSIFMTU, &ifr)) {
+						perror(wan_ifname);
+						logmessage("start_wan_if()","Error setting MTU on %s to %d", wan_ifname, mtu);
+					}
+					close(s);
+				}
 
 				/* Start pre-authenticator */
 				dbG("AUTO_WANPORT start auth:%d\n", unit);
@@ -2058,6 +2058,21 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 				/* Bring up WAN interface */
 				dbG("ifup:%s\n", wan_ifname);
 				ifconfig(wan_ifname, IFUP, NULL, NULL);
+
+				/* MTU */
+				if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
+					mtu = nvram_get_int(strcat_r(prefix, "mtu", tmp));
+					if ((mtu < 576) || (mtu > 9000))
+						mtu = 1500;     // Set a sane default value
+
+					ifr.ifr_mtu = mtu;
+					strncpy(ifr.ifr_name, wan_ifname, IFNAMSIZ);
+					if (ioctl(s, SIOCSIFMTU, &ifr)) {
+						perror(wan_ifname);
+						logmessage("start_wan_if()","Error setting MTU on %s to %d", wan_ifname, mtu);
+					}
+					close(s);
+				}
 
 				/* Start pre-authenticator */
 				dbG("start auth:%d\n", unit);
@@ -3893,6 +3908,12 @@ NOIP:
 	stop_upnp();
 	start_upnp();
 
+	/* ntp is set, but it didn't just get set, so ntp_synced didn't already did these */
+	if (nvram_get_int("ntp_ready") && !first_ntp_sync) {
+		stop_ddns();
+		start_ddns(NULL);
+	}
+
 #ifdef RTCONFIG_LANTIQ
 	disable_ppa_wan(wan_ifname);
 
@@ -4019,14 +4040,6 @@ NOIP:
 		eval("fc", "config", "--tcp-ack-mflows", "0");
 	else
 		eval("fc", "config", "--tcp-ack-mflows", nvram_get_int("fc_tcp_ack_mflows_disable_force") ? "0" : "1");
-#endif
-
-#if defined(RTCONFIG_SAMBASRV)
-	if (nvram_match("enable_samba", "1"))
-	{
-		stop_samba(0);
-		start_samba();
-	}
 #endif
 
 #if defined(RTCONFIG_SAMBASRV)
