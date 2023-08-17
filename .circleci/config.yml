@@ -336,8 +336,8 @@ workflows:
             - build_tuf-ax3000
             - build_tuf-ax5400_tuf
             - build_tuf-ax3000_tuf
-            - build_rt-ax95q
-            - build_rt-axe95q
+            #- build_rt-ax95q
+            #- build_rt-axe95q
             - build_rt-ax92u
       - publish-manifest-and-notes:
           filters:
@@ -371,8 +371,8 @@ workflows:
             - build_tuf-ax3000
             - build_tuf-ax5400_tuf
             - build_tuf-ax3000_tuf
-            - build_rt-ax95q
-            - build_rt-axe95q
+            #- build_rt-ax95q
+            #- build_rt-axe95q
             - build_rt-ax92u
 notify:
   webhooks:
