@@ -224,34 +224,34 @@ workflows:
               ignore:
                 - master
                 - mainline
-      - build:
-          name: "build_rt-ax95q"
-          model: "rt-ax95q"
-          ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
-      - build:
-          name: "build_rt-axe95q"
-          model: "rt-axe95q"
-          ui: "none"
-          release_dir: "src-rt-5.02axhnd.675x"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - master
-                - mainline
+      # - build:
+      #     name: "build_rt-ax95q"
+      #     model: "rt-ax95q"
+      #     ui: "none"
+      #     release_dir: "src-rt-5.02axhnd.675x"
+      #     requires:
+      #       - getcode
+      #     filters:
+      #       tags:
+      #         only: /.*/
+      #       branches:
+      #         ignore:
+      #           - master
+      #           - mainline
+      # - build:
+      #     name: "build_rt-axe95q"
+      #     model: "rt-axe95q"
+      #     ui: "none"
+      #     release_dir: "src-rt-5.02axhnd.675x"
+      #     requires:
+      #       - getcode
+      #     filters:
+      #       tags:
+      #         only: /.*/
+      #       branches:
+      #         ignore:
+      #           - master
+      #           - mainline
       - build:
           name: "build_tuf-ax5400"
           model: "tuf-ax5400"
