@@ -13,7 +13,7 @@ $(MAKECMDGOALS):
 	cp prebuilt/cmplzma ./cmplzma
 	cp prebuilt/lzmacmd ./lzmacmd
 	mkdir -p prelink/src
-	-cp prebuilt/$(BUILD_NAME)/execstack ./prelink/src/execstack
+	-cp prebuilt/execstack ./prelink/src/execstack
 	-mkdir -p libelf/lib
 	-cp prebuilt/libelf.so ./libelf/lib/libelf.so
 	rm -f libelf/lib/libelf.so.0
