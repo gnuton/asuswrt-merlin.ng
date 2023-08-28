@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   getcode:
     docker:
-      - image: cimg/base:2020.01
+      - image: cimg/base:2023.08
     steps:
       - checkout
       - run:
