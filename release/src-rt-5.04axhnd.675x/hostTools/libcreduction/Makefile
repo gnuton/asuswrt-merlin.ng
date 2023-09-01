@@ -126,7 +126,7 @@ EXP_TOOLCHAIN_LIBS32 := $(shell for j in $(EXP_TOOLCHAIN_LIBS32); do if test -n 
 
 # Get full paths for toolchain libs
 TOOLCHAIN_LIBS32 := $(shell for j in $(EXP_TOOLCHAIN_LIBS32); do if test -n "$$(find -L $(TOOLCHAIN_TOP) -name $$j)" \
-                           ; then find -L $(TOOLCHAIN_TOP) -name $$j -print -quit; else echo ""; fi; done;)
+                           ; then find -L $(TOOLCHAIN_TOP) -name $$j -pirint -quit; else echo ""; fi; done;)
 
 # Determine which libs are missing
 MISSING_LIBS32 := $(shell for j in $(EXP_TOOLCHAIN_LIBS32); do if test -n "$$(find -L $(TOOLCHAIN_TOP) -name $$j)" \
@@ -248,7 +248,7 @@ print_libs:
 	    echo $(SHLIBS64); \
 	fi
 
-all install: print_libs
+all install:
 	@if [ -n "$(TOOLCHAIN_LIBS32)" ]; then \
 	    echo "########## 32-bit toolchain libs to copy ##########";\
 	    echo $(TOOLCHAIN_LIBS32);\
