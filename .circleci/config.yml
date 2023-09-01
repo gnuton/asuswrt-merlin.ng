@@ -95,11 +95,11 @@ jobs:
 
             rm -rf ${IMAGE_PATH}/*cferom*
             for f in ${IMAGE_PATH}/*.w; do  md5sum "$f" > "$f.md5" ; done
-            for f in ${IMAGE_PATH}/*.pkgtb; do  md5sum "$f" > "$f.md5" ; done
+            for f in ${IMAGE_PATH}/*squashfs.pkgtb; do  md5sum "$f" > "$f.md5" ; done
 
             cp ${IMAGE_PATH}/*.md5 workspace/release
             cp ${IMAGE_PATH}/*ubi.w   workspace/release || :
-            cp ${IMAGE_PATH}/*.pkgtb   workspace/release || :
+            cp ${IMAGE_PATH}/*squashfs.pkgtb   workspace/release || :
 
             if [[ ${UI} == "none" ]]; then
               cp /tmp/build.log workspace/release/${MODEL}-build.log
