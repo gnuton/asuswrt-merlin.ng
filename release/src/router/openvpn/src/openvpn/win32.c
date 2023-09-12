@@ -173,8 +173,7 @@ init_security_attributes_allow_all(struct security_attributes *obj)
 void
 overlapped_io_init(struct overlapped_io *o,
                    const struct frame *frame,
-                   BOOL event_state,
-                   bool tuntap_buffer)  /* if true: tuntap buffer, if false: socket buffer */
+                   BOOL event_state)
 {
     CLEAR(*o);
 
@@ -186,7 +185,7 @@ overlapped_io_init(struct overlapped_io *o,
     }
 
     /* allocate buffer for overlapped I/O */
-    alloc_buf_sock_tun(&o->buf_init, frame, tuntap_buffer);
+    alloc_buf_sock_tun(&o->buf_init, frame);
 }
 
 void
@@ -510,19 +509,19 @@ win32_signal_open(struct win32_signal *ws,
         && !HANDLE_DEFINED(ws->in.read) && exit_event_name)
     {
         struct security_attributes sa;
+        struct gc_arena gc = gc_new();
+        const wchar_t *exit_event_nameW = wide_string(exit_event_name, &gc);
 
         if (!init_security_attributes_allow_all(&sa))
         {
             msg(M_ERR, "Error: win32_signal_open: init SA failed");
         }
 
-        ws->in.read = CreateEvent(&sa.sa,
-                                  TRUE,
-                                  exit_event_initial_state ? TRUE : FALSE,
-                                  exit_event_name);
+        ws->in.read = CreateEventW(&sa.sa, TRUE, exit_event_initial_state ? TRUE : FALSE,
+                                   exit_event_nameW);
         if (ws->in.read == NULL)
         {
-            msg(M_WARN|M_ERRNO, "NOTE: CreateEvent '%s' failed", exit_event_name);
+            msg(M_WARN|M_ERRNO, "NOTE: CreateEventW '%s' failed", exit_event_name);
         }
         else
         {
@@ -535,6 +534,7 @@ win32_signal_open(struct win32_signal *ws,
                 ws->mode = WSO_MODE_SERVICE;
             }
         }
+        gc_free(&gc);
     }
     /* set the ctrl handler in both console and service modes */
     if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE) win_ctrl_handler, true))
@@ -1352,13 +1352,12 @@ win32_get_arch(arch_t *process_arch, arch_t *host_arch)
     *process_arch = ARCH_UNKNOWN;
     *host_arch = ARCH_NATIVE;
 
-    typedef BOOL (__stdcall *is_wow64_process2_t)(HANDLE, USHORT *, USHORT *);
+    typedef BOOL (WINAPI *is_wow64_process2_t)(HANDLE, USHORT *, USHORT *);
     is_wow64_process2_t is_wow64_process2 = (is_wow64_process2_t)
                                             GetProcAddress(GetModuleHandle("Kernel32.dll"), "IsWow64Process2");
 
     USHORT process_machine = 0;
     USHORT native_machine = 0;
-    BOOL is_wow64 = FALSE;
 
 #ifdef _ARM64_
     *process_arch = ARCH_ARM64;
@@ -1380,8 +1379,8 @@ win32_get_arch(arch_t *process_arch, arch_t *host_arch)
     if (is_wow64_process2)
     {
         /* check if we're running on arm64 or amd64 machine */
-        is_wow64 = is_wow64_process2(GetCurrentProcess(),
-                                     &process_machine, &native_machine);
+        BOOL is_wow64 = is_wow64_process2(GetCurrentProcess(),
+                                          &process_machine, &native_machine);
         if (is_wow64)
         {
             switch (native_machine)
@@ -1403,7 +1402,7 @@ win32_get_arch(arch_t *process_arch, arch_t *host_arch)
     else
     {
         BOOL w64 = FALSE;
-        is_wow64 = IsWow64Process(GetCurrentProcess(), &w64) && w64;
+        BOOL is_wow64 = IsWow64Process(GetCurrentProcess(), &w64) && w64;
         if (is_wow64)
         {
             /* we are unable to differentiate between arm64 and amd64

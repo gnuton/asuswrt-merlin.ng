@@ -1,13 +1,14 @@
-c: Copyright (C) 1998 - 2022, Daniel Stenberg, <daniel@haxx.se>, et al.
+c: Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 SPDX-License-Identifier: curl
 Long: write-out
 Short: w
 Arg: <format>
 Help: Use output FORMAT after completion
 Category: verbose
-Example: -w '%{http_code}\\n' $URL
+Example: -w '%{response_code}\\n' $URL
 Added: 6.5
 See-also: verbose head
+Multi: single
 ---
 Make curl display information on stdout after a completed transfer. The format
 is a string that may contain plain text mixed with any number of
@@ -30,12 +31,18 @@ trailing colon). The header contents are exactly as sent over the network,
 with leading and trailing whitespace trimmed. Added in curl 7.84.0.
 
 .B NOTE:
-The %-symbol is a special symbol in the win32-environment, where all
-occurrences of % must be doubled when using this option.
+In Windows the %-symbol is a special symbol used to expand environment
+variables. In batch files all occurrences of % must be doubled when using this
+option to properly escape. If this option is used at the command prompt then
+the % cannot be escaped and unintended expansion is possible.
 
 The variables available are:
 .RS
 .TP 15
+.B certs
+Output the certificate chain with details. Supported only by the OpenSSL,
+GnuTLS, Schannel, NSS, GSKit and Secure Transport backends. (Added in 7.88.0)
+.TP
 .B content_type
 The Content-Type of the requested document, if there was any.
 .TP
@@ -58,7 +65,7 @@ server. (Added in 7.15.4)
 .B header_json
 A JSON object with all HTTP response headers from the recent transfer. Values
 are provided as arrays, since in the case of multiple headers there can be
-multiple values.
+multiple values. (Added in 7.83.0)
 
 The header names provided in lowercase, listed in order of appearance over the
 wire. Except for duplicated headers. They are grouped on the first occurrence
@@ -88,6 +95,11 @@ The local port number of the most recently done connection. (Added in 7.29.0)
 .B method
 The http method used in the most recent HTTP request. (Added in 7.72.0)
 .TP
+.B num_certs
+Number of server certificates received in the TLS handshake. Supported only by
+the OpenSSL, GnuTLS, Schannel, NSS, GSKit and Secure Transport backends. (Added
+in 7.88.0)
+.TP
 .B num_connects
 Number of new connects made in the recent transfer. (Added in 7.12.3)
 .TP
@@ -99,7 +111,7 @@ redirect). Note that the status line IS NOT a header. (Added in 7.73.0)
 Number of redirects that were followed in the request. (Added in 7.12.3)
 .TP
 .B onerror
-The rest of the output is only shown if the transfer returned a non-zero error
+The rest of the output is only shown if the transfer returned a non-zero error.
 (Added in 7.75.0)
 .TP
 .B proxy_ssl_verify_result
@@ -197,6 +209,70 @@ The total time, in seconds, that the full operation lasted.
 .B url
 The URL that was fetched. (Added in 7.75.0)
 .TP
+.B url.scheme
+The scheme part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.user
+The user part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.password
+The password part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.options
+The options part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.host
+The host part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.port
+The port number of the URL that was fetched. If no port number was specified,
+but the URL scheme is known, that scheme's default port number is
+shown. (Added in 8.1.0)
+.TP
+.B url.path
+The path part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.query
+The query part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.fragment
+The fragment part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B url.zoneid
+The zoneid part of the URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.scheme
+The scheme part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.user
+The user part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.password
+The password part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.options
+The options part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.host
+The host part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.port
+The port number of the effective (last) URL that was fetched. If no port
+number was specified, but the URL scheme is known, that scheme's default port
+number is shown. (Added in 8.1.0)
+.TP
+.B urle.path
+The path part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.query
+The query part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.fragment
+The fragment part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
+.B urle.zoneid
+The zoneid part of the effective (last) URL that was fetched. (Added in 8.1.0)
+.TP
 .B urlnum
 The URL index number of this transfer, 0-indexed. De-globbed URLs share the
 same index number as the origin globbed URL. (Added in 7.75.0)
@@ -206,4 +282,3 @@ The URL that was fetched last. This is most meaningful if you have told curl
 to follow location: headers.
 .RE
 .IP
-If this option is used several times, the last one will be used.

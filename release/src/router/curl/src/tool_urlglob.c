@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2022, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -100,7 +100,7 @@ static CURLcode glob_set(struct URLGlob *glob, char **patternp,
   pat->globindex = globindex;
 
   while(!done) {
-    switch (*pattern) {
+    switch(*pattern) {
     case '\0':                  /* URL ended while set was still open */
       return GLOBERROR("unmatched brace", opos, CURLE_URL_MALFORMAT);
 
@@ -295,7 +295,7 @@ static CURLcode glob_range(struct URLGlob *glob, char **patternp,
       }
     }
 
-    fail:
+fail:
     *posp += (pattern - *patternp);
 
     if(!endp || !step_n ||
@@ -350,7 +350,7 @@ static bool peek_ipv6(const char *str, size_t *skip)
   memcpy(hostname, str, hlen);
   hostname[hlen] = 0;
 
-  /* ask to "guess scheme" as then it works without a https:// prefix */
+  /* ask to "guess scheme" as then it works without an https:// prefix */
   rc = curl_url_set(u, CURLUPART_URL, hostname, CURLU_GUESS_SCHEME);
 
   curl_url_cleanup(u);
@@ -411,7 +411,7 @@ static CURLcode glob_parse(struct URLGlob *glob, char *pattern,
       res = glob_fixed(glob, glob->glob_buffer, sublen);
     }
     else {
-      switch (*pattern) {
+      switch(*pattern) {
       case '\0': /* done  */
         break;
 

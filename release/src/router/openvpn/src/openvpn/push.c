@@ -196,7 +196,7 @@ server_pushed_signal(struct context *c, const struct buffer *buffer, const bool 
 void
 receive_exit_message(struct context *c)
 {
-    dmsg(D_STREAM_ERRORS, "Exit message received by peer");
+    dmsg(D_STREAM_ERRORS, "CC-EEN exit message received by peer");
     /* With control channel exit notification, we want to give the session
      * enough time to handle retransmits and acknowledgment, so that eventual
      * retries from the client to resend the exit or ACKs will not trigger
@@ -271,9 +271,9 @@ receive_cr_response(struct context *c, const struct buffer *buffer)
     struct tls_session *session = &c->c2.tls_multi->session[TM_ACTIVE];
     struct man_def_auth_context *mda = session->opt->mda_context;
     struct env_set *es = session->opt->es;
-    int key_id = get_primary_key(c->c2.tls_multi)->key_id;
+    unsigned int mda_key_id = get_primary_key(c->c2.tls_multi)->mda_key_id;
 
-    management_notify_client_cr_response(key_id, mda, es, m);
+    management_notify_client_cr_response(mda_key_id, mda, es, m);
 #endif
 #if ENABLE_PLUGIN
     verify_crresponse_plugin(c->c2.tls_multi, m);
@@ -416,7 +416,16 @@ send_auth_failed(struct context *c, const char *client_reason)
         {
             buf_printf(&buf, ",%s", client_reason);
         }
-        send_control_channel_string(c, BSTR(&buf), D_PUSH);
+
+        /* We kill the whole session, send the AUTH_FAILED to any TLS session
+         * that might be active */
+        send_control_channel_string_dowork(&c->c2.tls_multi->session[TM_INITIAL],
+                                           BSTR(&buf), D_PUSH);
+        send_control_channel_string_dowork(&c->c2.tls_multi->session[TM_ACTIVE],
+                                           BSTR(&buf), D_PUSH);
+
+        reschedule_multi_process(c);
+
     }
 
     gc_free(&gc);
@@ -424,10 +433,11 @@ send_auth_failed(struct context *c, const char *client_reason)
 
 
 bool
-send_auth_pending_messages(struct tls_multi *tls_multi, const char *extra,
-                           unsigned int timeout)
+send_auth_pending_messages(struct tls_multi *tls_multi,
+                           struct tls_session *session,
+                           const char *extra, unsigned int timeout)
 {
-    struct key_state *ks = get_key_scan(tls_multi, 0);
+    struct key_state *ks = &session->key[KS_PRIMARY];
 
     static const char info_pre[] = "INFO_PRE,";
 
@@ -444,7 +454,7 @@ send_auth_pending_messages(struct tls_multi *tls_multi, const char *extra,
     struct gc_arena gc = gc_new();
     if ((proto & IV_PROTO_AUTH_PENDING_KW) == 0)
     {
-        send_control_channel_string_dowork(tls_multi, "AUTH_PENDING", D_PUSH);
+        send_control_channel_string_dowork(session, "AUTH_PENDING", D_PUSH);
     }
     else
     {
@@ -455,7 +465,7 @@ send_auth_pending_messages(struct tls_multi *tls_multi, const char *extra,
         struct buffer buf = alloc_buf_gc(len, &gc);
         buf_printf(&buf, auth_pre);
         buf_printf(&buf, "%u", timeout);
-        send_control_channel_string_dowork(tls_multi, BSTR(&buf), D_PUSH);
+        send_control_channel_string_dowork(session, BSTR(&buf), D_PUSH);
     }
 
     size_t len = strlen(extra) + 1 + sizeof(info_pre);
@@ -468,7 +478,7 @@ send_auth_pending_messages(struct tls_multi *tls_multi, const char *extra,
     struct buffer buf = alloc_buf_gc(len, &gc);
     buf_printf(&buf, info_pre);
     buf_printf(&buf, "%s", extra);
-    send_control_channel_string_dowork(tls_multi, BSTR(&buf), D_PUSH);
+    send_control_channel_string_dowork(session, BSTR(&buf), D_PUSH);
 
     ks->auth_deferred_expire = now + timeout;
 
@@ -671,6 +681,11 @@ prepare_push_reply(struct context *c, struct gc_arena *gc,
         push_option_fmt(gc, push_list, M_USAGE, "key-derivation tls-ekm");
     }
 
+    if (o->imported_protocol_flags & CO_USE_DYNAMIC_TLS_CRYPT)
+    {
+        buf_printf(&proto_flags, " dyn-tls-crypt");
+    }
+
     if (buf_len(&proto_flags) > 0)
     {
         push_option_fmt(gc, push_list, M_USAGE, "protocol-flags%s", buf_str(&proto_flags));
@@ -702,7 +717,6 @@ send_push_options(struct context *c, struct buffer *buf,
 {
     struct push_entry *e = push_list->head;
 
-    e = push_list->head;
     while (e)
     {
         if (e->enable)
@@ -740,6 +754,7 @@ send_push_reply_auth_token(struct tls_multi *multi)
 {
     struct gc_arena gc = gc_new();
     struct push_list push_list = { 0 };
+    struct tls_session *session = &multi->session[TM_ACTIVE];
 
     prepare_auth_token_push_reply(multi, &gc, &push_list);
 
@@ -750,7 +765,7 @@ send_push_reply_auth_token(struct tls_multi *multi)
     /* Construct a mimimal control channel push reply message */
     struct buffer buf = alloc_buf_gc(PUSH_BUNDLE_SIZE, &gc);
     buf_printf(&buf, "%s,%s", push_reply_cmd, e->option);
-    send_control_channel_string_dowork(multi, BSTR(&buf), D_PUSH);
+    send_control_channel_string_dowork(session, BSTR(&buf), D_PUSH);
     gc_free(&gc);
 }
 

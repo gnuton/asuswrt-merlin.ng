@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.16: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <title>openvpn</title>
 <style type="text/css">
 
@@ -473,24 +473,32 @@ need for /dev/urandom to be available.</p>
 <tr><td class="option-group" colspan="2">
 <kbd><span class="option">--compat-mode <var>version</var></span></kbd></td>
 </tr>
-<tr><td>&nbsp;</td><td><p class="first">This option provides a way to alter the default of OpenVPN to be more
-compatible with the version <tt class="docutils literal">version</tt> specified. All of the changes
-this option does can also be achieved using individual configuration
-options.</p>
+<tr><td>&nbsp;</td><td><p class="first">This option provides a convenient way to alter the defaults of OpenVPN
+to be more compatible with the version <tt class="docutils literal">version</tt> specified. All of
+the changes this option applies can also be achieved using individual
+configuration options.</p>
+<p>The version specified with this option is the version of OpenVPN peer
+OpenVPN should try to be compatible with. In general OpenVPN should be
+compatible with the last two previous version without this option. E.g.
+OpenVPN 2.6.0 should be compatible with 2.5.x and 2.4.x without this option.
+However, there might be some edge cases that still require this option even
+in these cases.</p>
 <p>Note: Using this option reverts defaults to no longer recommended
 values and should be avoided if possible.</p>
 <p>The following table details what defaults are changed depending on the
 version specified.</p>
-<ul class="last simple">
+<ul class="simple">
 <li>2.5.x or lower: <tt class="docutils literal"><span class="pre">--allow-compression</span> asym</tt> is automatically added
 to the configuration if no other compression options are present.</li>
 <li>2.4.x or lower: The cipher in <tt class="docutils literal"><span class="pre">--cipher</span></tt> is appended to
-<tt class="docutils literal"><span class="pre">--data-ciphers</span></tt></li>
+<tt class="docutils literal"><span class="pre">--data-ciphers</span></tt>.</li>
 <li>2.3.x or lower: <tt class="docutils literal"><span class="pre">--data-cipher-fallback</span></tt> is automatically added with
-the same cipher as <tt class="docutils literal"><span class="pre">--cipher</span></tt></li>
+the same cipher as <tt class="docutils literal"><span class="pre">--cipher</span></tt>.</li>
 <li>2.3.6 or lower: <tt class="docutils literal"><span class="pre">--tls-version-min</span> 1.0</tt> is added to the configuration
 when <tt class="docutils literal"><span class="pre">--tls-version-min</span></tt> is not explicitly set.</li>
 </ul>
+<p class="last">If not required, this is option should be avoided. Setting this option can
+lower security or disable features like data-channel offloading.</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--config <var>file</var></span></kbd></td>
@@ -1018,7 +1026,9 @@ uplink packets</em>.  This also allows migrating to disable compression
 when changing both server and client configurations to remove
 compression at the same time is not a feasible option.</dd>
 <dt><code>no</code>  (default)</dt>
-<dd>OpenVPN will refuse any non-stub compression.</dd>
+<dd>OpenVPN will refuse any compression.  If data-channel offloading
+is enabled, OpenVPN will additionally also refuse compression
+framing (stub).</dd>
 <dt><code>yes</code></dt>
 <dd>OpenVPN will send and receive compressed packets.</dd>
 </dl>
@@ -1426,7 +1436,7 @@ each entry exactly once. A successful connection resets the counter.
 <p>Valid syntaxes:</p>
 <pre class="literal-block">
 dns search-domains domain [domain ...]
-dns server n address addr[:port] [addr[:port]]
+dns server n address addr[:port] [addr[:port] ...]
 dns server n resolve-domains|exclude-domains domain [domain ...]
 dns server n dnssec yes|optional|no
 dns server n transport DoH|DoT|plain
@@ -1442,9 +1452,10 @@ DNS server options it must be between 0 and 127. The server id is used
 to group options and also for ordering the list of configured DNS servers;
 lower numbers come first. DNS servers being pushed to a client replace
 already configured DNS servers with the same server id.</p>
-<p>The <tt class="docutils literal">address</tt> option configures the IPv4 and / or IPv6 address of
-the DNS server. Optionally a port can be appended after a colon. IPv6
-addresses need to be enclosed in brackets if a port is appended.</p>
+<p>The <tt class="docutils literal">address</tt> option configures the IPv4 and / or IPv6 address(es) of
+the DNS server. Up to eight addresses can be specified per DNS server.
+Optionally a port can be appended after a colon. IPv6 addresses need to
+be enclosed in brackets if a port is appended.</p>
 <p>The <tt class="docutils literal"><span class="pre">resolve-domains</span></tt> and <tt class="docutils literal"><span class="pre">exclude-domains</span></tt> options take one or
 more DNS domains which are explicitly resolved or explicitly not resolved
 by a server. Only one of the options can be configured for a server.
@@ -3563,8 +3574,9 @@ options to avoid this behaviour.</p>
 <div class="section" id="openvpn-3-clients">
 <h2>OpenVPN 3 clients</h2>
 <p>Clients based on the OpenVPN 3.x library (<a class="reference external" href="https://github.com/openvpn/openvpn3/">https://github.com/openvpn/openvpn3/</a>)
-do not have a configurable <tt class="docutils literal"><span class="pre">--ncp-ciphers</span></tt> or <tt class="docutils literal"><span class="pre">--data-ciphers</span></tt> option. Instead
-these clients will announce support for all their supported AEAD ciphers
+do not have a configurable <tt class="docutils literal"><span class="pre">--ncp-ciphers</span></tt> or <tt class="docutils literal"><span class="pre">--data-ciphers</span></tt> option. Newer
+versions by default disable legacy AES-CBC, BF-CBC, and DES-CBC ciphers.
+These clients will always announce support for all their supported AEAD ciphers
 (<cite>AES-256-GCM</cite>, <cite>AES-128-GCM</cite> and in newer versions also <cite>Chacha20-Poly1305</cite>).</p>
 <p>To support OpenVPN 3.x based clients at least one of these ciphers needs to be
 included in the server's <tt class="docutils literal"><span class="pre">--data-ciphers</span></tt> option.</p>
@@ -4213,7 +4225,7 @@ such scripts and some third-party user interfaces such as tunnelblick also
 come with scripts that process these options.</p>
 <p>Valid syntax:</p>
 <pre class="literal-block">
-dhcp-options type [parm]
+dhcp-option type [parm]
 </pre>
 <dl class="docutils">
 <dt><code>DOMAIN</code> <tt class="docutils literal">name</tt></dt>
@@ -4556,7 +4568,7 @@ always be compatible between client and server.</p>
 <dd>Use a point-to-point topology, by allocating one /30 subnet
 per client. This is designed to allow point-to-point semantics when some
 or all of the connecting clients might be Windows systems. This is the
-default on OpenVPN 2.0.</dd>
+default.</dd>
 <dt><code>p2p</code></dt>
 <dd>Use a point-to-point topology where the remote endpoint of
 the client's tun interface always points to the local endpoint of the
@@ -4568,12 +4580,7 @@ Windows systems.</dd>
 configuring the tun interface with a local IP address and subnet mask,
 similar to the topology used in <tt class="docutils literal"><span class="pre">--dev</span> tap</tt> and ethernet bridging
 mode. This mode allocates a single IP address per connecting client and
-works on Windows as well. Only available when server and clients are
-OpenVPN 2.1 or higher, or OpenVPN 2.0.x which has been manually patched
-with the <tt class="docutils literal"><span class="pre">--topology</span></tt> directive code. When used on Windows, requires
-version 8.2 or higher of the TAP-Win32 driver. When used on *nix,
-requires that the tun driver supports an <tt class="docutils literal">ifconfig</tt>(8) command which
-sets a subnet instead of a remote endpoint IP address.</dd>
+works on Windows as well.</dd>
 </dl>
 <p class="last"><em>Note:</em> Using <tt class="docutils literal"><span class="pre">--topology</span> subnet</tt> changes the interpretation of the
 arguments of <tt class="docutils literal"><span class="pre">--ifconfig</span></tt> to mean &quot;address netmask&quot;, no longer &quot;local
@@ -5314,10 +5321,8 @@ only if the corresponding option has a value assigned. For the semantics
 of each individual variable, please refer to the documentation for <tt class="docutils literal"><span class="pre">--dns</span></tt>.</p>
 <pre class="last literal-block">
 dns_search_domain_{n}
-dns_server_{n}_address4
-dns_server_{n}_port4
-dns_server_{n}_address6
-dns_server_{n}_port6
+dns_server_{n}_address_{m}
+dns_server_{n}_port_{m}
 dns_server_{n}_resolve_domain_{m}
 dns_server_{n}_exclude_domain_{m}
 dns_server_{n}_dnssec
@@ -5811,12 +5816,19 @@ certificate's subject:</p>
 <pre class="literal-block">
 cryptoapicert &quot;SUBJ:Peter Runestig&quot;
 </pre>
-<p>To select a certificate, based on certificate's thumbprint:</p>
+<p>To select a certificate, based on certificate's thumbprint (SHA1 hash):</p>
 <pre class="literal-block">
 cryptoapicert &quot;THUMB:f6 49 24 41 01 b4 ...&quot;
 </pre>
-<p class="last">The thumbprint hex string can easily be copy-and-pasted from the Windows
-Certificate Store GUI.</p>
+<p>The thumbprint hex string can easily be copy-and-pasted from the Windows
+Certificate Store GUI. The embedded spaces in the hex string are optional.</p>
+<p>To select a certificate based on a substring in certificate's
+issuer name:</p>
+<pre class="literal-block">
+cryptoapicert &quot;ISSUER:Sample CA&quot;
+</pre>
+<p class="last">The first non-expired certificate found in the user's store or the
+machine store that matches the select-string is used.</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--dhcp-release</span></kbd></td>
@@ -6300,20 +6312,22 @@ See <tt class="docutils literal"><span class="pre">--ipchange</span></tt> for mo
 </div>
 <div class="section" id="howto">
 <h1>HOWTO</h1>
+<p>The manual <tt class="docutils literal"><span class="pre">openvpn-examples</span></tt>(5) gives some examples, especially for
+small setups.</p>
 <p>For a more comprehensive guide to setting up OpenVPN in a production
 setting, see the OpenVPN HOWTO at
 <a class="reference external" href="https://openvpn.net/community-resources/how-to/">https://openvpn.net/community-resources/how-to/</a></p>
 </div>
 <div class="section" id="protocol">
 <h1>PROTOCOL</h1>
-<p>For a description of OpenVPN's underlying protocol, see
-<a class="reference external" href="https://openvpn.net/community-resources/openvpn-protocol/">https://openvpn.net/community-resources/openvpn-protocol/</a></p>
+<p>An ongoing effort to document the OpenVPN protocol can be found under
+<a class="reference external" href="https://github.com/openvpn/openvpn-rfc">https://github.com/openvpn/openvpn-rfc</a></p>
 </div>
 <div class="section" id="web">
 <h1>WEB</h1>
-<p>OpenVPN's web site is at <a class="reference external" href="https://openvpn.net/">https://openvpn.net/</a></p>
+<p>OpenVPN's web site is at <a class="reference external" href="https://community.openvpn.net/">https://community.openvpn.net/</a></p>
 <p>Go here to download the latest version of OpenVPN, subscribe to the
-mailing lists, read the mailing list archives, or browse the SVN
+mailing lists, read the mailing list archives, or browse the Git
 repository.</p>
 </div>
 <div class="section" id="bugs">

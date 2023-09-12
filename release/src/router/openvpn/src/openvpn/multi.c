@@ -549,7 +549,10 @@ multi_del_iroutes(struct multi_context *m,
 static void
 setenv_stats(struct multi_context *m, struct context *c)
 {
-    dco_get_peer_stats_multi(&m->top.c1.tuntap->dco, m);
+    if (dco_enabled(&m->top.options))
+    {
+        dco_get_peer_stats_multi(&m->top.c1.tuntap->dco, m);
+    }
 
     setenv_counter(c->c2.es, "bytes_received", c->c2.link_read_bytes + c->c2.dco_read_bytes);
     setenv_counter(c->c2.es, "bytes_sent", c->c2.link_write_bytes + c->c2.dco_write_bytes);
@@ -849,7 +852,10 @@ multi_print_status(struct multi_context *m, struct status_output *so, const int 
 
         status_reset(so);
 
-        dco_get_peer_stats_multi(&m->top.c1.tuntap->dco, m);
+        if (dco_enabled(&m->top.options))
+        {
+            dco_get_peer_stats_multi(&m->top.c1.tuntap->dco, m);
+        }
 
         if (version == 1)
         {
@@ -1817,6 +1823,10 @@ multi_client_set_protocol_options(struct context *c)
     {
         o->imported_protocol_flags |= CO_USE_TLS_KEY_MATERIAL_EXPORT;
     }
+    if (proto & IV_PROTO_DYN_TLS_CRYPT)
+    {
+        o->imported_protocol_flags |= CO_USE_DYNAMIC_TLS_CRYPT;
+    }
 #endif
 
     if (proto & IV_PROTO_CC_EXIT_NOTIFY)
@@ -2756,6 +2766,12 @@ multi_connection_established(struct multi_context *m, struct multi_instance *mi)
         cc_succeeded = false;
     }
 
+    if (!check_compression_settings_valid(&mi->context.options.comp, D_MULTI_ERRORS))
+    {
+        msg(D_MULTI_ERRORS, "MULTI: client has been rejected due to invalid compression options");
+        cc_succeeded = false;
+    }
+
     if (cc_succeeded)
     {
         multi_client_connect_late_setup(m, mi, *option_types_found);
@@ -3199,37 +3215,6 @@ multi_signal_instance(struct multi_context *m, struct multi_instance *mi, const 
 
 #if defined(ENABLE_DCO) && (defined(TARGET_LINUX) || defined(TARGET_FREEBSD))
 static void
-process_incoming_dco_packet(struct multi_context *m, struct multi_instance *mi,
-                            dco_context_t *dco)
-{
-    if (BLEN(&dco->dco_packet_in) < 1)
-    {
-        msg(D_DCO, "Received too short packet for peer %d",
-            dco->dco_message_peer_id);
-        goto done;
-    }
-
-    uint8_t *ptr = BPTR(&dco->dco_packet_in);
-    uint8_t op = ptr[0] >> P_OPCODE_SHIFT;
-    if ((op == P_DATA_V1) || (op == P_DATA_V2))
-    {
-        msg(D_DCO, "DCO: received data channel packet for peer %d",
-            dco->dco_message_peer_id);
-        goto done;
-    }
-
-    struct buffer orig_buf = mi->context.c2.buf;
-    mi->context.c2.buf = dco->dco_packet_in;
-
-    multi_process_incoming_link(m, mi, 0);
-
-    mi->context.c2.buf = orig_buf;
-
-done:
-    buf_init(&dco->dco_packet_in, 0);
-}
-
-static void
 process_incoming_del_peer(struct multi_context *m, struct multi_instance *mi,
                           dco_context_t *dco)
 {
@@ -3244,12 +3229,9 @@ process_incoming_del_peer(struct multi_context *m, struct multi_instance *mi,
             reason = "ovpn-dco: transport error";
             break;
 
-#ifdef TARGET_LINUX
-        /* FIXME: this is linux-only today and breaks FreeBSD compilation */
         case OVPN_DEL_PEER_REASON_TRANSPORT_DISCONNECT:
             reason = "ovpn-dco: transport disconnected";
             break;
-#endif
 
         case OVPN_DEL_PEER_REASON_USERSPACE:
             /* We assume that is ourselves. Unfortunately, sometimes these
@@ -3298,13 +3280,13 @@ multi_process_incoming_dco(struct multi_context *m)
     if ((peer_id < m->max_clients) && (m->instances[peer_id]))
     {
         mi = m->instances[peer_id];
-        if (dco->dco_message_type == OVPN_CMD_PACKET)
-        {
-            process_incoming_dco_packet(m, mi, dco);
-        }
-        else if (dco->dco_message_type == OVPN_CMD_DEL_PEER)
+        if (dco->dco_message_type == OVPN_CMD_DEL_PEER)
         {
             process_incoming_del_peer(m, mi, dco);
+        }
+        else if (dco->dco_message_type == OVPN_CMD_SWAP_KEYS)
+        {
+            tls_session_soft_reset(mi->context.c2.tls_multi);
         }
     }
     else
@@ -3325,8 +3307,6 @@ multi_process_incoming_dco(struct multi_context *m)
         msg(msglevel, "Received DCO message for unknown peer-id: %d, "
             "type %d, del_peer_reason %d", peer_id, dco->dco_message_type,
             dco->dco_del_peer_reason);
-        /* Also clear the buffer if this was incoming packet for a dropped peer */
-        buf_init(&dco->dco_packet_in, 0);
     }
 
     dco->dco_message_type = 0;
@@ -4025,15 +4005,33 @@ management_kill_by_cid(void *arg, const unsigned long cid, const char *kill_msg)
 static bool
 management_client_pending_auth(void *arg,
                                const unsigned long cid,
+                               const unsigned int mda_key_id,
                                const char *extra,
                                unsigned int timeout)
 {
     struct multi_context *m = (struct multi_context *) arg;
     struct multi_instance *mi = lookup_by_cid(m, cid);
+
     if (mi)
     {
+        struct tls_multi *multi = mi->context.c2.tls_multi;
+        struct tls_session *session;
+
+        if (multi->session[TM_INITIAL].key[KS_PRIMARY].mda_key_id == mda_key_id)
+        {
+            session = &multi->session[TM_INITIAL];
+        }
+        else if (multi->session[TM_ACTIVE].key[KS_PRIMARY].mda_key_id == mda_key_id)
+        {
+            session = &multi->session[TM_ACTIVE];
+        }
+        else
+        {
+            return false;
+        }
+
         /* sends INFO_PRE and AUTH_PENDING messages to client */
-        bool ret = send_auth_pending_messages(mi->context.c2.tls_multi, extra,
+        bool ret = send_auth_pending_messages(multi, session, extra,
                                               timeout);
         reschedule_multi_process(&mi->context);
         multi_schedule_context_wakeup(m, mi);

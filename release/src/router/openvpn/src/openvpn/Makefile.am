@@ -16,7 +16,8 @@ MAINTAINERCLEANFILES = \
 
 EXTRA_DIST = \
 	openvpn.vcxproj \
-	openvpn.manifest
+	openvpn.manifest \
+	vcpkg.json
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -78,6 +79,7 @@ openvpn_SOURCES = \
 	mbuf.c mbuf.h \
 	memdbg.h \
 	misc.c misc.h \
+	ovpn_dco_freebsd.h \
 	ovpn_dco_linux.h \
 	ovpn_dco_win.h \
 	platform.c platform.h \

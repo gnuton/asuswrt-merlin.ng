@@ -1,6 +1,227 @@
 OpenVPN ChangeLog
 Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
 
+2023.08.14 -- Version 2.6.6
+
+Antonio Quartulli (1):
+      configure.ac: fix typ0 in LIBCAPNG_CFALGS
+
+Arne Schwabe (8):
+      Avoid unused function warning/error on FreeBSD (and potientially others)
+      fix warning with gcc 12.2.0 (compiler bug?)
+      Fix CR_RESPONSE mangaement message using wrong key_id
+      Print a more user-friendly error when tls-crypt-v2 client auth fails
+      Ignore Ipv6 route delete request on Android and set ipv4 verbosity to 7
+      Revert commit 423ced962d
+      Implement using --peer-fingerprint without CA certificates
+      show extra info for OpenSSL errors
+
+David Sommerseth (1):
+      ntlm: Clarify details on NTLM phase 3 decoding
+
+Frank Lichtenheld (8):
+      dist: add more missing files only used in the MSVC build
+      dist: Include all documentation in distribution
+      unit_tests: Add missing cert_data.h to source list for unit tests
+      test_tls_crypt: Improve mock() usage to be more portable
+      Remove old Travis CI related files
+      options: Do not hide variables from parent scope
+      pkcs11_openssl: Disable unused code
+      route: Fix overriding return value of add_route3
+
+George Pchelkin (1):
+      fix typo: dhcp-options to dhcp-option in vpn-network-options.rst
+
+Gert Doering (1):
+      Make received OCC exit messages more visible in log.
+
+Heiko Hund (1):
+      work around false positive warning with mingw 12
+
+Lev Stipakov (3):
+      tun.c: enclose DNS domain in single quotes in WMIC call
+      manage.c: document missing KID parameter
+      Set WINS servers via interactice service
+
+Sergey Korolev (1):
+      dco-linux: fix counter print format
+
+
+2023.06.13 -- Version 2.6.5
+
+Arne Schwabe (1):
+      Fix use-after-free with EVP_CIPHER_free
+
+Frank Lichtenheld (6):
+      dco_linux: properly close dco version file
+      DCO: fix memory leak in dco_get_peer_stats_multi for Linux
+      Fix two unused assignments
+      sample-plugins: Fix memleak in client-connect example plugin
+      options: remove --key-method from usage message
+      msvc-generate: include version.m4.in in tarball
+
+Ilya Shipitsin (1):
+      src/openvpn/dco_freebsd.c: handle malloc failure
+
+Lev Stipakov (2):
+      dco-win: support for --dev-node
+      tapctl: generate driver-specific adapter names
+
+Selva Nair (2):
+      Correctly handle Unicode names for exit event
+      Interactive service: do not force a target desktop for openvpn.exe
+
+
+2023.05.11 -- Version 2.6.4
+
+Arne Schwabe (3):
+      Remove unused variable line
+      Add Apache2 linking with for new commits
+      Fix compile error on TARGET_ANDROID
+
+Frank Lichtenheld (2):
+      man page: Remove cruft from --topology documentation
+      tests: do not include t_client.sh in dist
+
+Kristof Provost (1):
+      DCO: support key rotation notifications
+
+Michael Nix (1):
+      fix typo in help text: --ignore-unknown-option
+
+Selva Nair (2):
+      Format Windows error message in Unicode
+      Bugfix: dangling pointer passed to pkcs11-helper
+
+
+2023.04.13 -- Version 2.6.3
+
+Frank Lichtenheld (3):
+      GHA: remove Ubuntu 18.04 builds
+      vcpkg: request "tools" feature of openssl for MSVC build
+      doc: run rst2* with --strict to catch warnings
+
+Lev Stipakov (1):
+      Support of DNS domain for DHCP-less drivers
+
+Selva Nair (1):
+      Bug-fix: segfault in dco_get_peer_stats()
+
+2023.03.24 -- Version 2.6.2
+
+Antonio Quartulli (6):
+      dco: don't use NetLink to exchange control packets
+      dco: print version to log if available
+      dco-linux: remove M_ERRNO flag when printing netlink error message
+      multi: don't call DCO APIs if DCO is disabled
+      dco-freebsd: use m->instances[] instead of m->hash
+      dco-linux: implement dco_get_peer_stats{, multi} API
+
+Arne Schwabe (12):
+      Set netlink socket to be non-blocking
+      Ensure n = 2 is set in key2 struct in tls_crypt_v2_unwrap_client_key
+      Fix memory leaks in open_tun_dco()
+      Fix memory leaks in HMAC initial packet generation
+      Use key_state instead of multi for tls_send_payload parameter
+      Make sending plain text control message session aware
+      Only update frame calculation if we have a valid link sockets
+      Improve description of compat-mode
+      Simplify --compress parsing in options.c
+      Refuse connection if server pushes an option contradicting allow-compress
+      Add 'allow-compression stub-only' internally for DCO
+      Parse compression options and bail out when compression is disabled
+
+Frank Lichtenheld (1):
+      tests/unit_tests: Fix 'make distcheck' with subdir-objects enabled
+
+Gert Doering (1):
+      preparing release 2.6.2
+
+Heiko Hund (1):
+      dns option: allow up to eight addresses per server
+
+Kristof Provost (1):
+      dco: print FreeBSD version
+
+Lev Stipakov (4):
+      Support --inactive option for DCO
+      Fix '--inactive <time> 0' behavior for DCO
+      Print DCO client stats on SIGUSR2
+      Don't overwrite socket flags when using DCO on Windows
+
+Michael Baentsch (1):
+      using OpenSSL3 API for EVP PKEY type name reporting
+
+Selva Nair (8):
+      Bugfix: Convert ECDSA signature form pkcs11-helper to DER encoded form
+      Import some sample certificates into Windows store for testing
+      Add tests for finding certificates in Windows cert store
+      Refactor SSL_CTX_use_CryptoAPI_certificate()
+      Add a test for signing with certificates in Windows store
+      Unit tests: add test for SSL_CTX_use_Cryptoapi_certificate()
+      Improve error message on short read from socks proxy
+      Make error in setting metric for IPv6 interface non-fatal
+
+
+2023.03.08 -- Version 2.6.1
+
+Arne Schwabe (13):
+      Fix unaligned access in auth-token
+      Update LibreSSL to 3.7.0 in Github actions
+      Add printing USAN stack trace on github actions
+      Fix LibreSSL not building in Github Actions
+      Add missing stdint.h includes in unit tests files
+      Combine extra_tun/frame parameter of frame_calculate_payload_overhead
+      Update the last sections in the man page to a be a bit less outdated
+      Add building unit tests with mingw to github actions
+      Revise the cipher negotiation info about OpenVPN3 in the man page
+      Exit if a proper message instead of segfault on Android without management
+      Use proper print format/casting when converting msg_channel handle
+      Reduce initialisation spam from verb <= 3 and print summary instead
+      Dynamic tls-crypt for secure soft_reset/session renegotiation
+
+Frank Lichtenheld (8):
+      Changes.rst: document removal of --keysize
+      Windows: fix unused function setenv_foreign_option
+      Windows: fix unused variables in delete_route_ipv6
+      Windows: fix wrong printf format in x_check_status
+      Windows: fix unused variable in win32_get_arch
+      configure: enable DCO by default on FreeBSD/Linux
+      Windows: fix signedness errors with recv/send
+      configure: fix formatting of --disable-lz4 and --enable-comp-stub
+
+Gert Doering (2):
+      Get rid of unused 'bool tuntap_buffer' arguments.
+      FreeBSD 12.x workaround for IPv6 ifconfig is needed on 12.4 as well
+
+Kristof Provost (3):
+      options.c: enforce a minimal fragment size
+      configure: improve FreeBSD DCO check
+      dco: define OVPN_DEL_PEER_REASON_TRANSPORT_DISCONNECT on FreeBSD
+
+Lev Stipakov (6):
+      Allow certain DHCP options to be used without DHCP server
+      dco-win: use proper calling convention on x86
+      Improve format specifier for socket handle in Windows
+      Disable DCO if proxy is set via management
+      Add logging for windows driver selection process
+      Avoid management log loop with verb >= 6
+
+Matthias Andree (1):
+      make dist: Ship ovpn_dco_freebsd.h, too
+
+Selva Nair (9):
+      block-dns using iservice: fix a potential double free
+      Conditionally add subdir-objects option to automake
+      Build unit tests in mingw Windows build
+      cyryptapi.c: log the selected certificate's name
+      cryptoapi.c: remove pre OpenSSL-3.01 support
+      cryptoapi.c: simplify parsing of thumbprint hex string
+      Option --cryptoapicert: support issuer name as a selector
+      Add a unit test for functions in cryptoapi.c
+      Do not save pointer to 'struct passwd' returned by getpwnam etc.
+
+
 2023.01.25 -- Version 2.6.0
 
 Antonio Quartulli (1):

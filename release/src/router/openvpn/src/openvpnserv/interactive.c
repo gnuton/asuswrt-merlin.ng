@@ -93,6 +93,7 @@ typedef enum {
     undo_dns6,
     undo_domain,
     undo_ring_buffer,
+    undo_wins,
     _undo_type_max
 } undo_type_t;
 typedef list_item_t *undo_lists_t[_undo_type_max];
@@ -777,85 +778,114 @@ CmpAny(LPVOID item, LPVOID any)
 }
 
 static DWORD
-HandleBlockDNSMessage(const block_dns_message_t *msg, undo_lists_t *lists)
+DeleteBlockDNS(const block_dns_message_t *msg, undo_lists_t *lists)
 {
     DWORD err = 0;
-    block_dns_data_t *interface_data;
+    block_dns_data_t *interface_data = RemoveListItem(&(*lists)[block_dns], CmpAny, NULL);
+
+    if (interface_data)
+    {
+        err = delete_block_dns_filters(interface_data->engine);
+        if (interface_data->metric_v4 >= 0)
+        {
+            set_interface_metric(msg->iface.index, AF_INET,
+                                 interface_data->metric_v4);
+        }
+        if (interface_data->metric_v6 >= 0)
+        {
+            set_interface_metric(msg->iface.index, AF_INET6,
+                                 interface_data->metric_v6);
+        }
+        free(interface_data);
+    }
+    else
+    {
+        MsgToEventLog(M_ERR, TEXT("No previous block DNS filters to delete"));
+    }
+
+    return err;
+}
+
+static DWORD
+AddBlockDNS(const block_dns_message_t *msg, undo_lists_t *lists)
+{
+    DWORD err = 0;
+    block_dns_data_t *interface_data = NULL;
     HANDLE engine = NULL;
     LPCWSTR exe_path;
 
     exe_path = settings.exe_path;
 
-    if (msg->header.type == msg_add_block_dns)
+    err = add_block_dns_filters(&engine, msg->iface.index, exe_path, BlockDNSErrHandler);
+    if (!err)
     {
-        err = add_block_dns_filters(&engine, msg->iface.index, exe_path, BlockDNSErrHandler);
+        interface_data = malloc(sizeof(block_dns_data_t));
+        if (!interface_data)
+        {
+            err = ERROR_OUTOFMEMORY;
+            goto out;
+        }
+        interface_data->engine = engine;
+        interface_data->index = msg->iface.index;
+        int is_auto = 0;
+        interface_data->metric_v4 = get_interface_metric(msg->iface.index,
+                                                         AF_INET, &is_auto);
+        if (is_auto)
+        {
+            interface_data->metric_v4 = 0;
+        }
+        interface_data->metric_v6 = get_interface_metric(msg->iface.index,
+                                                         AF_INET6, &is_auto);
+        if (is_auto)
+        {
+            interface_data->metric_v6 = 0;
+        }
+
+        err = AddListItem(&(*lists)[block_dns], interface_data);
         if (!err)
         {
-            interface_data = malloc(sizeof(block_dns_data_t));
-            if (!interface_data)
-            {
-                return ERROR_OUTOFMEMORY;
-            }
-            interface_data->engine = engine;
-            interface_data->index = msg->iface.index;
-            int is_auto = 0;
-            interface_data->metric_v4 = get_interface_metric(msg->iface.index,
-                                                             AF_INET, &is_auto);
-            if (is_auto)
-            {
-                interface_data->metric_v4 = 0;
-            }
-            interface_data->metric_v6 = get_interface_metric(msg->iface.index,
-                                                             AF_INET6, &is_auto);
-            if (is_auto)
-            {
-                interface_data->metric_v6 = 0;
-            }
-            err = AddListItem(&(*lists)[block_dns], interface_data);
+            err = set_interface_metric(msg->iface.index, AF_INET,
+                                       BLOCK_DNS_IFACE_METRIC);
             if (!err)
             {
-                err = set_interface_metric(msg->iface.index, AF_INET,
-                                           BLOCK_DNS_IFACE_METRIC);
-                if (!err)
-                {
-                    set_interface_metric(msg->iface.index, AF_INET6,
-                                         BLOCK_DNS_IFACE_METRIC);
-                }
-            }
-        }
-    }
-    else
-    {
-        interface_data = RemoveListItem(&(*lists)[block_dns], CmpAny, NULL);
-        if (interface_data)
-        {
-            engine = interface_data->engine;
-            err = delete_block_dns_filters(engine);
-            engine = NULL;
-            if (interface_data->metric_v4 >= 0)
-            {
-                set_interface_metric(msg->iface.index, AF_INET,
-                                     interface_data->metric_v4);
-            }
-            if (interface_data->metric_v6 >= 0)
-            {
+                /* for IPv6, we intentionally ignore errors, because
+                 * otherwise block-dns activation will fail if a user or
+                 * admin has disabled IPv6 on the tun/tap/dco interface
+                 * (if OpenVPN wants IPv6 ifconfig, we'll fail there)
+                 */
                 set_interface_metric(msg->iface.index, AF_INET6,
-                                     interface_data->metric_v6);
+                                     BLOCK_DNS_IFACE_METRIC);
             }
-            free(interface_data);
-        }
-        else
-        {
-            MsgToEventLog(M_ERR, TEXT("No previous block DNS filters to delete"));
+            if (err)
+            {
+                /* delete the filters, remove undo item and free interface data */
+                DeleteBlockDNS(msg, lists);
+                engine = NULL;
+            }
         }
     }
 
+out:
     if (err && engine)
     {
         delete_block_dns_filters(engine);
+        free(interface_data);
     }
 
     return err;
+}
+
+static DWORD
+HandleBlockDNSMessage(const block_dns_message_t *msg, undo_lists_t *lists)
+{
+    if (msg->header.type == msg_add_block_dns)
+    {
+        return AddBlockDNS(msg, lists);
+    }
+    else
+    {
+        return DeleteBlockDNS(msg, lists);
+    }
 }
 
 /*
@@ -1047,6 +1077,63 @@ netsh_dns_cmd(const wchar_t *action, const wchar_t *proto, const wchar_t *if_nam
     {
         wcscat_s(cmdline, ncmdline, L" validate=no");
     }
+    err = ExecCommand(argv0, cmdline, timeout);
+
+out:
+    free(cmdline);
+    return err;
+}
+
+/**
+ * Run the command: netsh interface ip $action wins $if_name [static] $addr
+ * @param  action      "delete", "add" or "set"
+ * @param  if_name     "name_of_interface"
+ * @param  addr        IPv4 address as a string
+ *
+ * If addr is null and action = "delete" all addresses are deleted.
+ * if action = "set" then "static" is added before $addr
+ */
+static DWORD
+netsh_wins_cmd(const wchar_t *action, const wchar_t *if_name, const wchar_t *addr)
+{
+    DWORD err = 0;
+    int timeout = 30000; /* in msec */
+    wchar_t argv0[MAX_PATH];
+    wchar_t *cmdline = NULL;
+    const wchar_t *addr_static = (wcscmp(action, L"set") == 0) ? L"static" : L"";
+
+    if (!addr)
+    {
+        if (wcscmp(action, L"delete") == 0)
+        {
+            addr = L"all";
+        }
+        else /* nothing to do -- return success*/
+        {
+            goto out;
+        }
+    }
+
+    /* Path of netsh */
+    openvpn_swprintf(argv0, _countof(argv0), L"%ls\\%ls", get_win_sys_path(), L"netsh.exe");
+
+    /* cmd template:
+     * netsh interface ip $action wins $if_name $static $addr
+     */
+    const wchar_t *fmt = L"netsh interface ip %ls wins \"%ls\" %ls %ls";
+
+    /* max cmdline length in wchars -- include room for worst case and some */
+    size_t ncmdline = wcslen(fmt) + wcslen(if_name) + wcslen(action) + wcslen(addr)
+                      +wcslen(addr_static) + 32 + 1;
+    cmdline = malloc(ncmdline * sizeof(wchar_t));
+    if (!cmdline)
+    {
+        err = ERROR_OUTOFMEMORY;
+        goto out;
+    }
+
+    openvpn_swprintf(cmdline, ncmdline, fmt, action, if_name, addr_static, addr);
+
     err = ExecCommand(argv0, cmdline, timeout);
 
 out:
@@ -1270,6 +1357,86 @@ out:
 }
 
 static DWORD
+HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
+{
+    DWORD err = 0;
+    wchar_t addr[16]; /* large enough to hold string representation of an ipv4 */
+    int addr_len = msg->addr_len;
+
+    /* sanity check */
+    if (addr_len > _countof(msg->addr))
+    {
+        addr_len = _countof(msg->addr);
+    }
+
+    if (!msg->iface.name[0]) /* interface name is required */
+    {
+        return ERROR_MESSAGE_DATA;
+    }
+
+    /* use a non-const reference with limited scope to enforce null-termination of strings from client */
+    {
+        wins_cfg_message_t *msgptr = (wins_cfg_message_t *)msg;
+        msgptr->iface.name[_countof(msg->iface.name) - 1] = '\0';
+    }
+
+    wchar_t *wide_name = utf8to16(msg->iface.name); /* utf8 to wide-char */
+    if (!wide_name)
+    {
+        return ERROR_OUTOFMEMORY;
+    }
+
+    /* We delete all current addresses before adding any
+     * OR if the message type is del_wins_cfg
+     */
+    if (addr_len > 0 || msg->header.type == msg_del_wins_cfg)
+    {
+        err = netsh_wins_cmd(L"delete", wide_name, NULL);
+        if (err)
+        {
+            goto out;
+        }
+        free(RemoveListItem(&(*lists)[undo_wins], CmpWString, wide_name));
+    }
+
+    if (msg->header.type == msg_del_wins_cfg)
+    {
+        goto out;  /* job done */
+    }
+
+    for (int i = 0; i < addr_len; ++i)
+    {
+        RtlIpv4AddressToStringW(&msg->addr[i].ipv4, addr);
+        err = netsh_wins_cmd(i == 0 ? L"set" : L"add", wide_name, addr);
+        if (i == 0 && err)
+        {
+            goto out;
+        }
+        /* We do not check for duplicate addresses, so any error in adding
+         * additional addresses is ignored.
+         */
+    }
+
+    err = 0;
+
+    if (addr_len > 0)
+    {
+        wchar_t *tmp_name = _wcsdup(wide_name);
+        if (!tmp_name || AddListItem(&(*lists)[undo_wins], tmp_name))
+        {
+            free(tmp_name);
+            netsh_wins_cmd(L"delete", wide_name, NULL);
+            err = ERROR_OUTOFMEMORY;
+            goto out;
+        }
+    }
+
+out:
+    free(wide_name);
+    return err;
+}
+
+static DWORD
 HandleEnableDHCPMessage(const enable_dhcp_message_t *dhcp)
 {
     DWORD err = 0;
@@ -1458,6 +1625,7 @@ HandleMessage(HANDLE pipe, HANDLE ovpn_proc,
         enable_dhcp_message_t dhcp;
         register_ring_buffers_message_t rrb;
         set_mtu_message_t mtu;
+        wins_cfg_message_t wins;
     } msg;
     ack_message_t ack = {
         .header = {
@@ -1516,6 +1684,11 @@ HandleMessage(HANDLE pipe, HANDLE ovpn_proc,
         case msg_add_dns_cfg:
         case msg_del_dns_cfg:
             ack.error_number = HandleDNSConfigMessage(&msg.dns, lists);
+            break;
+
+        case msg_add_wins_cfg:
+        case msg_del_wins_cfg:
+            ack.error_number = HandleWINSConfigMessage(&msg.wins, lists);
             break;
 
         case msg_enable_dhcp:
@@ -1577,6 +1750,10 @@ Undo(undo_lists_t *lists)
 
                 case undo_dns6:
                     DeleteDNS(AF_INET6, item->data);
+                    break;
+
+                case undo_wins:
+                    netsh_wins_cmd(L"delete", item->data, NULL);
                     break;
 
                 case undo_domain:
@@ -1839,7 +2016,6 @@ RunOpenvpn(LPVOID p)
     }
 
     startup_info.cb = sizeof(startup_info);
-    startup_info.lpDesktop = L"winsta0\\default";
     startup_info.dwFlags = STARTF_USESTDHANDLES;
     startup_info.hStdInput = stdin_read;
     startup_info.hStdOutput = stdout_write;

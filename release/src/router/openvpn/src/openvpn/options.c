@@ -248,7 +248,7 @@ static const char usage_message[] =
     "--setenv name value : Set a custom environmental variable to pass to script.\n"
     "--setenv FORWARD_COMPATIBLE 1 : Relax config file syntax checking to allow\n"
     "                  directives for future OpenVPN versions to be ignored.\n"
-    "--ignore-unkown-option opt1 opt2 ...: Relax config file syntax. Allow\n"
+    "--ignore-unknown-option opt1 opt2 ...: Relax config file syntax. Allow\n"
     "                  these options to be ignored when unknown\n"
     "--script-security level: Where level can be:\n"
     "                  0 -- strictly no calling of external programs\n"
@@ -512,7 +512,7 @@ static const char usage_message[] =
     "                  each filter is applied in the order of appearance.\n"
     "--dns server <n> <option> <value> [value ...] : Configure option for DNS server #n\n"
     "                  Valid options are :\n"
-    "                  address <addr[:port]> [addr[:port]] : server address 4/6\n"
+    "                  address <addr[:port]> [addr[:port] ...] : server addresses 4/6\n"
     "                  resolve-domains <domain> [domain ...] : split domains\n"
     "                  exclude-domains <domain> [domain ...] : domains not to resolve\n"
     "                  dnssec <yes|no|optional> : option to use DNSSEC\n"
@@ -569,8 +569,6 @@ static const char usage_message[] =
     "(These options are meaningful only for TLS-mode)\n"
     "--tls-server    : Enable TLS and assume server role during TLS handshake.\n"
     "--tls-client    : Enable TLS and assume client role during TLS handshake.\n"
-    "--key-method m  : (DEPRECATED) Data channel key exchange method.  m should be a method\n"
-    "                  number, such as 1 (default), 2, etc.\n"
     "--ca file       : Certificate authority file in .pem format containing\n"
     "                  root certificate.\n"
 #ifndef ENABLE_CRYPTO_MBEDTLS
@@ -1041,6 +1039,7 @@ setenv_settings(struct env_set *es, const struct options *o)
     }
 }
 
+#ifndef _WIN32
 static void
 setenv_foreign_option(struct options *o, const char *argv[], int len, struct env_set *es)
 {
@@ -1078,6 +1077,7 @@ setenv_foreign_option(struct options *o, const char *argv[], int len, struct env
         gc_free(&gc);
     }
 }
+#endif /* ifndef _WIN32 */
 
 static in_addr_t
 get_ip_addr(const char *ip_string, int msglevel, bool *error)
@@ -1290,7 +1290,7 @@ show_tuntap_options(const struct tuntap_options *o)
     SHOW_INT(dhcp_masq_offset);
     SHOW_INT(dhcp_lease_time);
     SHOW_INT(tap_sleep);
-    SHOW_BOOL(dhcp_options);
+    SHOW_UNSIGNED(dhcp_options);
     SHOW_BOOL(dhcp_renew);
     SHOW_BOOL(dhcp_pre_release);
     SHOW_STR(domain);
@@ -1385,21 +1385,26 @@ tuntap_options_copy_dns(struct options *o)
         const struct dns_server *server = dns->servers;
         while (server)
         {
-            if (server->addr4_defined && tt->dns_len < N_DHCP_ADDR)
+            for (int i = 0; i < server->addr_count; ++i)
             {
-                tt->dns[tt->dns_len++] = server->addr4.s_addr;
-            }
-            else
-            {
-                overflow = true;
-            }
-            if (server->addr6_defined && tt->dns6_len < N_DHCP_ADDR)
-            {
-                tt->dns6[tt->dns6_len++] = server->addr6;
-            }
-            else
-            {
-                overflow = true;
+                if (server->addr[i].family == AF_INET)
+                {
+                    if (tt->dns_len >= N_DHCP_ADDR)
+                    {
+                        overflow = true;
+                        continue;
+                    }
+                    tt->dns[tt->dns_len++] = server->addr[i].in.a4.s_addr;
+                }
+                else
+                {
+                    if (tt->dns6_len >= N_DHCP_ADDR)
+                    {
+                        overflow = true;
+                        continue;
+                    }
+                    tt->dns6[tt->dns6_len++] = server->addr[i].in.a6;
+                }
             }
             server = server->next;
         }
@@ -1446,23 +1451,26 @@ foreign_options_copy_dns(struct options *o, struct env_set *es)
 
     while (server)
     {
-        if (server->addr4_defined)
+        for (int i = 0; i < server->addr_count; ++i)
         {
-            const char *argv[] = {
-                "dhcp-option",
-                "DNS",
-                print_in_addr_t(server->addr4.s_addr, 0, &gc)
-            };
-            setenv_foreign_option(o, argv, 3, es);
-        }
-        if (server->addr6_defined)
-        {
-            const char *argv[] = {
-                "dhcp-option",
-                "DNS6",
-                print_in6_addr(server->addr6, 0, &gc)
-            };
-            setenv_foreign_option(o, argv, 3, es);
+            if (server->addr[i].family == AF_INET)
+            {
+                const char *argv[] = {
+                    "dhcp-option",
+                    "DNS",
+                    print_in_addr_t(server->addr[i].in.a4.s_addr, 0, &gc)
+                };
+                setenv_foreign_option(o, argv, 3, es);
+            }
+            else
+            {
+                const char *argv[] = {
+                    "dhcp-option",
+                    "DNS6",
+                    print_in6_addr(server->addr[i].in.a6, 0, &gc)
+                };
+                setenv_foreign_option(o, argv, 3, es);
+            }
         }
         server = server->next;
     }
@@ -1896,10 +1904,8 @@ show_settings(const struct options *o)
 
     SHOW_BOOL(fast_io);
 
-#ifdef USE_COMP
     SHOW_INT(comp.alg);
     SHOW_INT(comp.flags);
-#endif
 
     SHOW_STR(route_script);
     SHOW_STR(route_default_gateway);
@@ -2478,12 +2484,20 @@ options_postprocess_verify_ce(const struct options *options,
         msg(M_USAGE, "On Windows, --ip-win32 doesn't make sense unless --ifconfig is also used");
     }
 
-    if (options->tuntap_options.dhcp_options
-        && options->windows_driver != WINDOWS_DRIVER_WINTUN
-        && options->tuntap_options.ip_win32_type != IPW32_SET_DHCP_MASQ
-        && options->tuntap_options.ip_win32_type != IPW32_SET_ADAPTIVE)
+    if (options->tuntap_options.dhcp_options & DHCP_OPTIONS_DHCP_REQUIRED)
     {
-        msg(M_USAGE, "--dhcp-option requires --ip-win32 dynamic or adaptive");
+        const char *prefix = "Some dhcp-options require DHCP server";
+        if (options->windows_driver != WINDOWS_DRIVER_TAP_WINDOWS6)
+        {
+            msg(M_USAGE, "%s, which is not supported by selected %s driver",
+                prefix, print_windows_driver(options->windows_driver));
+        }
+        else if (options->tuntap_options.ip_win32_type != IPW32_SET_DHCP_MASQ
+                 && options->tuntap_options.ip_win32_type != IPW32_SET_ADAPTIVE)
+        {
+            msg(M_USAGE, "%s, which requires --ip-win32 dynamic or adaptive",
+                prefix);
+        }
     }
 
     if (options->windows_driver == WINDOWS_DRIVER_WINTUN && dev != DEV_TYPE_TUN)
@@ -3302,9 +3316,7 @@ pre_connect_save(struct options *o)
     o->pre_connect->ping_send_timeout = o->ping_send_timeout;
 
     /* Miscellaneous Options */
-#ifdef USE_COMP
     o->pre_connect->comp = o->comp;
-#endif
 }
 
 void
@@ -3368,9 +3380,7 @@ pre_connect_restore(struct options *o, struct gc_arena *gc)
         o->ping_send_timeout = pp->ping_send_timeout;
 
         /* Miscellaneous Options */
-#ifdef USE_COMP
         o->comp = pp->comp;
-#endif
     }
 
     o->push_continuation = 0;
@@ -3626,11 +3636,15 @@ options_set_backwards_compatible_options(struct options *o)
      *
      * Disable compression by default starting with 2.6.0 if no other
      * compression related option has been explicitly set */
-    if (!comp_non_stub_enabled(&o->comp) && !need_compatibility_before(o, 20600)
-        && (o->comp.flags == 0))
+    if (!need_compatibility_before(o, 20600) && (o->comp.flags == 0))
     {
-        o->comp.flags = COMP_F_ALLOW_STUB_ONLY|COMP_F_ADVERTISE_STUBS_ONLY;
+        if (!comp_non_stub_enabled(&o->comp))
+        {
+            o->comp.flags = COMP_F_ALLOW_STUB_ONLY | COMP_F_ADVERTISE_STUBS_ONLY;
+        }
     }
+#else  /* ifdef USE_COMP */
+    o->comp.flags = COMP_F_ALLOW_NOCOMP_ONLY;
 #endif
 }
 
@@ -3731,6 +3745,12 @@ options_postprocess_mutate(struct options *o, struct env_set *es)
         o->tuntap_options.disable_dco = !dco_check_option(D_DCO, o)
                                         || !dco_check_startup_option(D_DCO, o);
     }
+#ifdef USE_COMP
+    if (dco_enabled(o))
+    {
+        o->comp.flags |= COMP_F_ALLOW_NOCOMP_ONLY;
+    }
+#endif
 
 #ifdef _WIN32
     if (dco_enabled(o))
@@ -3749,17 +3769,20 @@ options_postprocess_mutate(struct options *o, struct env_set *es)
             o->windows_driver = WINDOWS_DRIVER_TAP_WINDOWS6;
         }
     }
-#endif
-
+#else  /* _WIN32 */
     if (dco_enabled(o) && o->dev_node)
     {
         msg(M_WARN, "Note: ignoring --dev-node as it has no effect when using "
             "data channel offload");
         o->dev_node = NULL;
     }
+#endif /* _WIN32 */
 
     /* this depends on o->windows_driver, which is set above */
     options_postprocess_mutate_invariant(o);
+
+    /* check that compression settings in the options are okay */
+    check_compression_settings_valid(&o->comp, M_USAGE);
 
     /*
      * Save certain parms before modifying options during connect, especially
@@ -4176,7 +4199,6 @@ options_postprocess_pull(struct options *o, struct env_set *es)
  *
  * --cipher
  * --auth
- * --keysize
  * --secret
  * --no-replay
  *
@@ -4808,6 +4830,16 @@ show_windows_version(const unsigned int flags)
 #endif
 
 void
+show_dco_version(const unsigned int flags)
+{
+#ifdef ENABLE_DCO
+    struct gc_arena gc = gc_new();
+    msg(flags, "DCO version: %s", dco_version_string(&gc));
+    gc_free(&gc);
+#endif
+}
+
+void
 show_library_versions(const unsigned int flags)
 {
 #ifdef ENABLE_LZO
@@ -4830,6 +4862,7 @@ usage_version(void)
 #ifdef _WIN32
     show_windows_version( M_INFO|M_NOPREFIX );
 #endif
+    show_dco_version(M_INFO | M_NOPREFIX);
     msg(M_INFO|M_NOPREFIX, "Originally developed by James Yonan");
     msg(M_INFO|M_NOPREFIX, "Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>");
 #ifndef ENABLE_SMALL
@@ -5626,7 +5659,6 @@ set_user_script(struct options *options,
 #endif
 }
 
-#ifdef USE_COMP
 static void
 show_compression_warning(struct compress_options *info)
 {
@@ -5645,7 +5677,6 @@ show_compression_warning(struct compress_options *info)
         }
     }
 }
-#endif
 
 bool
 key_is_external(const struct options *options)
@@ -6539,6 +6570,12 @@ add_option(struct options *options,
     {
         VERIFY_PERMISSION(OPT_P_MTU|OPT_P_CONNECTION);
         options->ce.fragment = positive_atoi(p[1]);
+
+        if (options->ce.fragment < 68)
+        {
+            msg(msglevel, "--fragment needs to be at least 68");
+            goto err;
+        }
 
         if (p[2] && streq(p[2], "mtu"))
         {
@@ -7870,7 +7907,7 @@ add_option(struct options *options,
 #ifdef _WIN32
         VERIFY_PERMISSION(OPT_P_GENERAL);
         HANDLE process = GetCurrentProcess();
-        HANDLE handle = (HANDLE) atoll(p[1]);
+        HANDLE handle = (HANDLE) ((intptr_t) atoll(p[1]));
         if (!DuplicateHandle(process, handle, process, &options->msg_channel, 0,
                              FALSE, DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS))
         {
@@ -7995,13 +8032,13 @@ add_option(struct options *options,
 
             struct dns_server *server = dns_server_get(&options->dns_options.servers, priority, &options->dns_options.gc);
 
-            if (streq(p[3], "address") && !p[6])
+            if (streq(p[3], "address") && p[4])
             {
-                for (int i = 4; p[i]; i++)
+                for (int i = 4; p[i]; ++i)
                 {
                     if (!dns_server_addr_parse(server, p[i]))
                     {
-                        msg(msglevel, "--dns server %ld: malformed or duplicate address '%s'", priority, p[i]);
+                        msg(msglevel, "--dns server %ld: malformed address or maximum exceeded '%s'", priority, p[i]);
                         goto err;
                     }
                 }
@@ -8087,16 +8124,17 @@ add_option(struct options *options,
     {
         struct tuntap_options *o = &options->tuntap_options;
         VERIFY_PERMISSION(OPT_P_DHCPDNS);
-        bool ipv6dns = false;
 
         if ((streq(p[1], "DOMAIN") || streq(p[1], "ADAPTER_DOMAIN_SUFFIX"))
             && p[2] && !p[3])
         {
             o->domain = p[2];
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_OPTIONAL;
         }
         else if (streq(p[1], "NBS") && p[2] && !p[3])
         {
             o->netbios_scope = p[2];
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_REQUIRED;
         }
         else if (streq(p[1], "NBT") && p[2] && !p[3])
         {
@@ -8108,31 +8146,35 @@ add_option(struct options *options,
                 goto err;
             }
             o->netbios_node_type = t;
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_REQUIRED;
         }
         else if ((streq(p[1], "DNS") || streq(p[1], "DNS6")) && p[2] && !p[3]
                  && (!strstr(p[2], ":") || ipv6_addr_safe(p[2])))
         {
             if (strstr(p[2], ":"))
             {
-                ipv6dns = true;
                 dhcp_option_dns6_parse(p[2], o->dns6, &o->dns6_len, msglevel);
             }
             else
             {
                 dhcp_option_address_parse("DNS", p[2], o->dns, &o->dns_len, msglevel);
+                o->dhcp_options |= DHCP_OPTIONS_DHCP_OPTIONAL;
             }
         }
         else if (streq(p[1], "WINS") && p[2] && !p[3])
         {
             dhcp_option_address_parse("WINS", p[2], o->wins, &o->wins_len, msglevel);
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_OPTIONAL;
         }
         else if (streq(p[1], "NTP") && p[2] && !p[3])
         {
             dhcp_option_address_parse("NTP", p[2], o->ntp, &o->ntp_len, msglevel);
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_REQUIRED;
         }
         else if (streq(p[1], "NBDD") && p[2] && !p[3])
         {
             dhcp_option_address_parse("NBDD", p[2], o->nbdd, &o->nbdd_len, msglevel);
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_REQUIRED;
         }
         else if (streq(p[1], "DOMAIN-SEARCH") && p[2] && !p[3])
         {
@@ -8145,10 +8187,12 @@ add_option(struct options *options,
                 msg(msglevel, "--dhcp-option %s: maximum of %d search entries can be specified",
                     p[1], N_SEARCH_LIST_LEN);
             }
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_REQUIRED;
         }
         else if (streq(p[1], "DISABLE-NBT") && !p[2])
         {
             o->disable_nbt = 1;
+            o->dhcp_options |= DHCP_OPTIONS_DHCP_REQUIRED;
         }
 #if defined(TARGET_ANDROID)
         else if (streq(p[1], "PROXY_HTTP") && p[3] && !p[4])
@@ -8161,14 +8205,6 @@ add_option(struct options *options,
         {
             msg(msglevel, "--dhcp-option: unknown option type '%s' or missing or unknown parameter", p[1]);
             goto err;
-        }
-
-        /* flag that we have options to give to the TAP driver's DHCPv4 server
-         *  - skipped for "DNS6", as that's not a DHCPv4 option
-         */
-        if (!ipv6dns)
-        {
-            o->dhcp_options = true;
         }
     }
 #endif /* if defined(_WIN32) || defined(TARGET_ANDROID) */
@@ -8325,7 +8361,6 @@ add_option(struct options *options,
         options->passtos = true;
     }
 #endif
-#if defined(USE_COMP)
     else if (streq(p[0], "allow-compression") && p[1] && !p[2])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
@@ -8375,20 +8410,11 @@ add_option(struct options *options,
 
         /* All lzo variants do not use swap */
         options->comp.flags &= ~COMP_F_SWAP;
-#if defined(ENABLE_LZO)
+
         if (p[1] && streq(p[1], "no"))
-#endif
         {
             options->comp.alg = COMP_ALG_STUB;
             options->comp.flags &= ~COMP_F_ADAPTIVE;
-        }
-#if defined(ENABLE_LZO)
-        else if (options->comp.flags & COMP_F_ALLOW_STUB_ONLY)
-        {
-            /* Also printed on a push to hint at configuration problems */
-            msg(msglevel, "Cannot set comp-lzo to '%s', "
-                "allow-compression is set to 'no'", p[1]);
-            goto err;
         }
         else if (p[1])
         {
@@ -8414,7 +8440,6 @@ add_option(struct options *options,
             options->comp.flags |= COMP_F_ADAPTIVE;
         }
         show_compression_warning(&options->comp);
-#endif /* if defined(ENABLE_LZO) */
     }
     else if (streq(p[0], "comp-noadapt") && !p[1])
     {
@@ -8428,63 +8453,49 @@ add_option(struct options *options,
     else if (streq(p[0], "compress") && !p[2])
     {
         VERIFY_PERMISSION(OPT_P_COMP);
+        const char *alg = "stub";
         if (p[1])
         {
-            if (streq(p[1], "stub"))
-            {
-                options->comp.alg = COMP_ALG_STUB;
-                options->comp.flags |= (COMP_F_SWAP|COMP_F_ADVERTISE_STUBS_ONLY);
-            }
-            else if (streq(p[1], "stub-v2"))
-            {
-                options->comp.alg = COMP_ALGV2_UNCOMPRESSED;
-                options->comp.flags |= COMP_F_ADVERTISE_STUBS_ONLY;
-            }
-            else if (streq(p[1], "migrate"))
-            {
-                options->comp.alg = COMP_ALG_UNDEF;
-                options->comp.flags = COMP_F_MIGRATE;
+            alg = p[1];
+        }
 
-            }
-            else if (options->comp.flags & COMP_F_ALLOW_STUB_ONLY)
-            {
-                /* Also printed on a push to hint at configuration problems */
-                msg(msglevel, "Cannot set compress to '%s', "
-                    "allow-compression is set to 'no'", p[1]);
-                goto err;
-            }
-#if defined(ENABLE_LZO)
-            else if (streq(p[1], "lzo"))
-            {
-                options->comp.alg = COMP_ALG_LZO;
-                options->comp.flags &= ~(COMP_F_ADAPTIVE | COMP_F_SWAP);
-            }
-#endif
-#if defined(ENABLE_LZ4)
-            else if (streq(p[1], "lz4"))
-            {
-                options->comp.alg = COMP_ALG_LZ4;
-                options->comp.flags |= COMP_F_SWAP;
-            }
-            else if (streq(p[1], "lz4-v2"))
-            {
-                options->comp.alg = COMP_ALGV2_LZ4;
-            }
-#endif
-            else
-            {
-                msg(msglevel, "bad comp option: %s", p[1]);
-                goto err;
-            }
+        if (streq(alg, "stub"))
+        {
+            options->comp.alg = COMP_ALG_STUB;
+            options->comp.flags |= (COMP_F_SWAP|COMP_F_ADVERTISE_STUBS_ONLY);
+        }
+        else if (streq(alg, "stub-v2"))
+        {
+            options->comp.alg = COMP_ALGV2_UNCOMPRESSED;
+            options->comp.flags |= COMP_F_ADVERTISE_STUBS_ONLY;
+        }
+        else if (streq(alg, "migrate"))
+        {
+            options->comp.alg = COMP_ALG_UNDEF;
+            options->comp.flags = COMP_F_MIGRATE;
+        }
+        else if (streq(alg, "lzo"))
+        {
+            options->comp.alg = COMP_ALG_LZO;
+            options->comp.flags &= ~(COMP_F_ADAPTIVE | COMP_F_SWAP);
+        }
+        else if (streq(alg, "lz4"))
+        {
+            options->comp.alg = COMP_ALG_LZ4;
+            options->comp.flags |= COMP_F_SWAP;
+        }
+        else if (streq(alg, "lz4-v2"))
+        {
+            options->comp.alg = COMP_ALGV2_LZ4;
         }
         else
         {
-            options->comp.alg = COMP_ALG_STUB;
-            options->comp.flags |= COMP_F_SWAP;
+            msg(msglevel, "bad comp option: %s", alg);
+            goto err;
         }
+
         show_compression_warning(&options->comp);
     }
-#endif /* USE_COMP */
     else if (streq(p[0], "show-ciphers") && !p[1])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
@@ -8645,6 +8656,10 @@ add_option(struct options *options,
             else if (streq(p[j], "tls-ekm"))
             {
                 options->imported_protocol_flags |= CO_USE_TLS_KEY_MATERIAL_EXPORT;
+            }
+            else if (streq(p[j], "dyn-tls-crypt"))
+            {
+                options->imported_protocol_flags |= CO_USE_DYNAMIC_TLS_CRYPT;
             }
 #endif
             else
@@ -8867,7 +8882,7 @@ add_option(struct options *options,
             listend->next = newlist;
         }
     }
-#ifdef ENABLE_CRYPTOAPI
+#if defined(ENABLE_CRYPTOAPI) && defined(HAVE_XKEY_PROVIDER)
     else if (streq(p[0], "cryptoapicert") && p[1] && !p[2])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
@@ -9466,24 +9481,24 @@ add_option(struct options *options,
     else
     {
         int i;
-        int msglevel = msglevel_fc;
+        int msglevel_unknown = msglevel_fc;
         /* Check if an option is in --ignore-unknown-option and
          * set warning level to non fatal */
         for (i = 0; options->ignore_unknown_option && options->ignore_unknown_option[i]; i++)
         {
             if (streq(p[0], options->ignore_unknown_option[i]))
             {
-                msglevel = M_WARN;
+                msglevel_unknown = M_WARN;
                 break;
             }
         }
         if (file)
         {
-            msg(msglevel, "Unrecognized option or missing or extra parameter(s) in %s:%d: %s (%s)", file, line, p[0], PACKAGE_VERSION);
+            msg(msglevel_unknown, "Unrecognized option or missing or extra parameter(s) in %s:%d: %s (%s)", file, line, p[0], PACKAGE_VERSION);
         }
         else
         {
-            msg(msglevel, "Unrecognized option or missing or extra parameter(s): --%s (%s)", p[0], PACKAGE_VERSION);
+            msg(msglevel_unknown, "Unrecognized option or missing or extra parameter(s): --%s (%s)", p[0], PACKAGE_VERSION);
         }
     }
 err:

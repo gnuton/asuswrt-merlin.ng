@@ -31,6 +31,8 @@
 #include <sys/param.h>
 #include <sys/linker.h>
 #include <sys/nv.h>
+#include <sys/utsname.h>
+
 #include <netinet/in.h>
 
 #include "dco_freebsd.h"
@@ -142,7 +144,6 @@ open_fd(dco_context_t *dco)
     {
         dco->open = true;
     }
-    dco->dco_packet_in = alloc_buf(PAGE_SIZE);
 
     return dco->fd;
 }
@@ -231,7 +232,6 @@ create_interface(struct tuntap *tt, const char *dev)
     }
 
     snprintf(tt->dco.ifname, IFNAMSIZ, "%s", ifr.ifr_data);
-    tt->actual_name = string_alloc(tt->dco.ifname, NULL);
 
     /* see "Interface Flags" in ifnet(9) */
     int i = IFF_POINTOPOINT | IFF_MULTICAST;
@@ -550,6 +550,10 @@ dco_do_read(dco_context_t *dco)
             dco->dco_message_type = OVPN_CMD_DEL_PEER;
             break;
 
+        case OVPN_NOTIF_ROTATE_KEY:
+            dco->dco_message_type = OVPN_CMD_SWAP_KEYS;
+            break;
+
         default:
             msg(M_WARN, "Unknown kernel notification %d", type);
             break;
@@ -558,15 +562,6 @@ dco_do_read(dco_context_t *dco)
     nvlist_destroy(nvl);
 
     return 0;
-}
-
-int
-dco_do_write(dco_context_t *dco, int peer_id, struct buffer *buf)
-{
-    /* Control packets are passed through the socket, so this should never get
-     * called. See should_use_dco_socket(). */
-    ASSERT(0);
-    return -EINVAL;
 }
 
 bool
@@ -599,6 +594,10 @@ dco_available(int msglevel)
     }
 
     buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
+    if (!buf)
+    {
+        goto out;
+    }
 
     ifcr.ifcr_count = ifcr.ifcr_total;
     ifcr.ifcr_buffer = buf;
@@ -622,6 +621,20 @@ out:
     close(fd);
 
     return available;
+}
+
+const char *
+dco_version_string(struct gc_arena *gc)
+{
+    struct utsname *uts;
+    ALLOC_OBJ_GC(uts, struct utsname, gc);
+
+    if (uname(uts) != 0)
+    {
+        return "N/A";
+    }
+
+    return uts->version;
 }
 
 void
@@ -669,27 +682,17 @@ dco_event_set(dco_context_t *dco, struct event_set *es, void *arg)
 static void
 dco_update_peer_stat(struct multi_context *m, uint32_t peerid, const nvlist_t *nvl)
 {
-    struct hash_element *he;
-    struct hash_iterator hi;
 
-    hash_iterator_init(m->hash, &hi);
-
-    while ((he = hash_iterator_next(&hi)))
+    if (peerid >= m->max_clients || !m->instances[peerid])
     {
-        struct multi_instance *mi = (struct multi_instance *) he->value;
-
-        if (mi->context.c2.tls_multi->peer_id != peerid)
-        {
-            continue;
-        }
-
-        mi->context.c2.dco_read_bytes = nvlist_get_number(nvl, "in");
-        mi->context.c2.dco_write_bytes = nvlist_get_number(nvl, "out");
-
+        msg(M_WARN, "dco_update_peer_stat: invalid peer ID %d returned by kernel", peerid);
         return;
     }
 
-    msg(M_INFO, "Peer %d returned by kernel, but not found locally", peerid);
+    struct multi_instance *mi = m->instances[peerid];
+
+    mi->context.c2.dco_read_bytes = nvlist_get_number(nvl, "in");
+    mi->context.c2.dco_write_bytes = nvlist_get_number(nvl, "out");
 }
 
 int

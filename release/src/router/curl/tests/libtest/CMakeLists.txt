@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2022, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -80,6 +80,3 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/mk-lib1521.pl"
     "${CURL_SOURCE_DIR}/include/curl/curl.h"
   VERBATIM)
-
-set_property(TARGET chkdecimalpoint
-  APPEND PROPERTY COMPILE_DEFINITIONS "CURLX_NO_MEMORY_CALLBACKS;CURL_STATICLIB")

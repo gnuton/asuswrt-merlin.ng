@@ -55,6 +55,16 @@ parse_line(const char *line, char **p, const int n, const char *file,
     return 0;
 }
 
+/* Define this function here as dummy since including the ssl_*.c files
+ * leads to having to include even more unrelated code */
+bool
+key_state_export_keying_material(struct tls_session *session,
+                                 const char *label, size_t label_size,
+                                 void *ekm, size_t ekm_size)
+{
+    ASSERT(0);
+}
+
 const char *
 print_link_socket_actual(const struct link_socket_actual *act, struct gc_arena *gc)
 {
@@ -191,7 +201,9 @@ init_tas_auth(int key_direction)
 
     crypto_read_openvpn_key(&tls_crypt_kt, &tas.tls_wrap.opt.key_ctx_bi,
                             static_key, true, key_direction,
-                            "Control Channel Authentication", "tls-auth");
+                            "Control Channel Authentication", "tls-auth",
+                            NULL);
+    tas.workbuf = alloc_buf(1600);
 
     return tas;
 }
@@ -203,9 +215,23 @@ init_tas_crypt(bool server)
     tas.tls_wrap.mode = TLS_WRAP_CRYPT;
     tas.tls_wrap.opt.flags |= (CO_IGNORE_PACKET_ID|CO_PACKET_ID_LONG_FORM);
 
-    tls_crypt_init_key(&tas.tls_wrap.opt.key_ctx_bi, static_key, true, server);
+    tls_crypt_init_key(&tas.tls_wrap.opt.key_ctx_bi,
+                       &tas.tls_wrap.original_wrap_keydata, static_key,
+                       true, server);
+    tas.workbuf = alloc_buf(1600);
+    tas.tls_wrap.work = alloc_buf(1600);
 
     return tas;
+}
+
+void
+free_tas(struct tls_auth_standalone *tas)
+{
+    /* Not some of these might be null pointers but calling free on null
+     * pointers is a noop */
+    free_key_ctx_bi(&tas->tls_wrap.opt.key_ctx_bi);
+    free_buf(&tas->workbuf);
+    free_buf(&tas->tls_wrap.work);
 }
 
 void
@@ -215,7 +241,6 @@ test_tls_decrypt_lite_crypt(void **ut_state)
     struct tls_pre_decrypt_state state = { 0 };
 
     struct tls_auth_standalone tas = init_tas_crypt(true);
-
     struct buffer buf = alloc_buf(1024);
 
     /* tls-auth should be invalid */
@@ -250,6 +275,7 @@ test_tls_decrypt_lite_crypt(void **ut_state)
     }
 
     free_key_ctx_bi(&tas.tls_wrap.opt.key_ctx_bi);
+    free_tas(&tas);
     free_buf(&buf);
 }
 
@@ -305,6 +331,7 @@ test_tls_decrypt_lite_auth(void **ut_state)
     free_tls_pre_decrypt_state(&state);
     /* Wrong key direction gives a wrong hmac key and should not validate */
     free_key_ctx_bi(&tas.tls_wrap.opt.key_ctx_bi);
+    free_tas(&tas);
     tas = init_tas_auth(KEY_DIRECTION_INVERSE);
 
     buf_reset_len(&buf);
@@ -313,7 +340,7 @@ test_tls_decrypt_lite_auth(void **ut_state)
     assert_int_equal(verdict, VERDICT_INVALID);
 
     free_tls_pre_decrypt_state(&state);
-    free_key_ctx_bi(&tas.tls_wrap.opt.key_ctx_bi);
+    free_tas(&tas);
     free_buf(&buf);
 }
 
@@ -358,6 +385,7 @@ test_tls_decrypt_lite_none(void **ut_state)
 
     free_tls_pre_decrypt_state(&state);
     free_buf(&buf);
+    free_tas(&tas);
 }
 
 static void
@@ -429,10 +457,9 @@ test_verify_hmac_tls_auth(void **ut_state)
     bool valid = check_session_id_hmac(&state, &from.dest, hmac, 30);
     assert_false(valid);
 
-    free_key_ctx_bi(&tas.tls_wrap.opt.key_ctx_bi);
-    free_key_ctx(&tas.tls_wrap.tls_crypt_v2_server_key);
     free_tls_pre_decrypt_state(&state);
     free_buf(&buf);
+    free_tas(&tas);
     hmac_ctx_cleanup(hmac);
     hmac_ctx_free(hmac);
 }
@@ -550,6 +577,7 @@ test_generate_reset_packet_plain(void **ut_state)
     tas.tls_wrap.mode = TLS_WRAP_NONE;
     struct frame frame = { {.headroom = 200, .payload_size = 1400}, 0};
     tas.frame = frame;
+    tas.workbuf = alloc_buf(1600);
 
     uint8_t header = 0 | (P_CONTROL_HARD_RESET_CLIENT_V2 << P_OPCODE_SHIFT);
 
@@ -564,10 +592,9 @@ test_generate_reset_packet_plain(void **ut_state)
     struct buffer buf2 = tls_reset_standalone(&tas.tls_wrap, &tas, &client_id, &server_id, header, false);
     assert_int_equal(BLEN(&buf), BLEN(&buf2));
     assert_memory_equal(BPTR(&buf), BPTR(&buf2), BLEN(&buf));
-    free_buf(&buf2);
 
     free_tls_pre_decrypt_state(&state);
-    free_buf(&buf);
+    free_buf(&tas.workbuf);
 }
 
 static void
@@ -601,15 +628,12 @@ test_generate_reset_packet_tls_auth(void **ut_state)
     assert_int_equal(BLEN(&buf), BLEN(&buf2));
     assert_memory_equal(BPTR(&buf), BPTR(&buf2), BLEN(&buf));
 
-    free_buf(&buf2);
     free_tls_pre_decrypt_state(&state);
 
     packet_id_free(&tas_client.tls_wrap.opt.packet_id);
 
-    free_buf(&buf);
-    free_key_ctx_bi(&tas_server.tls_wrap.opt.key_ctx_bi);
-    free_key_ctx_bi(&tas_client.tls_wrap.opt.key_ctx_bi);
-
+    free_tas(&tas_client);
+    free_tas(&tas_server);
 }
 
 int

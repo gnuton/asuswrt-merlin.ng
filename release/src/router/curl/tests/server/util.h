@@ -7,7 +7,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2022, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -30,9 +30,9 @@ void logmsg(const char *msg, ...);
 long timediff(struct timeval newer, struct timeval older);
 
 #define TEST_DATA_PATH "%s/data/test%ld"
-#define ALTTEST_DATA_PATH "%s/log/test%ld"
+#define ALTTEST_DATA_PATH "%s/test%ld"
 
-#define SERVERLOGS_LOCK "log/serverlogs.lock"
+#define SERVERLOGS_LOCK "serverlogs.lock"
 
 /* global variable, where to find the 'data' dir */
 extern const char *path;
@@ -57,7 +57,7 @@ void win32_cleanup(void);
 #endif  /* WIN32 */
 
 /* fopens the test case file */
-FILE *test2fopen(long testno);
+FILE *test2fopen(long testno, const char *logdir);
 
 int wait_ms(int timeout_ms);
 curl_off_t our_getpid(void);
@@ -82,6 +82,8 @@ void install_signal_handlers(bool keep_sigalrm);
 void restore_signal_handlers(bool keep_sigalrm);
 
 #ifdef USE_UNIX_SOCKETS
+
+#include <curl/curl.h> /* for curl_socket_t */
 
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h> /* for sockaddr_un */

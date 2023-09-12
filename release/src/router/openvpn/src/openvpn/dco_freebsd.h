@@ -35,12 +35,14 @@ typedef enum ovpn_key_cipher dco_cipher_t;
 enum ovpn_message_type_t {
     OVPN_CMD_DEL_PEER,
     OVPN_CMD_PACKET,
+    OVPN_CMD_SWAP_KEYS,
 };
 
 enum ovpn_del_reason_t {
     OVPN_DEL_PEER_REASON_EXPIRED,
     OVPN_DEL_PEER_REASON_TRANSPORT_ERROR,
     OVPN_DEL_PEER_REASON_USERSPACE,
+    OVPN_DEL_PEER_REASON_TRANSPORT_DISCONNECT,
 };
 
 typedef struct dco_context {
@@ -49,8 +51,6 @@ typedef struct dco_context {
     int pipefd[2];
 
     char ifname[IFNAMSIZ];
-
-    struct buffer dco_packet_in;
 
     int dco_message_type;
     int dco_message_peer_id;

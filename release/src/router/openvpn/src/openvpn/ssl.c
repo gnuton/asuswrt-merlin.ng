@@ -1202,6 +1202,7 @@ static void
 tls_session_free(struct tls_session *session, bool clear)
 {
     tls_wrap_free(&session->tls_wrap);
+    tls_wrap_free(&session->tls_wrap_reneg);
 
     for (size_t i = 0; i < KS_SIZE; ++i)
     {
@@ -1358,6 +1359,17 @@ tls_auth_standalone_init(struct tls_options *tls_options,
                    tls_options->replay_time, "TAS", 0);
 
     return tas;
+}
+
+void
+tls_auth_standalone_free(struct tls_auth_standalone *tas)
+{
+    if (!tas)
+    {
+        return;
+    }
+
+    packet_id_free(&tas->tls_wrap.opt.packet_id);
 }
 
 /*
@@ -1730,11 +1742,6 @@ tls_session_update_crypto_params_do_work(struct tls_multi *multi,
         return true;
 
     }
-    if (strcmp(options->ciphername, session->opt->config_ciphername))
-    {
-        msg(D_HANDSHAKE, "Data Channel: using negotiated cipher '%s'",
-            options->ciphername);
-    }
 
     init_key_type(&session->opt->key_type, options->ciphername,
                   options->authname, true, true);
@@ -1763,6 +1770,17 @@ tls_session_update_crypto_params_do_work(struct tls_multi *multi,
         frame_print(frame_fragment, D_MTU_INFO, "Fragmentation MTU parms");
     }
 
+    if (session->key[KS_PRIMARY].key_id == 0
+        && session->opt->crypto_flags & CO_USE_DYNAMIC_TLS_CRYPT)
+    {
+        /* If dynamic tls-crypt has been negotiated, and we are on the
+         * first session (key_id = 0), generate a tls-crypt key for the
+         * following renegotiations */
+        if (!tls_session_generate_dynamic_tls_crypt_key(multi, session))
+        {
+            return false;
+        }
+    }
     return tls_session_generate_data_channel_keys(multi, session);
 }
 
@@ -1898,6 +1916,12 @@ key_state_soft_reset(struct tls_session *session)
     key_state_init(session, ks);
     ks->session_id_remote = ks_lame->session_id_remote;
     ks->remote_addr = ks_lame->remote_addr;
+}
+
+void
+tls_session_soft_reset(struct tls_multi *tls_multi)
+{
+    key_state_soft_reset(&tls_multi->session[TM_ACTIVE]);
 }
 
 /*
@@ -2070,6 +2094,7 @@ push_peer_info(struct buffer *buf, struct tls_session *session)
 
 #ifdef HAVE_EXPORT_KEYING_MATERIAL
         iv_proto |= IV_PROTO_TLS_KEY_EXPORT;
+        iv_proto |= IV_PROTO_DYN_TLS_CRYPT;
 #endif
 
         buf_printf(&out, "IV_PROTO=%d\n", iv_proto);
@@ -3656,7 +3681,7 @@ tls_pre_decrypt(struct tls_multi *multi,
 
         /*
          * If --single-session, don't allow any hard-reset connection request
-         * unless it the first packet of the session.
+         * unless it is the first packet of the session.
          */
         if (multi->opt.single_session && multi->n_sessions)
         {
@@ -3667,7 +3692,7 @@ tls_pre_decrypt(struct tls_multi *multi,
             goto error;
         }
 
-        if (!read_control_auth(buf, &session->tls_wrap, from,
+        if (!read_control_auth(buf, tls_session_get_tls_wrap(session, key_id), from,
                                session->opt))
         {
             goto error;
@@ -3737,8 +3762,8 @@ tls_pre_decrypt(struct tls_multi *multi,
          */
         if (op == P_CONTROL_SOFT_RESET_V1 && ks->state >= S_GENERATED_KEYS)
         {
-            if (!read_control_auth(buf, &session->tls_wrap, from,
-                                   session->opt))
+            if (!read_control_auth(buf, tls_session_get_tls_wrap(session, key_id),
+                                   from, session->opt))
             {
                 goto error;
             }
@@ -3759,8 +3784,8 @@ tls_pre_decrypt(struct tls_multi *multi,
                 do_burst = true;
             }
 
-            if (!read_control_auth(buf, &session->tls_wrap, from,
-                                   session->opt))
+            if (!read_control_auth(buf, tls_session_get_tls_wrap(session, key_id),
+                                   from, session->opt))
             {
                 goto error;
             }
@@ -3997,18 +4022,15 @@ tls_post_encrypt(struct tls_multi *multi, struct buffer *buf)
  */
 
 bool
-tls_send_payload(struct tls_multi *multi,
+tls_send_payload(struct key_state *ks,
                  const uint8_t *data,
                  int size)
 {
-    struct key_state *ks;
     bool ret = false;
 
     tls_clear_error();
 
-    ASSERT(multi);
-
-    ks = get_key_scan(multi, 0);
+    ASSERT(ks);
 
     if (ks->state >= S_ACTIVE)
     {

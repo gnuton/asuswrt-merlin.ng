@@ -1,7 +1,10 @@
 <testcase>
 <info>
 <keywords>
+<<<<<<< HEAD
 build system
+=======
+>>>>>>> 386.12
 source analysis
 </keywords>
 </info>
@@ -13,6 +16,7 @@ source analysis
 none
 </server>
 
+<<<<<<< HEAD
 <name>
 8 chars object name generation testing
 </name>
@@ -50,4 +54,15 @@ result: 12345678 expected: 12345678 input: 1234567890ABCDEFGHIJKLMNOPQRSTUV
 </file2>
 </verify>
 
+=======
+ <name>
+Verify deprecation statuses and versions
+ </name>
+
+<command type="perl">
+%SRCDIR/check-deprecated.pl %SRCDIR/..
+</command>
+</client>
+
+>>>>>>> 386.12
 </testcase>

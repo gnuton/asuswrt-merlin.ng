@@ -133,8 +133,6 @@ dco_get_secondary_key(struct tls_multi *multi, const struct key_state *primary)
 bool
 dco_update_keys(dco_context_t *dco, struct tls_multi *multi)
 {
-    msg(D_DCO_DEBUG, "%s: peer_id=%d", __func__, multi->dco_peer_id);
-
     /* this function checks if keys have to be swapped or erased, therefore it
      * can't do much if we don't have any key installed
      */
@@ -487,7 +485,6 @@ dco_p2p_add_new_peer(struct context *c)
     }
 
     c->c2.tls_multi->dco_peer_id = multi->peer_id;
-    c->c2.link_socket->dco_installed = true;
 
     return 0;
 }
@@ -606,17 +603,6 @@ dco_multi_add_new_peer(struct multi_context *m, struct multi_instance *mi)
     }
 
     c->c2.tls_multi->dco_peer_id = peer_id;
-
-    if (c->mode == CM_CHILD_TCP)
-    {
-        multi_tcp_dereference_instance(m->mtcp, mi);
-        if (close(sd))
-        {
-            msg(D_DCO|M_ERRNO, "error closing TCP socket after DCO handover");
-        }
-        c->c2.link_socket->dco_installed = true;
-        c->c2.link_socket->sd = SOCKET_UNDEFINED;
-    }
 
     return 0;
 }

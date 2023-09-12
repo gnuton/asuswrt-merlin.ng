@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2022, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -74,20 +74,22 @@ LIB_VTLS_HFILES =           \
   vtls/schannel.h           \
   vtls/sectransp.h          \
   vtls/vtls.h               \
+  vtls/vtls_int.h           \
   vtls/wolfssl.h            \
   vtls/x509asn1.h
 
 LIB_VQUIC_CFILES = \
-  vquic/msh3.c   \
-  vquic/ngtcp2.c   \
-  vquic/quiche.c   \
+  vquic/curl_msh3.c   \
+  vquic/curl_ngtcp2.c   \
+  vquic/curl_quiche.c   \
   vquic/vquic.c
 
 LIB_VQUIC_HFILES = \
-  vquic/msh3.h   \
-  vquic/ngtcp2.h   \
-  vquic/quiche.h   \
-  vquic/vquic.h
+  vquic/curl_msh3.h   \
+  vquic/curl_ngtcp2.h   \
+  vquic/curl_quiche.h   \
+  vquic/vquic.h    \
+  vquic/vquic_int.h
 
 LIB_VSSH_CFILES =  \
   vssh/libssh.c    \
@@ -103,20 +105,27 @@ LIB_CFILES =         \
   asyn-ares.c        \
   asyn-thread.c      \
   base64.c           \
+  bufq.c             \
   bufref.c           \
   c-hyper.c          \
+  cf-h1-proxy.c      \
+  cf-h2-proxy.c      \
+  cf-haproxy.c       \
+  cf-https-connect.c \
+  cf-socket.c        \
+  cfilters.c         \
   conncache.c        \
   connect.c          \
   content_encoding.c \
   cookie.c           \
   curl_addrinfo.c    \
-  curl_ctype.c       \
   curl_des.c         \
   curl_endian.c      \
   curl_fnmatch.c     \
   curl_get_line.c    \
   curl_gethostname.c \
   curl_gssapi.c      \
+  curl_log.c         \
   curl_memrchr.c     \
   curl_multibyte.c   \
   curl_ntlm_core.c   \
@@ -129,8 +138,8 @@ LIB_CFILES =         \
   curl_threads.c     \
   dict.c             \
   doh.c              \
-  dotdot.c           \
   dynbuf.c           \
+  dynhds.c           \
   easy.c             \
   easygetopt.c       \
   easyoptions.c      \
@@ -144,7 +153,6 @@ LIB_CFILES =         \
   getenv.c           \
   getinfo.c          \
   gopher.c           \
-  h2h3.c             \
   hash.c             \
   headers.c          \
   hmac.c             \
@@ -155,6 +163,7 @@ LIB_CFILES =         \
   hostsyn.c          \
   hsts.c             \
   http.c             \
+  http1.c            \
   http2.c            \
   http_chunks.c      \
   http_digest.c      \
@@ -162,7 +171,7 @@ LIB_CFILES =         \
   http_ntlm.c        \
   http_proxy.c       \
   http_aws_sigv4.c   \
-  idn_win32.c        \
+  idn.c              \
   if2ip.c            \
   imap.c             \
   inet_ntop.c        \
@@ -179,6 +188,7 @@ LIB_CFILES =         \
   multi.c            \
   netrc.c            \
   nonblock.c         \
+  noproxy.c          \
   openldap.c         \
   parsedate.c        \
   pingpong.c         \
@@ -218,15 +228,22 @@ LIB_CFILES =         \
   version.c          \
   version_win32.c    \
   warnless.c         \
-  wildcard.c
+  ws.c
 
 LIB_HFILES =         \
   altsvc.h           \
   amigaos.h          \
   arpa_telnet.h      \
   asyn.h             \
+  bufq.h             \
   bufref.h           \
   c-hyper.h          \
+  cf-h1-proxy.h      \
+  cf-h2-proxy.h      \
+  cf-haproxy.h       \
+  cf-https-connect.h \
+  cf-socket.h        \
+  cfilters.h         \
   conncache.h        \
   connect.h          \
   content_encoding.h \
@@ -243,6 +260,7 @@ LIB_HFILES =         \
   curl_hmac.h        \
   curl_krb5.h        \
   curl_ldap.h        \
+  curl_log.h         \
   curl_md4.h         \
   curl_md5.h         \
   curl_memory.h      \
@@ -263,8 +281,8 @@ LIB_HFILES =         \
   curlx.h            \
   dict.h             \
   doh.h              \
-  dotdot.h           \
   dynbuf.h           \
+  dynhds.h           \
   easy_lock.h        \
   easyif.h           \
   easyoptions.h      \
@@ -273,16 +291,17 @@ LIB_HFILES =         \
   fileinfo.h         \
   fopen.h            \
   formdata.h         \
+  functypes.h        \
   ftp.h              \
   ftplistparser.h    \
   getinfo.h          \
   gopher.h           \
-  h2h3.h             \
   hash.h             \
   headers.h          \
   hostip.h           \
   hsts.h             \
   http.h             \
+  http1.h            \
   http2.h            \
   http_chunks.h      \
   http_digest.h      \
@@ -290,6 +309,7 @@ LIB_HFILES =         \
   http_ntlm.h        \
   http_proxy.h       \
   http_aws_sigv4.h   \
+  idn.h              \
   if2ip.h            \
   imap.h             \
   inet_ntop.h        \
@@ -302,12 +322,12 @@ LIB_HFILES =         \
   multiif.h          \
   netrc.h            \
   nonblock.h         \
+  noproxy.h          \
   parsedate.h        \
   pingpong.h         \
   pop3.h             \
   progress.h         \
   psl.h              \
-  quic.h             \
   rand.h             \
   rename.h           \
   rtsp.h             \
@@ -341,7 +361,7 @@ LIB_HFILES =         \
   urldata.h          \
   version_win32.h    \
   warnless.h         \
-  wildcard.h
+  ws.h
 
 LIB_RCFILES = libcurl.rc
 

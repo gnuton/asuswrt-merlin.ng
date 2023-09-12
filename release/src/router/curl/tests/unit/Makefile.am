@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2022, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -51,9 +51,6 @@ LDADD = $(top_builddir)/src/libcurltool.la   \
 
 AM_CPPFLAGS += -DCURL_STATICLIB -DUNITTESTS
 
-# Makefile.inc provides neat definitions
-include Makefile.inc
-
 CHECKSRC = $(CS_$(V))
 CS_0 = @echo "  RUN     " $@;
 CS_1 =
@@ -61,6 +58,9 @@ CS_ = $(CS_0)
 
 checksrc:
 	$(CHECKSRC)@PERL@ $(top_srcdir)/scripts/checksrc.pl $(srcdir)/*.[ch]
+
+# Makefile.inc provides neat definitions
+include Makefile.inc
 
 if BUILD_UNITTESTS
 noinst_PROGRAMS = $(UNITPROGS)

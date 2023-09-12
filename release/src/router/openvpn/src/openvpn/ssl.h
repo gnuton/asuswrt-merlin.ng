@@ -43,6 +43,7 @@
 #include "ssl_common.h"
 #include "ssl_backend.h"
 #include "ssl_pkt.h"
+#include "tls_crypt.h"
 
 /* Used in the TLS PRF function */
 #define KEY_EXPANSION_ID "OpenVPN"
@@ -102,6 +103,9 @@
 
 /** Support for AUTH_FAIL,TEMP messages */
 #define IV_PROTO_AUTH_FAIL_TEMP  (1<<8)
+
+/** Support to dynamic tls-crypt (renegotiation with TLS-EKM derived tls-crypt key) */
+#define IV_PROTO_DYN_TLS_CRYPT   (1<<9)
 
 /* Default field in X509 to be username */
 #define X509_USERNAME_FIELD_DEFAULT "CN"
@@ -175,6 +179,12 @@ void tls_multi_init_finalize(struct tls_multi *multi, int tls_mtu);
  */
 struct tls_auth_standalone *tls_auth_standalone_init(struct tls_options *tls_options,
                                                      struct gc_arena *gc);
+
+/**
+ * Frees a standalone tls-auth verification object.
+ * @param tas   the object to free. May be NULL.
+ */
+void tls_auth_standalone_free(struct tls_auth_standalone *tas);
 
 /*
  * Setups the control channel frame size parameters from the data channel
@@ -414,7 +424,7 @@ void ssl_put_auth_challenge(const char *cr_str);
 /*
  * Send a payload over the TLS control channel
  */
-bool tls_send_payload(struct tls_multi *multi,
+bool tls_send_payload(struct key_state *ks,
                       const uint8_t *data,
                       int size);
 
@@ -476,6 +486,7 @@ tls_wrap_free(struct tls_wrap_ctx *tls_wrap)
 
     free_buf(&tls_wrap->tls_crypt_v2_metadata);
     free_buf(&tls_wrap->work);
+    secure_memzero(&tls_wrap->original_wrap_keydata, sizeof(tls_wrap->original_wrap_keydata));
 }
 
 static inline bool
@@ -561,6 +572,9 @@ show_available_tls_ciphers(const char *cipher_list,
 bool
 tls_session_generate_data_channel_keys(struct tls_multi *multi,
                                        struct tls_session *session);
+
+void
+tls_session_soft_reset(struct tls_multi *multi);
 
 /**
  * Load ovpn.xkey provider used for external key signing

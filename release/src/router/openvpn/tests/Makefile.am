@@ -14,17 +14,21 @@ MAINTAINERCLEANFILES = \
 
 SUBDIRS = unit_tests
 
+if !WIN32
 test_scripts = t_client.sh t_lpback.sh t_cltsrv.sh
 if HAVE_SITNL
 test_scripts += t_net.sh
+endif
 endif
 
 TESTS_ENVIRONMENT = top_srcdir="$(top_srcdir)"
 TESTS = $(test_scripts)
 
 dist_noinst_SCRIPTS = \
-	$(test_scripts) \
+	t_cltsrv.sh \
 	t_cltsrv-down.sh \
+	t_lpback.sh \
+	t_net.sh \
 	update_t_client_ips.sh
 
 dist_noinst_DATA = \

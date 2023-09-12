@@ -322,7 +322,7 @@ init_route(struct route_ipv4 *r,
     const in_addr_t default_netmask = IPV4_NETMASK_HOST;
     bool status;
     int ret;
-    struct in_addr special;
+    struct in_addr special = {0};
 
     CLEAR(*r);
     r->option = ro;
@@ -1068,7 +1068,7 @@ redirect_default_route_to_vpn(struct route_list *rl, const struct tuntap *tt,
 
             /* route DHCP/DNS server traffic through original default gateway */
             ret = add_bypass_routes(&rl->spec.bypass, rl->rgi.gateway.addr, tt, flags,
-                                    &rl->rgi, es, ctx);
+                                    &rl->rgi, es, ctx) && ret;
 
             if (rl->flags & RG_REROUTE_GW)
             {
@@ -1547,13 +1547,15 @@ local_route(in_addr_t network,
     return LR_NOMATCH;
 }
 
-/* Return true if the "on-link" form of the route should be used.  This is when the gateway for a
+/* Return true if the "on-link" form of the route should be used.  This is when the gateway for
  * a route is specified as an interface rather than an address. */
+#if defined(TARGET_LINUX) || defined(_WIN32) || defined(TARGET_DARWIN)
 static inline bool
 is_on_link(const int is_local_route, const unsigned int flags, const struct route_gateway_info *rgi)
 {
     return rgi && (is_local_route == LR_MATCH || ((flags & ROUTE_REF_GW) && (rgi->flags & RGI_ON_LINK)));
 }
+#endif
 
 bool
 add_route(struct route_ipv4 *r,
@@ -2306,8 +2308,9 @@ delete_route(struct route_ipv4 *r,
     openvpn_execve_check(&argv, es, 0, "ERROR: OpenBSD/NetBSD route delete command failed");
 
 #elif defined(TARGET_ANDROID)
-    msg(M_NONFATAL, "Sorry, deleting routes on Android is not possible. The VpnService API allows routes to be set on connect only.");
-
+    msg(D_ROUTE_DEBUG, "Deleting routes on Android is not possible/not "
+        "needed. The VpnService API allows routes to be set "
+        "on connect only and will clean up automatically.");
 #elif defined(TARGET_AIX)
 
     {
@@ -2337,12 +2340,6 @@ delete_route_ipv6(const struct route_ipv6 *r6, const struct tuntap *tt,
                   openvpn_net_ctx_t *ctx)
 {
     const char *network;
-#if !defined(TARGET_LINUX)
-    const char *gateway;
-#else
-    int metric;
-#endif
-    bool gateway_needed = false;
 
     if ((r6->flags & (RT_DEFINED|RT_ADDED)) != (RT_DEFINED|RT_ADDED))
     {
@@ -2350,10 +2347,25 @@ delete_route_ipv6(const struct route_ipv6 *r6, const struct tuntap *tt,
     }
 
 #ifndef _WIN32
+#if !defined(TARGET_LINUX)
+    const char *gateway;
+#else
+    int metric;
+#endif
+    bool gateway_needed = false;
     const char *device = tt->actual_name;
     if (r6->iface != NULL)              /* vpn server special route */
     {
         device = r6->iface;
+        gateway_needed = true;
+    }
+
+    /* if we used a gateway on "add route", we also need to specify it on
+     * delete, otherwise some OSes will refuse to delete the route
+     */
+    if (tt->type == DEV_TYPE_TAP
+        && !( (r6->flags & RT_METRIC_DEFINED) && r6->metric == 0 ) )
+    {
         gateway_needed = true;
     }
 #endif
@@ -2362,7 +2374,7 @@ delete_route_ipv6(const struct route_ipv6 *r6, const struct tuntap *tt,
     struct argv argv = argv_new();
 
     network = print_in6_addr( r6->network, 0, &gc);
-#if !defined(TARGET_LINUX)
+#if !defined(TARGET_LINUX) && !defined(_WIN32)
     gateway = print_in6_addr( r6->gateway, 0, &gc);
 #endif
 
@@ -2385,15 +2397,6 @@ delete_route_ipv6(const struct route_ipv6 *r6, const struct tuntap *tt,
 #endif
 
     msg( M_INFO, "delete_route_ipv6(%s/%d)", network, r6->netbits );
-
-    /* if we used a gateway on "add route", we also need to specify it on
-     * delete, otherwise some OSes will refuse to delete the route
-     */
-    if (tt->type == DEV_TYPE_TAP
-        && !( (r6->flags & RT_METRIC_DEFINED) && r6->metric == 0 ) )
-    {
-        gateway_needed = true;
-    }
 
 #if defined(TARGET_LINUX)
     metric = -1;
@@ -2494,7 +2497,10 @@ delete_route_ipv6(const struct route_ipv6 *r6, const struct tuntap *tt,
                 network, r6->netbits, gateway);
     argv_msg(D_ROUTE, &argv);
     openvpn_execve_check(&argv, es, 0, "ERROR: AIX route add command failed");
-
+#elif defined(TARGET_ANDROID)
+    msg(D_ROUTE_DEBUG, "Deleting routes on Android is not possible/not "
+        "needed. The VpnService API allows routes to be set "
+        "on connect only and will clean up automatically.");
 #else  /* if defined(TARGET_LINUX) */
     msg(M_FATAL, "Sorry, but I don't know how to do 'route ipv6' commands on this operating system.  Try putting your routes in a --route-down script");
 #endif /* if defined(TARGET_LINUX) */

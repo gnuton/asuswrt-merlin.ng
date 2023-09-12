@@ -54,11 +54,18 @@ openvpn_examples_sections = \
 	man-sections/examples.rst
 
 dist_noinst_DATA = \
-	README.plugins interactive-service-notes.rst \
+	android.txt \
+	interactive-service-notes.rst \
+	keying-material-exporter.txt \
 	openvpn.8.rst \
 	openvpn-examples.5.rst \
+	README.man \
+	README.plugins \
+	tls-crypt-v2.txt \
 	$(openvpn_sections) \
 	$(openvpn_examples_sections)
+
+EXTRA_DIST = tests
 
 # dependencies
 openvpn.8 openvpn.8.html: $(openvpn_sections)
@@ -68,19 +75,21 @@ openvpn-examples.5 openvpn-examples.5.html: $(openvpn_examples_sections)
 
 SUFFIXES = .8.rst .8 .8.html .5.rst .5 .5.html
 
+RST_FLAGS = --strict
+
 MAINTAINERCLEANFILES = \
 	$(srcdir)/Makefile.in
 
 .8.rst.8 .5.rst.5 :
 if HAVE_PYDOCUTILS
-	$(RST2MAN) $< > $@
+	$(RST2MAN) $(RST_FLAGS) $< > $@
 else
 	@echo "Missing python-docutils - skipping man page generation ($@)"
 endif
 
 .8.rst.8.html .5.rst.5.html :
 if HAVE_PYDOCUTILS
-	$(RST2HTML) $< > $@
+	$(RST2HTML) $(RST_FLAGS) $< > $@
 else
 	@echo "Missing python-docutils - skipping html page generation ($@)"
 endif
