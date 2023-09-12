@@ -79,7 +79,7 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 
 If you cannot find your router in the above list, please read [here](https://github.com/gnuton/asuswrt-merlin.ng/issues/140)!
 
-Not sure which version you have? V1? V2? Enable SSH, then ssh onto your router and run ```nvram get productid```
+Not sure which version you have? V1? V2? Enable SSH, then ssh into your router and run ```nvram get productid```
 
 ---------------------
 
