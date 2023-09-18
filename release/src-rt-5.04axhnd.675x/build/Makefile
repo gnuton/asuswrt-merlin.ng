@@ -30,15 +30,9 @@ default: mkenv prebuild_checks all_postcheck1
 all: cfebuild
 	$(MAKE) -f build/Makefile default
 
-all_postcheck1:
-	$(MAKE) -f build/Makefile profile_saved_check
-	$(MAKE) -f build/Makefile sanity_check
-	$(MAKE) -f build/Makefile rdp_link
-	$(MAKE) -f build/Makefile pinmuxcheck
-	$(MAKE) -f build/Makefile dynamic_cfe
-	$(MAKE) -f build/Makefile -j10 parallel_targets
-	$(MAKE) -f build/Makefile gdbserver
-	$(MAKE) -f build/Makefile full_buildimage
+all_postcheck1: profile_saved_check sanity_check rdp_link\
+     pinmuxcheck dynamic_cfe \
+     parallel_targets gdbserver full_buildimage
 
 # Order-only rules
 #----------------------------------------------------------------------------
