@@ -1840,15 +1840,15 @@ LINUX_ARCH_ASM_INCL_DIR = $(if ($KPATH_3X),$(LINUXDIR)/arch/mips/include/asm,$(L
 #
 
 ifeq ($(HND_ROUTER),y)
-all: clean-build kernel_header version fsbuild
-	$(MAKE) -j 10 $(obj-y)
+all: clean-build kernel_header version fsbuild $(obj-y)
 else ifeq ($(RTCONFIG_ARM),y)
-all: clean-build kernel_header libc version obj_prelibs kernel
-	$(MAKE) -j 10 $(obj-postlibs)
+all: clean-build kernel_header libc version obj_prelibs kernel $(obj-postlibs)
 else
-all: clean-build kernel_header libc version obj_prelibs kernel
-	$(MAKE) -j 10 $(obj-y)
+all: clean-build kernel_header libc version obj_prelibs kernel $(obj-y)
 endif
+
+$(obj-y): %:
+    $(MAKE) -j10 $@
 
 ifeq ($(RTCONFIG_BCMARM),y)
 ifneq ($(RTCONFIG_HND_ROUTER_AX_6710),y)
