@@ -1,5 +1,9 @@
 Asuswrt-Merlin Changelog
 
+3004.388.4_0-gnuton1 (XX-YYY-ZZZZ)
+  - NEW: Merged with GPL 388_23588.
+
+
 3004.388.4 (21-Aug-2023)
   - NOTE: In preparation for the new 3.0.0.6 codebase, the version
           string will now start with 3004 or 3006 to match with
