@@ -107,12 +107,17 @@ jobs:
             export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
 
             rm -rf ${IMAGE_PATH}/*cferom*
-            for f in ${IMAGE_PATH}/*.w; do  md5sum "$f" > "$f.md5" ; done
-            for f in ${IMAGE_PATH}/*squashfs.pkgtb; do  md5sum "$f" > "$f.md5" ; done
 
-            cp ${IMAGE_PATH}/*.md5 workspace/release
-            cp ${IMAGE_PATH}/*ubi.w   workspace/release || :
-            cp ${IMAGE_PATH}/*squashfs.pkgtb   workspace/release || :
+            if [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
+              for f in ${IMAGE_PATH}/*squashfs.pkgtb; do  md5sum "$f" > "$f.md5" ; done
+              cp ${IMAGE_PATH}/*squashfs.pkgtb   workspace/release || :
+            elif [[ ${SDK} == "src-rt-5.02axhnd.675x" ]]; then
+              for f in ${IMAGE_PATH}/*.w; do  md5sum "$f" > "$f.md5" ; done
+              cp ${IMAGE_PATH}/*ubi.w   workspace/release || :
+            else
+              for f in ${IMAGE_PATH}/*.w; do  md5sum "$f" > "$f.md5" ; done
+              cp ${IMAGE_PATH}/*.md5 workspace/release
+            fi
 
             if [[ ${UI} == "none" ]]; then
               cp /tmp/build.log workspace/release/${MODEL}-build.log
