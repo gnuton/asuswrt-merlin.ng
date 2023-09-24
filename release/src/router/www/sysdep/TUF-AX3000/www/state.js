@@ -441,6 +441,7 @@ function isSupport(_ptn){
 	return (ui_support[_ptn]) ? ui_support[_ptn] : 0;
 }
 
+var pagecache_ratio_support = isSupport("pcache_ratio");
 var cake_support = isSupport("cake");
 var igd2_support = isSupport("igd2");
 var nfsd_support = isSupport("nfsd");
