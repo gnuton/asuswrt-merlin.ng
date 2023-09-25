@@ -18,6 +18,11 @@ function replaceAll(txt, replace, with_this) {
    return txt.replace(new RegExp(replace, 'g'),with_this);
 }
 
+/* String replace &#39; with ' for dict */
+function stringSafeGet(str){
+    return str.replace(new RegExp("&#39;", 'g'), "'");
+}
+
 /* Internet Explorer lacks this array method */
 if (!('indexOf' in Array.prototype)) {
 	Array.prototype.indexOf = function(find, i) {
@@ -434,7 +439,6 @@ var wl_info = {
 			})()
 };
 //wireless end
-
 function isSupport(_ptn){
 	var ui_support = [<% get_ui_support(); %>][0];
 	if (based_modelid == "RT-AX56U" || based_modelid == "RT-AX58U") // Kludge
@@ -455,6 +459,7 @@ var band2g_support = isSupport("2.4G");
 var band5g_support = isSupport("5G");
 var band5g2_support = isSupport("5G-2");
 var band6g_support = isSupport("wifi6e");
+var wifi7_support = isSupport("wifi7");
 var band60g_support = isSupport("wigig");
 var max_band60g_wl_bw = 6;	// 2.16 GHz
 if (based_modelid == "GT-AXY16000") {
@@ -529,6 +534,7 @@ var IPv6_support = isSupport("ipv6");
 var IPv6_Passthrough_support = isSupport("ipv6pt");
 var IPv6_Only_support = isSupport("v6only");
 var Softwire46_support = isSupport("s46");
+var ocnvc_support = isSupport("ocnvc");
 var ParentalCtrl2_support = isSupport("PARENTAL2");
 var pptpd_support = isSupport("pptpd"); 
 var openvpnd_support = isSupport("openvpnd"); 
@@ -560,6 +566,7 @@ var swisscom_support = isSupport("swisscom");
 var tmo_support = isSupport("tmo");
 var atf_support = isSupport("atf");
 var pwrsave_support = isSupport("pwrsave");
+var pagecache_ratio_support = isSupport("pcache_ratio");
 var wl_mfp_support = isSupport("wl_mfp");	// For Protected Management Frames, ARM platform
 var bwdpi_support = isSupport("bwdpi");
 var bwdpi_mals_support = isSupport("dpi_mals");
@@ -574,6 +581,8 @@ var ipsec_cli_support = isSupport("ipsec_cli");
 //var traffic_analyzer_support = isSupport("traffic_analyzer");
 var traffic_analyzer_support = bwdpi_support;
 var traffic_limiter_support = isSupport("traffic_limiter");
+var dns_dpi_support = isSupport("dns_dpi");
+var router_boost_support = isSupport("router_boost");
 var force_upgrade_support = isSupport("fupgrade");
 var odm_support = isSupport("odm");
 var adBlock_support = isSupport("adBlock");
@@ -584,6 +593,7 @@ var wifiRadar_support = isSupport("wifiradar")
 var aura_support = isSupport("aura_rgb");
 var boostKey_support = isSupport("boostkey");
 var smart_connect_support = isSupport("smart_connect") || isSupport("bandstr");
+var smart_connect_v2_support = isSupport("smart_connect_v2");
 var rrsut_support = isSupport("rrsut");
 var gobi_support = isSupport("gobi");
 var findasus_support = isSupport("findasus");
@@ -762,11 +772,13 @@ if(based_modelid != "BRT-AC828"){
 }
 
 //notification value
-var notice_pw_is_default = '<% check_pw(); %>';
-if(notice_pw_is_default == 1 && window.location.pathname.toUpperCase().search("QIS_") < 0)	//force to change http_passwd / http_username & except QIS settings
+if(navigator.userAgent.search("asusrouter") == -1){
+	var notice_pw_is_default = '<% check_pw(); %>';
+	if(notice_pw_is_default == 1 && window.location.pathname.toUpperCase().search("QIS_") < 0) //force to change http_passwd / http_username & except QIS settings
 		location.href = 'Main_Password.asp?nextPage=' + window.location.pathname.substring(1 ,window.location.pathname.length);
-else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2 && window.location.pathname.toUpperCase().search("QIS_") < 0)
-	location.href = '/QIS_wizard.htm?flag=wireless';
+	else if('<% nvram_get("w_Setting"); %>' == '0' && sw_mode != 2 && window.location.pathname.toUpperCase().search("QIS_") < 0)
+		location.href = '/QIS_wizard.htm?flag=wireless';
+}
 
 var allUsbStatus = "";
 var allUsbStatusTmp = "";
@@ -796,7 +808,11 @@ if(wan_bonding_support){
 
 function change_wl_unit_status(_unit){
 	// if(sw_mode == 2 || sw_mode == 4) return false;
-	
+    
+	if(odmpid === 'GT6'){
+        _unit = (_unit+2)%3;
+    }
+		
 	document.titleForm.wl_unit.disabled = false;
 	document.titleForm.wl_unit.value = _unit;
 
@@ -1018,7 +1034,7 @@ function show_banner(L3){// L3 = The third Level of Menu
 		banner_code +='<div style="margin-left:25px;margin-right:20px;width:160px;height:52px;margin-top:0px;float:left;" align="left"><span><a href="https://github.com/gnuton/asuswrt-merlin.ng" target="_blank" rel="noreferrer"><img src="images/merlin-logo.png" style="border: 0;"></a></span></div>'
 		banner_code +='<div style="margin-top:0px;margin-left:-90px;*margin-top:0px;*margin-left:0px;" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
 			// logout
-			banner_code +='<a href="javascript:logout();"><div style="margin:20px 0 0 15px;*width:136px;background:url(\'images/New_ui/btn_logout.png\') no-repeat;background-size:cover;width:132px;height:34px;float:left;" align="center"><div style="margin:8px 0 0 15px;"><#t1Logout#></div></div></a>\n';
+		banner_code +='<a href="javascript:logout();"><div style="margin:20px 0 0 15px;*width:136px;background:url(\'images/New_ui/btn_logout.png\') no-repeat;background-size:cover;width:132px;height:34px;float:left;" align="center"><div style="margin:8px 0 0 15px;"><#t1Logout#></div></div></a>\n';
 	}
 	else if(spirit_logo_support){
 		banner_code +='<div class="banner1" align="center"><img src="images/New_ui/asus_spirit_title.png" width="214" height="31" align="left" style="margin-top:13px;margin-left:30px;">\n';
@@ -1576,9 +1592,9 @@ function showMenuTree(menuList, menuExclude){
 				tab_code += curTab.url;
 				tab_code += '" id="';
 				tab_code += curTab.url.split(".")[0];
-				tab_code += '_tab"><span>';
+				tab_code += '_tab"><div>';
 				tab_code += curTab.tabName; 
-				tab_code += '</span></div></td>';
+				tab_code += '</div></div></td>';
 				tabCounter ++;
 			}
 
@@ -2070,8 +2086,14 @@ function show_top_status(){
 		ssid_status_5g_2 = ssid_status_5g;
 		ssid_status_5g = ssid_status_2g;
 		ssid_status_2g = _t;
+	}	
+	else if(odmpid === 'GT6'){
+		var _t = ssid_status_5g_2;
+		ssid_status_5g_2 = ssid_status_5g;
+		ssid_status_5g = ssid_status_2g;
+		ssid_status_2g = _t;
 	}
-
+	
 	if(!band2g_support)
 		ssid_status_2g = "";
 
@@ -2367,7 +2389,7 @@ function show_top_status(){
 	var extendno = '<% nvram_get("extendno"); %>';
 	var FWString = '';
 
-	FWString = buildno;
+	FWString = firmver.replace(/\./g,"") + "." + buildno;
 	//if(rcno.length > 0)
 	//	FWString += "rc"+rcno;
 	if ((extendno != "") && (extendno != "0"))
@@ -2818,7 +2840,7 @@ function hadPlugged(deviceType){
 var AUTOLOGOUT_MAX_MINUTE = parseInt('<% nvram_get("http_autologout"); %>') * 20;
 var error_num = 5;
 function updateStatus(){
-	if(stopFlag == 1) return false;
+	if(stopFlag == 1 || navigator.userAgent.search("asusrouter") != -1) return false;
 	if(AUTOLOGOUT_MAX_MINUTE == 1) location = "Logout.asp"; // 0:disable auto logout, 1:trigger auto logout. 
 
 	require(['/require/modules/makeRequest.js'], function(makeRequest){
@@ -4223,6 +4245,9 @@ function regen_band(obj_name){
 	if(based_modelid == 'GT-AXE16000'){
 		band_value = [3, 0, 1, 2];
 	}
+	else if(odmpid == 'GT6'){
+		band_value = [2, 0, 1];
+	}
 
 	add_options_x2(obj_name, band_desc, band_value, current_band);
 }
@@ -4604,3 +4629,8 @@ function Get_Component_PWD_Strength_Meter(id){
 	var $strength_color = $("<div>").addClass("strength_color").appendTo($pwd_strength_container).attr("id", "scorebar"+postfix);
 	return $pwd_strength_container;
 }
+
+function plainPasswordSwitch(obj, event){
+	(event === 'focus') ? (obj.type = 'text') : (obj.type = 'password');						
+}
+
