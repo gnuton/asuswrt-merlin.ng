@@ -215,7 +215,7 @@ workflows:
           name: "build_dsl-ax82u"
           model: "dsl-ax82u"
           ui: "none"
-          skip_build: "N"
+          skip_build: "Y"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -231,7 +231,7 @@ workflows:
           name: "build_rt-ax82u"
           model: "rt-ax82u"
           ui: "none"
-          skip_build: "N"
+          skip_build: "Y"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -247,7 +247,7 @@ workflows:
           name: "build_rt-ax82u_v2"
           model: "rt-ax82u_v2"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.04axhnd.675x"
           resource: "large"
           requires:
@@ -359,7 +359,7 @@ workflows:
           name: "build_rt-ax92u"
           model: "rt-ax92u"
           ui: "none"
-          skip_build: "N"
+          skip_build: "Y"
           sdk: "src-rt-5.02axhnd"
           resource: "large"
           requires:
