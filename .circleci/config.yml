@@ -108,8 +108,8 @@ jobs:
 
             rm -rf ${IMAGE_PATH}/*cferom*
 
-            # Generate md5 and store images into workspace 
-            for f in ${IMAGE_PATH}/*.(squashfs.pkgtb|w); do
+            # Generate md5 and store images into workspace
+            for f in ${IMAGE_PATH}/*.{squashfs.pkgtb,w}; do
               md5sum "$f" > "$f.md5"
               cp "$f" workspace/release || :
             done
