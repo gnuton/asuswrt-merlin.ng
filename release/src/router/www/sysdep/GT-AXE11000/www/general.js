@@ -2058,6 +2058,14 @@ function gen_tab_menu(_tab_list_array, _currentItem) {
 	}
 }
 
+function check_is_merlin_fw(_fw) {
+	var fw_array = _fw.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)\.([^_]+)_(\w+)/);
+	if (fw_array && (fw_array[5].indexOf('.') > 0) )
+		return true;
+	else
+		return false;
+}
+
 function is_unit_24g(_unit) {
 	if (based_modelid == "GT-AXE16000") {
 		if (_unit == 3) return true;
