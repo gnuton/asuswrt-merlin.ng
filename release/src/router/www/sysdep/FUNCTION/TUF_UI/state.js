@@ -1312,11 +1312,11 @@ function hide_traffic_warning(){
 }
 
 function get_helplink(){
-	return "https://www.asuswrt-merlin.net/";
+	return "https://gnuton.github.io/asuswrt-merlin.ng/";
 }
 
 function get_Downloadlink(){
-	return "https://www.asuswrt-merlin.net/download";
+	return "https://github.com/gnuton/asuswrt-merlin.ng/releases/latest";
 }
 
 function Block_chars(obj, keywordArray){
@@ -1484,7 +1484,7 @@ function showMenuTree(menuList, menuExclude){
 		var getMenuCode = function(){
 			var menu_code = '<div style="margin-top:-172px">';
 			if (rog_support)
-				menu_code += '<div style="width:160px;height:52px;"><span><a href="https://www.asuswrt-merlin.net/" target="_blank" rel="noreferrer"><img src="images/merlin-logo.png" style="border: 0;"></a></span></div>';
+				menu_code += '<div style="width:160px;height:52px;"><span><a href="https://gnuton.github.io/asuswrt-merlin.ng/" target="_blank" rel="noreferrer"><img src="images/merlin-logo.png" style="border: 0;"></a></span></div>';
 			for(var i=0; i<menuList.length; i++){
 				var curMenu = menuList[i];
 				var firstEntry = -1;
