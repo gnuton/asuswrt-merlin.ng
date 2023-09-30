@@ -1199,7 +1199,6 @@ function shadeHandle(flag){
 						<td>
 							<div>
 								<select class="input_option" id="mail_provider">
-									<option value="0">Google</option>
 									<option value="1">AOL</option>
 									<option value="2">QQ</option>
 									<option value="3">163</option>
