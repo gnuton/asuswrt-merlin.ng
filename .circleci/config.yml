@@ -110,16 +110,14 @@ jobs:
             rm -rf ${IMAGE_PATH}/*cferom*
 
             # Generate md5 and store images into workspace
-            files=("${IMAGE_PATH}"/*.squashfs.pkgtb "${IMAGE_PATH}"/*.w)
+            files=("${IMAGE_PATH}"/*squashfs.pkgtb "${IMAGE_PATH}"/*.w)
 
             if [ ${#files[@]} -gt 0 ]; then
                 for f in "${files[@]}"; do
-                    if [ -f "$f" ] && [ "${f##*.}" != "md5" ]; then
-                        echo "Creating MD5 signature for $f"
-                        md5sum "$f" > "workspace/release/$f.md5"
-                        echo "Copying image $f to workspace"
-                        cp "$f" workspace/release
-                    fi
+                    echo "Creating MD5 signature for $f"
+                    md5sum "$f" > "workspace/release/$f.md5"
+                    echo "Copying image $f to workspace"
+                    cp "$f" workspace/release
                 done
             else
                 echo "No *.squashfs.pkgtb or *.w files found in ${IMAGE_PATH}"
