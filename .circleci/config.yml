@@ -68,6 +68,7 @@ jobs:
           no_output_timeout: 120m
           command: |
             export MERLINUPDATE=y
+            export DESKTOP_LINUX=true
             cd ${PROJECT_DIR}/release/${SDK}
             echo "----- Files in dir: $(pwd) -----"
             ls -alh
