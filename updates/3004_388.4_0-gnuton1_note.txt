@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: October 25, 2023
+Release: 3004.388.4_0-gnuton1
+
+  - NEW: Merged with GPL 388_23588.
+
+
+
