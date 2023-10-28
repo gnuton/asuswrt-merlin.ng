@@ -25,7 +25,7 @@
   ·
   <a href="https://twitter.com/gnuton">@MyTweets</a>
   ·  
-  <a href="https://discord.gg/d9znzA68Dd">Chat</a>  
+  <a href="https://discord.gg/pm7q6KFSzp">Chat</a>  
   ·  
   <a href="https://gitter.im/asuswrt/merlin-dsl">Old Chat</a>
 </p>
