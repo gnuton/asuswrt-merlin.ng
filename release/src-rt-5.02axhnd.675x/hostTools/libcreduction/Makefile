@@ -234,25 +234,25 @@ print_libs:
 	@echo "Installing C run-time library..."
 	@if [ -n "$(SHLIBS32)" ]; then \
 	    echo "######### All 32-bit required shared libs #########"; \
-	    echo $(SHLIBS32); \
+	    echo "$(SHLIBS32)"; \
 	fi
 	@if [ -n "$(SHLIBS64)" ]; then \
 	    echo "######### All 64-bit required shared libs #########"; \
-	    echo $(SHLIBS64); \
+	    echo "$(SHLIBS64)"; \
 	fi
 
 all install: print_libs
 	@if [ -n "$(TOOLCHAIN_LIBS32)" ]; then \
 	    echo "########## 32-bit toolchain libs to copy ##########";\
-	    echo $(TOOLCHAIN_LIBS32);\
+	    echo "$(TOOLCHAIN_LIBS32)";\
 	fi
 	@if [ -n "$(TOOLCHAIN_LIBS64)" ]; then \
 	    echo "########## 64-bit toolchain libs to copy ##########";\
-	    echo $(TOOLCHAIN_LIBS64);\
+	    echo "$(TOOLCHAIN_LIBS64)";\
 	fi
 	@if [ -n "$(TOOLCHAIN_LINKER)" ]; then \
 	    echo "##########  Dynamic linker libs to copy  ##########";\
-	    echo $(TOOLCHAIN_LINKER);\
+	    echo "$(TOOLCHAIN_LINKER)";\
 	fi
 	@echo "###################################################"
 	@echo ""
