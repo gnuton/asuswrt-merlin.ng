@@ -248,7 +248,7 @@ print_libs:
 	    echo $(SHLIBS64); \
 	fi
 
-all install: print_libs
+all install:
 	@if [ -n "$(TOOLCHAIN_LIBS32)" ]; then \
 	    echo "########## 32-bit toolchain libs to copy ##########";\
 	    echo $(TOOLCHAIN_LIBS32);\
