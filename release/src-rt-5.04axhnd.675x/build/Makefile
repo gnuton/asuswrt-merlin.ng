@@ -814,6 +814,8 @@ endif
 
 full_buildimage: kernelbuild $(DTBS) libcreduction gen_credits linux_tools
 
+execstack_exec=$(shell which execstack)
+
 full_buildimage buildimage:
 ifeq ($(BUILD_DISABLE_EXEC_STACK),y)
 ifneq ($(execstack_exec),)
