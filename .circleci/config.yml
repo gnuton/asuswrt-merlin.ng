@@ -110,7 +110,7 @@ jobs:
             rm -rf ${IMAGE_PATH}/*cferom*
 
             # Generate md5 and store images into workspace
-            files=("${IMAGE_PATH}"/*.squashfs.pkgtb "${IMAGE_PATH}"/*.w)
+            files=("${IMAGE_PATH}"/*squashfs.pkgtb "${IMAGE_PATH}"/*.w)
 
             if [ ${#files[@]} -gt 0 ]; then
                 for f in "${files[@]}"; do
