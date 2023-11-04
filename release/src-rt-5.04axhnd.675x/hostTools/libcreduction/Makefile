@@ -37,8 +37,7 @@ BIN_INSTALL_DIRS := $(INSTALL_DIR)/bin $(INSTALL_DIR)/sbin $(INSTALL_DIR)/usr
 # Get list of all required 32-bit libraries in final image
 SHLIBS32 := $(shell find -L $(BIN_INSTALL_DIRS) $(INSTALL_DIR)/lib $(INSTALL_DIR)/usr/lib -type f | file -f - \
              | grep "ELF 32-bit" )
-XXXX_FILES := $(shell find -L $(BIN_INSTALL_DIRS) $(INSTALL_DIR)/lib $(INSTALL_DIR)/usr/lib -type f)
-$(warning "DEBUG_XXX: $XXXX_FILES ")
+$(warning "DEBUG_XXX: $(SHLIBS32)")
 
 ifneq ($(SHLIBS32),)
 SHLIBS32 := $(shell find -L $(BIN_INSTALL_DIRS) $(INSTALL_DIR)/lib $(INSTALL_DIR)/usr/lib -type f | file -f - \
