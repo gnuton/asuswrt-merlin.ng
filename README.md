@@ -8,7 +8,7 @@
 </h3>
 
 <p align="center">
-  A powerful third party alternative firmware for Asus routers.
+  A powerful third-party firmware designed for Asus routers.
     
   <br>
   <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt"><strong>Explore Asus Merlin docs»</strong></a>
