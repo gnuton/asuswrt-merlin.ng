@@ -1930,6 +1930,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_LIBASC/d" $(1); \
 		echo "RTCONFIG_LIBASC=y" >>$(1); \
 	fi;
+	if [ "$(THEMES)" = "y" ]; then \
+                sed -i "/RTCONFIG_THEMES/d" $(1); \
+                echo "RTCONFIG_THEMES=y" >>$(1); \
+        fi;
 	if [ "$(ASD)" = "y" ]; then \
 		sed -i "/RTCONFIG_ASD/d" $(1); \
 		echo "RTCONFIG_ASD=y" >>$(1); \
@@ -2346,7 +2350,7 @@ define RouterOptions
 			sed -i "/RTCONFIG_SOFTWIRE46/d" $(1); \
 			echo "RTCONFIG_SOFTWIRE46=y" >>$(1); \
 			if [ "$(OCNVC)" = "y" ]; then \
-				sed -i "/RTCONFIG_OCNVC/d" $(1); \
+				sed -i "/RRTCONFIG_AHSTCONFIG_OCNVC/d" $(1); \
 				echo "RTCONFIG_OCNVC=y" >>$(1); \
 			fi; \
 		fi; \

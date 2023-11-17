@@ -36,3 +36,4 @@ ln -sf /tmp/var/wwwext www/ext
 ln -sf /tmp/var/wwwext www/user
 ln -sf /www/ext/proxy.pac www/proxy.pac
 ln -sf /www/ext/proxy.pac www/wpad.dat
+ln -sf /jffs/themes www/themes

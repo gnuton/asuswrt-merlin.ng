@@ -931,6 +931,22 @@
 					]
 				},
 				{
+                                        "name": "Theme",
+                                        "rtconfig": "RTCONFIG_THEMES",
+                                        "data": [
+                                                {
+                                                        "name": "Themes",
+                                                        "priority": 1,
+                                                        "__priority": "Hard Limit",
+                                                        "max_size": 4096,
+                                                        "min_size": 4096,
+                                                        "type": "dir",
+                                                        "path": "/jffs/themes"
+                                                }
+                                        ]
+                                },
+
+				{
 					"name": "last",
 					"rtconfig": null,
 					"data": null
