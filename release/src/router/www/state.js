@@ -342,6 +342,8 @@ var SG_mode = ('<% nvram_get("SG_mode"); %>' == 1);
 var isGundam = in_territory_code("GD") || CoBrand_flag == 1;
 var isKimetsu = (CoBrand_flag == '2');
 var isEva = (CoBrand_flag == '3');
+var custom_theme_name = '<% nvram_get("theme_name"); %>';
+
 if(isGundam){
 	document.write('<link rel="stylesheet" type="text/css" href="/css/gundam.css"></link>');
 }
@@ -350,6 +352,9 @@ else if(isKimetsu){
 }
 else if(isEva){
 	document.write('<link rel="stylesheet" type="text/css" href="/css/eva.css"></link>');
+}
+else if(custom_theme_name){
+	document.write('<link rel="stylesheet" type="text/css" href="/themes/' + custom_theme_name + '/style.css"></link>');
 }
 
 var is_RU_sku = (function(){
