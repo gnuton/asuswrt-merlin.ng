@@ -1052,6 +1052,15 @@ function show_banner(L3){// L3 = The third Level of Menu
 		banner_code +='<a href="javascript:logout();"><div style="margin-top:13px;margin-left:125px; *width:136px;" class="titlebtn" align="center"><span><#t1Logout#></span></div></a>\n';
 		banner_code +='<a href="javascript:reboot();"><div style="margin-top:13px;margin-left:0px;*width:136px;" class="titlebtn" align="center"><span><#BTN_REBOOT#></span></div></a>\n';
 	}
+	else if (custom_theme_name){
+		banner_code =  '<div class="banner1" align="center"></div>\n';
+		banner_code += '<div class="model-name" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
+		banner_code += '<div class="logo-container" align="left"><span><a href="https://github.com/gnuton/asuswrt-merlin.ng" target="_blank" rel="noreferrer"></a></span></div>';
+
+		// logout, reboot
+		banner_code += '<a href="javascript:logout();"><div class="titlebtn logout-btn" align="center"><span><#t1Logout#></span></div></a>\n';
+		banner_code += '<a href="javascript:reboot();"><div class="titlebtn reboot-btn" align="center"><span><#BTN_REBOOT#></span></div></a>\n';
+	}
 	else{
 		banner_code +='<div class="banner1" align="center"><img src="images/New_ui/asustitle.png" width="218" height="54" align="left">\n';
 		banner_code +='<div style="margin-top:13px;margin-left:-90px;*margin-top:0px;*margin-left:0px;" align="center"><span id="modelName_top" onclick="this.focus();" class="modelName_top"><#Web_Title2#></span></div>';
