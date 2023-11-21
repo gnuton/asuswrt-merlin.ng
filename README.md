@@ -101,11 +101,11 @@ Not sure which version you have? V1? V2? Enable SSH, then ssh into your router a
 Do you love this project? All kinds of contributions are welcome 🙌!
  * ⭐️ star the project
  * raise 🐞 issues 
- * send 🙇 code. ([Are you a dev? Click here!](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/DEV.md))
+ * send 🙇 code. ([Are you a dev? Click here!](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/www/DEV.md))
  * 💰 donations.
 
 <p align="center">
-  <a href="https://www.paypal.me/gnuton"><img src="donate.png" alt="donate" /></a>
+  <a href="https://www.paypal.me/gnuton"><img src="www/donate.png" alt="donate" /></a>
   <br/>  
   or 
   <br/>
