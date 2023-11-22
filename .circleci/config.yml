@@ -234,7 +234,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_rt-ax82u"
@@ -250,7 +249,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_rt-ax82u_v2"
@@ -266,7 +264,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_rt-ax95q"
@@ -282,7 +279,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_rt-axe95q"
@@ -298,7 +294,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_tuf-ax5400"
@@ -314,7 +309,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_tuf-ax3000"
@@ -330,7 +324,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_tuf-ax5400_tuf"
@@ -346,7 +339,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_tuf-ax3000_tuf"
@@ -362,7 +354,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - build:
           name: "build_rt-ax92u"
@@ -378,7 +369,6 @@ workflows:
               only: /.*/
             branches:
               ignore:
-                - master
                 - mainline
       - request-testing:
           type: approval
