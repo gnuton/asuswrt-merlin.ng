@@ -46,14 +46,14 @@
 	<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 		<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 		<input type="hidden" name="current_page" value="Advanced_UI_Theming.asp">
-		<input type="hidden" name="next_page" value="">
+		<input type="hidden" name="next_page" value="Advanced_UI_Theming.asp">
 		<input type="hidden" name="next_host" value="">
 		<input type="hidden" name="group_id" value="">
 		<input type="hidden" name="modified" value="0">
 		<input type="hidden" name="flag" value="">
-		<input type="hidden" name="action_mode" value="apply">
+		<input type="hidden" name="action_mode" value="">
 		<input type="hidden" name="action_wait" value="1">
-		<input type="hidden" name="action_script" value="saveNvram">
+		<input type="hidden" name="action_script" value="">
 		<input type="hidden" name="first_time" value="">
 		<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 		<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -84,15 +84,15 @@
 														<th>Select theme:</th>
 														<td>
 															<select name="theme_name" class="input_option" onchange="change_theme_preview_image(this.value);">
-																<option value="NONE"    <% nvram_match("theme_name", "", "selected"); %>>NONE</option>
-																<option value="Default" <% nvram_match("theme_name", "DEFAULT", "selected"); %>>DEFAULT</option>
-																<option value="One"     <% nvram_match("theme_name", "ONE", "selected"); %>>ONE</option>
+																<option value=""    <% nvram_match("theme_name", "", "selected"); %>>NONE</option>
+																<option value="default" <% nvram_match("theme_name", "DEFAULT", "selected"); %>>DEFAULT</option>
+																<option value="one"     <% nvram_match("theme_name", "ONE", "selected"); %>>ONE</option>
 															</select>
 														</td>
 													</tr>
 												</table>
 												<div class="apply_gen">
-													<input name="button" type="button" class="button_gen" onclick="applyRule()" value="<#CTL_apply#>"/>
+													<input type="button" class="button_gen" onclick="applyRule()" value="<#CTL_apply#>"/>
 												</div>
 											</td>
 										</tr>
@@ -106,7 +106,8 @@
 				<td width="10" align="center" valign="top">&nbsp;</td>
 			</tr>
 		</table>
-		<div id="footer"></div>
-	</form>
+		</form>
+		<div id="footer">			
+		</div>
 </body>
 </html>
