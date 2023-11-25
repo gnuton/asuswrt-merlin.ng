@@ -17,15 +17,12 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script>
-	custom_theme_name = '<% nvram_get("theme_name"); %>';
+	const isThemesEnabled = isSupport("themes"); 
+	const custom_theme_name = '<% nvram_get("theme_name"); %>';
 
 	function applyRule(){
 		showLoading();
 		document.form.submit();
-	}
-
-	function done_validating(action){
-		refreshpage();
 	}
 
 	function initial(){

@@ -18863,6 +18863,7 @@ NO_USB_CAP:
 	add_rc_support("upnpc");
 #endif
 
+
 #ifdef RTCONFIG_AUPNPC
 	add_rc_support("aupnpc");
 #endif
@@ -18927,6 +18928,10 @@ NO_USB_CAP:
 	// init_nvram() is executed after wan_defaults(), so restore AUTO_WANPORT here
 	add_rc_support("auto_wanport");
 #endif
+#ifdef RTCONFIG_THEMES
+	add_rc_support("themes");
+#endif
+
 	if(!nvram_match("forget_it", ""))
 		add_rc_support("defpass");
 
