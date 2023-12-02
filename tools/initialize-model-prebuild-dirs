@@ -53,4 +53,7 @@ mkdir -p dblog/commands/prebuild/$MODEL
 mkdir -p dblog/daemon/prebuild/$MODEL
 mkdir -p libasuslog/prebuild/$MODEL
 
+
+mkdir -p ./release/src/router/protect_srv/lib/prebuild/$MODEL
+
 echo "Don't forget to manually create release/MODEL/hostTools/ and release/MODEL/router-sysdep.MODEL"
