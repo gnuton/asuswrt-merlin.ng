@@ -36,8 +36,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "buffer.h"
@@ -45,6 +43,7 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
+#include <openssl/err.h>
 
 /* Functionality missing in 1.1.0 */
 #if OPENSSL_VERSION_NUMBER < 0x10101000L && !defined(ENABLE_CRYPTO_WOLFSSL)
@@ -74,6 +73,10 @@ X509_OBJECT_free(X509_OBJECT *obj)
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)) && !defined(ENABLE_CRYPTO_WOLFSSL)
 #define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT       RSA_F_RSA_EAY_PRIVATE_ENCRYPT
+#endif
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L && !defined(ENABLE_CRYPTO_WOLFSSL)) || (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x3050400fL)
+#define SSL_get_peer_tmp_key SSL_get_server_tmp_key
 #endif
 
 /* Functionality missing in 1.0.2 */
@@ -799,6 +802,17 @@ static inline void
 EVP_MD_free(const EVP_MD *md)
 {
     /* OpenSSL 1.1.1 and lower use only const EVP_MD, nothing to free */
+}
+
+static inline unsigned long
+ERR_get_error_all(const char **file, int *line,
+                  const char **func,
+                  const char **data, int *flags)
+{
+    static const char *empty = "";
+    *func = empty;
+    unsigned long err = ERR_get_error_line_data(file, line, data, flags);
+    return err;
 }
 
 #endif /* OPENSSL_VERSION_NUMBER < 0x30000000L */
