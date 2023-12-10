@@ -20429,6 +20429,8 @@ void setup_leds()
 			eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #elif defined(GTAX11000_PRO)
 			eval("wl", "-i", "eth6", "ledbh", "13", "7");
+#elif defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2)
+			eval("wl", "-i", "eth4", "ledbh", "10", "7");
 #endif
 		}
 
@@ -20463,8 +20465,6 @@ void setup_leds()
 			eval("wl", "-i", "eth7", "ledbh", "9", "7");
 #elif defined(GTAX6000)
 			eval("wl", "-i", "eth7", "ledbh", "13", "7");
-#elif defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO)
-				eval("wl", "-i", "eth4", "ledbh", "10", "7");
 #elif defined(BCM6750)
 #if defined(RTAX82U) && !defined(RTCONFIG_BCM_MFG)
 				if (!nvram_get_int("LED_order"))
@@ -20478,6 +20478,8 @@ void setup_leds()
 			eval("wl", "-i", "eth7", "ledbh", "13", "7");
 #elif defined(RTAX92U)
 			eval("wl", "-i", "eth6", "ledbh", "10", "7");
+#elif defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2)
+			eval("wl", "-i", "eth5", "ledbh", "10", "7");
 #endif
 		}
 
@@ -20497,6 +20499,8 @@ void setup_leds()
 			eval("wl", "-i", "eth8", "ledbh", "13", "7");
 #elif defined(RTAX92U)
 			eval("wl", "-i", "eth7", "ledbh", "15", "7");
+#elif defined(RTAX95Q) || defined(XT8PRO) || defined(BM68) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO) || defined(ET8_V2)
+			eval("wl", "-i", "eth6", "ledbh", "15", "7");
 #endif
 		}
 #endif
