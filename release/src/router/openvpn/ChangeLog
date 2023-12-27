@@ -1,6 +1,109 @@
 OpenVPN ChangeLog
 Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
 
+2023.11.17 -- Version 2.6.8
+
+Aquila Macedo (1):
+      doc: Correct typos in multiple documentation files
+
+Arne Schwabe (1):
+      Do not check key_state buffers that are in S_UNDEF state
+
+Frank Lichtenheld (1):
+      platform.c: Do not depend Windows build on HAVE_CHDIR
+
+Lev Stipakov (3):
+      config.h: fix incorrect defines for _wopen()
+      Make --dns options apply for tap-windows6 driver
+      Warn if pushed options require DHCP
+
+
+2023.11.08 -- Version 2.6.7
+
+Antonio Quartulli (1):
+      dco: fix crash when --multihome is used with --proto tcp
+
+Arne Schwabe (8):
+      Mock openvpn_exece on win32 also for test_tls_crypt
+      Add warning for the --show-groups command that some groups are missing
+      Print peer temporary key details
+      Add warning if a p2p NCP client connects to a p2mp server
+      Remove openssl engine method for loading the key
+      Remove saving initial frame code
+      Double check that we do not use a freed buffer when freeing a session
+      Fix using to_link buffer after freed
+
+Frank Lichtenheld (7):
+      GHA: do not trigger builds in openvpn-build anymore
+      GHA: new workflow to submit scan to Coverity Scan service
+      buffer: use memcpy in buf_catrunc
+      vcpkg-ports/pkcs11-helper: Backport MinGW series from master to release/2.6
+      CMake: backport CMake buildsystem from master to release/2.6
+      Remove all traces of the previous MSVC build system
+      doc: fix argument name in --route-delay documentation
+
+Heiko Hund (1):
+      dns option: remove support for exclude-domains
+
+Lev Stipakov (3):
+      Warn user if INFO control command is too long
+      dco-win: get driver version
+      dco: warn if DATA_V1 packets are sent to userspace
+
+Selva Nair (2):
+      Make cert_data.h and test_cryptoapi/pkcs11.c MSVC compliant
+      Log OpenSSL errors on failure to set certificate
+
+orbea (1):
+      configure: disable engines if OPENSSL_NO_ENGINE is defined
+
+
+2023.08.14 -- Version 2.6.6
+
+Antonio Quartulli (1):
+      configure.ac: fix typ0 in LIBCAPNG_CFALGS
+
+Arne Schwabe (8):
+      Avoid unused function warning/error on FreeBSD (and potientially others)
+      fix warning with gcc 12.2.0 (compiler bug?)
+      Fix CR_RESPONSE mangaement message using wrong key_id
+      Print a more user-friendly error when tls-crypt-v2 client auth fails
+      Ignore Ipv6 route delete request on Android and set ipv4 verbosity to 7
+      Revert commit 423ced962d
+      Implement using --peer-fingerprint without CA certificates
+      show extra info for OpenSSL errors
+
+David Sommerseth (1):
+      ntlm: Clarify details on NTLM phase 3 decoding
+
+Frank Lichtenheld (8):
+      dist: add more missing files only used in the MSVC build
+      dist: Include all documentation in distribution
+      unit_tests: Add missing cert_data.h to source list for unit tests
+      test_tls_crypt: Improve mock() usage to be more portable
+      Remove old Travis CI related files
+      options: Do not hide variables from parent scope
+      pkcs11_openssl: Disable unused code
+      route: Fix overriding return value of add_route3
+
+George Pchelkin (1):
+      fix typo: dhcp-options to dhcp-option in vpn-network-options.rst
+
+Gert Doering (1):
+      Make received OCC exit messages more visible in log.
+
+Heiko Hund (1):
+      work around false positive warning with mingw 12
+
+Lev Stipakov (3):
+      tun.c: enclose DNS domain in single quotes in WMIC call
+      manage.c: document missing KID parameter
+      Set WINS servers via interactice service
+
+Sergey Korolev (1):
+      dco-linux: fix counter print format
+
+
 2023.06.13 -- Version 2.6.5
 
 Arne Schwabe (1):
