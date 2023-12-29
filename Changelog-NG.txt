@@ -1,5 +1,8 @@
 Asuswrt-Merlin Changelog
 
+3004.388.5_0-gnuton1 (29-Dec-2023)
+  - UPDATED: imported changes from upstream
+
 3004.388.4_0-gnuton1 (25-Oct-2023)
   - NEW: Merged with GPL 388_23588.
 
