@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: December 29, 2023
+Release: 3004.388.5_0-gnuton1
+
+  - ADDED: Support for RT-AX82U_V2
+  - FIXED: AiMesh icons for TUF UI
+
+
