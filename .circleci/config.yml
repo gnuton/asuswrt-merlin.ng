@@ -225,7 +225,7 @@ workflows:
           name: "build_dsl-ax82u"
           model: "dsl-ax82u"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
