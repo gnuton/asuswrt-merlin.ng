@@ -1027,6 +1027,7 @@ function shadeHandle(flag){
 			<div style="width: 150px;margin-right: 18px;font-size: 14px;font-family: Xolonium;color: #848C98"><#Provider#></div>
 			<div class="select-container">
 					<select name="" id="mail_provider">
+						<option value="0">Google</option>
 						<option value="1">AOL</option>
 						<option value="2">QQ</option>
 						<option value="3">163</option>
