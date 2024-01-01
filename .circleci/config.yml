@@ -240,7 +240,7 @@ workflows:
           name: "build_rt-ax82u"
           model: "rt-ax82u"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
