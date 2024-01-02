@@ -269,7 +269,7 @@ workflows:
           name: "build_rt-ax95q"
           model: "rt-ax95q"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -284,7 +284,7 @@ workflows:
           name: "build_rt-axe95q"
           model: "rt-axe95q"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
