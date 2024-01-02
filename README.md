@@ -102,6 +102,7 @@ Do you love this project? All kinds of contributions are welcome 🙌!
  * ⭐️ star the project
  * raise 🐞 issues 
  * send 🙇 code. ([Are you a dev? Click here!](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/www/DEV.md))
+ * Help other people in the community via [chat](https://discord.com/channels/1155054060848807976/1168099691477614642) or [support tickets](https://github.com/gnuton/asuswrt-merlin.ng/issues?q=is%3Aissue+is%3Aopen+label%3Asuppport)
  * 💰 donations.
 
 <p align="center">
