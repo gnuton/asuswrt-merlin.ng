@@ -21,7 +21,7 @@
 .\" * SPDX-License-Identifier: curl
 .\" *
 .\" **************************************************************************
-.TH curl_global_cleanup 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
+.TH curl_global_cleanup 3 "December 04, 2023" "libcurl 8.5.0" "libcurl"
 
 .SH NAME
 curl_global_cleanup - global libcurl cleanup
@@ -59,17 +59,20 @@ recommend you do not run libcurl from any module that may be unloaded
 dynamically. This behavior may be addressed in the future.
 .SH EXAMPLE
 .nf
- curl_global_init(CURL_GLOBAL_DEFAULT);
+int main(void)
+{
+  curl_global_init(CURL_GLOBAL_DEFAULT);
 
- /* use libcurl, then before exiting... */
+  /* use libcurl, then before exiting... */
 
- curl_global_cleanup();
+  curl_global_cleanup();
+}
 .fi
 .SH AVAILABILITY
 Added in 7.8
 .SH RETURN VALUE
 None
 .SH "SEE ALSO"
-.BR curl_global_init "(3), "
-.BR libcurl "(3), "
-.BR libcurl-thread "(3), "
+.BR curl_global_init (3),
+.BR libcurl (3),
+.BR libcurl-thread (3)

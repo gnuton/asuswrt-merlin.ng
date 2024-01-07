@@ -25,21 +25,14 @@
 
 #include <sys/stat.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <tchar.h>
 #endif
 
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
-
-#ifdef USE_NSS
-#include <nspr.h>
-#include <plarenas.h>
 #endif
 
 #define ENABLE_CURLX_PRINTF
@@ -78,6 +71,7 @@ int vms_show = 0;
  * when command-line argument globbing is enabled under the MSYS shell, so turn
  * it off.
  */
+extern int _CRT_glob;
 int _CRT_glob = 0;
 #endif /* __MINGW32__ */
 
@@ -175,17 +169,17 @@ static CURLcode main_init(struct GlobalConfig *config)
         config->first->global = config;
       }
       else {
-        errorf(config, "error retrieving curl library information\n");
+        errorf(config, "error retrieving curl library information");
         free(config->first);
       }
     }
     else {
-      errorf(config, "error initializing curl library\n");
+      errorf(config, "error initializing curl library");
       free(config->first);
     }
   }
   else {
-    errorf(config, "error initializing curl\n");
+    errorf(config, "error initializing curl");
     result = CURLE_FAILED_INIT;
   }
 
@@ -212,14 +206,6 @@ static void main_free(struct GlobalConfig *config)
   /* Cleanup the easy handle */
   /* Main cleanup */
   curl_global_cleanup();
-#ifdef USE_NSS
-  if(PR_Initialized()) {
-    /* prevent valgrind from reporting still reachable mem from NSPR arenas */
-    PL_ArenaFinish();
-    /* prevent valgrind from reporting possibly lost memory (fd cache, ...) */
-    PR_Cleanup();
-  }
-#endif
   free_globalconfig(config);
 
   /* Free the config structures */
@@ -228,126 +214,13 @@ static void main_free(struct GlobalConfig *config)
   config->last = NULL;
 }
 
-#if 1//def ASUSWRT
-static int _get_process_path(const int pid, char *real_path, const size_t real_path_len)
-{
-	char link_path[512];
-
-	if(!real_path)
-		return 0;
-
-	snprintf(link_path, sizeof(link_path), "/proc/%d/exe", pid);
-	memset(real_path, 0, real_path_len);
-
-	if(-1 == readlink(link_path, real_path, real_path_len))
-	{
-		return 0;
-	}
-	else
-	{
-		return 1;
-	}
-}
-
-static int _get_cmdline(const int pid, char *cmdline, const size_t cmdline_len)
-{
-	FILE *fp;
-	char path[512], buf[2048] = {0}, *ptr;
-	long int fsize;
-	
-	if(!cmdline)
-		return 0;
-
-	snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
-	fp = fopen(path, "r");
-	if(fp)
-	{
-		memset(cmdline, 0, cmdline_len);
-		
-		fsize = fread(buf, 1, sizeof(buf), fp);
-		ptr = buf;
-		while(ptr - buf <  fsize)
-		{
-			if(*ptr == '\0')
-			{
-				++ptr;
-				continue;
-			}
-
-			snprintf(cmdline + strlen(cmdline), cmdline_len - strlen(cmdline), ptr == buf? "%s": " %s", ptr);
-			ptr += strlen(ptr);
-		}
-		fclose(fp);
-		return strlen(cmdline);
-	}
-	return 0;
-}
-
-static int _get_ppid(const int pid)
-{
-	FILE *fp;
-	char path[512], buf[512] = {0}, name[128], val[512];
-	int ppid = 0;
-
-	snprintf(path, sizeof(path), "/proc/%d/status", pid);
-
-	fp = fopen(path, "r");
-	if(fp)
-	{
-		while(fgets(buf, sizeof(buf), fp))
-		{
-			memset(name, 0, sizeof(name));
-			memset(val, 0, sizeof(val));
-			sscanf(buf, "%[^:]: %s", name, val);
-			if(!strcmp(name, "PPid"))
-			{
-				ppid = atoi(val);
-				break;
-			}
-		}
-		fclose(fp);
-	}
-	return ppid;
-}
-
-static int _check_caller()
-{
-  pid_t ppid, pid;
-	char cmdline[2048];
-  const char *invalid_caller[] = {"/usr/sbin/httpd", "/usr/sbin/lighttpd", NULL};
-  int i;
-  FILE *fp;
-
-  pid = getpid();
-  while(_get_process_path(pid, cmdline, sizeof(cmdline)) > 0)
-  {
-    for(i = 0; invalid_caller[i]; ++i)
-    {
-      if(!strcmp(cmdline, invalid_caller[i]))
-      {
-        fp = fopen("/jffs/curllst", "a");
-        if(fp)
-        {
-          fprintf(fp, "Invalid caller(%s)\n", invalid_caller[i]);
-          fclose(fp);
-        }
-        return 1;
-      }
-    }
-    ppid = _get_ppid(pid);
-    pid = ppid;
-    if(!ppid)
-      break;
-  }
-  return 0;  
-}
-#endif
 /*
 ** curl tool main function.
 */
 #ifdef _UNICODE
 #if defined(__GNUC__)
 /* GCC doesn't know about wmain() */
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
 #endif
@@ -360,45 +233,9 @@ int main(int argc, char *argv[])
   struct GlobalConfig global;
   memset(&global, 0, sizeof(global));
 
-#if 1//def ASUSWRT
-	pid_t ppid, pid;
-  FILE *fp = fopen("/jffs/curllst", "r");
-  long int log_size;
-	char cmdline[2048];
-  if(fp)
-  {
-    fseek(fp, 0, SEEK_END);
-    log_size = ftell(fp);
-    fclose(fp);
-    if(log_size >= 10 * 1024)
-    {
-      unlink("/jffs/curllst.1");
-      system("mv /jffs/curllst /jffs/curllst.1");
-    }
-  }
-
-  fp = fopen("/jffs/curllst", "a");
-  if(fp)
-  {
-    //get parent process information
-    pid = getpid();
-    while(_get_cmdline(pid, cmdline, sizeof(cmdline)) > 0)
-    {
-      ppid = _get_ppid(pid);
-      fprintf(fp, "(%d)%s\n", ppid, cmdline);
-      pid = ppid;
-      if(!ppid)
-        break;
-    }
-    fclose(fp);
-  }
-  if(_check_caller())
-    return 0;
-#endif
-
   tool_init_stderr();
 
-#ifdef WIN32
+#ifdef _WIN32
   /* Undocumented diagnostic option to list the full paths of all loaded
      modules. This is purposely pre-init. */
   if(argc == 2 && !_tcscmp(argv[1], _T("--dump-module-paths"))) {
@@ -411,13 +248,13 @@ int main(int argc, char *argv[])
   /* win32_init must be called before other init routines. */
   result = win32_init();
   if(result) {
-    fprintf(stderr, "curl: (%d) Windows-specific init failed.\n", result);
+    errorf(&global, "(%d) Windows-specific init failed", result);
     return result;
   }
 #endif
 
   if(main_checkfds()) {
-    fprintf(stderr, "curl: out of file descriptors\n");
+    errorf(&global, "out of file descriptors");
     return CURLE_FAILED_INIT;
   }
 
@@ -439,7 +276,7 @@ int main(int argc, char *argv[])
     main_free(&global);
   }
 
-#ifdef WIN32
+#ifdef _WIN32
   /* Flush buffers of all streams opened in write or update mode */
   fflush(NULL);
 #endif
@@ -450,5 +287,11 @@ int main(int argc, char *argv[])
   return (int)result;
 #endif
 }
+
+#ifdef _UNICODE
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+#endif
 
 #endif /* ndef UNITTESTS */

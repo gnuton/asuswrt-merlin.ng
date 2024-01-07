@@ -53,28 +53,19 @@
 #include "curlver.h"         /* libcurl version defines   */
 #include "system.h"          /* determine things run-time */
 
-/*
- * Define CURL_WIN32 when build target is Win32 API
- */
-
-#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) &&        \
-  !defined(__SYMBIAN32__)
-#define CURL_WIN32
-#endif
-
 #include <stdio.h>
 #include <limits.h>
 
-#if (defined(__FreeBSD__) && (__FreeBSD__ >= 2)) || defined(__MidnightBSD__)
+#if defined(__FreeBSD__) || defined(__MidnightBSD__)
 /* Needed for __FreeBSD_version or __MidnightBSD_version symbol definition */
-#include <osreldate.h>
+#include <sys/param.h>
 #endif
 
 /* The include stuff here below is mainly for time_t! */
 #include <sys/types.h>
 #include <time.h>
 
-#if defined(CURL_WIN32) && !defined(_WIN32_WCE) && !defined(__CYGWIN__)
+#if defined(_WIN32) && !defined(_WIN32_WCE) && !defined(__CYGWIN__)
 #if !(defined(_WINSOCKAPI_) || defined(_WINSOCK_H) || \
       defined(__LWIP_OPT_H__) || defined(LWIP_HDR_OPT_H))
 /* The check above prevents the winsock2 inclusion if winsock.h already was
@@ -88,20 +79,20 @@
    libc5-based Linux systems. Only include it on systems that are known to
    require it! */
 #if defined(_AIX) || defined(__NOVELL_LIBC__) || defined(__NetBSD__) || \
-    defined(__minix) || defined(__SYMBIAN32__) || defined(__INTEGRITY) || \
+    defined(__minix) || defined(__INTEGRITY) || \
     defined(ANDROID) || defined(__ANDROID__) || defined(__OpenBSD__) || \
     defined(__CYGWIN__) || defined(AMIGA) || defined(__NuttX__) || \
    (defined(__FreeBSD_version) && (__FreeBSD_version < 800000)) || \
    (defined(__MidnightBSD_version) && (__MidnightBSD_version < 100000)) || \
-    defined(__sun__) || defined(__serenity__)
+    defined(__sun__) || defined(__serenity__) || defined(__vxworks__)
 #include <sys/select.h>
 #endif
 
-#if !defined(CURL_WIN32) && !defined(_WIN32_WCE)
+#if !defined(_WIN32) && !defined(_WIN32_WCE)
 #include <sys/socket.h>
 #endif
 
-#if !defined(CURL_WIN32)
+#if !defined(_WIN32)
 #include <sys/time.h>
 #endif
 
@@ -128,7 +119,7 @@ typedef void CURLSH;
 
 #ifdef CURL_STATICLIB
 #  define CURL_EXTERN
-#elif defined(CURL_WIN32) || defined(__SYMBIAN32__) || \
+#elif defined(_WIN32) || \
      (__has_declspec_attribute(dllexport) && \
       __has_declspec_attribute(dllimport))
 #  if defined(BUILDING_LIBCURL)
@@ -144,7 +135,7 @@ typedef void CURLSH;
 
 #ifndef curl_socket_typedef
 /* socket typedef */
-#if defined(CURL_WIN32) && !defined(__LWIP_OPT_H__) && !defined(LWIP_HDR_OPT_H)
+#if defined(_WIN32) && !defined(__LWIP_OPT_H__) && !defined(LWIP_HDR_OPT_H)
 typedef SOCKET curl_socket_t;
 #define CURL_SOCKET_BAD INVALID_SOCKET
 #else
@@ -159,9 +150,9 @@ typedef enum {
   CURLSSLBACKEND_NONE = 0,
   CURLSSLBACKEND_OPENSSL = 1,
   CURLSSLBACKEND_GNUTLS = 2,
-  CURLSSLBACKEND_NSS = 3,
+  CURLSSLBACKEND_NSS                    CURL_DEPRECATED(8.3.0, "") = 3,
   CURLSSLBACKEND_OBSOLETE4 = 4,  /* Was QSOSSL. */
-  CURLSSLBACKEND_GSKIT = 5,
+  CURLSSLBACKEND_GSKIT                  CURL_DEPRECATED(8.3.0, "") = 5,
   CURLSSLBACKEND_POLARSSL               CURL_DEPRECATED(7.69.0, "") = 6,
   CURLSSLBACKEND_WOLFSSL = 7,
   CURLSSLBACKEND_SCHANNEL = 8,
@@ -646,10 +637,10 @@ typedef enum {
 #ifndef CURL_NO_OLDIES /* define this to test if your app builds with all
                           the obsolete stuff removed! */
 
-/* Previously obsolete error code re-used in 7.38.0 */
+/* Previously obsolete error code reused in 7.38.0 */
 #define CURLE_OBSOLETE16 CURLE_HTTP2
 
-/* Previously obsolete error codes re-used in 7.24.0 */
+/* Previously obsolete error codes reused in 7.24.0 */
 #define CURLE_OBSOLETE10 CURLE_FTP_ACCEPT_FAILED
 #define CURLE_OBSOLETE12 CURLE_FTP_ACCEPT_TIMEOUT
 
@@ -781,7 +772,7 @@ typedef enum {
   CURLPROXY_HTTP_1_0 = 1,   /* added in 7.19.4, force to use CONNECT
                                HTTP/1.0  */
   CURLPROXY_HTTPS = 2,  /* HTTPS but stick to HTTP/1 added in 7.52.0 */
-  CURLPROXY_HTTPS2 = 3, /* HTTPS and attempt HTTP/2 added in 8.1.0 */
+  CURLPROXY_HTTPS2 = 3, /* HTTPS and attempt HTTP/2 added in 8.2.0 */
   CURLPROXY_SOCKS4 = 4, /* support added in 7.15.2, enum existed already
                            in 7.10 */
   CURLPROXY_SOCKS5 = 5, /* added in 7.10 */
@@ -1358,7 +1349,7 @@ typedef enum {
      operation slower and is less friendly for the network. */
   CURLOPT(CURLOPT_FRESH_CONNECT, CURLOPTTYPE_LONG, 74),
 
-  /* Set to explicitly forbid the upcoming transfer's connection to be re-used
+  /* Set to explicitly forbid the upcoming transfer's connection to be reused
      when done. Do not use this unless you're absolutely sure of this, as it
      makes the operation slower and is less friendly for the network. */
   CURLOPT(CURLOPT_FORBID_REUSE, CURLOPTTYPE_LONG, 75),
@@ -1652,7 +1643,7 @@ typedef enum {
   CURLOPT(CURLOPT_SOCKOPTFUNCTION, CURLOPTTYPE_FUNCTIONPOINT, 148),
   CURLOPT(CURLOPT_SOCKOPTDATA, CURLOPTTYPE_CBPOINT, 149),
 
-  /* set to 0 to disable session ID re-use for this transfer, default is
+  /* set to 0 to disable session ID reuse for this transfer, default is
      enabled (== 1) */
   CURLOPT(CURLOPT_SSL_SESSIONID_CACHE, CURLOPTTYPE_LONG, 150),
 
@@ -2113,7 +2104,7 @@ typedef enum {
   CURLOPT(CURLOPT_SASL_AUTHZID, CURLOPTTYPE_STRINGPOINT, 289),
 
   /* allow RCPT TO command to fail for some recipients */
-  CURLOPT(CURLOPT_MAIL_RCPT_ALLLOWFAILS, CURLOPTTYPE_LONG, 290),
+  CURLOPT(CURLOPT_MAIL_RCPT_ALLOWFAILS, CURLOPTTYPE_LONG, 290),
 
   /* the private SSL-certificate as a "blob" */
   CURLOPT(CURLOPT_SSLCERT_BLOB, CURLOPTTYPE_BLOB, 291),
@@ -2207,6 +2198,9 @@ typedef enum {
   /* Can leak things, gonna exit() soon */
   CURLOPT(CURLOPT_QUICK_EXIT, CURLOPTTYPE_LONG, 322),
 
+  /* set a specific client IP for HAProxy PROXY protocol header? */
+  CURLOPT(CURLOPT_HAPROXY_CLIENT_IP, CURLOPTTYPE_STRINGPOINT, 323),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
@@ -2234,6 +2228,9 @@ typedef enum {
 
 /* */
 #define CURLOPT_FTP_RESPONSE_TIMEOUT CURLOPT_SERVER_RESPONSE_TIMEOUT
+
+/* Added in 8.2.0 */
+#define CURLOPT_MAIL_RCPT_ALLLOWFAILS CURLOPT_MAIL_RCPT_ALLOWFAILS
 
 #else
 /* This is set if CURL_NO_OLDIES is defined at compile-time */
@@ -2725,6 +2722,20 @@ CURL_EXTERN CURLcode curl_global_init_mem(long flags,
  */
 CURL_EXTERN void curl_global_cleanup(void);
 
+/*
+ * NAME curl_global_trace()
+ *
+ * DESCRIPTION
+ *
+ * curl_global_trace() can be invoked at application start to
+ * configure which components in curl should participate in tracing.
+
+ * This function is thread-safe if CURL_VERSION_THREADSAFE is set in the
+ * curl_version_info_data.features flag (fetch by curl_version_info()).
+
+ */
+CURL_EXTERN CURLcode curl_global_trace(const char *config);
+
 /* linked-list structure for the CURLOPT_QUOTE option (and other) */
 struct curl_slist {
   char *data;
@@ -2804,13 +2815,14 @@ CURL_EXTERN void curl_slist_free_all(struct curl_slist *list);
  */
 CURL_EXTERN time_t curl_getdate(const char *p, const time_t *unused);
 
-/* info about the certificate chain, only for OpenSSL, GnuTLS, Schannel, NSS
-   and GSKit builds. Asked for with CURLOPT_CERTINFO / CURLINFO_CERTINFO */
+/* info about the certificate chain, for SSL backends that support it. Asked
+   for with CURLOPT_CERTINFO / CURLINFO_CERTINFO */
 struct curl_certinfo {
   int num_of_certs;             /* number of certificates with information */
   struct curl_slist **certinfo; /* for each index in this array, there's a
-                                   linked list with textual information in the
-                                   format "name: value" */
+                                   linked list with textual information for a
+                                   certificate in the format "name:content".
+                                   eg "Subject:foo", "Issuer:bar", etc. */
 };
 
 /* Information about the SSL library used and the respective internal SSL
@@ -2918,7 +2930,9 @@ typedef enum {
   CURLINFO_REFERER          = CURLINFO_STRING + 60,
   CURLINFO_CAINFO           = CURLINFO_STRING + 61,
   CURLINFO_CAPATH           = CURLINFO_STRING + 62,
-  CURLINFO_LASTONE          = 62
+  CURLINFO_XFER_ID          = CURLINFO_OFF_T + 63,
+  CURLINFO_CONN_ID          = CURLINFO_OFF_T + 64,
+  CURLINFO_LASTONE          = 64
 } CURLINFO;
 
 /* CURLINFO_RESPONSE_CODE is the new name for the option previously known as
@@ -3197,6 +3211,7 @@ CURL_EXTERN CURLcode curl_easy_pause(CURL *handle, int bitmask);
 #include "options.h"
 #include "header.h"
 #include "websockets.h"
+#include "mprintf.h"
 
 /* the typechecker doesn't work in C++ (yet) */
 #if defined(__GNUC__) && defined(__GNUC_MINOR__) && \

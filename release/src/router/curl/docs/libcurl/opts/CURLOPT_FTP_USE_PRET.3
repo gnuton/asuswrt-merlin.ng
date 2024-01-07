@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FTP_USE_PRET 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_FTP_USE_PRET 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_FTP_USE_PRET \- use PRET for FTP
@@ -43,16 +43,21 @@ no effect when using the active FTP transfers mode.
 FTP
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/old-server/file.txt");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL,
+                     "ftp://example.com/old-server/file.txt");
 
-  /* a drftpd server, do it! */
-  curl_easy_setopt(curl, CURLOPT_FTP_USE_PRET, 1L);
+    /* a drftpd server, do it! */
+    curl_easy_setopt(curl, CURLOPT_FTP_USE_PRET, 1L);
 
-  ret = curl_easy_perform(curl);
+    res = curl_easy_perform(curl);
 
-  curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -60,4 +65,5 @@ Added in 7.20.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_FTP_USE_EPRT "(3), " CURLOPT_FTP_USE_EPSV "(3), "
+.BR CURLOPT_FTP_USE_EPRT (3),
+.BR CURLOPT_FTP_USE_EPSV (3)

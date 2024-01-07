@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_SIZE_UPLOAD_T 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLINFO_SIZE_UPLOAD_T 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLINFO_SIZE_UPLOAD_T \- get the number of uploaded bytes
@@ -40,18 +40,22 @@ were uploaded.
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  /* Perform the request */
-  res = curl_easy_perform(curl);
+    /* Perform the request */
+    res = curl_easy_perform(curl);
 
-  if(!res) {
-    curl_off_t ul;
-    res = curl_easy_getinfo(curl, CURLINFO_SIZE_UPLOAD_T, &ul);
     if(!res) {
-      printf("Uploaded %" CURL_FORMAT_CURL_OFF_T " bytes\\n", ul);
+      curl_off_t ul;
+      res = curl_easy_getinfo(curl, CURLINFO_SIZE_UPLOAD_T, &ul);
+      if(!res) {
+        printf("Uploaded %" CURL_FORMAT_CURL_OFF_T " bytes\\n", ul);
+      }
     }
   }
 }
@@ -61,5 +65,8 @@ Added in 7.55.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR curl_easy_getinfo "(3), " curl_easy_setopt "(3), "
-.BR CURLINFO_SIZE_DOWNLOAD_T "(3), " CURLINFO_SIZE_UPLOAD "(3), "
+.BR curl_easy_getinfo (3),
+.BR curl_easy_setopt (3),
+.BR CURLINFO_SIZE_DOWNLOAD_T (3),
+.BR CURLINFO_SIZE_UPLOAD (3)
+

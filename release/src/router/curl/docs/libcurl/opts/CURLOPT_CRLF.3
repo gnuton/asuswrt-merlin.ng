@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_CRLF 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_CRLF 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_CRLF \- CRLF conversion
@@ -44,13 +44,16 @@ This is a legacy option of questionable use.
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  CURLcode ret;
-  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/");
-  curl_easy_setopt(curl, CURLOPT_CRLF, 1L);
-  ret = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode ret;
+    curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/");
+    curl_easy_setopt(curl, CURLOPT_CRLF, 1L);
+    ret = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -58,4 +61,5 @@ SMTP since 7.40.0, other protocols since they were introduced
 .SH RETURN VALUE
 Returns CURLE_OK
 .SH "SEE ALSO"
-.BR CURLOPT_CONV_FROM_NETWORK_FUNCTION "(3), " CURLOPT_CONV_TO_NETWORK_FUNCTION "(3), "
+.BR CURLOPT_CONV_FROM_NETWORK_FUNCTION (3),
+.BR CURLOPT_CONV_TO_NETWORK_FUNCTION (3)

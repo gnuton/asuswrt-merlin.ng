@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PRIVATE 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_PRIVATE 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_PRIVATE \- store a private pointer
@@ -43,19 +43,26 @@ NULL
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-struct private secrets;
-if(curl) {
-  struct private *extracted;
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+struct private {
+  void *custom;
+};
 
-  /* store a pointer to our private struct */
-  curl_easy_setopt(curl, CURLOPT_PRIVATE, &secrets);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  struct private secrets;
+  if(curl) {
+    struct private *extracted;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  curl_easy_perform(curl);
+    /* store a pointer to our private struct */
+    curl_easy_setopt(curl, CURLOPT_PRIVATE, &secrets);
 
-  /* we can extract the private pointer again too */
-  curl_easy_getinfo(curl, CURLINFO_PRIVATE, &extracted);
+    curl_easy_perform(curl);
+
+    /* we can extract the private pointer again too */
+    curl_easy_getinfo(curl, CURLINFO_PRIVATE, &extracted);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -63,4 +70,6 @@ Added in 7.10.3
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_VERBOSE "(3), " CURLOPT_STDERR "(3), "
+.BR CURLINFO_PRIVATE (3),
+.BR CURLOPT_STDERR (3),
+.BR CURLOPT_VERBOSE (3)

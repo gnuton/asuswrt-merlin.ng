@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_CHUNK_END_FUNCTION 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_CHUNK_END_FUNCTION 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_CHUNK_END_FUNCTION \- callback after a transfer with FTP wildcard match
@@ -49,6 +49,12 @@ NULL
 FTP
 .SH EXAMPLE
 .nf
+#include <stdio.h>
+
+struct callback_data {
+   FILE *output;
+};
+
 static long file_is_downloaded(struct callback_data *data)
 {
   if(data->output) {
@@ -62,6 +68,9 @@ int main()
 {
   /* data for callback */
   struct callback_data callback_info;
+
+  CURL *curl = curl_easy_init();
+
   curl_easy_setopt(curl, CURLOPT_CHUNK_END_FUNCTION, file_is_downloaded);
   curl_easy_setopt(curl, CURLOPT_CHUNK_DATA, &callback_info);
 }
@@ -71,4 +80,5 @@ Added in 7.21.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_WILDCARDMATCH "(3), " CURLOPT_CHUNK_BGN_FUNCTION "(3), "
+.BR CURLOPT_CHUNK_BGN_FUNCTION (3),
+.BR CURLOPT_WILDCARDMATCH (3)

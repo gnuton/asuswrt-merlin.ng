@@ -33,9 +33,7 @@
  *
  */
 
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -104,7 +102,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-#ifdef WIN32
+#ifdef _WIN32
   win32_init();
   atexit(win32_cleanup);
 #endif

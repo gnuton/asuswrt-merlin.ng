@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_REDIRECT_COUNT 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLINFO_REDIRECT_COUNT 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLINFO_REDIRECT_COUNT \- get the number of redirects
@@ -40,17 +40,20 @@ actually followed.
 HTTP(S)
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  CURLcode res;
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
-  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-  res = curl_easy_perform(curl);
-  if(res == CURLE_OK) {
-    long redirects;
-    curl_easy_getinfo(curl, CURLINFO_REDIRECT_COUNT, &redirects);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    res = curl_easy_perform(curl);
+    if(res == CURLE_OK) {
+      long redirects;
+      curl_easy_getinfo(curl, CURLINFO_REDIRECT_COUNT, &redirects);
+    }
+    curl_easy_cleanup(curl);
   }
-  curl_easy_cleanup(curl);
 }
 .fi
 .SH AVAILABILITY
@@ -58,4 +61,7 @@ Added in 7.9.7
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR curl_easy_getinfo "(3), " curl_easy_setopt "(3), "
+.BR curl_easy_getinfo (3),
+.BR curl_easy_setopt (3),
+.BR CURLINFO_REDIRECT_URL (3),
+.BR CURLOPT_FOLLOWLOCATION (3)

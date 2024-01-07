@@ -145,7 +145,10 @@ ifneq ($(findstring -rtmp,$(CFG)),)
   CPPFLAGS += -DUSE_LIBRTMP
   CPPFLAGS += -I"$(LIBRTMP_PATH)"
   _LDFLAGS += -L"$(LIBRTMP_PATH)/librtmp"
-  _LIBS += -lrtmp -lwinmm
+  _LIBS += -lrtmp
+  ifdef WIN32
+    _LIBS += -lwinmm
+  endif
   ZLIB := 1
 endif
 
@@ -239,7 +242,7 @@ ifeq ($(findstring -nghttp3,$(CFG))$(findstring -ngtcp2,$(CFG)),-nghttp3-ngtcp2)
       ifneq ($(wildcard $(OPENSSL_INCLUDE)/openssl/aead.h),)
         NGTCP2_LIBS := -lngtcp2_crypto_boringssl
       else  # including libressl
-        NGTCP2_LIBS := -lngtcp2_crypto_openssl
+        NGTCP2_LIBS := -lngtcp2_crypto_quictls
       endif
     else ifneq ($(findstring -wolfssl,$(CFG)),)
       NGTCP2_LIBS := -lngtcp2_crypto_wolfssl
@@ -375,6 +378,9 @@ distclean vclean: clean
 ifdef LOCAL
 
 CPPFLAGS += -DBUILDING_LIBCURL
+ifdef WIN32
+CPPFLAGS += -DCURL_STATICLIB
+endif
 
 ### Sources and targets
 
@@ -388,6 +394,9 @@ ifdef WIN32
 CURL_DLL_SUFFIX ?=
 libcurl_dll_LIBRARY := libcurl$(CURL_DLL_SUFFIX).dll
 libcurl_dll_a_LIBRARY := libcurl.dll.a
+ifeq ($(findstring -trackmem,$(CFG)),)
+CURL_LDFLAGS_LIB += $(PROOT)/libcurl.def
+endif
 ifdef MAP
 libcurl_map_LIBRARY := libcurl$(CURL_DLL_SUFFIX).map
 CURL_LDFLAGS_LIB += -Wl,-Map,$(libcurl_map_LIBRARY)

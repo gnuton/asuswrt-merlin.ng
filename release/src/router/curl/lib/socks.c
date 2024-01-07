@@ -161,7 +161,7 @@ static void socksstate(struct socks_state *sx, struct Curl_easy *data,
   enum connect_t oldstate = sx->state;
 #ifdef DEBUG_AND_VERBOSE
   /* synced with the state list in urldata.h */
-  static const char * const statename[] = {
+  static const char * const socks_statename[] = {
     "INIT",
     "SOCKS_INIT",
     "SOCKS_SEND",
@@ -193,7 +193,7 @@ static void socksstate(struct socks_state *sx, struct Curl_easy *data,
 #ifdef DEBUG_AND_VERBOSE
   infof(data,
         "SXSTATE: %s => %s; line %d",
-        statename[oldstate], statename[sx->state],
+        socks_statename[oldstate], socks_statename[sx->state],
         lineno);
 #endif
 }
@@ -339,8 +339,8 @@ static CURLproxycode do_SOCKS4(struct Curl_cfilter *cf,
 
     if(dns) {
 #ifdef CURLRES_ASYNCH
-      data->state.async.dns = dns;
-      data->state.async.done = TRUE;
+      conn->resolve_async.dns = dns;
+      conn->resolve_async.done = TRUE;
 #endif
       infof(data, "Hostname '%s' was found", sx->hostname);
       sxstate(sx, data, CONNECT_RESOLVED);
@@ -402,8 +402,11 @@ CONNECT_REQ_INIT:
     socksreq[8] = 0; /* ensure empty userid is NUL-terminated */
     if(sx->proxy_user) {
       size_t plen = strlen(sx->proxy_user);
-      if(plen >= (size_t)data->set.buffer_size - 8) {
-        failf(data, "Too long SOCKS proxy user name, can't use");
+      if(plen > 255) {
+        /* there is no real size limit to this field in the protocol, but
+           SOCKS5 limits the proxy user field to 255 bytes and it seems likely
+           that a longer field is either a mistake or malicious input */
+        failf(data, "Too long SOCKS proxy user name");
         return CURLPX_LONG_USER;
       }
       /* copy the proxy name WITH trailing zero */
@@ -426,7 +429,8 @@ CONNECT_REQ_INIT:
         socksreq[7] = 1;
         /* append hostname */
         hostnamelen = strlen(sx->hostname) + 1; /* length including NUL */
-        if(hostnamelen <= 255)
+        if((hostnamelen <= 255) &&
+           (packetsize + hostnamelen < data->set.buffer_size))
           strcpy((char *)socksreq + packetsize, sx->hostname);
         else {
           failf(data, "SOCKS4: too long host name");
@@ -567,7 +571,6 @@ static CURLproxycode do_SOCKS5(struct Curl_cfilter *cf,
   */
   struct connectdata *conn = cf->conn;
   unsigned char *socksreq = (unsigned char *)data->state.buffer;
-  char dest[256] = "unknown";  /* printable hostname:port */
   int idx;
   CURLcode result;
   CURLproxycode presult;
@@ -588,9 +591,9 @@ static CURLproxycode do_SOCKS5(struct Curl_cfilter *cf,
 
     /* RFC1928 chapter 5 specifies max 255 chars for domain name in packet */
     if(!socks5_resolve_local && hostname_len > 255) {
-      infof(data, "SOCKS5: server resolving disabled for hostnames of "
-            "length > 255 [actual len=%zu]", hostname_len);
-      socks5_resolve_local = TRUE;
+      failf(data, "SOCKS5: the destination hostname is too long to be "
+            "resolved remotely by the proxy.");
+      return CURLPX_LONG_HOSTNAME;
     }
 
     if(auth & ~(CURLAUTH_BASIC | CURLAUTH_GSSAPI))
@@ -803,8 +806,8 @@ CONNECT_REQ_INIT:
 
     if(dns) {
 #ifdef CURLRES_ASYNCH
-      data->state.async.dns = dns;
-      data->state.async.done = TRUE;
+      conn->resolve_async.dns = dns;
+      conn->resolve_async.done = TRUE;
 #endif
       infof(data, "SOCKS5: hostname '%s' found", sx->hostname);
     }
@@ -820,10 +823,19 @@ CONNECT_REQ_INIT:
     /* FALLTHROUGH */
 CONNECT_RESOLVED:
   case CONNECT_RESOLVED: {
+    char dest[MAX_IPADR_LEN];  /* printable address */
     struct Curl_addrinfo *hp = NULL;
-    size_t destlen;
     if(dns)
       hp = dns->addr;
+#ifdef ENABLE_IPV6
+    if(data->set.ipver != CURL_IPRESOLVE_WHATEVER) {
+      int wanted_family = data->set.ipver == CURL_IPRESOLVE_V4 ?
+        AF_INET : AF_INET6;
+      /* scan for the first proper address */
+      while(hp && (hp->ai_family != wanted_family))
+        hp = hp->ai_next;
+    }
+#endif
     if(!hp) {
       failf(data, "Failed to resolve \"%s\" for SOCKS5 connect.",
             sx->hostname);
@@ -831,8 +843,6 @@ CONNECT_RESOLVED:
     }
 
     Curl_printable_address(hp, dest, sizeof(dest));
-    destlen = strlen(dest);
-    msnprintf(dest + destlen, sizeof(dest) - destlen, ":%d", sx->remote_port);
 
     len = 0;
     socksreq[len++] = 5; /* version (SOCKS5) */
@@ -848,7 +858,8 @@ CONNECT_RESOLVED:
         socksreq[len++] = ((unsigned char *)&saddr_in->sin_addr.s_addr)[i];
       }
 
-      infof(data, "SOCKS5 connect to IPv4 %s (locally resolved)", dest);
+      infof(data, "SOCKS5 connect to %s:%d (locally resolved)", dest,
+            sx->remote_port);
     }
 #ifdef ENABLE_IPV6
     else if(hp->ai_family == AF_INET6) {
@@ -862,7 +873,8 @@ CONNECT_RESOLVED:
           ((unsigned char *)&saddr_in6->sin6_addr.s6_addr)[i];
       }
 
-      infof(data, "SOCKS5 connect to IPv6 %s (locally resolved)", dest);
+      infof(data, "SOCKS5 connect to [%s]:%d (locally resolved)", dest,
+            sx->remote_port);
     }
 #endif
     else {
@@ -904,7 +916,7 @@ CONNECT_RESOLVE_REMOTE:
       }
       else {
         socksreq[len++] = 3;
-        socksreq[len++] = (char) hostname_len; /* one byte address length */
+        socksreq[len++] = (unsigned char) hostname_len; /* one byte length */
         memcpy(&socksreq[len], sx->hostname, hostname_len); /* w/o NULL */
         len += hostname_len;
       }
@@ -1115,12 +1127,12 @@ static CURLcode socks_proxy_cf_connect(struct Curl_cfilter *cf,
     return CURLE_OK;
   }
 
-  result = cf->next->cft->connect(cf->next, data, blocking, done);
+  result = cf->next->cft->do_connect(cf->next, data, blocking, done);
   if(result || !*done)
     return result;
 
   if(!sx) {
-    sx = calloc(sizeof(*sx), 1);
+    sx = calloc(1, sizeof(*sx));
     if(!sx)
       return CURLE_OUT_OF_MEMORY;
     cf->ctx = sx;
@@ -1158,32 +1170,29 @@ static CURLcode socks_proxy_cf_connect(struct Curl_cfilter *cf,
   return result;
 }
 
-static int socks_cf_get_select_socks(struct Curl_cfilter *cf,
+static void socks_cf_adjust_pollset(struct Curl_cfilter *cf,
                                      struct Curl_easy *data,
-                                     curl_socket_t *socks)
+                                     struct easy_pollset *ps)
 {
   struct socks_state *sx = cf->ctx;
-  int fds;
 
-  fds = cf->next->cft->get_select_socks(cf->next, data, socks);
-  if(!fds && cf->next->connected && !cf->connected && sx) {
+  if(!cf->connected && sx) {
     /* If we are not connected, the filter below is and has nothing
      * to wait on, we determine what to wait for. */
-    socks[0] = Curl_conn_cf_get_socket(cf, data);
+    curl_socket_t sock = Curl_conn_cf_get_socket(cf, data);
     switch(sx->state) {
     case CONNECT_RESOLVING:
     case CONNECT_SOCKS_READ:
     case CONNECT_AUTH_READ:
     case CONNECT_REQ_READ:
     case CONNECT_REQ_READ_MORE:
-      fds = GETSOCK_READSOCK(0);
+      Curl_pollset_set_in_only(data, ps, sock);
       break;
     default:
-      fds = GETSOCK_WRITESOCK(0);
+      Curl_pollset_set_out_only(data, ps, sock);
       break;
     }
   }
-  return fds;
 }
 
 static void socks_proxy_cf_close(struct Curl_cfilter *cf,
@@ -1193,7 +1202,7 @@ static void socks_proxy_cf_close(struct Curl_cfilter *cf,
   DEBUGASSERT(cf->next);
   cf->connected = FALSE;
   socks_proxy_cf_free(cf);
-  cf->next->cft->close(cf->next, data);
+  cf->next->cft->do_close(cf->next, data);
 }
 
 static void socks_proxy_cf_destroy(struct Curl_cfilter *cf,
@@ -1228,7 +1237,7 @@ struct Curl_cftype Curl_cft_socks_proxy = {
   socks_proxy_cf_connect,
   socks_proxy_cf_close,
   socks_cf_get_host,
-  socks_cf_get_select_socks,
+  socks_cf_adjust_pollset,
   Curl_cf_def_data_pending,
   Curl_cf_def_send,
   Curl_cf_def_recv,

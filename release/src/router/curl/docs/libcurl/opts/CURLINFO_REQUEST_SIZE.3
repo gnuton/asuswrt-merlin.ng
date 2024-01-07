@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_REQUEST_SIZE 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLINFO_REQUEST_SIZE 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLINFO_REQUEST_SIZE \- get size of sent request
@@ -40,18 +40,21 @@ than one request if \fICURLOPT_FOLLOWLOCATION(3)\fP is enabled.
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  CURLcode res;
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
-  res = curl_easy_perform(curl);
-  if(res == CURLE_OK) {
-    long req;
-    res = curl_easy_getinfo(curl, CURLINFO_REQUEST_SIZE, &req);
-    if(!res)
-      printf("Request size: %ld bytes\\n", req);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    res = curl_easy_perform(curl);
+    if(res == CURLE_OK) {
+      long req;
+      res = curl_easy_getinfo(curl, CURLINFO_REQUEST_SIZE, &req);
+      if(!res)
+        printf("Request size: %ld bytes\\n", req);
+    }
+    curl_easy_cleanup(curl);
   }
-  curl_easy_cleanup(curl);
 }
 .fi
 .SH AVAILABILITY
@@ -59,6 +62,7 @@ Added in 7.4.1
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR curl_easy_getinfo "(3), " curl_easy_setopt "(3), "
-.BR CURLINFO_HEADER_SIZE "(3), "
-.BR CURLINFO_SIZE_DOWNLOAD "(3), "
+.BR curl_easy_getinfo (3),
+.BR curl_easy_setopt (3),
+.BR CURLINFO_HEADER_SIZE (3),
+.BR CURLINFO_SIZE_DOWNLOAD_T (3)

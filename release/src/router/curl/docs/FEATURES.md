@@ -12,7 +12,7 @@
 
 ## libcurl
 
- - full URL syntax with no length limit
+ - URL RFC 3986 syntax
  - custom maximum download time
  - custom least download speed acceptable
  - custom output result after completion
@@ -43,7 +43,7 @@
  - PUT
  - HEAD
  - POST
- - multipart formpost (RFC1867-style)
+ - multipart formpost (RFC 1867-style)
  - authentication: Basic, Digest, NTLM (9) and Negotiate (SPNEGO) (3)
    to server and proxy
  - resume (both GET and PUT)
@@ -212,7 +212,7 @@
   6. requires c-ares
   7. requires libssh2, libssh or wolfSSH
   8. requires libssh2 or libssh
-  9. requires OpenSSL, GnuTLS, mbedTLS, NSS, Secure Transport or SSPI
+  9. requires OpenSSL, GnuTLS, mbedTLS, Secure Transport or SSPI
      (native Windows)
   10. requires libidn2 or Windows
   11. requires libz, brotli and/or zstd

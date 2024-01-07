@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_RTSP_SERVER_CSEQ 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_RTSP_SERVER_CSEQ 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_RTSP_SERVER_CSEQ \- RTSP server CSEQ number
@@ -42,12 +42,16 @@ unimplemented.
 RTSP
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "rtsp://example.com/");
-  curl_easy_setopt(curl, CURLOPT_RTSP_SERVER_CSEQ, 1234L);
-  ret = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "rtsp://example.com/");
+    curl_easy_setopt(curl, CURLOPT_RTSP_SERVER_CSEQ, 1234L);
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -55,4 +59,6 @@ Added in 7.20.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_RTSP_CLIENT_CSEQ "(3), " CURLOPT_RTSP_STREAM_URI "(3), "
+.BR CURLINFO_RTSP_SERVER_CSEQ (3),
+.BR CURLOPT_RTSP_CLIENT_CSEQ (3),
+.BR CURLOPT_RTSP_STREAM_URI (3)

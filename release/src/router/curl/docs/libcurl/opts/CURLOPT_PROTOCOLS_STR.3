@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROTOCOLS_STR 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_PROTOCOLS_STR 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_PROTOCOLS_STR \- allowed protocols
@@ -62,16 +62,19 @@ All protocols built-in
 All
 .SH EXAMPLE
 .nf
-curl = curl_easy_init();
-if(curl) {
-  /* pass in the URL from an external source */
-  curl_easy_setopt(curl, CURLOPT_URL, argv[1]);
+int main(int argc, char **argv)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    /* pass in the URL from an external source */
+    curl_easy_setopt(curl, CURLOPT_URL, argv[1]);
 
-  /* only allow HTTP, TFTP and SFTP */
-  curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,tftp,sftp");
+    /* only allow HTTP, TFTP and SFTP */
+    curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,tftp,sftp");
 
-  /* Perform the request */
-  curl_easy_perform(curl);
+    /* Perform the request */
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -81,5 +84,8 @@ Returns CURLE_UNKNOWN_OPTION if the option is not implemented,
 CURLE_UNSUPPORTED_PROTOCOL if a listed protocol is not supported or disabled,
 CURLE_BAD_FUNCTION_ARGUMENT if no protocol is listed else CURLE_OK.
 .SH "SEE ALSO"
-.BR CURLOPT_REDIR_PROTOCOLS_STR "(3), " CURLOPT_URL "(3), "
-.BR curl_version_info "(3), " CURLINFO_SCHEME "(3), "
+.BR curl_version_info (3),
+.BR CURLINFO_SCHEME (3),
+.BR CURLOPT_DEFAULT_PROTOCOL (3),
+.BR CURLOPT_REDIR_PROTOCOLS_STR (3),
+.BR CURLOPT_URL (3)

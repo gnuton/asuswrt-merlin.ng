@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_TLSAUTH_TYPE 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_TLSAUTH_TYPE 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_TLSAUTH_TYPE \- TLS authentication methods
@@ -38,7 +38,7 @@ the method of the TLS authentication. Supported method is "SRP".
 
 .IP SRP
 TLS-SRP authentication. Secure Remote Password authentication for TLS is
-defined in RFC5054 and provides mutual authentication if both sides have a
+defined in RFC 5054 and provides mutual authentication if both sides have a
 shared secret. To use TLS-SRP, you must also set the
 \fICURLOPT_TLSAUTH_USERNAME(3)\fP and \fICURLOPT_TLSAUTH_PASSWORD(3)\fP
 options.
@@ -53,14 +53,18 @@ blank
 All TLS-based protocols
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
-  curl_easy_setopt(curl, CURLOPT_TLSAUTH_TYPE, "SRP");
-  curl_easy_setopt(curl, CURLOPT_TLSAUTH_USERNAME, "user");
-  curl_easy_setopt(curl, CURLOPT_TLSAUTH_PASSWORD, "secret");
-  ret = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
+    curl_easy_setopt(curl, CURLOPT_TLSAUTH_TYPE, "SRP");
+    curl_easy_setopt(curl, CURLOPT_TLSAUTH_USERNAME, "user");
+    curl_easy_setopt(curl, CURLOPT_TLSAUTH_PASSWORD, "secret");
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -69,4 +73,5 @@ to work. Added in 7.21.4
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_TLSAUTH_USERNAME "(3), " CURLOPT_TLSAUTH_PASSWORD "(3), "
+.BR CURLOPT_TLSAUTH_USERNAME (3),
+.BR CURLOPT_TLSAUTH_PASSWORD (3)

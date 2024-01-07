@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FTP_ACCOUNT 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_FTP_ACCOUNT 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_FTP_ACCOUNT \- account info for FTP
@@ -45,15 +45,19 @@ NULL
 FTP
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/foo.bin");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/foo.bin");
 
-  curl_easy_setopt(curl, CURLOPT_FTP_ACCOUNT, "human-resources");
+    curl_easy_setopt(curl, CURLOPT_FTP_ACCOUNT, "human-resources");
 
-  ret = curl_easy_perform(curl);
+    res = curl_easy_perform(curl);
 
-  curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -62,4 +66,5 @@ Added in 7.13.0
 Returns CURLE_OK if the option is supported, CURLE_UNKNOWN_OPTION if not, or
 CURLE_OUT_OF_MEMORY if there was insufficient heap space.
 .SH "SEE ALSO"
-.BR CURLOPT_USERNAME "(3), " CURLOPT_PASSWORD "(3), "
+.BR CURLOPT_PASSWORD (3),
+.BR CURLOPT_USERNAME (3)

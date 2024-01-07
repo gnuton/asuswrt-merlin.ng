@@ -91,14 +91,14 @@ main(void)
 
     printf("-----------------------------------------------\n"
            "Setting a cookie \"PREF\" via cookie interface:\n");
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
     /* Netscape format cookie */
     snprintf(nline, sizeof(nline), "%s\t%s\t%s\t%s\t%.0f\t%s\t%s",
              ".example.com", "TRUE", "/", "FALSE",
              difftime(time(NULL) + 31337, (time_t)0),
-             "PREF", "hello example, i like you very much!");
+             "PREF", "hello example, i like you!");
     res = curl_easy_setopt(curl, CURLOPT_COOKIELIST, nline);
     if(res != CURLE_OK) {
       fprintf(stderr, "Curl curl_easy_setopt failed: %s\n",

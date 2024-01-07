@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_LOCALPORT 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_LOCALPORT 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_LOCALPORT \- local port number to use for socket
@@ -43,14 +43,18 @@ this option is set. Valid port numbers are 1 - 65535.
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/foo.bin");
-  curl_easy_setopt(curl, CURLOPT_LOCALPORT, 49152L);
-  /* and try 20 more ports following that */
-  curl_easy_setopt(curl, CURLOPT_LOCALPORTRANGE, 20L);
-  ret = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/foo.bin");
+    curl_easy_setopt(curl, CURLOPT_LOCALPORT, 49152L);
+    /* and try 20 more ports following that */
+    curl_easy_setopt(curl, CURLOPT_LOCALPORTRANGE, 20L);
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -58,4 +62,6 @@ Added in 7.15.2
 .SH RETURN VALUE
 Returns CURLE_OK
 .SH "SEE ALSO"
-.BR CURLOPT_LOCALPORTRANGE "(3), " CURLOPT_INTERFACE "(3), "
+.BR CURLINFO_LOCAL_PORT (3),
+.BR CURLOPT_INTERFACE (3),
+.BR CURLOPT_LOCALPORTRANGE (3)

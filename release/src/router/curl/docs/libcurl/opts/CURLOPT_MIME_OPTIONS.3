@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_MIME_OPTIONS 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_MIME_OPTIONS 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_MIME_OPTIONS \- set MIME option flags
@@ -61,29 +61,32 @@ When the containing multipart form is sent, this is normally transmitted as
 HTTP, IMAP, SMTP
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-curl_mime *form = NULL;
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  curl_mime *form = NULL;
 
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
-  curl_easy_setopt(curl, CURLOPT_MIME_OPTIONS, CURLMIMEOPT_FORMESCAPE);
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    curl_easy_setopt(curl, CURLOPT_MIME_OPTIONS, CURLMIMEOPT_FORMESCAPE);
 
-  form = curl_mime_init(curl);
-  if(form) {
-    curl_mimepart *part = curl_mime_addpart(form);
+    form = curl_mime_init(curl);
+    if(form) {
+      curl_mimepart *part = curl_mime_addpart(form);
 
-    if(part) {
-      curl_mime_filedata(part, "strange\\\\file\\\\name");
-      curl_mime_name(part, "strange\\"field\\"name");
-      curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+      if(part) {
+        curl_mime_filedata(part, "strange\\\\file\\\\name");
+        curl_mime_name(part, "strange\\"field\\"name");
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
 
-      /* Perform the request */
-      curl_easy_perform(curl);
+        /* Perform the request */
+        curl_easy_perform(curl);
+      }
     }
-  }
 
-  curl_easy_cleanup(curl);
-  curl_mime_free(mime);
+    curl_easy_cleanup(curl);
+    curl_mime_free(form);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -91,4 +94,5 @@ Option added in 7.81.0.
 .SH RETURN VALUE
 Returns CURLE_OK
 .SH "SEE ALSO"
-.BR CURLOPT_MIMEPOST "(3), " CURLOPT_HTTPPOST "(3)"
+.BR CURLOPT_HTTPPOST (3),
+.BR CURLOPT_MIMEPOST (3)

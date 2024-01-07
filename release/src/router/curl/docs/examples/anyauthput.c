@@ -33,7 +33,7 @@
 
 #include <curl/curl.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #  define FILENO(fp) _fileno(fp)
 #else
 #  define FILENO(fp) fileno(fp)
@@ -60,7 +60,7 @@ static int my_seek(void *userp, curl_off_t offset, int origin)
   FILE *fp = (FILE *) userp;
 
   if(-1 == fseek(fp, (long) offset, origin))
-    /* couldn't seek */
+    /* could not seek */
     return CURL_SEEKFUNC_CANTSEEK;
 
   return CURL_SEEKFUNC_OK; /* success! */

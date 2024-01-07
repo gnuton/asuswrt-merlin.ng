@@ -21,7 +21,7 @@
 .\" * SPDX-License-Identifier: curl
 .\" *
 .\" **************************************************************************
-.TH curl_mime_name 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
+.TH curl_mime_name 3 "December 04, 2023" "libcurl 8.5.0" "libcurl"
 
 .SH NAME
 curl_mime_name - set a mime part's name
@@ -45,23 +45,29 @@ is valid: only the value set by the last call is retained. It is possible to
 reset the name of a part by setting \fIname\fP to NULL.
 .SH EXAMPLE
 .nf
- curl_mime *mime;
- curl_mimepart *part;
+int main(void)
+{
+  curl_mime *mime;
+  curl_mimepart *part;
 
- /* create a mime handle */
- mime = curl_mime_init(easy);
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    /* create a mime handle */
+    mime = curl_mime_init(curl);
 
- /* add a part */
- part = curl_mime_addpart(mime);
+    /* add a part */
+    part = curl_mime_addpart(mime);
 
- /* give the part a name */
- curl_mime_name(part, "shoe_size");
+    /* give the part a name */
+    curl_mime_name(part, "shoe_size");
+  }
+}
 .fi
 .SH AVAILABILITY
 As long as at least one of HTTP, SMTP or IMAP is enabled. Added in 7.56.0.
 .SH RETURN VALUE
 CURLE_OK or a CURL error code upon failure.
 .SH "SEE ALSO"
-.BR curl_mime_addpart "(3),"
-.BR curl_mime_data "(3),"
-.BR curl_mime_type "(3)"
+.BR curl_mime_addpart (3),
+.BR curl_mime_data (3),
+.BR curl_mime_type (3)

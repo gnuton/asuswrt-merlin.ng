@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PREREQDATA 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_PREREQDATA 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_PREREQDATA \- pointer passed to the pre-request callback
@@ -33,29 +33,37 @@ CURLOPT_PREREQDATA \- pointer passed to the pre-request callback
 CURLcode curl_easy_setopt(CURL *handle, CURLOPT_PREREQDATA, void *pointer);
 .fi
 .SH DESCRIPTION
-Pass a \fIpointer\fP that will be untouched by libcurl and passed as the first
-argument in the pre-request callback set with
-\fICURLOPT_PREREQFUNCTION(3)\fP.
+Pass a \fIpointer\fP that is untouched by libcurl and passed as the first
+argument in the pre-request callback set with \fICURLOPT_PREREQFUNCTION(3)\fP.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS
 All
 .SH EXAMPLE
 .nf
+struct priv {
+  void *custom;
+};
+
 static int prereq_callback(void *clientp,
                            char *conn_primary_ip,
                            char *conn_local_ip,
                            int conn_primary_port,
                            int conn_local_port)
 {
-  printf("Connection made to %s:%s\\n", conn_primary_ip, conn_primary_port);
+  printf("Connection made to %s:%d\\n", conn_primary_ip, conn_primary_port);
   return CURL_PREREQFUNC_OK;
 }
 
+int main(void)
 {
-  struct data prereq_data;
-  curl_easy_setopt(CURL *handle, CURLOPT_PREREQFUNCTION, prereq_callback);
-  curl_easy_setopt(CURL *handle, CURLOPT_PREREQDATA, &prereq_data);
+  struct priv prereq_data;
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_PREREQFUNCTION, prereq_callback);
+    curl_easy_setopt(curl, CURLOPT_PREREQDATA, &prereq_data);
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -63,4 +71,6 @@ Added in 7.80.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_PREREQFUNCTION "(3) "
+.BR CURLINFO_PRIMARY_IP (3),
+.BR CURLINFO_PRIMARY_PORT (3),
+.BR CURLOPT_PREREQFUNCTION (3)

@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_UPLOAD 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_UPLOAD 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_UPLOAD \- data upload
@@ -43,35 +43,51 @@ Using PUT with HTTP 1.1 implies the use of a "Expect: 100-continue" header.
 You can disable this header with \fICURLOPT_HTTPHEADER(3)\fP as usual.
 
 If you use PUT to an HTTP 1.1 server, you can upload data without knowing the
-size before starting the transfer if you use chunked encoding. You enable this
-by adding a header like "Transfer-Encoding: chunked" with
-\fICURLOPT_HTTPHEADER(3)\fP. With HTTP 1.0 or without chunked transfer, you
-must specify the size.
+size before starting the transfer. The library enables this by adding a header
+"Transfer-Encoding: chunked". With HTTP 1.0 or if you prefer not to use chunked
+transfer, you must specify the size of the data with
+\fICURLOPT_INFILESIZE(3)\fP or \fICURLOPT_INFILESIZE_LARGE(3)\fP.
 .SH DEFAULT
 0, default is download
 .SH PROTOCOLS
 Most
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  /* we want to use our own read function */
-  curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+static size_t read_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+  FILE *src = userdata;
+  /* copy as much data as possible into the 'ptr' buffer, but no more than
+     'size' * 'nmemb' bytes! */
+  size_t retcode = fread(ptr, size, nmemb, src);
 
-  /* enable uploading */
-  curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+  return retcode;
+}
 
-  /* specify target */
-  curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/dir/to/newfile");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    FILE *src = fopen("local-file", "r");
+    curl_off_t fsize; /* set this to the size of the input file */
 
-  /* now specify which pointer to pass to our callback */
-  curl_easy_setopt(curl, CURLOPT_READDATA, hd_src);
+    /* we want to use our own read function */
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_cb);
 
-  /* Set the size of the file to upload */
-  curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
+    /* enable uploading */
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
-  /* Now run off and do what you have been told! */
-  curl_easy_perform(curl);
+    /* specify target */
+    curl_easy_setopt(curl, CURLOPT_URL, "ftp://example.com/dir/to/newfile");
+
+    /* now specify which pointer to pass to our callback */
+    curl_easy_setopt(curl, CURLOPT_READDATA, src);
+
+    /* Set the size of the file to upload */
+    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fsize);
+
+    /* Now run off and do what you have been told! */
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -79,5 +95,6 @@ Always
 .SH RETURN VALUE
 Returns CURLE_OK
 .SH "SEE ALSO"
-.BR CURLOPT_PUT "(3), " CURLOPT_READFUNCTION "(3), "
-.BR CURLOPT_INFILESIZE_LARGE "(3), "
+.BR CURLOPT_PUT (3),
+.BR CURLOPT_READFUNCTION (3),
+.BR CURLOPT_INFILESIZE_LARGE (3)

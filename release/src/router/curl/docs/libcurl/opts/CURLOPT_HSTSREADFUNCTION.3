@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_HSTSREADFUNCTION 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_HSTSREADFUNCTION 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_HSTSREADFUNCTION \- read callback for HSTS hosts
@@ -48,7 +48,7 @@ This callback function gets called by libcurl repeatedly when it populates the
 in-memory HSTS cache.
 
 Set the \fIclientp\fP argument with the \fICURLOPT_HSTSREADDATA(3)\fP option
-or it will be NULL.
+or it is NULL.
 
 When this callback is invoked, the \fIsts\fP pointer points to a populated
 struct: Copy the host name to \fIname\fP (no longer than \fInamelen\fP
@@ -59,8 +59,8 @@ FALSE. Set \fIexpire\fP to a date stamp or a zero length string for *forever*
 The callback should return \fICURLSTS_OK\fP if it returns a name and is
 prepared to be called again (for another host) or \fICURLSTS_DONE\fP if it has
 no entry to return. It can also return \fICURLSTS_FAIL\fP to signal
-error. Returning \fICURLSTS_FAIL\fP will stop the transfer from being
-performed and make \fICURLE_ABORTED_BY_CALLBACK\fP get returned.
+error. Returning \fICURLSTS_FAIL\fP stops the transfer from being performed
+and make \fICURLE_ABORTED_BY_CALLBACK\fP get returned.
 
 This option does not enable HSTS, you need to use \fICURLOPT_HSTS_CTRL(3)\fP to
 do that.
@@ -70,21 +70,40 @@ NULL - no callback.
 This feature is only used for HTTP(S) transfer.
 .SH EXAMPLE
 .nf
+struct priv {
+  void *custom;
+};
+
+static CURLSTScode hsts_cb(CURL *easy, struct curl_hstsentry *sts,
+                           void *clientp)
 {
-  /* set HSTS read callback */
-  curl_easy_setopt(curl, CURLOPT_HSTSREADFUNCTION, hstsread);
+  /* populate the struct as documented */
+  return CURLSTS_OK;
+}
 
-  /* pass in suitable argument to the callback */
-  curl_easy_setopt(curl, CURLOPT_HSTSREADDATA, &hstspreload[0]);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    struct priv my_stuff;
+    CURLcode res;
 
-  result = curl_easy_perform(curl);
+    /* set HSTS read callback */
+    curl_easy_setopt(curl, CURLOPT_HSTSREADFUNCTION, hsts_cb);
+
+    /* pass in suitable argument to the callback */
+    curl_easy_setopt(curl, CURLOPT_HSTSREADDATA, &my_stuff);
+
+    res = curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
 Added in 7.74.0
 .SH RETURN VALUE
-This will return CURLE_OK.
+This returns CURLE_OK.
 .SH "SEE ALSO"
-.BR CURLOPT_HSTSREADDATA "(3), " CURLOPT_HSTSWRITEFUNCTION "(3), "
-.BR CURLOPT_HSTS "(3), " CURLOPT_HSTS_CTRL "(3), "
-
+.BR CURLOPT_HSTS (3),
+.BR CURLOPT_HSTS_CTRL (3),
+.BR CURLOPT_HSTSREADDATA (3),
+.BR CURLOPT_HSTSWRITEFUNCTION (3)

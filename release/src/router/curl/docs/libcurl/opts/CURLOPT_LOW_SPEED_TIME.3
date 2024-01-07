@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_LOW_SPEED_TIME 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_LOW_SPEED_TIME 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_LOW_SPEED_TIME \- low speed limit time period
@@ -43,18 +43,22 @@ library to consider it too slow and abort.
 All
 .SH EXAMPLE
 .nf
-curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, url);
-  /* abort if slower than 30 bytes/sec during 60 seconds */
-  curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
-  curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 30L);
-  res = curl_easy_perform(curl);
-  if(CURLE_OPERATION_TIMEDOUT == res) {
-    printf("Timeout!\\n");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    /* abort if slower than 30 bytes/sec during 60 seconds */
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 30L);
+    res = curl_easy_perform(curl);
+    if(CURLE_OPERATION_TIMEDOUT == res) {
+      printf("Timeout!\\n");
+    }
+    /* always cleanup */
+    curl_easy_cleanup(curl);
   }
-  /* always cleanup */
-  curl_easy_cleanup(curl);
 }
 .fi
 .SH AVAILABILITY
@@ -62,4 +66,5 @@ Always
 .SH RETURN VALUE
 Returns CURLE_OK
 .SH "SEE ALSO"
-.BR CURLOPT_LOW_SPEED_LIMIT "(3), " CURLOPT_TIMEOUT "(3), "
+.BR CURLOPT_LOW_SPEED_LIMIT (3),
+.BR CURLOPT_TIMEOUT (3)

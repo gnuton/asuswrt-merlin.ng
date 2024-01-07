@@ -87,7 +87,6 @@ EXTRA_DIST =                                    \
  RUSTLS.md                                      \
  ROADMAP.md                                     \
  SECURITY-ADVISORY.md                           \
- SECURITY-PROCESS.md                            \
  SSL-PROBLEMS.md                                \
  SSLCERTS.md                                    \
  THANKS                                         \
@@ -95,6 +94,7 @@ EXTRA_DIST =                                    \
  TheArtOfHttpScripting.md                       \
  URL-SYNTAX.md                                  \
  VERSIONS.md                                    \
+ VULN-DISCLOSURE-POLICY.md                      \
  WEBSOCKET.md
 
 MAN2HTML= roffit $< >$@
@@ -111,7 +111,8 @@ SUFFIXES = .1 .html .pdf
 # have changed.
 $(abs_builddir)/curl.1:
 	if test "$(top_builddir)x" != "$(top_srcdir)x" -a -e "$(srcdir)/curl.1"; then \
-		$(INSTALL_DATA) "$(srcdir)/curl.1" $@; fi
+		$(INSTALL_DATA) "$(srcdir)/curl.1" $@ \
+		&& touch -r "$(srcdir)/curl.1" $@; fi
 	cd cmdline-opts && $(MAKE)
 
 html: $(HTMLPAGES)

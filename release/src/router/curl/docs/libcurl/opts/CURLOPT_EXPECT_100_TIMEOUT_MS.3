@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_EXPECT_100_TIMEOUT_MS 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_EXPECT_100_TIMEOUT_MS 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_EXPECT_100_TIMEOUT_MS \- timeout for Expect: 100-continue response
@@ -44,14 +44,17 @@ sent anyway.
 HTTP
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  /* wait 3 seconds for 100-continue */
-  curl_easy_setopt(curl, CURLOPT_EXPECT_100_TIMEOUT_MS, 3000L);
+    /* wait 3 seconds for 100-continue */
+    curl_easy_setopt(curl, CURLOPT_EXPECT_100_TIMEOUT_MS, 3000L);
 
-  curl_easy_perform(curl);
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -59,4 +62,5 @@ Added in 7.36.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_POST "(3), " CURLOPT_HTTPPOST "(3), "
+.BR CURLOPT_HTTPPOST (3),
+.BR CURLOPT_POST (3)

@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROXY_SSLVERSION 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_PROXY_SSLVERSION 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_PROXY_SSLVERSION \- preferred HTTPS proxy TLS version
@@ -40,7 +40,7 @@ when connecting to an HTTPS proxy.
 Use one of the available defines for this purpose. The available options are:
 .RS
 .IP CURL_SSLVERSION_DEFAULT
-The default action. This will attempt to figure out the remote SSL protocol
+The default action. This attempts to figure out the remote SSL protocol
 version.
 .IP CURL_SSLVERSION_TLSv1
 TLSv1.x
@@ -86,15 +86,18 @@ CURL_SSLVERSION_DEFAULT
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  /* ask libcurl to use TLS version 1.0 or later */
-  curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
+    /* ask libcurl to use TLS version 1.0 or later */
+    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
 
-  /* Perform the request */
-  curl_easy_perform(curl);
+    /* Perform the request */
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -102,5 +105,7 @@ Added in 7.52.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_USE_SSL "(3), " CURLOPT_HTTP_VERSION "(3), "
-.BR CURLOPT_IPRESOLVE "(3) " CURLOPT_SSLVERSION "(3), "
+.BR CURLOPT_HTTP_VERSION (3),
+.BR CURLOPT_IPRESOLVE (3),
+.BR CURLOPT_SSLVERSION (3),
+.BR CURLOPT_USE_SSL (3)

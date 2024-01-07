@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_SSLENGINE_DEFAULT 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_SSLENGINE_DEFAULT 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_SSLENGINE_DEFAULT \- make SSL engine default
@@ -43,13 +43,17 @@ None
 All TLS based protocols: HTTPS, FTPS, IMAPS, POP3S, SMTPS etc.
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
-  curl_easy_setopt(curl, CURLOPT_SSLENGINE, "dynamic");
-  curl_easy_setopt(curl, CURLOPT_SSLENGINE_DEFAULT, 1L);
-  ret = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
+    curl_easy_setopt(curl, CURLOPT_SSLENGINE, "dynamic");
+    curl_easy_setopt(curl, CURLOPT_SSLENGINE_DEFAULT, 1L);
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -65,4 +69,5 @@ CURLE_UNKNOWN_OPTION - Option not recognized.
 
 CURLE_OUT_OF_MEMORY - Insufficient heap space.
 .SH "SEE ALSO"
-.BR CURLOPT_SSLENGINE "(3), " CURLOPT_SSLCERT "(3), "
+.BR CURLOPT_SSLENGINE (3),
+.BR CURLOPT_SSLCERT (3)

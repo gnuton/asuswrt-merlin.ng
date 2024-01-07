@@ -134,7 +134,6 @@ These options are provided to select the TLS backend to use.
  - BearSSL: `--with-bearssl`
  - GnuTLS: `--with-gnutls`.
  - mbedTLS: `--with-mbedtls`
- - NSS: `--with-nss`
  - OpenSSL: `--with-openssl` (also for BoringSSL, AWS-LC, libressl, and quictls)
  - rustls: `--with-rustls`
  - Schannel: `--with-schannel`
@@ -163,6 +162,8 @@ library check.
 
 # Windows
 
+Building for Windows XP is required as a minimum.
+
 ## Building Windows DLLs and C runtime (CRT) linkage issues
 
  As a general rule, building a DLL with static CRT linkage is highly
@@ -184,12 +185,12 @@ multi-threaded dynamic C runtime.
 
  If you get linkage errors read section 5.7 of the FAQ document.
 
-## MinGW32
+## mingw-w64
 
-Make sure that MinGW32's bin directory is in the search path, for example:
+Make sure that mingw-w64's bin directory is in the search path, for example:
 
 ```cmd
-set PATH=c:\mingw32\bin;%PATH%
+set PATH=c:\mingw-w64\bin;%PATH%
 ```
 
 then run `mingw32-make mingw32` in the root dir. There are other
@@ -247,7 +248,7 @@ Requires DJGPP in the search path and pointing to the Watt-32 stack via
 
 Run `make -f Makefile.dist djgpp` in the root curl dir.
 
-For build configuration options, please see the MinGW32 section.
+For build configuration options, please see the mingw-w64 section.
 
 Notes:
 
@@ -262,7 +263,7 @@ Notes:
 
 Run `make -f Makefile.dist amiga` in the root curl dir.
 
-For build configuration options, please see the MinGW32 section.
+For build configuration options, please see the mingw-w64 section.
 
 ## Disabling Specific Protocols in Windows builds
 
@@ -525,7 +526,12 @@ disabling support for some feature:
  - `--disable-alt-svc` (HTTP Alt-Svc)
  - `--disable-ares` (the C-ARES DNS library)
  - `--disable-cookies` (HTTP cookies)
- - `--disable-crypto-auth` (cryptographic authentication)
+ - `--disable-basic-auth` (cryptographic authentication)
+ - `--disable-bearer-auth` (cryptographic authentication)
+ - `--disable-digest-auth` (cryptographic authentication)
+ - `--disable-kerberos-auth` (cryptographic authentication)
+ - `--disable-negotiate-auth` (cryptographic authentication)
+ - `--disable-aws` (cryptographic authentication)
  - `--disable-dateparse` (date parsing for time conditionals)
  - `--disable-dnsshuffle` (internal server load spreading)
  - `--disable-doh` (DNS-over-HTTP)
@@ -590,29 +596,29 @@ that are not automatically detected:
  - `--disable-libcurl-option`   !`--libcurl`
  - `--disable-verbose`          !verbose\ logs
 
-# PORTS
+# Ports
 
 This is a probably incomplete list of known CPU architectures and operating
 systems that curl has been compiled for. If you know a system curl compiles
 and runs on, that is not listed, please let us know!
 
-## 92 Operating Systems
+## 101 Operating Systems
 
-    AIX, AmigaOS, Android, Aros, BeOS, Blackberry 10, Blackberry Tablet OS,
-    Cell OS, Chrome OS, Cisco IOS, Cygwin, DG/UX, Dragonfly BSD, DR DOS, eCOS,
-    FreeBSD, FreeDOS, FreeRTOS, Fuchsia, Garmin OS, Genode, Haiku, HardenedBSD,
-    HP-UX, Hurd, Illumos, Integrity, iOS, ipadOS, IRIX, Linux, Lua RTOS,
-    Mac OS 9, macOS, Mbed, Micrium, MINIX, MorphOS, MPE/iX, MS-DOS, NCR MP-RAS,
-    NetBSD, Netware, Nintendo Switch, NonStop OS, NuttX, Omni OS, OpenBSD,
-    OpenStep, Orbis OS, OS/2, OS/400, OS21, Plan 9, PlayStation Portable, QNX,
-    Qubes OS, ReactOS, Redox, RICS OS, RTEMS, Sailfish OS, SCO Unix, Serenity,
-    SINIX-Z, Solaris, SunOS, Syllable OS, Symbian, Tizen, TPF, Tru64, tvOS,
-    ucLinux, Ultrix, UNICOS, UnixWare, VMS, vxWorks, watchOS, WebOS,
-    Wii system software, Windows, Windows CE, Xbox System, Xenix, Zephyr,
-    z/OS, z/TPF, z/VM, z/VSE
+    AIX, AmigaOS, Android, ArcoOS, Aros, Atari FreeMiNT, BeOS, Blackberry 10,
+    Blackberry Tablet OS, Cell OS, CheriBSD, Chrome OS, Cisco IOS, DG/UX,
+    Dragonfly BSD, DR DOS, eCOS, FreeBSD, FreeDOS, FreeRTOS, Fuchsia, Garmin OS,
+    Genode, Haiku, HardenedBSD, HP-UX, Hurd, Illumos, Integrity, iOS, ipadOS, IRIX,
+    Linux, Lua RTOS, Mac OS 9, macOS, Mbed, Meego, Micrium, MINIX, Moblin, MorphOS,
+    MPE/iX, MS-DOS, NCR MP-RAS, NetBSD, Netware, NextStep, Nintendo Switch,
+    NonStop OS, NuttX, OpenBSD, OpenStep, Orbis OS, OS/2, OS/400, OS21, Plan 9,
+    PlayStation Portable, QNX, Qubes OS, ReactOS, Redox, RICS OS, ROS, RTEMS,
+    Sailfish OS, SCO Unix, Serenity, SINIX-Z, SkyOS, Solaris, Sortix, SunOS,
+    Syllable OS, Symbian, Tizen, TPF, Tru64, tvOS, ucLinux, Ultrix, UNICOS,
+    UnixWare, VMS, vxWorks, watchOS, Wear OS, WebOS, Wii system software, Wii U,
+    Windows, Windows CE, Xbox System, Xenix, Zephyr, z/OS, z/TPF, z/VM, z/VSE
 
-## 26 CPU Architectures
+## 28 CPU Architectures
 
-    Alpha, ARC, ARM, AVR32, CompactRISC, Elbrus, ETRAX, HP-PA, Itanium,
+    Alpha, ARC, ARM, AVR32, C-SKY, CompactRISC, Elbrus, ETRAX, HP-PA, Itanium,
     LoongArch, m68k, m88k, MicroBlaze, MIPS, Nios, OpenRISC, POWER, PowerPC,
-    RISC-V, s390, SH4, SPARC, Tilera, VAX, x86, Xtensa
+    RISC-V, s390, SH4, SPARC, Tilera, VAX, x86, Xtensa, z/arch

@@ -46,10 +46,10 @@ Connection: close
 <server>
 http
 </server>
- <name>
+<name>
 HTTP resume transfer with the whole file already downloaded and --fail
- </name>
- <command>
+</name>
+<command>
 http://%HOSTIP:%HTTPPORT/want/%TESTNUMBER -C 87 --fail
 </command>
 </client>
@@ -64,9 +64,8 @@ User-Agent: curl/%VERSION
 Accept: */*
 
 </protocol>
-# CURLE_HTTP_RETURNED_ERROR
 <errorcode>
-22
+0
 </errorcode>
 </verify>
 </testcase>

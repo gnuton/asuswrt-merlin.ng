@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROXY_CAPATH 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_PROXY_CAPATH 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_PROXY_CAPATH \- directory holding HTTPS proxy CA certificates
@@ -49,21 +49,25 @@ NULL
 Everything used over an HTTPS proxy
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
-  /* using an HTTPS proxy */
-  curl_easy_setopt(curl, CURLOPT_PROXY, "https://localhost:443");
-  curl_easy_setopt(curl, CURLOPT_PROXY_CAPATH, "/etc/cert-dir");
-  ret = curl_easy_perform(curl);
-  curl_easy_cleanup(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
+    /* using an HTTPS proxy */
+    curl_easy_setopt(curl, CURLOPT_PROXY, "https://localhost:443");
+    curl_easy_setopt(curl, CURLOPT_PROXY_CAPATH, "/etc/cert-dir");
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
 Added in 7.52.0
 
 This option is supported by the OpenSSL, GnuTLS, and mbedTLS (since 7.56.0)
-backends. The NSS backend provides the option only for backward compatibility.
+backends.
 .SH RETURN VALUE
 CURLE_OK if supported; or an error such as:
 
@@ -73,6 +77,8 @@ CURLE_UNKNOWN_OPTION
 
 CURLE_OUT_OF_MEMORY
 .SH "SEE ALSO"
-.BR CURLOPT_PROXY_CAINFO "(3), "
-.BR CURLOPT_CAINFO "(3), " CURLOPT_PROXY_SSL_VERIFYHOST "(3), "
-.BR CURLOPT_STDERR "(3), " CURLOPT_DEBUGFUNCTION "(3), "
+.BR CURLOPT_CAINFO (3),
+.BR CURLOPT_DEBUGFUNCTION (3),
+.BR CURLOPT_PROXY_CAINFO (3),
+.BR CURLOPT_PROXY_SSL_VERIFYHOST (3),
+.BR CURLOPT_STDERR (3)

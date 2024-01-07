@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_EFFECTIVE_METHOD 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLINFO_EFFECTIVE_METHOD 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLINFO_EFFECTIVE_METHOD \- get the last used HTTP method
@@ -40,27 +40,30 @@ method.
 In cases when you have asked libcurl to follow redirects, the method may not be
 the same method the first request would use.
 
-The \fBmethodp\fP pointer will be NULL or pointing to private memory you MUST
-NOT free - it gets freed when you call \fIcurl_easy_cleanup(3)\fP on the
+The \fBmethodp\fP pointer is NULL or points to private memory. You MUST NOT
+free - it gets freed when you call \fIcurl_easy_cleanup(3)\fP on the
 corresponding CURL handle.
 .SH PROTOCOLS
 HTTP(S)
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  CURLcode res;
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
-  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "data");
-  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-  res = curl_easy_perform(curl);
-  if(res == CURLE_OK) {
-    char *method = NULL;
-    curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_METHOD, &method);
-    if(method)
-      printf("Redirected to method: %s\\n", method);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "data");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    res = curl_easy_perform(curl);
+    if(res == CURLE_OK) {
+      char *method = NULL;
+      curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_METHOD, &method);
+      if(method)
+        printf("Redirected to method: %s\\n", method);
+    }
+    curl_easy_cleanup(curl);
   }
-  curl_easy_cleanup(curl);
 }
 .fi
 .SH AVAILABILITY
@@ -68,4 +71,7 @@ Added in 7.72.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR curl_easy_getinfo "(3), " curl_easy_setopt "(3), "
+.BR curl_easy_getinfo (3),
+.BR curl_easy_setopt (3),
+.BR CURLOPT_CUSTOMREQUEST (3),
+.BR CURLOPT_FOLLOWLOCATION (3)

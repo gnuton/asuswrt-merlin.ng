@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_CERTINFO 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_CERTINFO 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_CERTINFO \- request SSL certificate information
@@ -34,7 +34,7 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_CERTINFO, long certinfo);
 .fi
 .SH DESCRIPTION
 Pass a long set to 1 to enable libcurl's certificate chain info gatherer. With
-this enabled, libcurl will extract lots of information and data about the
+this enabled, libcurl extracts lots of information and data about the
 certificates in the certificate chain used in the SSL connection. This data
 may then be retrieved after a transfer using \fIcurl_easy_getinfo(3)\fP and
 its option \fICURLINFO_CERTINFO(3)\fP.
@@ -44,41 +44,50 @@ its option \fICURLINFO_CERTINFO(3)\fP.
 All TLS-based
 .SH EXAMPLE
 .nf
-curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://www.example.com/");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://www.example.com/");
 
-  /* connect to any HTTPS site, trusted or not */
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    /* connect to any HTTPS site, trusted or not */
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
-  curl_easy_setopt(curl, CURLOPT_CERTINFO, 1L);
+    curl_easy_setopt(curl, CURLOPT_CERTINFO, 1L);
 
-  res = curl_easy_perform(curl);
+    res = curl_easy_perform(curl);
 
-  if (!res) {
-    struct curl_certinfo *ci;
-    res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &ci);
+    if(!res) {
+      struct curl_certinfo *ci;
+      res = curl_easy_getinfo(curl, CURLINFO_CERTINFO, &ci);
 
-    if (!res) {
-      printf("%d certs!\\n", ci->num_of_certs);
+      if(!res) {
+        int i;
+        printf("%d certs!\\n", ci->num_of_certs);
 
-      for(i = 0; i < ci->num_of_certs; i++) {
-        struct curl_slist *slist;
+        for(i = 0; i < ci->num_of_certs; i++) {
+          struct curl_slist *slist;
 
-        for(slist = ci->certinfo[i]; slist; slist = slist->next)
-          printf("%s\\n", slist->data);
+          for(slist = ci->certinfo[i]; slist; slist = slist->next)
+            printf("%s\\n", slist->data);
+        }
       }
     }
+    curl_easy_cleanup(curl);
   }
-  curl_easy_cleanup(curl);
 }
 .fi
 .SH AVAILABILITY
-This option is supported by the OpenSSL, GnuTLS, Schannel, NSS, GSKit and
-Secure Transport backends. Schannel support added in 7.50.0. Secure Transport
-support added in 7.79.0.
+This option is supported by the OpenSSL, GnuTLS, Schannel and Secure
+Transport backends. Schannel support added in 7.50.0. Secure Transport support
+added in 7.79.0.
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_CAINFO "(3), " CURLOPT_SSL_VERIFYPEER "(3), "
+.BR CURLINFO_CAINFO (3),
+.BR CURLINFO_CAPATH (3),
+.BR CURLINFO_CERTINFO (3),
+.BR CURLOPT_CAINFO (3),
+.BR CURLOPT_SSL_VERIFYPEER (3)

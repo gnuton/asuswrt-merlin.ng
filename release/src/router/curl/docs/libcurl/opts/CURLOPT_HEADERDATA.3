@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_HEADERDATA 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_HEADERDATA 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_HEADERDATA \- pointer to pass to header callback
@@ -37,14 +37,14 @@ Pass a \fIpointer\fP to be used to write the header part of the received data
 to.
 
 If \fICURLOPT_WRITEFUNCTION(3)\fP or \fICURLOPT_HEADERFUNCTION(3)\fP is used,
-\fIpointer\fP will be passed in to the respective callback.
+\fIpointer\fP is passed in to the respective callback.
 
 If neither of those options are set, \fIpointer\fP must be a valid FILE * and
-it will be used by a plain fwrite() to write headers to.
+it is used by a plain fwrite() to write headers to.
 
 If you are using libcurl as a win32 DLL, you \fBMUST\fP use a
 \fICURLOPT_WRITEFUNCTION(3)\fP or \fICURLOPT_HEADERFUNCTION(3)\fP if you set
-this option or you will experience crashes.
+this option or you might experience crashes.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS
@@ -59,24 +59,27 @@ struct my_info {
 static size_t header_callback(char *buffer, size_t size,
                               size_t nitems, void *userdata)
 {
-  struct my_info *i = (struct my_info *)userdata;
-
+  struct my_info *i = userdata;
+  printf("shoe size: %d\\n", i->shoesize);
   /* now this callback can access the my_info struct */
 
   return nitems * size;
 }
 
-CURL *curl = curl_easy_init();
-if(curl) {
-  struct my_info my = { 10, "the cookies are in the cupboard" };
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    struct my_info my = { 10, "the cookies are in the cupboard" };
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
 
-  /* pass in custom data to the callback */
-  curl_easy_setopt(curl, CURLOPT_HEADERDATA, &my);
+    /* pass in custom data to the callback */
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &my);
 
-  curl_easy_perform(curl);
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -84,4 +87,6 @@ Always
 .SH RETURN VALUE
 Returns CURLE_OK
 .SH "SEE ALSO"
-.BR CURLOPT_HEADERFUNCTION "(3), " CURLOPT_WRITEFUNCTION "(3), "
+.BR curl_easy_header (3),
+.BR CURLOPT_HEADERFUNCTION (3),
+.BR CURLOPT_WRITEFUNCTION (3)

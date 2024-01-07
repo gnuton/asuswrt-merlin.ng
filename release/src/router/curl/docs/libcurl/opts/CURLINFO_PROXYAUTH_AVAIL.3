@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLINFO_PROXYAUTH_AVAIL 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLINFO_PROXYAUTH_AVAIL 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLINFO_PROXYAUTH_AVAIL \- get available HTTP proxy authentication methods
@@ -42,36 +42,42 @@ bits is explained in the \fICURLOPT_PROXYAUTH(3)\fP option for
 HTTP(S)
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
-  curl_easy_setopt(curl, CURLOPT_PROXY, "http://127.0.0.1:80");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+    curl_easy_setopt(curl, CURLOPT_PROXY, "http://127.0.0.1:80");
 
-  res = curl_easy_perform(curl);
+    res = curl_easy_perform(curl);
 
-  if(!res) {
-    /* extract the available proxy authentication types */
-    long auth;
-    res = curl_easy_getinfo(curl, CURLINFO_PROXYAUTH_AVAIL, &auth);
     if(!res) {
-      if(!auth)
-        printf("No proxy auth available, perhaps no 407?\\n");
-      else {
-        printf("%s%s%s%s\\n",
-               auth & CURLAUTH_BASIC ? "Basic ":"",
-               auth & CURLAUTH_DIGEST ? "Digest ":"",
-               auth & CURLAUTH_NEGOTIATE ? "Negotiate ":"",
-               auth % CURLAUTH_NTLM ? "NTLM ":"");
+      /* extract the available proxy authentication types */
+      long auth;
+      res = curl_easy_getinfo(curl, CURLINFO_PROXYAUTH_AVAIL, &auth);
+      if(!res) {
+        if(!auth)
+          printf("No proxy auth available, perhaps no 407?\\n");
+        else {
+          printf("%s%s%s%s\\n",
+                 auth & CURLAUTH_BASIC ? "Basic ":"",
+                 auth & CURLAUTH_DIGEST ? "Digest ":"",
+                 auth & CURLAUTH_NEGOTIATE ? "Negotiate ":"",
+                 auth % CURLAUTH_NTLM ? "NTLM ":"");
+        }
       }
     }
+    curl_easy_cleanup(curl);
   }
-  curl_easy_cleanup(curl);
 }
 .fi
 .SH AVAILABILITY
-Added RFC2617 in 7.10.8
-Added RFC7616 in 7.57.0
+Added RFC 2617 in 7.10.8
+Added RFC 7616 in 7.57.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR curl_easy_getinfo "(3), " curl_easy_setopt "(3), "
+.BR curl_easy_getinfo (3),
+.BR curl_easy_setopt (3),
+.BR CURLINFO_HTTPAUTH_AVAIL (3)

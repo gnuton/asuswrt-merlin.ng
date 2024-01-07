@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_PROTOCOLS 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_PROTOCOLS 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_PROTOCOLS \- allowed protocols
@@ -40,8 +40,8 @@ available protocols!
 Pass a long that holds a bitmask of CURLPROTO_* defines. If used, this bitmask
 limits what protocols libcurl may use in the transfer. This allows you to have
 a libcurl built to support a wide range of protocols but still limit specific
-transfers to only be allowed to use a subset of them. By default libcurl will
-accept all protocols it supports (\fICURLPROTO_ALL\fP). See also
+transfers to only be allowed to use a subset of them. By default libcurl
+accepts all protocols it supports (\fICURLPROTO_ALL\fP). See also
 \fICURLOPT_REDIR_PROTOCOLS(3)\fP.
 
 These are the available protocol defines:
@@ -81,17 +81,20 @@ All protocols built-in.
 All
 .SH EXAMPLE
 .nf
-curl = curl_easy_init();
-if(curl) {
-  /* pass in the URL from an external source */
-  curl_easy_setopt(curl, CURLOPT_URL, argv[1]);
+int main(int argc, char **argv)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    /* pass in the URL from an external source */
+    curl_easy_setopt(curl, CURLOPT_URL, argv[1]);
 
-  /* only allow HTTP, TFTP and SFTP */
-  curl_easy_setopt(curl, CURLOPT_PROTOCOLS,
-                   CURLPROTO_HTTP | CURLPROTO_TFTP | CURLPROTO_SFTP);
+    /* only allow HTTP, TFTP and SFTP */
+    curl_easy_setopt(curl, CURLOPT_PROTOCOLS,
+                     CURLPROTO_HTTP | CURLPROTO_TFTP | CURLPROTO_SFTP);
 
-  /* Perform the request */
-  curl_easy_perform(curl);
+    /* Perform the request */
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -99,4 +102,6 @@ Added in 7.19.4. Deprecated since 7.85.0.
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_REDIR_PROTOCOLS "(3), " CURLOPT_URL "(3), "
+.BR CURLOPT_DEFAULT_PROTOCOL (3),
+.BR CURLOPT_REDIR_PROTOCOLS (3),
+.BR CURLOPT_URL (3)

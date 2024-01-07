@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_FAILONERROR 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_FAILONERROR 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_FAILONERROR \- request failure on HTTP response >= 400
@@ -38,29 +38,32 @@ code returned is equal to or larger than 400. The default action would be to
 return the page normally, ignoring that code.
 
 This method is not fail-safe and there are occasions where non-successful
-response codes will slip through, especially when authentication is involved
+response codes slip through, especially when authentication is involved
 (response codes 401 and 407).
 
 You might get some amounts of headers transferred before this situation is
 detected, like when a "100-continue" is received as a response to a POST/PUT
 and a 401 or 407 is received immediately afterwards.
 
-When this option is used and an error is detected, it will cause the
-connection to get closed and \fICURLE_HTTP_RETURNED_ERROR\fP is returned.
+When this option is used and an error is detected, it causes the connection to
+get closed and \fICURLE_HTTP_RETURNED_ERROR\fP is returned.
 .SH DEFAULT
 0, do not fail on error
 .SH PROTOCOLS
 HTTP
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  CURLcode ret;
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
-  curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-  ret = curl_easy_perform(curl);
-  if(ret == CURLE_HTTP_RETURNED_ERROR) {
-    /* an HTTP response error problem */
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode ret;
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/");
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+    ret = curl_easy_perform(curl);
+    if(ret == CURLE_HTTP_RETURNED_ERROR) {
+      /* an HTTP response error problem */
+    }
   }
 }
 .fi
@@ -69,4 +72,6 @@ Along with HTTP.
 .SH RETURN VALUE
 Returns CURLE_OK if HTTP is enabled, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_HTTP200ALIASES "(3), " CURLOPT_KEEP_SENDING_ON_ERROR "(3), "
+.BR CURLINFO_RESPONSE_CODE (3),
+.BR CURLOPT_HTTP200ALIASES (3),
+.BR CURLOPT_KEEP_SENDING_ON_ERROR (3)

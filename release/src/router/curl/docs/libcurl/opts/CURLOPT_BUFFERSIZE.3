@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_BUFFERSIZE 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_BUFFERSIZE 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_BUFFERSIZE \- receive buffer size
@@ -36,7 +36,7 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_BUFFERSIZE, long size);
 Pass a long specifying your preferred \fIsize\fP (in bytes) for the receive
 buffer in libcurl.  The main point of this would be that the write callback
 gets called more often and with smaller chunks. Secondly, for some protocols,
-there's a benefit of having a larger buffer for performance.
+there is a benefit of having a larger buffer for performance.
 
 This is just treated as a request, not an order. You cannot be guaranteed to
 actually get the given size.
@@ -55,16 +55,20 @@ CURL_MAX_WRITE_SIZE (16kB)
 All
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "sftp://example.com/foo.bin");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "sftp://example.com/foo.bin");
 
-  /* ask libcurl to allocate a larger receive buffer */
-  curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 120000L);
+    /* ask libcurl to allocate a larger receive buffer */
+    curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 120000L);
 
-  ret = curl_easy_perform(curl);
+    res = curl_easy_perform(curl);
 
-  curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -72,5 +76,8 @@ Added in 7.10.  Growing the buffer was added in 7.53.0.
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_MAX_RECV_SPEED_LARGE "(3), " CURLOPT_WRITEFUNCTION "(3), "
-.BR CURLOPT_UPLOAD_BUFFERSIZE "(3), "
+.BR CURLOPT_MAX_RECV_SPEED_LARGE (3),
+.BR CURLOPT_MAXFILESIZE (3),
+.BR CURLOPT_UPLOAD_BUFFERSIZE (3),
+.BR CURLOPT_WRITEFUNCTION (3)
+

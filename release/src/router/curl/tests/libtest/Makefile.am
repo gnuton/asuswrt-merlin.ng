@@ -52,8 +52,8 @@ if USE_EXPLICIT_LIB_DEPS
 SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la @LIBCURL_LIBS@
 TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la @LIBCURL_LIBS@
 else
-SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la @CURL_NETWORK_LIBS@ @NSS_LIBS@
-TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la @CURL_NETWORK_AND_TIME_LIBS@ @NSS_LIBS@
+SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la @CURL_NETWORK_LIBS@
+TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la @CURL_NETWORK_AND_TIME_LIBS@
 endif
 
 # Dependencies (may need to be overridden)
@@ -103,7 +103,7 @@ libhostname_la_CPPFLAGS = $(AM_CPPFLAGS) $(libhostname_la_CPPFLAGS_EXTRA)
 libhostname_la_LDFLAGS = $(AM_LDFLAGS) $(libhostname_la_LDFLAGS_EXTRA)
 libhostname_la_CFLAGS = $(AM_CFLAGS) $(libhostname_la_CFLAGS_EXTRA)
 
-libhostname_la_SOURCES = sethostname.c sethostname.h
+libhostname_la_SOURCES = sethostname.c
 
 libhostname_la_LIBADD =
 libhostname_la_DEPENDENCIES =

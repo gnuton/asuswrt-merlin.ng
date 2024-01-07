@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_READDATA 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_READDATA 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_READDATA \- pointer passed to the read callback
@@ -34,37 +34,47 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_READDATA, void *pointer);
 .fi
 .SH DESCRIPTION
 Data \fIpointer\fP to pass to the file read function. If you use the
-\fICURLOPT_READFUNCTION(3)\fP option, this is the pointer you will get as
-input in the fourth argument to the callback.
+\fICURLOPT_READFUNCTION(3)\fP option, this is the pointer you get as input in
+the fourth argument to the callback.
 
 If you do not specify a read callback but instead rely on the default internal
 read function, this data must be a valid readable FILE * (cast to 'void *').
 
-If you are using libcurl as a win32 DLL, you \fBMUST\fP use a
-\fICURLOPT_READFUNCTION(3)\fP if you set this option or you will experience
-crashes.
+If you are using libcurl as a DLL on Windows, you must use the
+\fICURLOPT_READFUNCTION(3)\fP callback if you set this option, otherwise you
+might experience crashes.
 .SH DEFAULT
 By default, this is a FILE * to stdin.
 .SH PROTOCOLS
 This is used for all protocols when sending data.
 .SH EXAMPLE
 .nf
-CURL *curl = curl_easy_init();
-struct MyData this;
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+struct MyData {
+  void *custom;
+};
 
-  /* pass pointer that gets passed in to the
-     CURLOPT_READFUNCTION callback */
-  curl_easy_setopt(curl, CURLOPT_READDATA, &this);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  struct MyData this;
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  curl_easy_perform(curl);
+    /* pass pointer that gets passed in to the
+       CURLOPT_READFUNCTION callback */
+    curl_easy_setopt(curl, CURLOPT_READDATA, &this);
+
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
 This option was once known by the older name CURLOPT_INFILE, the name
 \fICURLOPT_READDATA(3)\fP was introduced in 7.9.7.
 .SH RETURN VALUE
-This will return CURLE_OK.
+This returns CURLE_OK.
 .SH "SEE ALSO"
-.BR CURLOPT_READFUNCTION "(3), " CURLOPT_WRITEDATA "(3), "
+.BR CURLOPT_HEADERDATA (3),
+.BR CURLOPT_READFUNCTION (3),
+.BR CURLOPT_WRITEDATA (3),
+.BR CURLOPT_WRITEFUNCTION (3)

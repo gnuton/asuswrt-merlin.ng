@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_REQUEST_TARGET 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_REQUEST_TARGET 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_REQUEST_TARGET \- alternative target for this request
@@ -35,22 +35,28 @@ CURLcode curl_easy_setopt(CURL *handle, CURLOPT_REQUEST_TARGET, string);
 .SH DESCRIPTION
 Pass a char * to string which libcurl uses in the upcoming request instead of
 the path as extracted from the URL.
+
+libcurl passes on the verbatim string in its request without any filter or
+other safe guards. That includes white space and control characters.
 .SH DEFAULT
 NULL
 .SH PROTOCOLS
 HTTP
 .SH EXAMPLE
 .nf
-curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/*");
-  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/*");
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
 
-  /* issue an OPTIONS * request (no leading slash) */
-  curl_easy_setopt(curl, CURLOPT_REQUEST_TARGET, "*");
+    /* issue an OPTIONS * request (no leading slash) */
+    curl_easy_setopt(curl, CURLOPT_REQUEST_TARGET, "*");
 
-  /* Perform the request */
-  curl_easy_perform(curl);
+    /* Perform the request */
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -58,4 +64,7 @@ Added in 7.55.0
 .SH RETURN VALUE
 Returns CURLE_OK if the option is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_CUSTOMREQUEST "(3), " CURLOPT_HTTPGET "(3), "
+.BR CURLOPT_CUSTOMREQUEST (3),
+.BR CURLOPT_HTTPGET (3),
+.BR CURLOPT_PATH_AS_IS (3),
+.BR CURLOPT_URL (3)

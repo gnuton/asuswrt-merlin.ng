@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLMOPT_PIPELINING_SITE_BL 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLMOPT_PIPELINING_SITE_BL 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLMOPT_PIPELINING_SITE_BL \- pipelining host block list
@@ -47,18 +47,23 @@ The default value is NULL, which means that there is no block list.
 HTTP(S)
 .SH EXAMPLE
 .nf
-  char *site_block_list[] =
-  {
-    "www.haxx.se",
-    "www.example.com:1234",
-    NULL
-  };
+static char *site_block_list[] =
+{
+  "www.haxx.se",
+  "www.example.com:1234",
+  NULL
+};
 
+int main(void)
+{
+  CURLM *m = curl_multi_init();
   curl_multi_setopt(m, CURLMOPT_PIPELINING_SITE_BL, site_block_list);
+}
 .fi
 .SH AVAILABILITY
 Added in 7.30.0
 .SH RETURN VALUE
 Returns CURLM_OK if the option is supported, and CURLM_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLMOPT_PIPELINING "(3), " CURLMOPT_PIPELINING_SERVER_BL "(3), "
+.BR CURLMOPT_PIPELINING (3),
+.BR CURLMOPT_PIPELINING_SERVER_BL (3)

@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH CURLOPT_HTTPGET 3 "April 26, 2023" "ibcurl 8.1.2" libcurl
+.TH CURLOPT_HTTPGET 3 "December 04, 2023" "ibcurl 8.5.0" libcurl
 
 .SH NAME
 CURLOPT_HTTPGET \- ask for an HTTP GET request
@@ -37,7 +37,7 @@ Pass a long. If \fIuseget\fP is 1, this forces the HTTP request to get back to
 using GET. Usable if a POST, HEAD, PUT, etc has been used previously using the
 same curl \fIhandle\fP.
 
-When setting \fICURLOPT_HTTPGET(3)\fP to 1, it will automatically set
+When setting \fICURLOPT_HTTPGET(3)\fP to 1, libcurl automatically sets
 \fICURLOPT_NOBODY(3)\fP to 0 and \fICURLOPT_UPLOAD(3)\fP to 0.
 
 Setting this option to zero has no effect. Applications need to explicitly
@@ -49,15 +49,18 @@ reset a handle to default method, consider \fIcurl_easy_reset(3)\fP.
 HTTP(S)
 .SH EXAMPLE
 .nf
-curl = curl_easy_init();
-if(curl) {
-  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
 
-  /* use a GET to fetch this */
-  curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+    /* use a GET to fetch this */
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 
-  /* Perform the request */
-  curl_easy_perform(curl);
+    /* Perform the request */
+    curl_easy_perform(curl);
+  }
 }
 .fi
 .SH AVAILABILITY
@@ -65,5 +68,7 @@ Along with HTTP
 .SH RETURN VALUE
 Returns CURLE_OK if HTTP is supported, and CURLE_UNKNOWN_OPTION if not.
 .SH "SEE ALSO"
-.BR CURLOPT_NOBODY "(3), " CURLOPT_UPLOAD "(3), " CURLOPT_POST "(3), "
-.BR curl_easy_reset "(3) "
+.BR curl_easy_reset (3),
+.BR CURLOPT_NOBODY (3),
+.BR CURLOPT_POST (3),
+.BR CURLOPT_UPLOAD (3)

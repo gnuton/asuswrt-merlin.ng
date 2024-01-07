@@ -21,29 +21,37 @@
 .\" * SPDX-License-Identifier: curl
 .\" *
 .\" **************************************************************************
-.TH curl_multi_strerror 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
+.TH curl_multi_strerror 3 "December 04, 2023" "libcurl 8.5.0" "libcurl"
 
 .SH NAME
 curl_multi_strerror - return string describing error code
 .SH SYNOPSIS
 .nf
-.B #include <curl/curl.h>
-.BI "const char *curl_multi_strerror(CURLMcode " errornum ");"
+#include <curl/curl.h>
+
+const char *curl_multi_strerror(CURLMcode errornum);
+.fi
 .SH DESCRIPTION
-The curl_multi_strerror() function returns a string describing the
-\fICURLMcode\fP error code passed in the argument \fIerrornum\fP.
+This function returns a string describing the \fICURLMcode\fP error code
+passed in the argument \fIerrornum\fP.
 .SH EXAMPLE
 .nf
-int still_running;
+int main(void)
+{
+  int still_running;
+  CURLM *multi = curl_multi_init();
 
-CURLMcode mc = curl_multi_perform(multi_handle, &still_running);
-if(mc)
-  printf("error: %s\\n", curl_multi_strerror(mc));
+  CURLMcode mc = curl_multi_perform(multi, &still_running);
+  if(mc)
+    printf("error: %s\\n", curl_multi_strerror(mc));
+}
 .fi
 .SH AVAILABILITY
 This function was added in libcurl 7.12.0
 .SH RETURN VALUE
 A pointer to a null-terminated string.
 .SH "SEE ALSO"
-.BR libcurl-errors "(3), " curl_easy_strerror "(3), "
-.BR curl_share_strerror "(3), " curl_url_strerror "(3)"
+.BR curl_easy_strerror (3),
+.BR curl_share_strerror (3),
+.BR curl_url_strerror (3),
+.BR libcurl-errors (3)

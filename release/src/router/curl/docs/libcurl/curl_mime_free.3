@@ -21,7 +21,7 @@
 .\" * SPDX-License-Identifier: curl
 .\" *
 .\" **************************************************************************
-.TH curl_mime_free 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
+.TH curl_mime_free 3 "December 04, 2023" "libcurl 8.5.0" "libcurl"
 
 .SH NAME
 curl_mime_free - free a previously built mime structure
@@ -44,21 +44,28 @@ are by the top structure freeing.
 \fBmime\fP is the handle as returned from a previous call to
 \fIcurl_mime_init(3)\fP and may be NULL.
 
-Passing in a NULL pointer in \fImime\fP will make this function return
-immediately with no action.
+Passing in a NULL pointer in \fImime\fP makes this function return immediately
+with no action.
 .SH EXAMPLE
 .nf
-  /* Build the mime message. */
-  mime = curl_mime_init(curl);
+int main(void)
+{
+  CURL *curl = curl_easy_init();
+  if(curl) {
+    /* Build the mime message. */
+    curl_mime *mime = curl_mime_init(curl);
 
-  /* ... */
+    /* send off the transfer */
 
-  /* Free multipart message. */
-  curl_mime_free(mime);
+    /* Free multipart message. */
+    curl_mime_free(mime);
+  }
+}
 .fi
 .SH AVAILABILITY
 As long as at least one of HTTP, SMTP or IMAP is enabled. Added in 7.56.0.
 .SH RETURN VALUE
 None
 .SH "SEE ALSO"
-.BR curl_mime_init "(3)"
+.BR curl_free (3),
+.BR curl_mime_init (3)

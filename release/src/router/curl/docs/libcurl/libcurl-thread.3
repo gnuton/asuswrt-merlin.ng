@@ -22,7 +22,7 @@
 .\" *
 .\" **************************************************************************
 .\"
-.TH libcurl-thread 3 "April 26, 2023" "libcurl 8.1.2" "libcurl"
+.TH libcurl-thread 3 "October 30, 2023" "libcurl 8.5.0" "libcurl"
 
 .SH NAME
 libcurl-thread \- libcurl thread safety
@@ -43,53 +43,28 @@ interface but you must provide your own locking and set
 Note that some items are specifically documented as not thread-safe in the
 share API (the connection pool and HSTS cache for example).
 .SH TLS
-If you are accessing HTTPS or FTPS URLs in a multi-threaded manner, you are
-then of course using the underlying SSL library multi-threaded and those libs
-might have their own requirements on this issue. You may need to provide one
-or two functions to allow it to function properly:
-.IP OpenSSL
-OpenSSL 1.1.0+ "can be safely used in multi-threaded applications provided that
-support for the underlying OS threading API is built-in." In that case the
-engine is used by libcurl in a way that is fully thread-safe.
-
-https://www.openssl.org/docs/man1.1.0/man3/CRYPTO_THREAD_run_once.html#DESCRIPTION
-
-OpenSSL <= 1.0.2 the user must set callbacks.
-
-https://www.openssl.org/docs/man1.0.2/man3/CRYPTO_set_locking_callback.html#DESCRIPTION
-
-https://curl.se/libcurl/c/opensslthreadlock.html
-
-.IP GnuTLS
-https://gnutls.org/manual/html_node/Thread-safety.html
-.IP NSS
-thread-safe already without anything required.
-.IP Secure-Transport
-The engine is used by libcurl in a way that is fully thread-safe.
-.IP Schannel
-The engine is used by libcurl in a way that is fully thread-safe.
-.IP wolfSSL
-The engine is used by libcurl in a way that is fully thread-safe.
-.IP BoringSSL
-The engine is used by libcurl in a way that is fully thread-safe.
-.IP AWS-LC
-The engine is used by libcurl in a way that is fully thread-safe.
+All current TLS libraries libcurl supports are thread-safe. OpenSSL 1.1.0+ can
+be safely used in multi-threaded applications provided that support for the
+underlying OS threading API is built-in. For older versions of OpenSSL, the
+user must set mutex callbacks.
 .SH "Signals"
 Signals are used for timing out name resolves (during DNS lookup) - when built
-without using either the c-ares or threaded resolver backends. When using
-multiple threads you should set the \fICURLOPT_NOSIGNAL(3)\fP option to 1L for
-all handles. Everything will or might work fine except that timeouts are not
-honored during the DNS lookup - which you can work around by building libcurl
-with c-ares or threaded-resolver support. c-ares is a library that provides
-asynchronous name resolves. On some platforms, libcurl simply will not
+without using either the c-ares or threaded resolver backends. On systems that
+have a signal concept.
+
+When using multiple threads you should set the \fICURLOPT_NOSIGNAL(3)\fP
+option to 1L for all handles. Everything works fine except that timeouts
+cannot be honored during DNS lookups - which you can work around by building
+libcurl with c-ares or threaded-resolver support. c-ares is a library that
+provides asynchronous name resolves. On some platforms, libcurl simply cannot
 function properly multi-threaded unless the \fICURLOPT_NOSIGNAL(3)\fP option
 is set.
 
 When \fICURLOPT_NOSIGNAL(3)\fP is set to 1L, your application needs to deal
 with the risk of a SIGPIPE (that at least the OpenSSL backend can
-trigger). Note that setting \fICURLOPT_NOSIGNAL(3)\fP to 0L will not work in a
-threaded situation as there will be race where libcurl risks restoring the
-former signal handler while another thread should still ignore it.
+trigger). Note that setting \fICURLOPT_NOSIGNAL(3)\fP to 0L does not work in a
+threaded situation as there is a race condition where libcurl risks restoring
+the former signal handler while another thread should still ignore it.
 .SH "Name resolving"
 The \fBgethostbyname\fP or \fBgetaddrinfo\fP and other name resolving system
 calls used by libcurl are provided by your operating system and must be thread
