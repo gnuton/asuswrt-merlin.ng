@@ -1,20 +1,20 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.16: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
 <title>openvpn</title>
 <style type="text/css">
 
 /*
 :Author: David Goodger (goodger@python.org)
-:Id: $Id: html4css1.css 7952 2016-07-26 18:15:59Z milde $
+:Id: $Id: html4css1.css 8954 2022-01-20 10:10:25Z milde $
 :Copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the HTML output of Docutils.
 
-See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+See https://docutils.sourceforge.io/docs/howto/html-stylesheets.html for how to
 customize this style sheet.
 */
 
@@ -871,7 +871,7 @@ plug-in hook to dynamically generate client-specific configuration
 method</li>
 <li><code>OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY</code> plug-in hooks returns
 success/failure via <code>auth_control_file</code> when using deferred auth
-method and pending authentification via <code>pending_auth_file</code>.</li>
+method and pending authentication via <code>pending_auth_file</code>.</li>
 </ul>
 </td></tr>
 <tr><td class="option-group" colspan="2">
@@ -1325,9 +1325,9 @@ react according to <tt class="docutils literal"><span class="pre">--auth-retry</
 <tr><td class="option-group" colspan="2">
 <kbd><span class="option">--auth-token-user <var>base64username</var></span></kbd></td>
 </tr>
-<tr><td>&nbsp;</td><td><p class="first">Companion option to <tt class="docutils literal"><span class="pre">--auth-token</span></tt>. This options allows to override
+<tr><td>&nbsp;</td><td><p class="first">Companion option to <tt class="docutils literal"><span class="pre">--auth-token</span></tt>. This options allows one to override
 the username used by the client when reauthenticating with the <tt class="docutils literal"><span class="pre">auth-token</span></tt>.
-It also allows to use <tt class="docutils literal"><span class="pre">--auth-token</span></tt> in setups that normally do not use
+It also allows one to use <tt class="docutils literal"><span class="pre">--auth-token</span></tt> in setups that normally do not use
 username and password.</p>
 <p class="last">The username has to be base64 encoded.</p>
 </td></tr>
@@ -1437,7 +1437,7 @@ each entry exactly once. A successful connection resets the counter.
 <pre class="literal-block">
 dns search-domains domain [domain ...]
 dns server n address addr[:port] [addr[:port] ...]
-dns server n resolve-domains|exclude-domains domain [domain ...]
+dns server n resolve-domains domain [domain ...]
 dns server n dnssec yes|optional|no
 dns server n transport DoH|DoT|plain
 dns server n sni server-name
@@ -1456,14 +1456,10 @@ already configured DNS servers with the same server id.</p>
 the DNS server. Up to eight addresses can be specified per DNS server.
 Optionally a port can be appended after a colon. IPv6 addresses need to
 be enclosed in brackets if a port is appended.</p>
-<p>The <tt class="docutils literal"><span class="pre">resolve-domains</span></tt> and <tt class="docutils literal"><span class="pre">exclude-domains</span></tt> options take one or
-more DNS domains which are explicitly resolved or explicitly not resolved
-by a server. Only one of the options can be configured for a server.
-<tt class="docutils literal"><span class="pre">resolve-domains</span></tt> is used to define a split-dns setup, where only
-given domains are resolved by a server. <tt class="docutils literal"><span class="pre">exclude-domains</span></tt> is used to
-define domains which will never be resolved by a server (e.g. domains
-which can only be resolved locally). Systems which do not support fine
-grained DNS domain configuration, will ignore these settings.</p>
+<p>The <tt class="docutils literal"><span class="pre">resolve-domains</span></tt> option takes one or more DNS domains used to define
+a split-dns or dns-routing setup, where only the given domains are resolved
+by the server. Systems which do not support fine grained DNS domain
+configuration will ignore this setting.</p>
 <p>The <tt class="docutils literal">dnssec</tt> option is used to configure validation of DNSSEC records.
 While the exact semantics may differ for resolvers on different systems,
 <tt class="docutils literal">yes</tt> likely makes validation mandatory, <tt class="docutils literal">no</tt> disables it, and <tt class="docutils literal">optional</tt>
@@ -2540,7 +2536,7 @@ are tagged with 1 by default.</p>
 <tr><td class="option-group">
 <kbd><span class="option">--vlan-pvid <var>v</var></span></kbd></td>
 <td><p class="first">Specifies which VLAN identifier a &quot;port&quot; is associated with. Only valid
-when <tt class="docutils literal"><span class="pre">--vlan-tagging</span></tt> is speficied.</p>
+when <tt class="docutils literal"><span class="pre">--vlan-tagging</span></tt> is specified.</p>
 <p>In the client context, the setting specifies which VLAN ID a client is
 associated with. In the global context, the VLAN ID of the server TAP
 device is set. The latter only makes sense for <tt class="docutils literal"><span class="pre">--vlan-accept</span>
@@ -4225,7 +4221,7 @@ such scripts and some third-party user interfaces such as tunnelblick also
 come with scripts that process these options.</p>
 <p>Valid syntax:</p>
 <pre class="literal-block">
-dhcp-options type [parm]
+dhcp-option type [parm]
 </pre>
 <dl class="docutils">
 <dt><code>DOMAIN</code> <tt class="docutils literal">name</tt></dt>
@@ -4489,7 +4485,7 @@ client mode, and is undefined in server mode.</dd>
 <pre class="literal-block">
 route-delay
 route-delay n
-route-delay n m
+route-delay n w
 </pre>
 <p>Delay <tt class="docutils literal">n</tt> seconds (default <code>0</code>) after connection establishment,
 before adding routes. If <tt class="docutils literal">n</tt> is <code>0</code>, routes will be added
@@ -4501,7 +4497,7 @@ downgrade (or <tt class="docutils literal"><span class="pre">--chroot</span></tt
 set tap adapter addresses. The delay will give the DHCP handshake time
 to complete before routes are added.</p>
 <p class="last">On Windows, <tt class="docutils literal"><span class="pre">--route-delay</span></tt> tries to be more intelligent by waiting
-<tt class="docutils literal">w</tt> seconds (default <code>30</code> by default) for the TAP-Win32 adapter
+<tt class="docutils literal">w</tt> seconds (default <code>30</code>) for the TAP-Win32 adapter
 to come up before adding routes.</p>
 </td></tr>
 <tr><td class="option-group" colspan="2">
@@ -4608,7 +4604,7 @@ unfragmented.</p>
 periods of active usage.</p>
 <p>It's best to use the <tt class="docutils literal"><span class="pre">--fragment</span></tt> and/or <tt class="docutils literal"><span class="pre">--mssfix</span></tt> options to deal
 with MTU sizing issues.</p>
-<p class="last">Note: Depending on the platform, the operating system allows to receive
+<p class="last">Note: Depending on the platform, the operating system allows one to receive
 packets larger than <tt class="docutils literal"><span class="pre">tun-mtu</span></tt> (e.g. Linux and FreeBSD) but other platforms
 (like macOS) limit received packets to the same size as the MTU.</p>
 </td></tr>
@@ -5324,7 +5320,6 @@ dns_search_domain_{n}
 dns_server_{n}_address_{m}
 dns_server_{n}_port_{m}
 dns_server_{n}_resolve_domain_{m}
-dns_server_{n}_exclude_domain_{m}
 dns_server_{n}_dnssec
 dns_server_{n}_transport
 dns_server_{n}_sni

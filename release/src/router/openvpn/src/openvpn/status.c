@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -315,75 +313,3 @@ status_read(struct status_output *so, struct buffer *buf)
 
     return ret;
 }
-
-#ifdef ASUSWRT
-#define ST_ERROR                -1
-#define ERRNO_SSL                4
-#define ERRNO_AUTH               6
-#define ERRNO_NET_CONN           8
-#define ST_RUNNING		2
-#define ERRNO_CONF		7
-void update_nvram_status(int event)
-{
-	char cmd[128] = {0};
-	char name[16] = {0};
-	char *p = NULL;
-	int is_client = 0;
-	static int last_state = 1;
-
-	prctl(PR_GET_NAME, name);	//e.g. vpnserverX or vpnclientX
-
-	p = name + 3;
-
-	if (!strncmp(p, "client", 6))
-		is_client = 1;
-
-	switch(event) {
-	case EVENT_AUTH_FAILED:
-		if (is_client && last_state != ST_ERROR) {
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_errno=%d", p, ERRNO_AUTH);
-			system(cmd);
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_state=%d", p, ST_ERROR);
-			system(cmd);
-			last_state = ST_ERROR;
-		}
-		break;
-	case EVENT_TLS_ERROR:
-		if (is_client && last_state != ST_ERROR) {
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_errno=%d", p, ERRNO_SSL);
-			system(cmd);
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_state=%d", p, ST_ERROR);
-			system(cmd);
-			last_state = ST_ERROR;
-		}
-		break;
-	case EVENT_NET_CONN:
-		if (is_client && last_state != ST_ERROR) {
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_errno=%d", p, ERRNO_NET_CONN);
-			system(cmd);
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_state=%d", p, ST_ERROR);
-			system(cmd);
-			last_state = ST_ERROR;
-		}
-		break;
-	case EVENT_CONF_ERROR:
-		if (last_state != ST_ERROR) {
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_errno=%d", p, ERRNO_CONF);
-			system(cmd);
-			snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_state=%d", p, ST_ERROR);
-			system(cmd);
-			last_state = ST_ERROR;
-		}
-		break;
-	case 0:
-		snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_errno=%d", p, 0);
-		system(cmd);
-		snprintf(cmd, sizeof(cmd), "nvram set vpn_%s_state=%d", p, ST_RUNNING);
-		system(cmd);
-		last_state = ST_RUNNING;
-		break;
-	default:
-		break;
-	}
-}
-#endif

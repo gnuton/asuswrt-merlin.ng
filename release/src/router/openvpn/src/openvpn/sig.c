@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -310,16 +308,6 @@ print_status(struct context *c, struct status_output *so)
     {
         dco_get_peer_stats(c);
     }
-
-#ifdef ASUSWRT
-    if(c->c2.to_link_addr)
-    {
-        status_printf (so, "REMOTE,%s:%d,Static_Key"
-            , inet_ntoa(c->c2.to_link_addr->dest.addr.in4.sin_addr)
-            , ntohs(c->c2.to_link_addr->dest.addr.in4.sin_port)
-        );
-    }
-#endif
 
     status_printf(so, "OpenVPN STATISTICS");
     status_printf(so, "Updated,%s", time_string(0, 0, false, &gc));

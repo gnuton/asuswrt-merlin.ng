@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -284,10 +282,6 @@ x_msg_va(const unsigned int flags, const char *format, va_list arglist)
     if (flags & M_OPTERR)
     {
         openvpn_snprintf(m2, ERR_BUF_SIZE, "Options error: %s", m1);
-        if (flags & M_FATAL)
-        {
-            update_nvram_status(EVENT_CONF_ERROR);
-        }
         SWAP;
     }
 
@@ -391,7 +385,6 @@ x_msg_va(const unsigned int flags, const char *format, va_list arglist)
     if (flags & M_FATAL)
     {
         msg(M_INFO, "Exiting due to fatal error");
-        update_nvram_status(EVENT_CONF_ERROR);	/* for missed events */
     }
 
     if (flags & M_FATAL)
