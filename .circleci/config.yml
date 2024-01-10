@@ -315,7 +315,7 @@ workflows:
           name: "build_tuf-ax5400"
           model: "tuf-ax5400"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -330,7 +330,7 @@ workflows:
           name: "build_tuf-ax3000"
           model: "tuf-ax3000"
           ui: "none"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -345,7 +345,7 @@ workflows:
           name: "build_tuf-ax5400_tuf"
           model: "tuf-ax5400"
           ui: "tuf"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -360,7 +360,7 @@ workflows:
           name: "build_tuf-ax3000_tuf"
           model: "tuf-ax3000"
           ui: "tuf"
-          skip_build: "Y"
+          skip_build: "N"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
