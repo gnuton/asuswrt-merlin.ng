@@ -171,16 +171,15 @@ jobs:
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
             echo "Generating manifest file..."
+            echo "DSL-AC68U#FW${MAJOR_VER}#EXT${MINOR_VER}"       > ${UPDATE_DIR}/manifest2.txt
             echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
             echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
- 
+            
             cp $HOME/project/workspace/release/CHANGELOG ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
@@ -270,7 +269,7 @@ workflows:
           name: "build_rt-ax95q"
           model: "rt-ax95q"
           ui: "none"
-          skip_build: "N"
+          skip_build: "Y"
           sdk: "src-rt-5.02axhnd.675x"
           resource: "large"
           requires:
@@ -285,23 +284,8 @@ workflows:
           name: "build_rt-axe95q"
           model: "rt-axe95q"
           ui: "none"
-          skip_build: "N"
+          skip_build: "Y"
           sdk: "src-rt-5.02axhnd.675x"
-          resource: "large"
-          requires:
-            - getcode
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore:
-                - mainline
-      - build:
-          name: "build_rt-ax5400"
-          model: "rt-ax5400"
-          ui: "none"
-          skip_build: "N"
-          sdk: "src-rt-5.04axhnd.675x"
           resource: "large"
           requires:
             - getcode
@@ -404,7 +388,6 @@ workflows:
             - build_rt-axe95q
             - build_rt-ax92u
             - build_rt-ax82u_v2
-            - build_rt-ax5400
       - publish-manifest-and-notes:
           filters:
             tags:
@@ -441,7 +424,6 @@ workflows:
             - build_rt-axe95q
             - build_rt-ax92u
             - build_rt-ax82u_v2
-            - build_rt-ax5400
 notify:
   webhooks:
     - url: https://webhooks.gitter.im/e/c26cd1f27c23a32898e9

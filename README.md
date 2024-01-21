@@ -74,13 +74,13 @@ Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng
 * [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/)
 * [TUF-AX5400 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX5400/) 
 * [TUF-AX3000 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX3000/)
-* [ZenWiFi XT8 / RT-AX95Q](https://www.asus.com/Networking-IoT-Servers/Whole-Home-Mesh-WiFi-System/ZenWiFi-WiFi-Systems/ASUS-ZenWiFi-AX-XT8/) 
+* [ZenWiFi XT8 / RT-AX95Q v1](https://www.asus.com/Networking-IoT-Servers/Whole-Home-Mesh-WiFi-System/ZenWiFi-WiFi-Systems/ASUS-ZenWiFi-AX-XT8/) 
 * [ZenWifi ET8 / RT-AXE95Q](https://www.asus.com/networking-iot-servers/whole-home-mesh-wifi-system/zenwifi-wifi-systems/asus-zenwifi-et8/) 
 
 386.x firmware:
 * [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) ⬇️ Download latest release: [386.10_0-gnuton1](https://github.com/gnuton/asuswrt-merlin.ng/releases/download/388.2_2_0-gnuton1/DSL-AC68U_386.10_0-gnuton1_DSL_1.0.5.3.trx) ⬇️
 
-If you cannot find your router in the above list, please read [here](https://github.com/gnuton/asuswrt-merlin.ng/issues/140)!
+If you cannot find your router in the above list, please read [🔥 here 🔥](https://github.com/gnuton/asuswrt-merlin.ng/issues/523)!
 
 Not sure which version you have? V1? V2? Enable SSH, then ssh into your router and run ```nvram get productid```
 
@@ -102,6 +102,7 @@ Do you love this project? All kinds of contributions are welcome 🙌!
  * ⭐️ star the project
  * raise 🐞 issues 
  * send 🙇 code. ([Are you a dev? Click here!](https://github.com/gnuton/asuswrt-merlin.ng/blob/master/www/DEV.md))
+ * Help other people in the community via [chat](https://discord.com/channels/1155054060848807976/1168099691477614642) or [support tickets](https://github.com/gnuton/asuswrt-merlin.ng/issues?q=is%3Aissue+is%3Aopen+label%3Asuppport)
  * 💰 donations.
 
 <p align="center">
