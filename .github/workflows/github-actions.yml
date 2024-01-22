@@ -2,22 +2,22 @@ name: Containers
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
-    build:
+    build-job:
         name: build firmware
         runs-on: ubuntu-latest
+        container: 
+          image: gnuton/asuswrt-merlin-toolchains-docker:latest
+          env:
+            TEST: development
+
         steps:
           - name: Check out the repo
-            uses: actions/checkout@v4
-          - name: Run the build process with Docker
-            uses: addnab/docker-run-action@v3
-            with:
-              image: gnuton/asuswrt-merlin-toolchains-docker:latest
-                options: -v ${{ github.workspace }}:/project
-                run: |
-                    echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-                    echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-                    echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-                    echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-                    echo "🖥️  The workflow is now ready to test your code on the runner."
-                    ls ${{ github.workspace }}
-                    echo "🍏 This job's status is ${{ job.status }}."
+            uses: actions/checkout@master
+          - run: |
+              echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+              echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+              echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+              echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+              echo "🖥️  The workflow is now ready to test your code on the runner."
+              ls ${{ github.workspace }}
+              echo "🍏 This job's status is ${{ job.status }}."
