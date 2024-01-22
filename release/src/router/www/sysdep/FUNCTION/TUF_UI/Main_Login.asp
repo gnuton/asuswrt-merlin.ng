@@ -431,11 +431,10 @@ var remaining_time_show;
 var countdownid, rtime_obj;
 var redirect_page = login_info.page;
 var cloud_file = '<% get_parameter("file"); %>';
-if ('<% nvram_get("http_dut_redir"); %>' == '1') {
 var isRouterMode = ('<% nvram_get("sw_mode"); %>' == '1') ? true : false;
 
 var header_info = [<% get_header_info(); %>][0];
-var ROUTERHOSTNAME = '<% nvram_get("local_domain"); %>';
+var ROUTERHOSTNAME = '<#Web_DOMAIN_NAME#>';
 var domainNameUrl = header_info.protocol+"://"+ROUTERHOSTNAME+":"+header_info.port;
 var chdom = function(){window.location.href=domainNameUrl};
 (function(){
@@ -445,7 +444,6 @@ var chdom = function(){window.location.href=domainNameUrl};
 		}, 1);
 	}
 })();
-}
 
 <% login_state_hook(); %>
 

@@ -292,17 +292,27 @@ function handle_11ac_80MHz(){
 function show_cert_settings(show){
 	var orig_le_enable = '<% nvram_get("le_enable"); %>';
 	if(show){
-		document.form.le_enable.disabled = false;
 		showhide("https_cert", 1);
-		if(orig_le_enable != "0")
-			showhide("cert_details", 1);
-		else
-			showhide("cert_details", 0);
+		showhide("cert_details", 1);
+		if (orig_le_enable == "1") {
+			showhide("CAcert_details", 0);
+		} else {
+			showhide("CAcert_details", 1);
+		}
+		if (letsencrypt_support) {
+			document.form.le_enable.disabled = false;
+			document.getElementById("le_crypt").style.display = "";
+		} else {
+			document.form.le_enable.disabled = true;
+			document.getElementById("le_crypt").style.display = "none";
+		}
 	}
 	else{
 		document.form.le_enable.disabled = true;
 		showhide("https_cert", 0);
 		showhide("cert_details", 0);
+		showhide("CAcert_details", 0);
+		document.getElementById("le_crypt").style.display = "none";
 	}
 }
 
@@ -337,9 +347,6 @@ function change_common_radio(o, s, v, r){
 				showhide("wildcard_field",1);
 			}
 
-			if(letsencrypt_support)
-				show_cert_settings(1);
-
 			change_ddns_setting(document.form.ddns_server_x.value);
 		}else{
 			if(document.form.ddns_server_x.value == "WWW.ASUS.COM"){
@@ -362,9 +369,11 @@ function change_common_radio(o, s, v, r){
 
 			document.getElementById("ddns_status_tr").style.display = "none";
 			document.getElementById("ddns_result_tr").style.display = "none";
-			if(letsencrypt_support)
-				show_cert_settings(0);
 		}
+		if (HTTPS_support)
+			show_cert_settings(1);
+		else
+			show_cert_settings(0);
 		update_ddns_wan_unit_option();
 	}
 	else if(v == "wan_dnsenable_x"){
@@ -450,19 +459,23 @@ function openLink(s){
 		if (document.form.ddns_server_x.value.indexOf("WWW.DYNDNS.ORG")!=-1)
 			tourl = "https://account.dyn.com/services/zones/svc/add.html?_add_dns=c&trial=standarddns";
 		else if (document.form.ddns_server_x.value == 'WWW.ZONEEDIT.COM')
-			tourl = "http://www.zoneedit.com/";
+			tourl = "https://www.zoneedit.com/";
 		else if (document.form.ddns_server_x.value == 'WWW.SELFHOST.DE')
-			tourl = "http://WWW.SELFHOST.DE";
+			tourl = "https://WWW.SELFHOST.DE";
 		else if (document.form.ddns_server_x.value == 'WWW.DNSOMATIC.COM')
-			tourl = "http://dnsomatic.com/create/";
+			tourl = "https://dnsomatic.com/create/";
 		else if (document.form.ddns_server_x.value == 'WWW.TUNNELBROKER.NET')
-			tourl = "http://www.tunnelbroker.net/register.php";
+			tourl = "https://www.tunnelbroker.net/register.php";
 		else if (document.form.ddns_server_x.value == 'WWW.ASUS.COM')
 			tourl = "";
 		else if (document.form.ddns_server_x.value == 'WWW.NO-IP.COM')
-			tourl = "http://www.no-ip.com/newUser.php";
+			tourl = "https://www.no-ip.com/newUser.php";
+		else if (document.form.ddns_server_x.value == 'WWW.NAMECHEAP.COM')
+			tourl = "https://www.namecheap.com";
+		else if (document.form.ddns_server_x.value == "FREEDNS.AFRAID.ORG")
+			tourl = "https://freedns.afraid.org/";
 		else if (document.form.ddns_server_x.value == 'WWW.ORAY.COM')
-			tourl = "http://www.oray.com/";
+			tourl = "https://www.oray.com/";
 		else if (document.form.ddns_server_x.value == 'DOMAINS.GOOGLE.COM')
 			tourl = "https://domains.google/";
 		else	tourl = "";
@@ -1622,7 +1635,7 @@ function wl_auth_mode_change(isload){
 function showhide(element, sh)
 {
 	var status;
-	if (sh == 1){
+	if ((sh == 1) || (sh == true)){
 		status = "";
 	}
 	else{
@@ -1845,8 +1858,8 @@ function limit_auth_method(g_unit){
 		}
 	}	
 
-	if(is_KR_sku){	// MODELDEP by Territory_code
-		auth_array.splice(0, 1); //remove Open System
+	if(is_KR_sku){ //remove Open System
+		auth_array = auth_array.filter(subArr => subArr[1] !== 'open');
 	}
 
 	if(isSupport("amas") && isSupport("amasRouter") && (isSwMode("rt") || isSwMode("ap"))){

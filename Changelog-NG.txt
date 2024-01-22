@@ -8,6 +8,55 @@ Asuswrt-Merlin Changelog
   - NEW: Merged with GPL 388_23588.
 
 
+3004.388.6 (20-Jan-2024)
+  - NOTE: Since Asus provided GPL code for the RT-AX56U, this model
+          will exceptionally be included with this release, despite
+          still being considered being end-of-life.
+
+  - NOTE: Asus reworked the way SSL certificates are handled in
+          24353.  The automatic conversion code does not always
+          work properly, you might need to force your router
+          to re-generate its SSL certificates by toggling the
+          SSL mode on the DDNS page.
+
+  - NEW: Added ethtool to the firmware.
+  - UPDATED: Merged GPL 388_24353.
+  - UPDATED: nano to 7.2.
+  - UPDATED: ncurses to 6.3.
+  - UPDATED: OUI database used by networkmap and the webui.
+  - FIXED: CVE-2023-48795 in dropbear.
+  - FIXED: e-Learning category not always properly identified
+           on the Classification/Stats page.
+  - FIXED: Incorrectly report 2.4 GHz as being disabled when
+           disabling 6 GHz on the GT-AXE16000.
+  - FIXED: UPNP leases without a description would not appear
+           on the Forwarded Ports page.
+
+
+3004.388.5 (2-Dec-2023)
+  - UPDATED: OpenSSL to 1.1.1w.
+  - UPDATED: Curl to 8.4.0.
+  - UPDATED: OpenVPN to 2.6.8.
+  - CHANGED: Enable fast-io for OpenVPN clients and servers that
+             use UDP, which will speed up performance on some models.
+  - CHANGED: You can now directly enter an IPv6 address on the
+             Network Tools page as a target.
+  - CHANGED: Display tracked connections on the QoS/Classification
+             page even if QoS isn't set to Adaptive QoS.
+  - CHANGED: QOS/Classification page can now resolve local IPv6
+             addresses.
+  - CHANGED: Allow custom MTU for Wireguard clients (patch from
+             Asus).
+  - FIXED: CIDR-formatted addresses were rejected on the Network
+           Filter page.  Implemented temporary workaround.
+  - FIXED: Various issues with the QOS Classification page.
+  - FIXED: Netfilter TEE kernel module is missing.
+  - FIXED: OpenVPN client state getting cleared when Wireless
+           was being restarted.
+  - FIXED: Networkmap wasn't recognizing the GT-AX11000_PRO as
+           having USB 3.0 ports
+
+
 3004.388.4 (21-Aug-2023)
   - NOTE: In preparation for the new 3.0.0.6 codebase, the version
           string will now start with 3004 or 3006 to match with
