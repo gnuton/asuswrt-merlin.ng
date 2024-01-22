@@ -8,11 +8,17 @@ jobs:
         container: 
           image: gnuton/asuswrt-merlin-toolchains-docker:latest
           env:
-            TEST: development
-          options: --user docker 
+            MERLINUPDATE: y
+            MODEL: rt-ax28u
+            SDK: src-rt-5.02axhnd.675x
+          options: --user root 
+          volumes:
+            - ${{ github.workspace }}/home/docker
         steps:
           - name: Check out the repo
-            uses: actions/checkout@master
+            uses: actions/checkout@v4
+            with:
+              path: '/home/docker/'
           - run: |
               pwd 
               ls
