@@ -224,6 +224,8 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 
 	while (fgets(line, sizeof(line), fp) != NULL)
 	{
+		desc[0] = '\0';
+
 		if (sscanf(line,
 			"%3[^:]:"
 			"%5[^:]:"
@@ -231,7 +233,7 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 			"%5[^:]:"
 			"%14[^:]:"
 			"%199[^\n]",
-			proto, eport, iaddr, iport, timestamp, desc) < 6) continue;
+			proto, eport, iaddr, iport, timestamp, desc) < 5) continue;
 
 		if (str_escape_quotes(desc2, desc, sizeof(desc2)) == 0)
 			strlcpy(desc2, desc, sizeof(desc2));
@@ -744,7 +746,7 @@ int parseTcFilter(webs_t wp, const char *interface) {
 	int ret;
 	char *mark = NULL;
 	char *flowid = NULL;
-	int value;
+	int value, value2;
 
 	ret = websWrite(wp, "var tcdata_filter_array = [];\n");
 
@@ -767,11 +769,13 @@ int parseTcFilter(webs_t wp, const char *interface) {
 
 		mark = strstr(buffer, "mark ");
 		if (mark) {
-			if (sscanf(mark, "mark %x", &value) == 1) {
-				foundmark = (value & 0x3F0000)/0xFFFF;
-				if (foundmark == lastmark) {
-					foundmark += 50;
-				}
+			if (sscanf(mark, "mark %x %x", &value, &value2) != 2 || value2 != 0xc03f0000) {
+				foundflowid = -1;
+				continue;
+			}
+			foundmark = (value & 0x3F0000)/0xFFFF;
+			if (foundmark == lastmark) {
+				foundmark += 50;
 			}
 		}
 
