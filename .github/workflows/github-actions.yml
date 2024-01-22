@@ -1,4 +1,3 @@
-
 name: Containers
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
@@ -8,9 +7,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
           - name: Check out the repo
-            uses: actions/checkout@latest
+            uses: actions/checkout@v4
           - name: Run the build process with Docker
-            uses: addnab/docker-run-action@latest
+            uses: addnab/docker-run-action@v3
             with:
               image: gnuton/asuswrt-merlin-toolchains-docker:latest
                 options: -v ${{ github.workspace }}:/project
