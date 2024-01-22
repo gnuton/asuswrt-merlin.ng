@@ -13,12 +13,11 @@ jobs:
             SDK: src-rt-5.02axhnd.675x
           options: --user root 
           volumes:
-            - ${{ github.workspace }}/home/docker
+            - ${{ github.workspace }}:/home/docker
         steps:
-          - name: Check out the repo
-            uses: actions/checkout@v4
           - run: |
               pwd 
+              ls /home/docker
               ls
               echo $HOME
               cd "release/$SDK"
