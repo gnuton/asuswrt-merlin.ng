@@ -1,0 +1,59 @@
+#!/bin/sh
+
+MODEL=RT-AX5400
+
+cd ./release/src/router/
+
+# Model Dirs
+mkdir -p bwdpi_source/asus/prebuild/$MODEL
+mkdir -p bwdpi_source/asus_sql/prebuild/$MODEL
+mkdir -p bwdpi_source/prebuild/$MODEL
+mkdir -p cfg_mnt/prebuild/$MODEL
+mkdir -p httpd/prebuild/$MODEL
+mkdir -p rc/prebuild/$MODEL
+mkdir -p shared/prebuild/$MODEL
+mkdir -p sw-hw-auth/prebuild/$MODEL
+mkdir -p www/sysdep/$MODEL
+mkdir -p ahs/prebuild/$MODEL
+mkdir -p amas-utils/prebuild/$MODEL
+mkdir -p asd/prebuild/$MODEL
+mkdir -p libasc/prebuild/$MODEL
+mkdir -p dns_ping/prebuild/$MODEL
+mkdir -p fsmd/prebuild/$MODEL
+
+# Old MODEL dir in pre HND models
+mkdir -p aaews/prebuild/$MODEL
+mkdir -p asusnatnl/natnl/prebuild/$MODEL
+mkdir -p asuswebstorage/prebuild/$MODEL
+mkdir -p bsd/prebuilt/$MODEL
+mkdir -p dhd/prebuilt/$MODEL
+mkdir -p dropbox_client/prebuild/$MODEL
+mkdir -p eventd/prebuilt/$MODEL
+mkdir -p ftpclient/prebuild/$MODEL
+mkdir -p infosvr/prebuild/$MODEL
+mkdir -p inotify/prebuild/$MODEL
+mkdir -p libbcm/prebuilt/$MODEL
+mkdir -p libletsencrypt/prebuild/$MODEL
+mkdir -p lighttpd-1.4.39/prebuild/$MODEL
+mkdir -p networkmap/prebuild/$MODEL
+mkdir -p nt_center/actMail/prebuild/$MODEL
+mkdir -p nt_center/lib/prebuild/$MODEL
+mkdir -p nt_center/prebuild/$MODEL
+mkdir -p protect_srv/lib/prebuild/$MODEL
+mkdir -p protect_srv/prebuild/$MODEL
+mkdir -p sambaclient/prebuild/$MODEL
+mkdir -p sysstate/commands/prebuild/$MODEL
+mkdir -p sysstate/log_daemon/prebuild/$MODEL
+mkdir -p u2ec/prebuild/$MODEL
+mkdir -p usbclient/prebuild/$MODEL
+mkdir -p wb/prebuild/$MODEL
+mkdir -p webdav_client/prebuild/$MODEL
+mkdir -p wlc_nt/prebuild/$MODEL
+mkdir -p dblog/commands/prebuild/$MODEL
+mkdir -p dblog/daemon/prebuild/$MODEL
+mkdir -p libasuslog/prebuild/$MODEL
+
+
+mkdir -p ./release/src/router/protect_srv/lib/prebuild/$MODEL
+
+echo "Don't forget to manually create release/MODEL/hostTools/ and release/MODEL/router-sysdep.MODEL"

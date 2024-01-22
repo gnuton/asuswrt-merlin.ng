@@ -1,14 +1,14 @@
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
 # 1 "<built-in>"
 # 1 "<command-line>"
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/stdc-predef.h" 1 3 4
 # 1 "<command-line>" 2
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
 
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h" 1
-# 535 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h" 1
+# 535 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 struct allocs_rdp {
     unsigned char param1_size;
     unsigned char param2_size;
@@ -56,7 +56,7 @@ typedef struct
     } allocs;
     unsigned int ulMemoryConfig;
     struct partition_info {
-# 591 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 591 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
  unsigned short size;
     } part_info[4];
     struct allocs_dhd alloc_dhd;
@@ -66,10 +66,10 @@ typedef struct
 
     unsigned int ulFeatures;
     char chUnused[268];
-# 614 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 614 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
     unsigned int ulCheckSum;
 } NVRAM_DATA, *PNVRAM_DATA;
-# 663 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 663 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 typedef struct
 {
         int active_idx;
@@ -80,7 +80,7 @@ typedef struct
         unsigned short write_fail_count[20];
         int cferom_crc;
 }BOOT_BLOCK_MIRROR_INFO;
-# 711 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 711 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 typedef struct _SP_HEADER
 {
     char SPMagicNum[8];
@@ -94,7 +94,7 @@ typedef struct _TOKEN_DEF
     char tokenName[16];
     int tokenLen;
 } SP_TOKEN, *PSP_TOKEN;
-# 756 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
+# 756 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/shared/opensource/include/bcm963xx/bcm_hwdefs.h"
 typedef struct
 {
     char bootState;
@@ -103,34 +103,34 @@ typedef struct
     unsigned int version;
     unsigned int inode;
 } JFFS2_SEARCH_STRUCT;
-# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c" 2
-# 17 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 1
-# 112 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h"
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdsPhyMemDefs.h" 1
-# 199 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdsPhyMemDefs.h"
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../adslcore63178/adsl_defs.h" 1
-# 200 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdsPhyMemDefs.h" 2
-# 113 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
-# 127 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h"
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 1
-# 79 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h"
+# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c" 2
+# 17 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 1
+# 112 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdsPhyMemDefs.h" 1
+# 199 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdsPhyMemDefs.h"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../adslcore63178/adsl_defs.h" 1
+# 200 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdsPhyMemDefs.h" 2
+# 113 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
+# 127 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 1
+# 79 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h"
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/asm/param.h" 1 3 4
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/param.h" 1 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/param.h" 1 3 4
 
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/param.h" 1 3 4
-# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/param.h" 2 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/param.h" 1 3 4
+# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/param.h" 2 3 4
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/asm/param.h" 2 3 4
-# 80 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 2
+# 80 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 2
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h" 1
-
-
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h" 1
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h" 1
+
+
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h" 1
 
 
 
@@ -138,19 +138,19 @@ typedef struct
 
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/int-ll64.h" 1 3 4
-# 10 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/int-ll64.h" 3 4
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 1 3 4
-# 11 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/int-ll64.h" 1 3 4
+# 10 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/int-ll64.h" 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 1 3 4
+# 11 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 3 4
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/asm/bitsperlong.h" 1 3 4
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/bitsperlong.h" 1 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/bitsperlong.h" 1 3 4
 
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/bitsperlong.h" 1 3 4
-# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/bitsperlong.h" 2 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/bitsperlong.h" 1 3 4
+# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/bitsperlong.h" 2 3 4
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/asm/bitsperlong.h" 2 3 4
-# 12 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 2 3 4
+# 12 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 2 3 4
 
 
 
@@ -159,7 +159,7 @@ typedef struct
 
 
 
-# 19 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 3 4
+# 19 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/asm-generic/int-ll64.h" 3 4
 typedef __signed__ char __s8;
 typedef unsigned char __u8;
 
@@ -172,7 +172,7 @@ typedef unsigned int __u32;
 
 __extension__ typedef __signed__ long long __s64;
 __extension__ typedef unsigned long long __u64;
-# 11 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/int-ll64.h" 2 3 4
+# 11 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/asm-generic/int-ll64.h" 2 3 4
 
 
 
@@ -189,20 +189,20 @@ typedef unsigned int u32;
 typedef signed long long s64;
 typedef unsigned long long u64;
 # 5 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/asm/types.h" 2 3 4
-# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h" 2
-# 13 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h"
+# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h" 2
+# 13 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h"
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/linux/posix_types.h" 1 3 4
 
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/stddef.h" 1 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/stddef.h" 1 3 4
 
 
 
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/stddef.h" 1 3 4
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/compiler.h" 1 3 4
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/stddef.h" 2 3 4
-# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/stddef.h" 2 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/stddef.h" 1 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/compiler.h" 1 3 4
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/stddef.h" 2 3 4
+# 5 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/stddef.h" 2 3 4
 
 
 
@@ -301,10 +301,10 @@ typedef unsigned short __kernel_uid16_t;
 typedef unsigned short __kernel_gid16_t;
 # 36 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/asm/posix_types.h" 2 3 4
 # 36 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/linux/posix_types.h" 2 3 4
-# 14 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h" 2
-# 32 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h"
+# 14 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h" 2
+# 32 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h"
 
-# 32 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h"
+# 32 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/uapi/linux/types.h"
 typedef __u16 __le16;
 typedef __u16 __be16;
 typedef __u32 __le32;
@@ -314,7 +314,7 @@ typedef __u64 __be64;
 
 typedef __u16 __sum16;
 typedef __u32 __wsum;
-# 6 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h" 2
+# 6 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h" 2
 
 
 
@@ -327,9 +327,9 @@ typedef __kernel_fd_set fd_set;
 typedef __kernel_dev_t dev_t;
 typedef __kernel_ino_t ino_t;
 typedef 
-# 17 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h" 3 4
+# 17 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h" 3 4
        __kernel_mode_t 
-# 17 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
+# 17 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
                         mode_t;
 typedef unsigned short umode_t;
 typedef __u32 nlink_t;
@@ -350,9 +350,9 @@ typedef __kernel_uid16_t uid16_t;
 typedef __kernel_gid16_t gid16_t;
 
 typedef unsigned long uintptr_t;
-# 45 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
+# 45 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
 typedef __kernel_loff_t loff_t;
-# 54 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
+# 54 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
 typedef __kernel_size_t size_t;
 
 
@@ -413,10 +413,10 @@ typedef __u32 uint32_t;
 typedef __u64 uint64_t;
 typedef __u64 u_int64_t;
 typedef __s64 int64_t;
-# 133 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
+# 133 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
 typedef unsigned long sector_t;
 typedef unsigned long blkcnt_t;
-# 154 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
+# 154 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/linux-4.1/include/linux/types.h"
 typedef u32 dma_addr_t;
 
 
@@ -480,10 +480,10 @@ struct callback_head {
 
 
 typedef u64 cycle_t;
-# 82 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 2
+# 82 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 2
 
 # 1 "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1/arm-buildroot-linux-gnueabi/sysroot/usr/include/linux/version.h" 1 3 4
-# 84 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 2
+# 84 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h" 2
 
 
 
@@ -502,7 +502,7 @@ typedef unsigned long OS_STATUS;
 
 
 extern int gConsoleOutputEnable;
-# 161 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h"
+# 161 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h"
 OS_STATUS BcmOsInitialize( void );
 OS_STATUS BcmOsUninitialize( void );
 OS_STATUS bcmOsTaskCreate( char* name, int stackSize, int priority,
@@ -522,25 +522,25 @@ void bcmOsTimerStart(void* timerHandle, int timeout);
 void bcmOsTimerStop(void* timerHandle);
 void bcmOsDelay(unsigned long timeMs);
 void bcmOsWakeupMonitorTask(void);
-# 200 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h"
+# 200 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/../BcmOs.h"
 void *calloc( unsigned long num, unsigned long size );
 void free( void *memblock );
-# 128 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/SoftModemTypes.h" 1
-# 160 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/SoftModemTypes.h"
+# 128 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/SoftModemTypes.h" 1
+# 160 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/SoftModemTypes.h"
 typedef signed char schar;
 typedef unsigned char uchar;
-# 222 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/SoftModemTypes.h"
+# 222 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/SoftModemTypes.h"
 typedef unsigned long long ulonglong;
 typedef unsigned char Boolean;
 typedef unsigned int BitField;
-# 129 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h" 1
-# 151 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h"
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h" 1
-# 112 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
-# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/EndianUtil.h" 1
-# 113 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h" 2
+# 129 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h" 1
+# 151 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h" 1
+# 112 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
+# 1 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/EndianUtil.h" 1
+# 113 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h" 2
 
 typedef struct {
  char *pStart;
@@ -548,7 +548,7 @@ typedef struct {
  char *pRead;
  char *pWrite;
 } circBufferStruct;
-# 148 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
+# 148 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
 static __inline int CircBufferDistance(circBufferStruct *pCB, char *p1, char *p2, int d)
 {
  int tmp = p2 - p1 - d;
@@ -561,7 +561,7 @@ static __inline char * CircBufferAddContig(circBufferStruct *pCB, char *p, int n
  p += n;
  return (p == pCB->pEnd ? pCB->pStart : p);
 }
-# 191 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
+# 191 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
 typedef struct {
  int pStart;
  int pEnd;
@@ -570,7 +570,7 @@ typedef struct {
  int pRead;
  int pWrite;
 } stretchBufferStruct;
-# 208 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
+# 208 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
 typedef struct {
  char *pStart;
  char *pEnd;
@@ -579,7 +579,7 @@ typedef struct {
  char *pRead;
  char *pWrite;
 } stretchHostBufferStruct;
-# 239 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
+# 239 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/CircBuf.h"
 static __inline int _StretchBufferGetReadAvailTotal(stretchBufferStruct *fBuf, int rdPtr)
 {
  int wrPtr = fBuf->pWrite;
@@ -598,7 +598,7 @@ static __inline int _StretchBufferGetWriteAvail(stretchBufferStruct *fBuf, int r
  int wrPtr = fBuf->pWrite;
  return( ((rdPtr - wrPtr) > 0) ? rdPtr - wrPtr - 1: fBuf->pExtraEnd - wrPtr );
 }
-# 152 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h" 2
+# 152 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h" 2
 
 typedef struct _AdslXfaceData {
  stretchBufferStruct sbSta;
@@ -606,14 +606,14 @@ typedef struct _AdslXfaceData {
  uint gfcTable[15];
  uint sdramBaseAddr;
 } AdslXfaceData;
-# 169 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h"
+# 169 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h"
 typedef struct _DslParamData {
  ushort len;
  uchar verId;
  uchar ctrl;
  uint lowSdramSize;
 } DslParamData;
-# 183 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h"
+# 183 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslXfaceData.h"
 typedef struct _AdslOemSharedData {
  uint g994VendorIdLen;
  uint g994XmtNonStdInfoLen;
@@ -636,8 +636,8 @@ typedef struct _AdslOemSharedData {
  uint clEocBufLen;
  uint clEocBufPtr;
 } AdslOemSharedData;
-# 130 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
-# 203 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h"
+# 130 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h" 2
+# 203 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/bcmdrivers/broadcom/char/adsl/impl1/softdsl/AdslCoreDefs.h"
 typedef struct {
  uint sdramPageAddr0;
  uint sdramImageAddr0;
@@ -660,10 +660,10 @@ typedef struct {
 } adslPhyInfo;
 extern adslPhyInfo adslCorePhyDesc;
 extern unsigned int adslPhyXfaceOffset;
-# 18 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c" 2
+# 18 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c" 2
  #define "ADSL_SDRAM_IMAGE_SIZE" (((0x200000 - 0x000000)+0xFFFFF)&0xFFF00000)
 
  #define "DRAM_OFFSET_ADSL" ((0x00000000 +0x04000000)-(((0x200000 - 0x000000)+0xFFFFF)&0xFFF00000))
-# 89 "/data/ASUSWRT/asuswrt-repository-388-rc1-2/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
+# 89 "/data/ASUSWRT/asuswrt-repository-388-rc1/release/src-rt-5.02axhnd.675x/kernel/dts/bcm963xx_dt_bindings.c"
  #define "DRAM_BASE" 0x00000000
  #define "DRAM_DEF_SIZE" 0x04000000
