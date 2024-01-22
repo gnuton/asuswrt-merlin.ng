@@ -5,7 +5,8 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: gnuton/asuswrt-merlin-toolchains-docker:latest
+    container:
+	image: gnuton/asuswrt-merlin-toolchains-docker:latest
     env:
       TEST: xxx
     steps:
