@@ -9,7 +9,7 @@ jobs:
           image: gnuton/asuswrt-merlin-toolchains-docker:latest
           env:
             TEST: development
-          options: --user root
+          options: --user docker 
         steps:
           - name: Check out the repo
             uses: actions/checkout@master
