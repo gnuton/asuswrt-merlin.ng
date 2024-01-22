@@ -140,7 +140,7 @@ routing.
   Valid syntax:
   ::
 
-     dhcp-options type [parm]
+     dhcp-option type [parm]
 
   :code:`DOMAIN` ``name``
         Set Connection-specific DNS Suffix to :code:`name`.
@@ -420,7 +420,7 @@ routing.
 
        route-delay
        route-delay n
-       route-delay n m
+       route-delay n w
 
   Delay ``n`` seconds (default :code:`0`) after connection establishment,
   before adding routes. If ``n`` is :code:`0`, routes will be added
@@ -434,7 +434,7 @@ routing.
   to complete before routes are added.
 
   On Windows, ``--route-delay`` tries to be more intelligent by waiting
-  ``w`` seconds (default :code:`30` by default) for the TAP-Win32 adapter
+  ``w`` seconds (default :code:`30`) for the TAP-Win32 adapter
   to come up before adding routes.
 
 --route-ipv6 args
@@ -548,7 +548,7 @@ routing.
   It's best to use the ``--fragment`` and/or ``--mssfix`` options to deal
   with MTU sizing issues.
 
-  Note: Depending on the platform, the operating system allows to receive
+  Note: Depending on the platform, the operating system allows one to receive
   packets larger than ``tun-mtu`` (e.g. Linux and FreeBSD) but other platforms
   (like macOS) limit received packets to the same size as the MTU.
 

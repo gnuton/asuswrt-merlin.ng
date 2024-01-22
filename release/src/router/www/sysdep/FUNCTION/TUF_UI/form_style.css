@@ -2148,6 +2148,16 @@ padding-top:1px;
 	width: 740px;
 	margin: 1px 0;
 }
+
+.perNode_MainContent{
+	width: 740px;
+	position: absolute;
+	left: 50%;
+	margin-top: 30px;
+	margin-left: -370px;
+	background-color: transparent;
+}
+
 .MainContent{
 	background-color: rgba(38,38,38,.87);
 	width: 99%;
@@ -2155,6 +2165,27 @@ padding-top:1px;
 	-moz-border-radius: 3px;
 	border-radius:3px;
 }
+
+.returnBtn{
+	float:right;
+	cursor:pointer;
+	margin-left:-20px;
+	margin-top: -25px;
+}
+
+.perNode_returnBtn{
+	float:right;
+	cursor:pointer;
+	margin-left:-20px;
+	margin-top: -25px;
+}
+
+.perNode_apply_gen{
+	text-align: center;
+	width: 100%;
+	margin-top: 10px;
+}
+
 .query_list{
 	display: none;
 	background-color: #3E2902;

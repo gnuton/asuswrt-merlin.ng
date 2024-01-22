@@ -127,105 +127,97 @@
 	bottom: 0;
 	width: 100%;
 	height: 148px;
-	background-size: 100% 100%;
-}
-.translucent_bg:before{
-	content: "";
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	margin: auto;
-	background-image: linear-gradient(190deg, rgba(255,255,255,0) 60%, rgba(0,0,0,0.8) 100%);
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: left bottom;
 }
 .translucent_bg.Home, .translucent_bg.Custom{ 
-	background-image: url("/images/New_ui/amesh/location/Home.png");
+	background-image: url("/images/New_ui/amesh/location/Home.jpg");
 }
 .translucent_bg.Living_Room{
-	background-image: url("/images/New_ui/amesh/location/Living_Room.png");
+	background-image: url("/images/New_ui/amesh/location/Living_Room.jpg");
 }
 .translucent_bg.Dining_Room{
-	background-image: url("/images/New_ui/amesh/location/Dining_Room.png");
+	background-image: url("/images/New_ui/amesh/location/Dining_Room.jpg");
 }
 .translucent_bg.Kitchen{
-	background-image: url("/images/New_ui/amesh/location/Kitchen.png");
+	background-image: url("/images/New_ui/amesh/location/Kitchen.jpg");
 }
 .translucent_bg.Bedroom{
-	background-image: url("/images/New_ui/amesh/location/Bedroom.png");
+	background-image: url("/images/New_ui/amesh/location/Bedroom.jpg");
 }
 .translucent_bg.Master_Bedroom{
-	background-image: url("/images/New_ui/amesh/location/Master_Bedroom.png");
+	background-image: url("/images/New_ui/amesh/location/Master_Bedroom.jpg");
 }
 .translucent_bg.Kids_Room{
-	background-image: url("/images/New_ui/amesh/location/Kids_Room.png");
+	background-image: url("/images/New_ui/amesh/location/Kids_Room.jpg");
 }
 .translucent_bg.Guest_Room{
-	background-image: url("/images/New_ui/amesh/location/Guest_Room.png");
+	background-image: url("/images/New_ui/amesh/location/Guest_Room.jpg");
 }
 .translucent_bg.Study_Room{
-	background-image: url("/images/New_ui/amesh/location/Study_Room.png");
+	background-image: url("/images/New_ui/amesh/location/Study_Room.jpg");
 }
 .translucent_bg.Walk-in_Closet{
-	background-image: url("/images/New_ui/amesh/location/Walk-in_Closet.png");
+	background-image: url("/images/New_ui/amesh/location/Walk-in_Closet.jpg");
 }
 .translucent_bg.Bathroom{
-	background-image: url("/images/New_ui/amesh/location/Bathroom.png");
+	background-image: url("/images/New_ui/amesh/location/Bathroom.jpg");
 }
 .translucent_bg.Office{
-	background-image: url("/images/New_ui/amesh/location/Office.png");
+	background-image: url("/images/New_ui/amesh/location/Office.jpg");
 }
 .translucent_bg.Meeting_Room{
-	background-image: url("/images/New_ui/amesh/location/Meeting_Room.png");
+	background-image: url("/images/New_ui/amesh/location/Meeting_Room.jpg");
 }
 .translucent_bg.Gaming_Room{
 	background-image: url("/images/New_ui/amesh/location/Gaming_Room.jpg");
 }
 .translucent_bg.Hallway{
-	background-image: url("/images/New_ui/amesh/location/Hallway.png");
+	background-image: url("/images/New_ui/amesh/location/Hallway.jpg");
 }
 .translucent_bg.Hall{
-	background-image: url("/images/New_ui/amesh/location/Hall.png");
+	background-image: url("/images/New_ui/amesh/location/Hall.jpg");
 }
 .translucent_bg.Stairwell{
-	background-image: url("/images/New_ui/amesh/location/Stairwell.png");
+	background-image: url("/images/New_ui/amesh/location/Stairwell.jpg");
 }
 .translucent_bg.Third_Floor{
 	background-image: url("/images/New_ui/amesh/location/Third_Floor.jpg");
 }
 .translucent_bg.Second_Floor{
-	background-image: url("/images/New_ui/amesh/location/Second_Floor.png");
+	background-image: url("/images/New_ui/amesh/location/Second_Floor.jpg");
 }
 .translucent_bg.First_Floor{
 	background-image: url("/images/New_ui/amesh/location/First_Floor.jpg");
 }
 .translucent_bg.Attic{
-	background-image: url("/images/New_ui/amesh/location/Attic.png");
+	background-image: url("/images/New_ui/amesh/location/Attic.jpg");
 }
 .translucent_bg.Basement{
-	background-image: url("/images/New_ui/amesh/location/Basement.png");
+	background-image: url("/images/New_ui/amesh/location/Basement.jpg");
 }
 .translucent_bg.Storage{
-	background-image: url("/images/New_ui/amesh/location/Storage.png");
+	background-image: url("/images/New_ui/amesh/location/Storage.jpg");
 }
 .translucent_bg.Balcony{
-	background-image: url("/images/New_ui/amesh/location/Balcony.png");
+	background-image: url("/images/New_ui/amesh/location/Balcony.jpg");
 }
 .translucent_bg.Yard{
-	background-image: url("/images/New_ui/amesh/location/Yard.png");
+	background-image: url("/images/New_ui/amesh/location/Yard.jpg");
 }
 .translucent_bg.Garage{
-	background-image: url("/images/New_ui/amesh/location/Garage.png");
+	background-image: url("/images/New_ui/amesh/location/Garage.jpg");
 }
 .translucent_bg.Gym{
 	background-image: url("/images/New_ui/amesh/location/Gym.jpg");
 }
 .model_info_bg{
 	position: absolute;
-	top: 96px;
 	left: 16px;
+	bottom: 5px;
+	z-index: 10;
+	max-width: 220px;
 }
 .model_name{
 	margin-bottom: 3px;
@@ -267,7 +259,7 @@
 	bottom: 6px;
 	right: 6px;
 	z-index: 9;
-	background-position: 0% 0%;
+	background-position: 40% 0%;
 }
 .model_icon.web{
 	background-size: contain;
@@ -885,6 +877,18 @@
 .connect_type_status_bg .uplink_icon_bg > .uplink_type_icon.wired.disconnected, .connect_type_status_bg .uplink_icon_bg > .uplink_type_icon.wired.X{
 	background-position: -102px -510px;
 }
+.connect_type_status_bg .uplink_icon_bg > .uplink_type_icon.moca{
+	background: url(/images/New_ui/amesh/signal_quality_moca.svg) no-repeat;
+}
+.connect_type_status_bg .uplink_icon_bg > .uplink_type_icon.moca.great{
+	background-position: 6px 2px;
+}
+.connect_type_status_bg .uplink_icon_bg > .uplink_type_icon.moca.weak{
+	background-position: 6px -96px;
+}
+.connect_type_status_bg .uplink_icon_bg > .uplink_type_icon.moca.disconnected{
+	background-position: 6px -198px;
+}
 .card_block_bg span.connect_title{
 	top: 24px;
 	line-height: initial;
@@ -1411,7 +1415,7 @@
 	background: #FFA83A;
 	border-radius: 50%;
 	position: absolute;
-	top: 2px;
+	top: 4px;
 	bottom: 0;
 	left: 0;
 	right: 0;
@@ -1960,6 +1964,9 @@
 	z-index: 200;
 	background-repeat: no-repeat;
 }
+.jstree-anchor.moca:before {
+	background-image: url(/images/New_ui/amesh/topology_connect_quality_moca.svg);
+}
 .jstree-anchor.great.wired:before {
 	background-position: 10px -38px;
 }
@@ -1977,6 +1984,12 @@
 }
 .jstree-anchor.weak.plc:before {
 	background-position: -806px -38px;
+}
+.jstree-anchor.great.moca:before {
+	background-position: 3px -38px;
+}
+.jstree-anchor.weak.moca:before {
+	background-position: -79px -38px;
 }
 .jstree-anchor.disconnected:before {
 	background-position: -287px -38px;
@@ -2141,6 +2154,16 @@
 }
 .jstree-default .jstree-node.disconnected:before{
 	background-position: -655px 0px;
+}
+.jstree-default .jstree-node.moca:before{
+	background: url(/images/New_ui/amesh/topology_connect_quality_moca.svg);
+	background-repeat: repeat-y;
+}
+.jstree-default .jstree-node.great.moca:before{
+	background-position: -159px 0px;
+}
+.jstree-default .jstree-node.weak.moca:before{
+	background-position: -235px 0px;
 }
 .jstree-default .jstree-node.level_2:before{
 	left: 30px;
@@ -2491,7 +2514,7 @@
 	border-width: 1px;
 	border-style: solid;
 	position: relative;
-} 
+}
 .connect_line_info_bg .connect_line:before{
 	content: "";
 	position: absolute;
@@ -2501,6 +2524,9 @@
 	left: 2px;
 	top: 2px;
 	background-repeat: no-repeat;
+}
+.connect_line_info_bg .connect_line.moca:before{
+	background-image: url(/images/New_ui/amesh/topology_connect_quality_moca.svg);
 }
 .connect_line_info_bg .connect_line.wired.great:before{
 	background-position: 5px 0px;
@@ -2519,6 +2545,12 @@
 }
 .connect_line_info_bg .connect_line.plc.weak:before{
 	background-position: -811px -59px;
+}
+.connect_line_info_bg .connect_line.moca.great:before{
+	background-position: -2px -59px;
+}
+.connect_line_info_bg .connect_line.moca.weak:before{
+	background-position: -83px -59px;
 }
 .connect_line_info_bg .connect_line.disconnected:before{
 	background-position: -292px -55px;
@@ -2715,17 +2747,17 @@
 	display: flex;
 	align-items: flex-start;
 	height: auto;
-	margin-left: 16px;
+	margin-left: 3%;
 	position: relative;
 	margin-bottom: 6px;
+	flex-flow: column;
+	width: 94%;
 }
 .port_status_bg:before{
-	content: "";
 	position: absolute;
-	left: 0%;
+	content: "";
 	bottom: -6px;
-	height: 1px;
-	width: 95%;
+	width: 100%;
 	border-bottom: 1px solid #3E4E59;
 }
 .port_status_bg > div{
@@ -2733,41 +2765,26 @@
 	flex-wrap: wrap;
 	height: auto;
 	position: relative;
-}
-.port_status_bg .label_W_bg{
-	width: auto;
-	max-width: 92px;
-	margin-right: 6px;
+	width: 100%;
 }
 .port_status_bg .label_W_bg:before{
 	position: absolute;
 	content: "";
-	right: -5px;
-	top: -4%;
-	height: 100%;
-	border-left: 1px solid #3E4E59;
-}
-.port_status_bg .label_L_bg:before{
-	position: absolute;
-	content: "";
-	top: -4%;
-	height: 100%;
-	border-right: 1px solid #3E4E59;
-	left: -5px;
+	bottom: 0;
+	width: 100%;
+	border-bottom: 1px solid #3E4E59;
 }
 .port_status_bg .label_W_bg > div, .port_status_bg .label_L_bg > div{
 	display: flex;
-	width: 46px;
+	min-width: 46px;
+	flex-basis: 25%;
 	height: auto;
 	flex-direction: column;
 	align-items: center;
 	margin-bottom: 8px;
 }
 .port_status_bg .label_L_bg{
-	margin-left: 3px;
-	flex-grow: 1;
-	flex-shrink: 0;
-	flex-basis: 65%;
+	margin-top: 12px;
 }
 .port_status_bg .port_icon{
 	background-image: url(/images/New_ui/amesh/port_status.svg);
@@ -2793,7 +2810,19 @@
 	background-position: 1px -330px;
 }
 .port_status_bg .port_icon.USB.unplug{
-    background-position: 1px -290px;
+	background-position: 1px -290px;
+}
+.port_status_bg .port_icon.MoCA{
+	background-size: 92px;
+}
+.port_status_bg .port_icon.MoCA.conn{
+	background-position: 0px -378px;
+}
+.port_status_bg .port_icon.MoCA.warn{
+	background-position: 0px -416px;
+}
+.port_status_bg .port_icon.MoCA.unplug{
+	background-position: 0px -340px;
 }
 .port_status_bg .port_icon .wan_icon{
 	width: 20px;
@@ -2810,7 +2839,7 @@
 	text-align: center;
 	line-height: 100%;
 	font-size: 11px;
-	margin-top: 4px;
+	margin-top: 8px;
 }
 .port_status_icon_desc{
 	display: flex;
@@ -2858,13 +2887,102 @@
 	margin-bottom: 3px;
 }
 .port_status_bg .label_W_bg .port_icon:before{
-    position: absolute;
-    content: "";
-    width: 16px;
-    height: 16px;
-    background-image: url(/images/New_ui/amesh/port_status.svg);
-    background-size: 70px;
-    right: -5px;
-    bottom: -5px;
-    background-position: 0px -179px;
+	position: absolute;
+	content: "";
+	width: 16px;
+	height: 16px;
+	background-image: url(/images/New_ui/amesh/port_status.svg);
+	background-size: 70px;
+	right: -5px;
+	bottom: -5px;
+	background-position: 0px -179px;
+}
+.opt_ADS_status_container{
+	display: flex;
+	margin-bottom: 12px;
+}
+.opt_ADS_status_container .icon_container{
+	width: 14%;
+	height: 50px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.opt_ADS_status_container .opt_ADS_icon_loading{
+	background-color: #1ea2ff;
+	background-image: url(/images/New_ui/amesh/client_control.svg);
+	background-repeat: no-repeat;
+	background-size: 1400%;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	background-position: -476px 4px;
+	animation: cssload-spin 2s infinite linear;
+}
+.opt_ADS_status_container .text_container{
+	width: 86%;
+	padding-left: 6px;
+}
+.opt_ADS_status_container .text_container > div{
+	height: 50%;
+	display: flex;
+	align-items: center;
+}
+.opt_ADS_status_container .status_stage{
+    color: #33ACFF;
+    font-size: 14px;
+}
+.opt_ADS_status_container .status_text{
+	font-size: 13px;
+}
+.MoCA_node_container{
+	position: relative;
+	margin-left: 22px;
+	margin-bottom: 12px;
+	font-size: 14px;
+}
+.MoCA_node_container:not(:last-child):before{
+	content: "";
+	position: absolute;
+	left: 0%;
+	bottom: -6px;
+	height: 1px;
+	width: 95%;
+	border-bottom: 1px solid #3E4E59;
+}
+.MoCA_node_sub_info{
+	display: flex;
+	position: relative;
+}
+.MoCA_node_sub_info > div{
+	position: relative;
+	margin-right: 8px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	line-height: 100%;
+	font-size: 12px;
+	color: #B9CFDE;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.66);
+}
+.MoCA_node_sub_info > div:not(:first-child):before{
+	position: absolute;
+	content: "";
+	left: -4px;
+	height: 60%;
+	border-left: 1px solid #7F8FA4;
+}
+.MoCA_node_container .MoCA_PHY_rate{
+	font-size: 14px;
+}
+.MoCA_node_container .MoCA_PHY_rate.great{
+	color: #4EF81C;
+}
+.MoCA_node_container .MoCA_PHY_rate.weak{
+	color: #ECC000;
+}
+@media (min-width: 1900px){
+	.translucent_bg{
+		background-position: left center;
+	}
 }
