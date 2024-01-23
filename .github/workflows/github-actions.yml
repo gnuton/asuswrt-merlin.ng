@@ -28,6 +28,8 @@ jobs:
           volumes:
             - ${{ github.workspace }}:/project
         steps:
+          - name: Set tag
+            run: echo "CIRCLE_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           - name: "Fetch code" 
             run: |
               pwd
@@ -37,6 +39,17 @@ jobs:
               cd /project
               git clone --single-branch --depth 1 --branch master $GIT_REPO
               ls /home/docker
+          - name: "Set version"
+            run: |
+              if [ -z "${CIRCLE_TAG}" ]; then
+                echo "Nothing to do. Not a release."
+              else
+                TAG=$(echo ${CIRCLE_TAG} | sed 's/^[^.]*\.//')
+                MAJOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
+                MINOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
+                sed -i "s/SERIALNO=.*/SERIALNO=${MAJOR_VER}/g" release/src-rt/version.conf
+                sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
+              fi
           - name: "Build"
             run: |
               echo "----- I am: $(id) -----"
