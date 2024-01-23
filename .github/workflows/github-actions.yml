@@ -25,7 +25,7 @@ jobs:
               echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
               sudo chmod 777 /project
               cd /project
-              git clone --single-branch --branch master $GIT_REPO
+              git clone --single-branch --depth 1 --branch master $GIT_REPO
               ls /home/docker
           - name: "Build"
             run: |
@@ -44,6 +44,8 @@ jobs:
                 echo "SDK not supported"
                 exit -1
               fi
+              echo "----- Check envs dir ---------"
+              ls -alh /home/docker/envs/
               echo "----- Debugging env vars -----"
               env
               echo "------ Setting UI as $UI ---------"
