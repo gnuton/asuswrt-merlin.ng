@@ -35,7 +35,7 @@ jobs:
               echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
               sudo chmod 777 /project
               cd /project
-              git clone --single-branch --depth 0 --branch master $GIT_REPO
+              git clone --single-branch --depth 1 --branch master $GIT_REPO
               ls /home/docker
           - name: "Build"
             run: |
