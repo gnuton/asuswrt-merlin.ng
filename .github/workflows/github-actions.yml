@@ -46,7 +46,6 @@ jobs:
                 exit -1
               fi
               echo "----- hack-ish fix ---------"
-              sudo rm -f /opt/toolchains
               sudo ln -sf /home/docker/am-toolchains/brcm-arm-hnd /opt/toolchains
               echo "----- Check envs dir ---------"
 
