@@ -12,6 +12,8 @@ jobs:
             MODEL: "rt-ax28u"
             SDK: "src-rt-5.02axhnd.675x"
             GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
+            PROJECT_DIR: "/project/asuswrt-merlin.ng"
+            UI: "none"
           options: --user root 
           volumes:
             - ${{ github.workspace }}:/project
@@ -26,11 +28,32 @@ jobs:
               ls /home/docker
           - name: "Build"
             run: |
-              cd "/project/"
-              ls
-              cd "asuswrt-merlin.ng"
-              ls
-              cd "release/$SDK"
+              cd ${PROJECT_DIR}/release/${SDK}
+              echo "----- Files in dir: $(pwd) -----"
+              ls -alh
+              echo "----- Setting toolchains for ${SDK} -----"
+              if [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
+                source /home/docker/envs/bcm-hnd-ax-4.19.sh
+              elif [[ ${SDK} == "src-rt-5.02axhnd.675x" ]]; then
+                source /home/docker/envs/bcm-hnd.sh
+              elif [[ ${SDK} == "src-rt-5.02axhnd" ]]; then
+                source /home/docker/envs/bcm-hnd.sh
+              else
+                echo "SDK not supported"
+                exit -1
+              fi
+              echo "----- Debugging env vars -----"
+              env
+              echo "------ Setting UI as $UI ---------"
+              if [[ ${UI} == "tuf" ]]; then
+                echo "Enabling TUF UI"
+                sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
+              fi
+              echo "----- BUILD -----"
+              if [[ ${SKIP_BUILD} == "Y" ]]; then
+                echo "Skipping build"
+                exit 0
+              fi
               make "$MODEL"
               echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
               echo "🍏 This job's status is ${{ job.status }}."
