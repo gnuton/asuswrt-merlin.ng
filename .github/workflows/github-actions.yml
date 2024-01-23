@@ -11,7 +11,7 @@ jobs:
             MERLINUPDATE: "y"
             MODEL: "rt-ax28u"
             SDK: "src-rt-5.02axhnd.675x"
-            GIT_REPO: "git@github.com:gnuton/asuswrt-merlin.ng.git"
+            GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           options: --user root 
           volumes:
             - ${{ github.workspace }}:/project
