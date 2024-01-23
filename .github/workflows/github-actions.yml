@@ -5,15 +5,24 @@ jobs:
     build-job:
         name: build firmware
         runs-on: ubuntu-latest
+        strategy:
+        matrix:
+        include:
+          - model: "dsl-ax82u"
+            sdk: "src-rt-5.02axhnd.675x"
+            ui: "none"
+          - model: "rt-ax82u"
+            sdk: "src-rt-5.02axhnd.675x"
+            ui: "none"
         container: 
           image: gnuton/asuswrt-merlin-toolchains-docker:latest
           env:
             MERLINUPDATE: "y"
-            MODEL: "rt-ax82u"
-            SDK: "src-rt-5.02axhnd.675x"
+            MODEL: ${{ matrix.model }}
+            SDK: ${{ matrix.sdk }}
+            UI: ${{ matrix.ui }}
             GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
             PROJECT_DIR: "/project/asuswrt-merlin.ng"
-            UI: "none"
             HOME: "/home/docker"
           options: --user docker 
           volumes:
@@ -26,7 +35,7 @@ jobs:
               echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
               sudo chmod 777 /project
               cd /project
-              git clone --single-branch --depth 1 --branch master $GIT_REPO
+              git clone --single-branch --depth 0 --branch master $GIT_REPO
               ls /home/docker
           - name: "Build"
             run: |
