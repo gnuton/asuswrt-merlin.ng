@@ -26,7 +26,11 @@ jobs:
               ls /home/docker
           - name: "Build"
             run: |
-              cd "/project/release/$SDK"
+              cd "/project/"
+              ls
+              cd "asuswrt-merlin.ng"
+              ls
+              cd "release/$SDK"
               make "$MODEL"
               echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
               echo "🍏 This job's status is ${{ job.status }}."
