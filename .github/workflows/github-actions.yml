@@ -14,7 +14,7 @@ jobs:
             GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
             PROJECT_DIR: "/project/asuswrt-merlin.ng"
             UI: "none"
-          options: --user root 
+          options: --user docker 
           volumes:
             - ${{ github.workspace }}:/project
         steps:
