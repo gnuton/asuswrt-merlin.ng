@@ -24,6 +24,7 @@ jobs:
             GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
             PROJECT_DIR: "/project/asuswrt-merlin.ng"
             HOME: "/home/docker"
+            CHANGELOG_FILE: "/tmp/CHANGELOG"
           options: --user docker 
           volumes:
             - ${{ github.workspace }}:/project
@@ -49,6 +50,11 @@ jobs:
                 sed -i "s/SERIALNO=.*/SERIALNO=${MAJOR_VER}/g" release/src-rt/version.conf
                 sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
               fi
+          - name: Generate changelog
+            run: |
+              cd ${PROJECT_DIR}
+              python tools/get-last-notes.py > "${CHANGELOG_FILE}"
+              cat "${CHANGELOG_FILE}"
           - name: "Build"
             run: |
               echo "----- I am: $(id) -----"
