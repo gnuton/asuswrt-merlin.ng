@@ -40,6 +40,7 @@ jobs:
               ls /home/docker
           - name: "Set version"
             run: |
+              cd ${PROJECT_DIR}
               export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
               if [ -z "${CIRCLE_TAG}" ]; then
                 echo "Nothing to do. Not a release."
