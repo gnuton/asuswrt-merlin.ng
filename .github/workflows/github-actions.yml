@@ -9,7 +9,7 @@ jobs:
           image: gnuton/asuswrt-merlin-toolchains-docker:latest
           env:
             MERLINUPDATE: "y"
-            MODEL: "rt-ax28u"
+            MODEL: "rt-ax82u"
             SDK: "src-rt-5.02axhnd.675x"
             GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
             PROJECT_DIR: "/project/asuswrt-merlin.ng"
