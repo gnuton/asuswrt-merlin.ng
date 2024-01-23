@@ -28,8 +28,6 @@ jobs:
           volumes:
             - ${{ github.workspace }}:/project
         steps:
-          - name: Set tag
-            run: echo "CIRCLE_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           - name: "Fetch code" 
             run: |
               pwd
@@ -41,6 +39,7 @@ jobs:
               ls /home/docker
           - name: "Set version"
             run: |
+              export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
               if [ -z "${CIRCLE_TAG}" ]; then
                 echo "Nothing to do. Not a release."
               else
