@@ -16,13 +16,16 @@ jobs:
           volumes:
             - ${{ github.workspace }}:/project
         steps:
-          - run: |
+          - name: "Fetch code" 
+            run: |
               pwd
               echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event." 
               echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
               cd /project
               git clone --single-branch --branch master $GIT_REPO
               echo $HOME
+          - name: "Build"
+            run: |
               cd "release/$SDK"
               make "$MODEL"
               echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
