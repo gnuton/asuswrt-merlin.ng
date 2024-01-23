@@ -14,7 +14,7 @@ jobs:
             GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
             PROJECT_DIR: "/project/asuswrt-merlin.ng"
             UI: "none"
-          options: --user docker 
+          options: --user root 
           volumes:
             - ${{ github.workspace }}:/project
         steps:
@@ -23,11 +23,17 @@ jobs:
               pwd
               echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event." 
               echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+              chown docker /project 
+              chgrp docker /project
               cd /project
+              su - docker
               git clone --single-branch --branch master $GIT_REPO
               ls /home/docker
           - name: "Build"
             run: |
+              echo "----- I am: $(id) -----"
+              su - docker
+              echo "----- I am: $(id) -----"
               cd ${PROJECT_DIR}/release/${SDK}
               echo "----- Files in dir: $(pwd) -----"
               ls -alh
