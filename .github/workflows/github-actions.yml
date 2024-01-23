@@ -45,7 +45,11 @@ jobs:
                 echo "SDK not supported"
                 exit -1
               fi
+              echo "----- hack-ish fix ---------"
+              rm -f /opt/toolchains
+              sudo ln -sf /home/docker/am-toolchains/brcm-arm-hnd /opt/toolchains
               echo "----- Check envs dir ---------"
+
               ls -alh /home/docker/envs/
               echo "----- Debugging env vars -----"
               env
