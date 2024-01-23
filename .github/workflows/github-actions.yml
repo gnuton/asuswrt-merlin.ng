@@ -8,24 +8,22 @@ jobs:
         container: 
           image: gnuton/asuswrt-merlin-toolchains-docker:latest
           env:
-            MERLINUPDATE: y
-            MODEL: rt-ax28u
-            SDK: src-rt-5.02axhnd.675x
+            MERLINUPDATE: "y"
+            MODEL: "rt-ax28u"
+            SDK: "src-rt-5.02axhnd.675x"
+            GIT_REPO: "git@github.com:gnuton/asuswrt-merlin.ng.git"
           options: --user root 
           volumes:
-            - ${{ github.workspace }}:/home/docker
+            - ${{ github.workspace }}:/project
         steps:
           - run: |
-              pwd 
-              ls /home/docker
-              ls
+              pwd
+              echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event." 
+              echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+              cd /project
+              git clone --single-branch --branch master $GIT_REPO
               echo $HOME
               cd "release/$SDK"
               make "$MODEL"
-              echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
               echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-              echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-              echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-              echo "🖥️  The workflow is now ready to test your code on the runner."
-              #ls ${{ github.workspace }}
               echo "🍏 This job's status is ${{ job.status }}."
