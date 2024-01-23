@@ -7,13 +7,13 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
           matrix:
-          include:
-            - model: "dsl-ax82u"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "none"
-            - model: "rt-ax82u"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "none"
+            include:
+              - model: "dsl-ax82u"
+                sdk: "src-rt-5.02axhnd.675x"
+                ui: "none"
+              - model: "rt-ax82u"
+                sdk: "src-rt-5.02axhnd.675x"
+                ui: "none"
         container: 
           image: gnuton/asuswrt-merlin-toolchains-docker:latest
           env:
