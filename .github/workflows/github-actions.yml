@@ -172,10 +172,18 @@ jobs:
                   cp "${CHANGELOG_FILE}" workspace/release
                 fi
               fi
-
-              
           - name: "Archive artifacts"
-            uses: actions/upload-artifact@v2
+            id: artifact-upload-step
+            uses: actions/upload-artifact@v4
             with:
               name: release-${{ matrix.model }}
               path: ${{ github.workspace }}/artifacts
+          - name: Output artifact ID
+            run:  echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+    release-job:
+    needs: [build-job]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish release
+        run: |
+          echo "test"
