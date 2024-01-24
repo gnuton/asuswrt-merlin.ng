@@ -173,8 +173,7 @@ jobs:
               fi
             fi
         - name: "Archive artifacts"
-          id: artifact-upload-step
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v2
           with:
             name: release-${{ matrix.model }}
             path: ${{ github.workspace }}/artifacts
