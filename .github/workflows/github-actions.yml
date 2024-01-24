@@ -67,13 +67,15 @@ jobs:
           volumes:
             - ${{ github.workspace }}:/project
         steps:
-          - name: "🎉 Prepare project dir" 
+          - name: "Fetch code" 
             run: |
+              pwd
+              echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event." 
               echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
               sudo chmod 777 /project
-          - uses: actions/checkout@v4
-            with:
-              path: '/project'
+              cd /project
+              git clone --single-branch --depth 1 --branch master $GIT_REPO
+              ls /home/docker
           - name: "Set version"
             run: |
               cd ${PROJECT_DIR}
@@ -128,7 +130,7 @@ jobs:
                 exit 0
               fi
               echo "make ${MODEL}"
-              mkdir -p /project/asuswrt-merlin.ng/release/src-rt-5.02axhnd.675x/image/
+              mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
               touch "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_puresqubi.w"
               echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
               echo "🍏 This job's status is ${{ job.status }}."
