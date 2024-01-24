@@ -181,9 +181,9 @@ jobs:
           - name: Output artifact ID
             run:  echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
     release-job:
-    needs: [build-job]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish release
-        run: |
-          echo "test"
+      needs: build-job
+      runs-on: ubuntu-latest
+      steps:
+        - name: Publish release
+          run: |
+            echo "test"
