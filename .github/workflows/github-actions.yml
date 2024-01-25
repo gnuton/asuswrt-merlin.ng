@@ -68,10 +68,11 @@ jobs:
         volumes:
           - ${{ github.workspace }}:/project
       steps:
+        - name: Fix permissions in docker image
+          run: |
+            sudo chown docker:docker /home/docker /project -R
         - name: Setup git config
           run: |
-            cd $HOME
-            ls -alh
             # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
@@ -81,7 +82,7 @@ jobs:
             pwd
             echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event." 
             echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-            sudo chmod 777 /project
+            
             cd /project
             git clone --single-branch --depth 1 --branch master $GIT_REPO
             ls /home/docker
