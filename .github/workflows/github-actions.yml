@@ -208,7 +208,7 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     
-    publish-manifest-job:
+    manifest-job:
       name: Publish Manifest
       needs: build-job
       runs-on: uvuntu-latest
@@ -252,7 +252,3 @@ jobs:
             git add ${UPDATE_DIR}
             git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [skip ci]" -a
             git push origin
-      - name: Update versions in Manifest file
-        run: |
-          ls
-            
