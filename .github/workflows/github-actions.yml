@@ -181,6 +181,23 @@ jobs:
       needs: build-job
       runs-on: ubuntu-latest
       steps:
+        - name: Download packages
+          uses: actions/download-artifact@v4
+          with:
+            path: artifacts
+        - name: Get release version
+          run: |
+            echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
         - name: Publish release
           run: |
             echo "test"
+        - name: Publish archives and packages
+          uses: softprops/action-gh-release@v1
+          with:
+            tag_name: ${{ env.version }}
+            body: "This is a test"
+            draft: true
+            prerelease: true
+            files: artifacts
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
