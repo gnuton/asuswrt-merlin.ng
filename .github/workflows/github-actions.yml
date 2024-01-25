@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
     build-job:
-      name: build firmware
+      name: 🏗️ Build
       runs-on: ubuntu-latest
       strategy:
         matrix:
@@ -129,11 +129,11 @@ jobs:
               echo "Skipping build"
               exit 0
             fi
-            echo "make ${MODEL}"
-            mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
-            echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-            echo "🍏 This job's status is ${{ job.status }}."
+            make ${MODEL}
+            # #### Just for testing ####
+            # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
+            # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
+            
         - name: "Prepare artifacts"
           env: 
             ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
@@ -175,6 +175,7 @@ jobs:
             name: release-${{ matrix.model }}-${{ matrix.ui }}
             path: ${{ github.workspace }}/artifacts
     release-job:
+      name: ⬆️ Publish
       needs: build-job
       runs-on: ubuntu-latest
       steps:
