@@ -193,6 +193,6 @@ jobs:
             body: "This is a test"
             draft: true
             prerelease: true
-            files: artifacts
+            files: release*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
