@@ -191,7 +191,7 @@ jobs:
             tag_name: ${{ env.version }}
             body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-dsl-ax82u-default/CHANGELOG
             draft: true
-            prerelease: {env.prerelease}
+            prerelease: ${{ env.prerelease }}
             files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
