@@ -68,6 +68,14 @@ jobs:
         volumes:
           - ${{ github.workspace }}:/project
       steps:
+        - name: Setup git config
+          run: |
+            cd $HOME
+            ls -alh
+            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
+            git config --global user.email "bot@gnuton.org"
+            git config --global user.name "Circle CI BOT"
+            git config --global push.default simple
         - name: "Fetch code" 
           run: |
             pwd
@@ -175,12 +183,6 @@ jobs:
           with:
             name: release-${{ matrix.model }}-${{ matrix.ui }}
             path: ${{ github.workspace }}/artifacts
-        - name: Setup git config
-          run: |
-            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
-            git config --global user.email "bot@gnuton.org"
-            git config --global user.name "Circle CI BOT"
-            git config --global push.default simple
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
