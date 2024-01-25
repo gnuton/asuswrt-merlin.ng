@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
     build-job:
-      name: 🏗️ Build
+      name: Build
       runs-on: ubuntu-latest
       if: "!contains(github.event.commits[0].message, '[skip ci]')"
       strategy:
@@ -12,39 +12,39 @@ jobs:
             - model: "dsl-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "rt-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "rt-ax82u_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "rt-ax92u"
               sdk: "src-rt-5.02axhnd"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "rt-ax5400"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "tuf-ax3000"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "tuf-ax5400"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
             - model: "tuf-ax3000"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "tuf"
-              skip: "Y"
+              skip: "n"
             - model: "tuf-ax5400"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "tuf"
-              skip: "Y"
+              skip: "n"
             - model: "rt-ax95q"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
@@ -60,6 +60,7 @@ jobs:
           MODEL: ${{ matrix.model }}
           SDK: ${{ matrix.sdk }}
           UI: ${{ matrix.ui }}
+          SKIP_BUILD: ${{ matrix.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
@@ -77,11 +78,7 @@ jobs:
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
         - name: "Fetch code" 
-          run: |
-            pwd
-            echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event." 
-            echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-            
+          run: | 
             cd /project
             git clone --single-branch --depth 1 --branch master $GIT_REPO
             ls /home/docker
