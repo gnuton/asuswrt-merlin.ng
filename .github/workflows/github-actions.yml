@@ -69,7 +69,7 @@ jobs:
       steps:
         - name: Fix permissions in docker image
           run: |
-            sudo rm /github/home
+            sudo rm -Rf /github/home
             sudo ln -s /home/docker /github/home
             sudo chown docker:docker /home/docker /project -R
         - name: Setup git config
