@@ -5,6 +5,7 @@ jobs:
     build-job:
       name: 🏗️ Build
       runs-on: ubuntu-latest
+      if: "!contains(github.event.commits[0].message, '[skip ci]')"
       strategy:
         matrix:
           include:
@@ -129,10 +130,10 @@ jobs:
               echo "Skipping build"
               exit 0
             fi
-            make ${MODEL}
+            # make ${MODEL}
             # #### Just for testing ####
-            # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
+            mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
+            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
           env: 
@@ -174,6 +175,42 @@ jobs:
           with:
             name: release-${{ matrix.model }}-${{ matrix.ui }}
             path: ${{ github.workspace }}/artifacts
+        - name: Setup git config
+          run: |
+            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
+            git config --global user.email "bot@gnuton.org"
+            git config --global user.name "Circle CI BOT"
+            git config --global push.default simple
+        - name: "Publish Manifest"
+          env:
+            UPDATE_DIR: "updates"
+          run: |
+            export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
+            if [[ $GITHUB_REF_TYPE == "branch" ]]; then
+              echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
+              exit 0
+            fi
+
+            MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
+            MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
+            RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
+            echo "Generating manifest file..."
+            echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
+            echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
+            echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+            echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
+            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
+            echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
+            echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+            echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+ 
+            cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
+            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
+            git add ${UPDATE_DIR}
+            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [skip ci]" -a
+            git push origin
+
     release-job:
       name: ⬆️ Publish
       needs: build-job
@@ -184,7 +221,7 @@ jobs:
         - name: Get release version
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-            echo "prerelease=$([[ "${GITHUB_REF#refs/*/}" == *alpha* || "${GITHUB_REF#refs/*/}" == *beta* ]] && echo True || echo False" >> $GITHUB_ENV
+            echo "prerelease=$([[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False" >> $GITHUB_ENV
         - name: Publish archives and packages
           uses: softprops/action-gh-release@v1
           with:
@@ -195,3 +232,12 @@ jobs:
             files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    publish_manifest-job:
+      name: Publish Manifest
+      needs: build-job
+      runs-on: build-job
+      steps:
+        - name: Update versions in Manifest file
+          run: |
+            ls
+            
