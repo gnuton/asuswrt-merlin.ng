@@ -211,7 +211,7 @@ jobs:
     manifest-job:
       name: Publish Manifest
       needs: build-job
-      runs-on: uvuntu-latest
+      runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
           
