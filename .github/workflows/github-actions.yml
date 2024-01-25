@@ -228,6 +228,7 @@ jobs:
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
+            CHANGELOG_FILE: "release-dsl-ax82u-default/CHANGELOG"
           run: |
             ls -alh
             find . -name CHANGELOG
