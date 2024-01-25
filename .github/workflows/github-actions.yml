@@ -193,6 +193,6 @@ jobs:
             body: "This is a test"
             draft: true
             prerelease: true
-            files: release*
+            files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
