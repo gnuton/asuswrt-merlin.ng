@@ -184,13 +184,14 @@ jobs:
         - name: Get release version
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+            echo "prerelease=$([[ "${GITHUB_REF#refs/*/}" == *alpha* || "${GITHUB_REF#refs/*/}" == *beta* ]] && echo True || echo False" >> $GITHUB_ENV
         - name: Publish archives and packages
           uses: softprops/action-gh-release@v1
           with:
             tag_name: ${{ env.version }}
             body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-dsl-ax82u-default/CHANGELOG
             draft: true
-            prerelease: true
+            prerelease: {env.prerelease}
             files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
