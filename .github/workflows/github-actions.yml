@@ -70,6 +70,7 @@ jobs:
       steps:
         - name: Fix permissions in docker image
           run: |
+            env
             sudo chown docker:docker /home/docker /project -R
         - name: Setup git config
           run: |
