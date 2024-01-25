@@ -206,11 +206,12 @@ jobs:
             files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+    
+    
     publish-manifest-job:
       name: Publish Manifest
       needs: build-job
-      runs-on: build-job
+      runs-on: uvuntu-latest
       steps:
         - uses: actions/checkout@v4
           
