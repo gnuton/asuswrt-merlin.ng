@@ -188,9 +188,6 @@ jobs:
         - name: Get release version
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-        - name: Publish release
-          run: |
-            echo "test"
         - name: Publish archives and packages
           uses: softprops/action-gh-release@v1
           with:
