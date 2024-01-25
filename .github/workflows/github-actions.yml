@@ -182,7 +182,7 @@ jobs:
             path: ${{ github.workspace }}/artifacts
 
     release-job:
-      name: ⬆️ Publish
+      name: Publish
       needs: build-job
       runs-on: ubuntu-latest
       if: startsWith(github.event.ref, 'refs/tags/')
