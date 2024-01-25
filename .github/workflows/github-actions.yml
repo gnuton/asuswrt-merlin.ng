@@ -131,7 +131,7 @@ jobs:
             fi
             echo "make ${MODEL}"
             mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_puresqubi.w"
+            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
             echo "🍏 This job's status is ${{ job.status }}."
         - name: "Prepare artifacts"
