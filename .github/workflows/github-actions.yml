@@ -1,5 +1,5 @@
 name: Containers
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: Building (user: ${{ github.actor }} ) 🚀
 on: [push]
 jobs:
     build-job:
