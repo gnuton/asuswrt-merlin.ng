@@ -62,9 +62,6 @@ jobs:
           UI: ${{ matrix.ui }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
-          HOME: "/home/docker"
-          GITHUB_HOME: "/home/docker"
-          GITHUB_RUNNER_HOME: "/home/docker"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
         options: --user docker 
         volumes:
@@ -72,8 +69,8 @@ jobs:
       steps:
         - name: Fix permissions in docker image
           run: |
-            ls -alh /github
-            ls -alh /github/home
+            sudo rm /github/home
+            sudo ln -s /home/docker /github/home
             sudo chown docker:docker /home/docker /project -R
         - name: Setup git config
           run: |
