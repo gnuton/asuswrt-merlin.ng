@@ -69,9 +69,7 @@ jobs:
       steps:
         - name: Fix permissions in docker image
           run: |
-            sudo rm -Rf /github/home
-            sudo ln -s /home/docker /github/home
-            sudo chown docker:docker /home/docker /project -R
+            sudo chown docker:docker /github/home /home/docker /project -R
         - name: Setup git config
           run: |
             # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
