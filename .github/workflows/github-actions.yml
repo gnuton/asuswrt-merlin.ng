@@ -72,7 +72,8 @@ jobs:
       steps:
         - name: Fix permissions in docker image
           run: |
-            export HOME=/home/docker
+            ls -alh /github
+            ls -alh /github/home
             sudo chown docker:docker /home/docker /project -R
         - name: Setup git config
           run: |
