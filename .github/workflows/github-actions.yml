@@ -187,7 +187,7 @@ jobs:
           uses: softprops/action-gh-release@v1
           with:
             tag_name: ${{ env.version }}
-            body: "This is a test"
+            body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-dsl-ax82u-default/CHANGELOG
             draft: true
             prerelease: true
             files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
