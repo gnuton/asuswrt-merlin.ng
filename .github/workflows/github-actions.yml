@@ -182,9 +182,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Download packages
-          uses: actions/download-artifact@v4
-          with:
-            path: artifacts
+          uses: actions/download-artifact@v2
         - name: Get release version
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
