@@ -223,10 +223,14 @@ jobs:
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
+        - name: Download packages
+          uses: actions/download-artifact@v2
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
           run: |
+            ls -alh
+            find . -name CHANGELOG
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
             if [[ $GITHUB_REF_TYPE == "branch" ]]; then
               echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
