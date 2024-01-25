@@ -230,7 +230,7 @@ jobs:
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
             if [[ $GITHUB_REF_TYPE == "branch" ]]; then
               echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
-              exit 0
+              # ENABLE AGAIN # exit 0
             fi
 
             MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
