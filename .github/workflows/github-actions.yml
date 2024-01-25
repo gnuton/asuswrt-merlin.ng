@@ -1,5 +1,5 @@
 name: Containers
-run-name: Building (user: ${{ github.actor }} ) 🚀
+run-name: "Building images 🚀"
 on: [push]
 jobs:
     build-job:
