@@ -209,7 +209,7 @@ jobs:
       name: Publish Manifest
       needs: build-job
       runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/')
+      if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
       steps:
         - uses: actions/checkout@v4
           with:
