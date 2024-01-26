@@ -5,62 +5,31 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
-      if: "!contains(github.event.commits[0].message, '[skip ci]')"
       strategy:
         matrix:
-          include:
-            - model: "dsl-ax82u"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax82u"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax82u_v2"
-              sdk: "src-rt-5.04axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax92u"
-              sdk: "src-rt-5.02axhnd"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax5400"
-              sdk: "src-rt-5.04axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "tuf-ax3000"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "tuf-ax5400"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "tuf-ax3000"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "tuf"
-              skip: "n"
-            - model: "tuf-ax5400"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "tuf"
-              skip: "n"
-            - model: "rt-ax95q"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-axe95q"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-      container: 
+          cfg:
+            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
+            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
+            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "tuf",      skip: false }
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
+      container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
           MERLINUPDATE: "y"
-          MODEL: ${{ matrix.model }}
-          SDK: ${{ matrix.sdk }}
-          UI: ${{ matrix.ui }}
-          SKIP_BUILD: ${{ matrix.skip }}
+          MODEL: ${{ matrix.cfg.model }}
+          SDK: ${{ matrix.cfg.sdk }}
+          UI: ${{ matrix.cfg.ui }}
+          SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
@@ -69,20 +38,37 @@ jobs:
           - ${{ github.workspace }}:/project
       steps:
         - name: Fix permissions in docker image
+          if: matrix.cfg.skip == false
           run: |
             sudo chown docker:docker /github/home /home/docker /project -R
         - name: Setup git config
+          if: matrix.cfg.skip == false
           run: |
-            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
-        - name: "Fetch code" 
+        - name: "Fetch code"
+          if: matrix.cfg.skip == false
           run: | 
             cd /project
-            git clone --single-branch --depth 1 --branch master $GIT_REPO
+            if [[ $GITHUB_REF_TYPE == "tag" ]]; then
+                export BRANCH="master"
+            else
+                export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+            fi
+
+            echo "Fetching code from branch $BRANCH"
+
+            if git clone --single-branch --depth 1 --branch "$BRANCH" "$GIT_REPO"; then
+                echo "Code fetched successfully."
+            else
+                echo "Failed to fetch code. Check the repository and branch settings."
+                exit 1
+            fi
+            
             ls /home/docker
         - name: "Set version"
+          if: matrix.cfg.skip == false
           run: |
             cd ${PROJECT_DIR}
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
@@ -97,11 +83,13 @@ jobs:
                 echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
             fi
         - name: Generate changelog
+          if: matrix.cfg.skip == false
           run: |
             cd ${PROJECT_DIR}
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
+          if: matrix.cfg.skip == false
           run: |
             echo "----- I am: $(id) -----"
             cd ${PROJECT_DIR}/release/${SDK}
@@ -130,27 +118,21 @@ jobs:
               echo "Enabling TUF UI"
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
-            echo "----- BUILD -----"
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Skipping build"
-              exit 0
-            fi
-            make ${MODEL}
+
+            echo "----- BUILD ${MODEL}-----"
+            make "${MODEL}"
             # #### Just for testing ####
             # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
             # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
+          if: matrix.cfg.skip == false
           env: 
             ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           run: |
             export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
 
             mkdir -p "${ARTIFACTS_DIR}"
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Nothing to persist. Skipping."
-              exit 0
-            fi
 
             echo "Removing images with boot loader."
             rm -rf ${IMAGE_PATH}/*cferom*
@@ -176,11 +158,11 @@ jobs:
               cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
             fi
         - name: "Archive artifacts"
+          if: matrix.cfg.skip == false
           uses: actions/upload-artifact@v2
           with:
-            name: release-${{ matrix.model }}-${{ matrix.ui }}
+            name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: ${{ github.workspace }}/artifacts
-
     release-job:
       name: Publish
       needs: build-job
@@ -221,7 +203,7 @@ jobs:
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
         - name: Download packages
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
@@ -238,11 +220,12 @@ jobs:
             echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
             echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
+            echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"  >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [skip ci]" -a
+            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
             git push origin
