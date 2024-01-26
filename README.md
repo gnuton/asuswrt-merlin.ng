@@ -61,7 +61,6 @@ All releases:
 
 Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/tag/RMerl/asuswrt-merlin.ng.svg)
 
-Main branch build: [![CircleCI](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/master.svg?style=svg)](https://circleci.com/gh/gnuton/asuswrt-merlin.ng/tree/master)
 
 ---------------------
 
@@ -94,7 +93,8 @@ Not sure which version you have? V1? V2? Enable SSH, then ssh into your router a
 ### Thanks to
 - Asus for the GPLs and HW samples.
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
-- [CircleCI](https://circleci.com/) for providing a powerful CI infra for building the images on the cloud. 
+- GitHub for providing the runners to build new images.
+- [CircleCI](https://circleci.com/) for having provided a powerful CI infra for building the images on the cloud. 
 
 ---------------------
 ### How can I help?
