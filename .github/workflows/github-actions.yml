@@ -56,7 +56,7 @@ jobs:
             - model: "tuf-ax3000_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: "n"
       container: 
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
