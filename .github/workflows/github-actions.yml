@@ -5,7 +5,6 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && strategy.matrix.skip != 'true'"
       strategy:
         matrix:
           include:
@@ -57,7 +56,8 @@ jobs:
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
               skip: true
-      container: 
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && strategy.matrix.skip != 'true'"
+      container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
           MERLINUPDATE: "y"
