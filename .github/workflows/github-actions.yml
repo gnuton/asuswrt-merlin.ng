@@ -7,21 +7,19 @@ jobs:
       runs-on: ubuntu-latest
       strategy:
         matrix:
-          exclude:
-            - { skip: "Y" }
           cfg:
-              - { model: "dsl-ax82u", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "rt-ax82u_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "N" }
-              - { model: "rt-ax92u", sdk: "src-rt-5.02axhnd", ui: "default", skip: "Y" }
-              - { model: "rt-ax5400", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "rt-ax82u", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "tuf-ax5400", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "tuf", skip: "Y" }
-              - { model: "tuf-ax5400", sdk: "src-rt-5.02axhnd.675x", ui: "tuf", skip: "Y" }
-              - { model: "rt-ax95q", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "rt-axe95q", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-              - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: "N" }
+              - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: "Y" }
+              - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: "Y" }
+              - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: "Y" }
+              - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: "Y" }
+              - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: "Y" }
 
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
@@ -39,21 +37,28 @@ jobs:
         volumes:
           - ${{ github.workspace }}:/project
       steps:
+        - name: Check skip
+          run: |
+            [ "$SKIP_BUILD" = "Y" ] && exit -1
         - name: Fix permissions in docker image
+          if: ${{ failure() }}
           run: |
             sudo chown docker:docker /github/home /home/docker /project -R
         - name: Setup git config
+          if: ${{ failure() }}
           run: |
             # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
-        - name: "Fetch code" 
+        - name: "Fetch code"
+          if: ${{ failure() }}
           run: | 
             cd /project
             git clone --single-branch --depth 1 --branch master $GIT_REPO
             ls /home/docker
         - name: "Set version"
+          if: ${{ failure() }}
           run: |
             cd ${PROJECT_DIR}
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
@@ -68,11 +73,13 @@ jobs:
                 echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
             fi
         - name: Generate changelog
+          if: ${{ failure() }}
           run: |
             cd ${PROJECT_DIR}
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
+          if: ${{ failure() }}
           run: |
             echo "----- I am: $(id) -----"
             cd ${PROJECT_DIR}/release/${SDK}
@@ -108,6 +115,7 @@ jobs:
             # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
+          if: ${{ failure() }}
           env: 
             ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           run: |
@@ -143,6 +151,7 @@ jobs:
               cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
             fi
         - name: "Archive artifacts"
+          if: ${{ failure() }}
           uses: actions/upload-artifact@v2
           with:
             name: release-${{ matrix.model }}-${{ matrix.ui }}
