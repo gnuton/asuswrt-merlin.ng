@@ -8,7 +8,7 @@ jobs:
       outputs:
         jobs: ${{ steps.exclude-job.outputs.jobs }}
       steps:
-        - id: exclude-jobs
+        - id: exclude-job
           run: | 
               echo 'jobs=[
                 { "skip": true }
