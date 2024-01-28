@@ -63,7 +63,7 @@ jobs:
           env:
             CFG: ${{ toJSON(matrix) }}
           run: |
-            echo "cfg=$CFG" >> $GITHUB_OUTPUT
+            echo "cfg=$CFG"
     build-job:
       name: Build
       runs-on: ubuntu-latest
