@@ -57,14 +57,13 @@ jobs:
               ui: "default"
               skip: "Y"
       outputs:
-        matrix: ${{ steps.set-matrix.outputs.matrix }}
+        matrix: ${{ steps.set-matrix.outputs.matrix.cfg }}
       steps:
         - id: set-matrix
           env:
             CFG: ${{ toJSON(matrix) }}
           run: |
-            echo $CFG
-            jq -r -n 'env.CFG | fromjson | @json "::set-output name=result::\(.data)"'
+            echo "cfg=$CFG" >> $GITHUB_OUTPUT
     build-job:
       name: Build
       runs-on: ubuntu-latest
