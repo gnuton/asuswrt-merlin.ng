@@ -39,7 +39,7 @@ jobs:
       steps:
         - name: Check skip
           run: |
-            [ "$SKIP_BUILD" = "Y" ] && exit -1
+            [ "$SKIP_BUILD" = "Y" ] && exit -1 || exit 0
         - name: Fix permissions in docker image
           if: ${{ !failure() }}
           run: |
