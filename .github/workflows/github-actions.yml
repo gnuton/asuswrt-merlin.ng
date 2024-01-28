@@ -72,6 +72,12 @@ jobs:
         volumes:
           - ${{ github.workspace }}:/project
       steps:
+        - name: Skip build condition check
+          run: |
+            if [[ ${SKIP_BUILD} == "Y" ]]; then
+              echo "Skipping build"
+              exit 0
+            fi
         - name: Fix permissions in docker image
           run: |
             sudo chown docker:docker /github/home /home/docker /project -R
@@ -135,10 +141,6 @@ jobs:
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
             echo "----- BUILD ${MODEL}-----"
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Skipping build"
-              exit 0
-            fi
             make "${MODEL}"
             # #### Just for testing ####
             # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
