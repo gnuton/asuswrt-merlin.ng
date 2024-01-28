@@ -5,23 +5,22 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
-
       strategy:
         matrix:
           cfg:
             - data:
-                - { model: "dsl-ax82u", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "rt-ax82u", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "rt-ax82u_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "N" }
-                - { model: "rt-ax92u", sdk: "src-rt-5.02axhnd", ui: "default", skip: "Y" }
-                - { model: "rt-ax5400", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "tuf-ax5400", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "tuf", skip: "Y" }
-                - { model: "tuf-ax5400", sdk: "src-rt-5.02axhnd.675x", ui: "tuf", skip: "Y" }
-                - { model: "rt-ax95q", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "rt-axe95q", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
-                - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "dsl-ax82u", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "rt-ax82u_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "N" }
+              - { model: "rt-ax92u", sdk: "src-rt-5.02axhnd", ui: "default", skip: "Y" }
+              - { model: "rt-ax5400", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "rt-ax82u", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "tuf-ax5400", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "tuf", skip: "Y" }
+              - { model: "tuf-ax5400", sdk: "src-rt-5.02axhnd.675x", ui: "tuf", skip: "Y" }
+              - { model: "rt-ax95q", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "rt-axe95q", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: "Y" }
+              - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default", skip: "Y" }
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
