@@ -5,7 +5,7 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
-      if: "!contains(github.event.commits[0].message, '[SKIP CI]') && ! ${{ matrix.skip }}"
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && matrix.skip != 'true'"
       strategy:
         matrix:
           include:
@@ -245,5 +245,5 @@ jobs:
             cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [skip ci]" -a
+            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
             git push origin
