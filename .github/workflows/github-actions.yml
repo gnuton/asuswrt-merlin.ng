@@ -2,11 +2,11 @@ name: Containers
 run-name: "Building images 🚀"
 on: [push]
 jobs:
-  exclude-jobs:
+  exclude-job:
       name: Generate exclude job vars
       runs-on: ubuntu-latest
       outputs:
-        jobs: ${{ steps.exclude-jobs.outputs.jobs }}
+        jobs: ${{ steps.exclude-job.outputs.jobs }}
       steps:
         - id: exclude-jobs
           # 1. use any other condition(s) that fits your requirements
@@ -26,8 +26,8 @@ jobs:
   build-job:
       name: Build
       runs-on: ubuntu-latest
-      needs: exclude-jobs
-      exclude: ${{ fromJSON(needs.exclude-jobs.outputs.jobs) }}
+      needs: exclude-job
+      exclude: ${{ fromJSON(needs.exclude-job.outputs.jobs) }}
       strategy:
         matrix:
           include:
