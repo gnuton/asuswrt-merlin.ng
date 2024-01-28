@@ -134,12 +134,12 @@ jobs:
               echo "Enabling TUF UI"
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
-            echo "----- BUILD -----"
+            echo "----- BUILD ${MODEL}-----"
             if [[ ${SKIP_BUILD} == "Y" ]]; then
               echo "Skipping build"
               exit 0
             fi
-            make ${MODEL}
+            make "${MODEL}"
             # #### Just for testing ####
             # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
             # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
@@ -242,10 +242,10 @@ jobs:
             echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
             echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
+            echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"  >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-            echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
             cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
