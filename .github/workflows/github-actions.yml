@@ -53,7 +53,7 @@ jobs:
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
               skip: "Y"
-            - model: "tuf-ax3000_v2"
+            - model: "tuf-ax3000_v3"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
               skip: "n"
