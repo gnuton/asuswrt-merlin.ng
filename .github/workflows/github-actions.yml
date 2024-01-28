@@ -19,7 +19,9 @@ jobs:
       needs: exclude-job
       strategy:
         matrix:
-          exclude: ${{ fromJSON(needs.exclude-job.outputs.jobs) }}
+          #exclude: ${{ fromJSON(needs.exclude-job.outputs.jobs) }}
+          exclude:
+            - skip: true
           include:
             - model: "dsl-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
