@@ -5,58 +5,58 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
-      if: "!contains(github.event.commits[0].message, '[skip ci]')"
+      if: "!contains(github.event.commits[0].message, '[SKIP CI]') && ! ${{ matrix.skip }}"
       strategy:
         matrix:
           include:
             - model: "dsl-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "rt-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "rt-ax82u_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "n"
+              skip: false
             - model: "rt-ax92u"
               sdk: "src-rt-5.02axhnd"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "rt-ax5400"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "tuf-ax3000"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "tuf-ax5400"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "tuf-ax3000"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "tuf"
-              skip: "Y"
+              skip: true
             - model: "tuf-ax5400"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "tuf"
-              skip: "Y"
+              skip: true
             - model: "rt-ax95q"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "rt-axe95q"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
             - model: "tuf-ax3000_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "Y"
+              skip: true
       container: 
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
@@ -72,12 +72,6 @@ jobs:
         volumes:
           - ${{ github.workspace }}:/project
       steps:
-        - name: Skip build condition check
-          run: |
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Skipping build"
-              exit 0
-            fi
         - name: Fix permissions in docker image
           run: |
             sudo chown docker:docker /github/home /home/docker /project -R
