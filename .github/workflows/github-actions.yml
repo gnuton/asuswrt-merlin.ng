@@ -2,7 +2,7 @@ name: Containers
 run-name: "Building images 🚀"
 on: [push]
 jobs:
-  exclude-job:
+    exclude-job:
       name: Generate exclude job vars
       runs-on: ubuntu-latest
       outputs:
@@ -23,7 +23,7 @@ jobs:
             else
               echo 'jobs=[]' >> $GITHUB_OUTPUT  # 5
             fi
-  build-job:
+    build-job:
       name: Build
       runs-on: ubuntu-latest
       needs: exclude-job
@@ -203,7 +203,6 @@ jobs:
           with:
             name: release-${{ matrix.model }}-${{ matrix.ui }}
             path: ${{ github.workspace }}/artifacts
-
     release-job:
       name: Publish
       needs: build-job
