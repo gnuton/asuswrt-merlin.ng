@@ -2,21 +2,9 @@ name: Containers
 run-name: "Building images 🚀"
 on: [push]
 jobs:
-    exclude-job:
+    matrix-job:
       name: Generate exclude job
       runs-on: ubuntu-latest
-      outputs:
-        jobs: ${{ steps.exclude-job.outputs.jobs }}
-      steps:
-        - id: exclude-job
-          run: | 
-              echo 'jobs=[
-                { "skip": true }
-              ]' | tr -d '[:space:]' >> $GITHUB_OUTPUT
-    build-job:
-      name: Build
-      runs-on: ubuntu-latest
-      needs: exclude-job
       strategy:
         matrix:
           #exclude: ${{ fromJSON(needs.exclude-job.outputs.jobs) }}
@@ -71,15 +59,29 @@ jobs:
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
               skip: "Y"
+      outputs:
+        jobs: ${{ steps.set-matrix.outputs.matrix }}
+      steps:
+        - id: set-matrix
+          env:
+            CFG: ${{ toJSON(matrix) }}
+          run: jq -r -n 'env.CFG | fromjson | @json "::set-output name=result::\(.data)"'
+    build-job:
+      name: Build
+      runs-on: ubuntu-latest
+      needs: matrix-job
+      strategy:
+        matrix:
+          cfg: ${{ fromJson(needs.matrix-job.outputs.matrix) }}
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
           MERLINUPDATE: "y"
-          MODEL: ${{ matrix.model }}
-          SDK: ${{ matrix.sdk }}
-          UI: ${{ matrix.ui }}
-          SKIP_BUILD: ${{ matrix.skip }}
+          MODEL: ${{ matrix.cfg.model }}
+          SDK: ${{ matrix.cfg.sdk }}
+          UI: ${{ matrix.cgf.ui }}
+          SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
