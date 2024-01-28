@@ -20,7 +20,7 @@ jobs:
             - model: "rt-ax82u_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "N"
+              skip: "n"
             - model: "rt-ax92u"
               sdk: "src-rt-5.02axhnd"
               ui: "default"
@@ -52,11 +52,11 @@ jobs:
             - model: "rt-axe95q"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: "n"
+              skip: "Y"
             - model: "tuf-ax3000_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: "n"
+              skip: "Y"
       container: 
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
