@@ -3,26 +3,16 @@ run-name: "Building images 🚀"
 on: [push]
 jobs:
     exclude-job:
-      name: Generate exclude job vars
+      name: Generate exclude job
       runs-on: ubuntu-latest
       outputs:
         jobs: ${{ steps.exclude-job.outputs.jobs }}
       steps:
         - id: exclude-jobs
-          # 1. use any other condition(s) that fits your requirements
-          # 2. each item in the JSON array will be matched against your matrix later
-          # 3. here I exclude everything except ubuntu-latest + python3.7 (see matrix below)
-          # 4. make sure to output as single line
-          # 5. the default case is: exclude nothing
-          run: |
-            if ${{ github.repository_owner == 'pawamoy-insiders' }}; then  # 1
-              # 2, 3
+          run: | 
               echo 'jobs=[
-                {"skip": true },
-              ]' | tr -d '[:space:]' >> $GITHUB_OUTPUT  # 4
-            else
-              echo 'jobs=[]' >> $GITHUB_OUTPUT  # 5
-            fi
+                { "skip": true }
+              ]' | tr -d '[:space:]' >> $GITHUB_OUTPUT
     build-job:
       name: Build
       runs-on: ubuntu-latest
