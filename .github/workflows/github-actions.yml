@@ -2,9 +2,31 @@ name: Containers
 run-name: "Building images 🚀"
 on: [push]
 jobs:
-    build-job:
+  exclude-jobs:
+    runs-on: ubuntu-latest
+    outputs:
+      jobs: ${{ steps.exclude-jobs.outputs.jobs }}
+    steps:
+      - id: exclude-jobs
+        # 1. use any other condition(s) that fits your requirements
+        # 2. each item in the JSON array will be matched against your matrix later
+        # 3. here I exclude everything except ubuntu-latest + python3.7 (see matrix below)
+        # 4. make sure to output as single line
+        # 5. the default case is: exclude nothing
+        run: |
+          if ${{ github.repository_owner == 'pawamoy-insiders' }}; then  # 1
+            # 2, 3
+            echo 'jobs=[
+              {"skip": true },
+            ]' | tr -d '[:space:]' >> $GITHUB_OUTPUT  # 4
+          else
+            echo 'jobs=[]' >> $GITHUB_OUTPUT  # 5
+          fi
+  build-job:
       name: Build
       runs-on: ubuntu-latest
+      needs: exclude-jobs
+      exclude: ${{ fromJSON(needs.exclude-jobs.outputs.jobs) }}
       strategy:
         matrix:
           include:
@@ -56,7 +78,7 @@ jobs:
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
               skip: true
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && !${{ matrix.skip }}"
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
