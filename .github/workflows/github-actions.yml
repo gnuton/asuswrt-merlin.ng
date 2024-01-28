@@ -7,6 +7,7 @@ jobs:
       runs-on: ubuntu-latest
       strategy:
         matrix:
+          cfg: []
           include:
             - model: "dsl-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
@@ -61,7 +62,7 @@ jobs:
       steps:
         - id: set-matrix
           env:
-            CFG: ${{ toJSON(matrix) }}
+            CFG: ${{ toJSON(matrix.cfg) }}
           run: jq -r -n 'env.CFG | fromjson | @json "::set-output name=result::\(.data)"'
     build-job:
       name: Build
