@@ -71,7 +71,8 @@ jobs:
       needs: matrix-job
       strategy:
         matrix:
-          cfg: ${{ fromJson(needs.matrix-job.outputs.matrix) }}
+          cfg:
+            - ${{ fromJson(needs.matrix-job.outputs.matrix) }}
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
