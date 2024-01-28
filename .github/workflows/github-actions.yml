@@ -57,7 +57,7 @@ jobs:
               ui: "default"
               skip: "Y"
       outputs:
-        matrix: ${{ steps.set-matrix.outputs.matrix.cfg }}
+        matrix: ${{ steps.set-matrix.outputs.cfg }}
       steps:
         - id: set-matrix
           env:
