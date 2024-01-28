@@ -21,56 +21,56 @@ jobs:
         matrix:
           #exclude: ${{ fromJSON(needs.exclude-job.outputs.jobs) }}
           exclude:
-            - skip: true
+            - skip: "Y"
           include:
             - model: "dsl-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "rt-ax82u"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "rt-ax82u_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: false
+              skip: "N"
             - model: "rt-ax92u"
               sdk: "src-rt-5.02axhnd"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "rt-ax5400"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "tuf-ax3000"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "tuf-ax5400"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "tuf-ax3000"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "tuf"
-              skip: true
+              skip: "Y"
             - model: "tuf-ax5400"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "tuf"
-              skip: true
+              skip: "Y"
             - model: "rt-ax95q"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "rt-axe95q"
               sdk: "src-rt-5.02axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
             - model: "tuf-ax3000_v2"
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
-              skip: true
+              skip: "Y"
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
