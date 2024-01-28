@@ -5,7 +5,7 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && matrix.skip != 'true'"
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && strategy.matrix.skip != 'true'"
       strategy:
         matrix:
           include:
