@@ -28,7 +28,7 @@ jobs:
           MERLINUPDATE: "y"
           MODEL: ${{ matrix.cfg.model }}
           SDK: ${{ matrix.cfg.sdk }}
-          UI: ${{ matrix.cgf.ui }}
+          UI: ${{ matrix.cfg.ui }}
           SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
@@ -38,24 +38,24 @@ jobs:
           - ${{ github.workspace }}:/project
       steps:
         - name: Fix permissions in docker image
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           run: |
             sudo chown docker:docker /github/home /home/docker /project -R
         - name: Setup git config
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           run: |
             # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
         - name: "Fetch code"
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           run: | 
             cd /project
             git clone --single-branch --depth 1 --branch master $GIT_REPO
             ls /home/docker
         - name: "Set version"
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           run: |
             cd ${PROJECT_DIR}
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
@@ -70,13 +70,13 @@ jobs:
                 echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
             fi
         - name: Generate changelog
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           run: |
             cd ${PROJECT_DIR}
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           run: |
             echo "----- I am: $(id) -----"
             cd ${PROJECT_DIR}/release/${SDK}
@@ -112,7 +112,7 @@ jobs:
             # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           env: 
             ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           run: |
@@ -148,7 +148,7 @@ jobs:
               cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
             fi
         - name: "Archive artifacts"
-          if: ! matrix.cfg.skip
+          if: matrix.cfg.skip == false
           uses: actions/upload-artifact@v2
           with:
             name: release-${{ matrix.model }}-${{ matrix.ui }}
