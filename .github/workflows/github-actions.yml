@@ -56,7 +56,7 @@ jobs:
               sdk: "src-rt-5.04axhnd.675x"
               ui: "default"
               skip: true
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && strategy.matrix.skip != 'true'"
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]') && matrix.skip != 'true'"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
