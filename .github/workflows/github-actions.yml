@@ -52,7 +52,14 @@ jobs:
           if: matrix.cfg.skip == false
           run: | 
             cd /project
-            git clone --single-branch --depth 1 --branch master $GIT_REPO
+            if [[ $GITHUB_REF_TYPE == "branch" ]]; then
+              export BRANCH="master"
+            else
+              export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+            fi
+            echo "Fetching code from branch $BRANCH"
+            git clone --single-branch --depth 1 --branch $BRANCH $GIT_REPO
+            
             ls /home/docker
         - name: "Set version"
           if: matrix.cfg.skip == false
