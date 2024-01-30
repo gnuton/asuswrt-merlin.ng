@@ -103,7 +103,7 @@ jobs:
             echo "------ Setting UI as $UI ---------"
             if [[ ${UI} == "tuf" ]]; then
               echo "Enabling TUF UI"
-              sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
+              #sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
             echo "----- BUILD ${MODEL}-----"
             make "${MODEL}"
