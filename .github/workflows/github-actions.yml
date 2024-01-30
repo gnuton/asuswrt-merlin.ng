@@ -8,18 +8,18 @@ jobs:
       strategy:
         matrix:
           cfg:
-            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: true }
-            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: true }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: true }
-            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
-            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
-            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
+            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
+            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
             - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: true }
-            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "tuf",  skip: false }
+            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "tuf",      skip: false }
 
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
@@ -44,7 +44,6 @@ jobs:
         - name: Setup git config
           if: matrix.cfg.skip == false
           run: |
-            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
             git config --global user.email "bot@gnuton.org"
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
@@ -119,8 +118,6 @@ jobs:
               echo "Enabling TUF UI"
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
-            echo "------DEBUG--------------"
-            cat ${PROJECT_DIR}/release/src-rt/target.mak
 
             echo "----- BUILD ${MODEL}-----"
             make "${MODEL}"
@@ -136,10 +133,6 @@ jobs:
             export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
 
             mkdir -p "${ARTIFACTS_DIR}"
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Nothing to persist. Skipping."
-              exit 0
-            fi
 
             echo "Removing images with boot loader."
             rm -rf ${IMAGE_PATH}/*cferom*
@@ -168,7 +161,7 @@ jobs:
           if: matrix.cfg.skip == false
           uses: actions/upload-artifact@v2
           with:
-            name: release-${{ matrix.model }}-${{ matrix.ui }}
+            name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: ${{ github.workspace }}/artifacts
     release-job:
       name: Publish
@@ -210,7 +203,7 @@ jobs:
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
         - name: Download packages
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
