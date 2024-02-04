@@ -1,11 +1,12 @@
-name: Containers
+name: Images 
 run-name: "Building images 🚀"
 on: [push]
-jobs:
+jobs:          
     build-job:
       name: Build
       runs-on: ubuntu-latest
       strategy:
+        fail-fast: false
         matrix:
           cfg:
             - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
@@ -32,24 +33,25 @@ jobs:
           SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
+          ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
+          PROJECTBASEDIR: "/project" # Fixes https://github.com/SonarSource/sonarcloud-github-action/pull/58
         options: --user docker 
         volumes:
-          - ${{ github.workspace }}:/project
+          - /mnt:/project
       steps:
+        - name: Run debug commands - post
+          run: |
+            cd /
+            echo "--- Disk available ----"
+            df -h
         - name: Fix permissions in docker image
           if: matrix.cfg.skip == false
           run: |
-            sudo chown docker:docker /github/home /home/docker /project -R
-        - name: Setup git config
-          if: matrix.cfg.skip == false
-          run: |
-            git config --global user.email "bot@gnuton.org"
-            git config --global user.name "Circle CI BOT"
-            git config --global push.default simple
+            sudo chown -R docker:docker /github/home /home/docker /project
         - name: "Fetch code"
           if: matrix.cfg.skip == false
-          run: | 
+          run: |
             cd /project
             if [[ $GITHUB_REF_TYPE == "tag" ]]; then
                 export BRANCH="master"
@@ -91,6 +93,8 @@ jobs:
         - name: "Build"
           if: matrix.cfg.skip == false
           run: |
+            echo "----- Space available -----"
+            df -h
             echo "----- I am: $(id) -----"
             cd ${PROJECT_DIR}/release/${SDK}
             echo "----- Files in dir: $(pwd) -----"
@@ -127,13 +131,9 @@ jobs:
             
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
-          env: 
-            ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           run: |
-            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
-
             mkdir -p "${ARTIFACTS_DIR}"
-
+            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
             echo "Removing images with boot loader."
             rm -rf ${IMAGE_PATH}/*cferom*
 
@@ -162,7 +162,7 @@ jobs:
           uses: actions/upload-artifact@v2
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
-            path: ${{ github.workspace }}/artifacts
+            path: "/project/artifacts"
     release-job:
       name: Publish
       needs: build-job
@@ -170,7 +170,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       steps:
         - name: Download packages
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
         - name: Get release version
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
