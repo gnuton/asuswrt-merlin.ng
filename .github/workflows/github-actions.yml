@@ -47,7 +47,7 @@ jobs:
           if: matrix.cfg.skip == false
           run: |
             sudo chown docker:docker /github/home /home/docker /__w /project -R
-         - name: Setup git config
+        - name: Setup git config
           if: matrix.cfg.skip == false
           run: |
             git config --global user.email "bot@gnuton.org"
