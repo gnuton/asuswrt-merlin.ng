@@ -46,13 +46,7 @@ jobs:
         - name: Fix permissions in docker image
           if: matrix.cfg.skip == false
           run: |
-            sudo chown docker:docker /github/home /home/docker /home/runner /__w /project -R
-        - name: Setup git config
-          if: matrix.cfg.skip == false
-          run: |
-            git config --global user.email "bot@gnuton.org"
-            git config --global user.name "Circle CI BOT"
-            git config --global push.default simple
+            sudo chown docker:docker /github/home /home/docker /__w /project -R
         - name: "Fetch code"
           if: matrix.cfg.skip == false
           run: |
