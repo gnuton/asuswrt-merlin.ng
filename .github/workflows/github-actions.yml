@@ -1,35 +1,7 @@
 name: Images 
 run-name: "Building images 🚀"
 on: [push]
-jobs:
-    debug-job:
-      name: Debug
-      runs-on: ubuntu-latest
-      steps:
-        - name: Run debug commands - pre
-          run: |
-            echo "--- Disk available ----"
-            df -h
-            echo "workspace dir ${{ github.workspace }}"
-            ls ${{ github.workspace }}
-            ls /mnt
-        - name: Maximize build space
-          uses: easimon/maximize-build-space@master
-          with:
-            root-reserve-mb: 512
-            swap-size-mb: 1024
-            remove-dotnet: 'true'
-            remove-android: 'true'
-            remove-haskell: 'true'
-            remove-codeql: 'true'
-        - name: Run debug commands - post
-          run: |
-            echo "--- Disk available ----"
-            df -h
-            echo "workspace dir ${{ github.workspace }}"
-            ls ${{ github.workspace }}
-            ls /mnt
-            
+jobs:          
     build-job:
       name: Build
       runs-on: ubuntu-latest
@@ -66,23 +38,10 @@ jobs:
         volumes:
           - /mnt:/project
       steps:
-        - name: Free Disk Space (Ubuntu)
-          uses: jlumbroso/free-disk-space@main
-          with:
-            tool-cache: false
-            android: true
-            dotnet: true
-            haskell: true
-            large-packages: true
-            docker-images: false
-            swap-storage: true
         - name: Run debug commands - post
           run: |
             echo "--- Disk available ----"
             df -h
-            echo "workspace dir ${{ github.workspace }}"
-            ls ${{ github.workspace }}
-            ls /mnt
         - name: Fix permissions in docker image
           if: matrix.cfg.skip == false
           run: |
@@ -168,10 +127,10 @@ jobs:
             fi
 
             echo "----- BUILD ${MODEL}-----"
-            make "${MODEL}"
+            # make "${MODEL}"
             # #### Just for testing ####
-            # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
+            mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
+            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
