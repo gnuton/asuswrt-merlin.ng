@@ -2,6 +2,14 @@ name: Images
 run-name: "Building images 🚀"
 on: [push]
 jobs:
+    debug-job:
+      name: Debug
+      runs-on: ubuntu-latest
+      steps:
+        - name: Run debug commands
+          run: |
+            echo "--- Disk available ----"
+            df -h
     build-job:
       name: Build
       runs-on: ubuntu-latest
