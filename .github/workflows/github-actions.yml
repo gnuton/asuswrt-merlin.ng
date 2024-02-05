@@ -48,7 +48,7 @@ jobs:
           run: |
             sudo chown docker:docker /github/home /home/docker /project -R
             echo "hack from https://github.com/actions/checkout/issues/1014"
-            sudo mkdir -m 1777 /__w -R
+            sudo mkdir -m 1777 /__w
         - name: Setup git config
           if: matrix.cfg.skip == false
           run: |
