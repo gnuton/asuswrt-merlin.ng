@@ -33,6 +33,7 @@ jobs:
           SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
+          ARTIFACTS_DIR: /project/artifacts
           CHANGELOG_FILE: "/tmp/CHANGELOG"
         options: --user docker 
         volumes:
@@ -54,7 +55,7 @@ jobs:
             git config --global push.default simple
         - name: "Fetch code"
           if: matrix.cfg.skip == false
-          run: | 
+          run: |
             cd /project
             if [[ $GITHUB_REF_TYPE == "tag" ]]; then
                 export BRANCH="master"
@@ -134,13 +135,9 @@ jobs:
             
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
-          env: 
-            ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           run: |
-            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
-
             mkdir -p "${ARTIFACTS_DIR}"
-
+            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
             echo "Removing images with boot loader."
             rm -rf ${IMAGE_PATH}/*cferom*
 
@@ -169,7 +166,7 @@ jobs:
           uses: actions/upload-artifact@v2
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
-            path: ${{ github.workspace }}/artifacts
+            path: ${ARTIFACTS_DIR}
     release-job:
       name: Publish
       needs: build-job
