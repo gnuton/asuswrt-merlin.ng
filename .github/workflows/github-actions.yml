@@ -46,10 +46,8 @@ jobs:
         - name: Fix permissions in docker image
           if: matrix.cfg.skip == false
           run: |
-            sudo chown docker:docker /github/home /home/docker /project -R
-            echo "hack from https://github.com/actions/checkout/issues/1014"
-            sudo mkdir -m 1777 /__w
-        - name: Setup git config
+            sudo chown docker:docker /github/home /home/docker /project /__w -R
+         - name: Setup git config
           if: matrix.cfg.skip == false
           run: |
             git config --global user.email "bot@gnuton.org"
