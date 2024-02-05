@@ -33,7 +33,7 @@ jobs:
           SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
-          ARTIFACTS_DIR: /project/artifacts
+          ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
         options: --user docker 
         volumes:
@@ -166,7 +166,7 @@ jobs:
           uses: actions/upload-artifact@v2
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
-            path: ${ARTIFACTS_DIR}
+            path: "/project/artifacts"
     release-job:
       name: Publish
       needs: build-job
