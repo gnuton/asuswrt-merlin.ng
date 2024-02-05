@@ -64,7 +64,7 @@ jobs:
           CHANGELOG_FILE: "/tmp/CHANGELOG"
         options: --user docker 
         volumes:
-          - ${{ github.workspace }}:/project
+          - /mnt:/project
       steps:
         - name: Free Disk Space (Ubuntu)
           uses: jlumbroso/free-disk-space@main
