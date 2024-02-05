@@ -6,10 +6,30 @@ jobs:
       name: Debug
       runs-on: ubuntu-latest
       steps:
-        - name: Run debug commands
+        - name: Run debug commands - pre
           run: |
             echo "--- Disk available ----"
             df -h
+            echo "workspace dir ${{ github.workspace }}"
+            ls ${{ github.workspace }}
+            ls /mnt
+        - name: Maximize build space
+          uses: easimon/maximize-build-space@master
+          with:
+            root-reserve-mb: 512
+            swap-size-mb: 1024
+            remove-dotnet: 'true'
+            remove-android: 'true'
+            remove-haskell: 'true'
+            remove-codeql: 'true'
+        - name: Run debug commands - post
+          run: |
+            echo "--- Disk available ----"
+            df -h
+            echo "workspace dir ${{ github.workspace }}"
+            ls ${{ github.workspace }}
+            ls /mnt
+            
     build-job:
       name: Build
       runs-on: ubuntu-latest
@@ -46,6 +66,23 @@ jobs:
         volumes:
           - ${{ github.workspace }}:/project
       steps:
+        - name: Free Disk Space (Ubuntu)
+          uses: jlumbroso/free-disk-space@main
+          with:
+            tool-cache: false
+            android: true
+            dotnet: true
+            haskell: true
+            large-packages: true
+            docker-images: false
+            swap-storage: true
+        - name: Run debug commands - post
+          run: |
+            echo "--- Disk available ----"
+            df -h
+            echo "workspace dir ${{ github.workspace }}"
+            ls ${{ github.workspace }}
+            ls /mnt
         - name: Fix permissions in docker image
           if: matrix.cfg.skip == false
           run: |
