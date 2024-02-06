@@ -124,10 +124,10 @@ jobs:
             fi
 
             echo "----- BUILD ${MODEL}-----"
-            # make "${MODEL}"
+            make "${MODEL}"
             # #### Just for testing ####
-            mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
+            # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
+            # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
