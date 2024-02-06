@@ -200,7 +200,7 @@ jobs:
       runs-on: ubuntu-latest
       if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v2
           with:
             ref: master
         - name: Setup git config
