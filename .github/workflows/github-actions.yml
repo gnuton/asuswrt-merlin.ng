@@ -43,7 +43,6 @@ jobs:
         - name: Run debug commands - post
           run: |
             cd /
-            rgrep event.json
             echo "--- Disk available ----"
             df -h
         - name: Fix permissions in docker image
