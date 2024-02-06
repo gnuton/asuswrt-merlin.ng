@@ -48,7 +48,7 @@ jobs:
           run: |
             sudo mkdir -p /home/runner/work/_temp/_github_workflow/
             sudo touch /home/runner/work/_temp/_github_workflow/event.json
-            sudo chown -R docker:docker /github/home /home/docker /home/runner/work/_temp/_github_workflow/ /__w /project
+            sudo chown -R docker:docker /github/home /home/docker /home/runner/work/_temp/_github_workflow/* /__w /project
         - name: Setup git config
           if: matrix.cfg.skip == false
           run: |
