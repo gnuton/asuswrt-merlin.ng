@@ -35,7 +35,7 @@ jobs:
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
-          PROJECTBASEDIR: "/project/asuswrt-merlin.ng" # Fixes https://github.com/SonarSource/sonarcloud-github-action/pull/58
+          PROJECTBASEDIR: "/project" # Fixes https://github.com/SonarSource/sonarcloud-github-action/pull/58
         options: --user docker 
         volumes:
           - /mnt:/project
