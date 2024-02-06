@@ -159,7 +159,7 @@ jobs:
             fi
         - name: "Archive artifacts"
           if: matrix.cfg.skip == false
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: "/project/artifacts"
@@ -193,7 +193,7 @@ jobs:
       runs-on: ubuntu-latest
       if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
       steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v4
           with:
             ref: master
         - name: Setup git config
@@ -203,7 +203,7 @@ jobs:
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
         - name: Download packages
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
