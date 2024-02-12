@@ -80,7 +80,22 @@ jobs:
         - name: "Fetch code" 
           run: | 
             cd /project
-            git clone --single-branch --depth 1 --branch master $GIT_REPO
+
+            if [[ $GITHUB_REF_TYPE == "tag" ]]; then
+                export TAG="${GITHUB_REF#refs/tags/}"
+                echo "Fetching code from tag $TAG"
+            else
+                export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+                echo "Fetching code from branch $BRANCH"
+            fi
+
+            if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
+                echo "Code fetched successfully."
+            else
+                echo "Failed to fetch code. Check the repository and settings."
+                exit 1
+            fi
+
             ls /home/docker
         - name: "Set version"
           run: |
