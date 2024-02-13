@@ -1,86 +1,56 @@
-name: Containers
+name: Images 
 run-name: "Building images 🚀"
 on: [push]
-jobs:
+jobs:          
     build-job:
       name: Build
       runs-on: ubuntu-latest
-      if: "!contains(github.event.commits[0].message, '[skip ci]')"
       strategy:
+        fail-fast: false
         matrix:
-          include:
-            - model: "dsl-ax82u"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax82u"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax82u_v2"
-              sdk: "src-rt-5.04axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax92u"
-              sdk: "src-rt-5.02axhnd"
-              ui: "default"
-              skip: "n"
-            - model: "rt-ax5400"
-              sdk: "src-rt-5.04axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "tuf-ax3000"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "tuf-ax5400"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "tuf-ax3000"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "tuf"
-              skip: "n"
-            - model: "tuf-ax5400"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "tuf"
-              skip: "n"
-            - model: "rt-ax95q"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-            - model: "rt-axe95q"
-              sdk: "src-rt-5.02axhnd.675x"
-              ui: "default"
-              skip: "n"
-      container: 
+          cfg:
+            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
+            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
+            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+      if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
+      container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
           MERLINUPDATE: "y"
-          MODEL: ${{ matrix.model }}
-          SDK: ${{ matrix.sdk }}
-          UI: ${{ matrix.ui }}
-          SKIP_BUILD: ${{ matrix.skip }}
+          MODEL: ${{ matrix.cfg.model }}
+          SDK: ${{ matrix.cfg.sdk }}
+          UI: ${{ matrix.cfg.ui }}
+          SKIP_BUILD: ${{ matrix.cfg.skip }}
           GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
+          ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
+          PROJECTBASEDIR: "/project" # REMOVE_ME: Fixes https://github.com/SonarSource/sonarcloud-github-action/pull/58
         options: --user docker 
         volumes:
-          - ${{ github.workspace }}:/project
+          - /mnt:/project # HACK: Use /mnt partition since bigger than others. This prevents to run out of space
       steps:
+        - name: Run debug commands - post
+          run: |
+            cd /
+            echo "--- Disk available ----"
+            df -h
         - name: Fix permissions in docker image
+          if: matrix.cfg.skip == false
           run: |
-            sudo chown docker:docker /github/home /home/docker /project -R
-        - name: Setup git config
+            sudo chown -R docker:docker /github/home /home/docker /project
+        - name: "Fetch code"
+          if: matrix.cfg.skip == false
           run: |
-            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
-            git config --global user.email "bot@gnuton.org"
-            git config --global user.name "Circle CI BOT"
-            git config --global push.default simple
-        - name: "Fetch code" 
-          run: | 
             cd /project
-
             if [[ $GITHUB_REF_TYPE == "tag" ]]; then
                 export TAG="${GITHUB_REF#refs/tags/}"
                 echo "Fetching code from tag $TAG"
@@ -98,6 +68,7 @@ jobs:
 
             ls /home/docker
         - name: "Set version"
+          if: matrix.cfg.skip == false
           run: |
             cd ${PROJECT_DIR}
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
@@ -112,12 +83,16 @@ jobs:
                 echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
             fi
         - name: Generate changelog
+          if: matrix.cfg.skip == false
           run: |
             cd ${PROJECT_DIR}
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
+          if: matrix.cfg.skip == false
           run: |
+            echo "----- Space available -----"
+            df -h
             echo "----- I am: $(id) -----"
             cd ${PROJECT_DIR}/release/${SDK}
             echo "----- Files in dir: $(pwd) -----"
@@ -145,28 +120,18 @@ jobs:
               echo "Enabling TUF UI"
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
-            echo "----- BUILD -----"
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Skipping build"
-              exit 0
-            fi
-            make ${MODEL}
+
+            echo "----- BUILD ${MODEL}-----"
+            make "${MODEL}"
             # #### Just for testing ####
             # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
             # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
-          env: 
-            ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
+          if: matrix.cfg.skip == false
           run: |
-            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
-
             mkdir -p "${ARTIFACTS_DIR}"
-            if [[ ${SKIP_BUILD} == "Y" ]]; then
-              echo "Nothing to persist. Skipping."
-              exit 0
-            fi
-
+            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
             echo "Removing images with boot loader."
             rm -rf ${IMAGE_PATH}/*cferom*
 
@@ -191,11 +156,11 @@ jobs:
               cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
             fi
         - name: "Archive artifacts"
+          if: matrix.cfg.skip == false
           uses: actions/upload-artifact@v2
           with:
-            name: release-${{ matrix.model }}-${{ matrix.ui }}
-            path: ${{ github.workspace }}/artifacts
-
+            name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
+            path: "/project/artifacts"
     release-job:
       name: Publish
       needs: build-job
@@ -203,7 +168,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       steps:
         - name: Download packages
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
         - name: Get release version
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
@@ -236,7 +201,7 @@ jobs:
             git config --global user.name "Circle CI BOT"
             git config --global push.default simple
         - name: Download packages
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
@@ -259,5 +224,5 @@ jobs:
             cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [skip ci]" -a
+            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
             git push origin
