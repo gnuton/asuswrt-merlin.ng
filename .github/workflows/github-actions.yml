@@ -122,10 +122,10 @@ jobs:
             fi
 
             echo "----- BUILD ${MODEL}-----"
-            make "${MODEL}"
+            #make "${MODEL}"
             # #### Just for testing ####
-            # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
+            mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
+            echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
             
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
@@ -165,14 +165,16 @@ jobs:
       name: Publish
       needs: build-job
       runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/')
       steps:
         - name: Download packages
           uses: actions/download-artifact@v4
         - name: Get release version
           run: |
+            cd project
+            tree
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
             echo "prerelease=$( [[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False )" >> $GITHUB_ENV
+            exit 1
         - name: Publish archives and packages
           uses: softprops/action-gh-release@v1
           with:
@@ -182,7 +184,7 @@ jobs:
             prerelease: ${{ env.prerelease }}
             files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
           env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN_FALSE }}
     
     
     manifest-job:
