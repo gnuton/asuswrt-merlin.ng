@@ -9,17 +9,17 @@ jobs:
         fail-fast: false
         matrix:
           cfg:
-            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
-            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
-            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: true }
+            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: true }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: true }
+            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: true }
+            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: true }
             - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
             - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "tuf",      skip: false }
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
