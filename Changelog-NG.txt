@@ -1,6 +1,6 @@
 Asuswrt-Merlin Changelog
 
-3004.388.6_0-gnuton1 (XX-XXX-XXXX)
+3004.388.6_0-gnuton1 (25-Feb-2024)
   - ADDED: Support for RT-AX5400
 
 3004.388.6 (20-Jan-2024)
