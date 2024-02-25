@@ -1,0 +1,8 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: February 25, 2024
+Release: 3004.388.6_0-gnuton1
+
+  - ADDED: Support for RT-AX5400
+
+
