@@ -142,7 +142,7 @@ then
 	cp release/src-rt-5.02L.07p2axhnd/targets/cfe/prebuilt/* $REPO/release/src-rt-5.02L.07p2axhnd/targets/cfe/sysdeps/$BUILD_NAME/
 	rsync -a --del release/src-rt-5.02L.07p2axhnd/router-sysdep/ $REPO/release/src-rt-5.02L.07p2axhnd/router-sysdep.$BUILD_NAME_LC
 
-elif [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "XT12" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ] || [ "$BUILD_NAME" == "RT-AX86U_PRO" ] || [ "$BUILD_NAME" == "RT-AX88U_PRO" ] || [ "$BUILD_NAME" == "RT-AX82U_V2" ] || [ "$BUILD_NAME" == "RT-AX5400" ] || [ "$BUILD_NAME" == "TUF-AX3000_V2" ]
+elif [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "XT12" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ] || [ "$BUILD_NAME" == "RT-AX86U_PRO" ] || [ "$BUILD_NAME" == "RT-AX88U_PRO" ] || [ "$BUILD_NAME" == "RT-AX82U_V2" ] || [ "$BUILD_NAME" == "RT-AX5400" ] || [ "$BUILD_NAME" == "TUF-AX3000_V2" ] || [ "$BUILD_NAME" == "RT-AX58U_V2"  ]
 then
         SDK="_4912hnd"
         ARCH="_arm"
@@ -303,6 +303,15 @@ then
    cp -a ./release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/*  $REPO/release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/$BUILD_NAME/
 fi
 
+if [ "$BUILD_NAME" == "RT-AX58U_V2" ]
+then
+   cp -a ./release/src-rt-5.04axhnd.675x/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o $REPO/release/src-rt-5.04axhnd.675x/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o
+   cp -a ./release/src/router/hnd_extra/prebuilt/* $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt
+
+   mkdir -p $REPO/release/src-rt-5.04axhnd.675x/bootloaders/obj.rt-ax58u_v2/uboot/drivers/net/bcmbca/rtk
+   cp -a ./release/src-rt-5.04axhnd.675x/bootloaders/u-boot-2019.07/drivers/net/bcmbca/rtk/RTK_OBJS.o $REPO/release/src-rt-5.04axhnd.675x/bootloaders/obj.rt-ax58u_v2/uboot/drivers/net/bcmbca/rtk
+   cp -a ./release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/*  $REPO/release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/$BUILD_NAME/
+fi
 
 # Anything newer than SDK6
 if [ "$SDK" != "" ]
