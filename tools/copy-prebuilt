@@ -303,6 +303,10 @@ then
    cp -a ./release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/*  $REPO/release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/$BUILD_NAME/
 fi
 
+if [ "$BUILD_NAME" == "RT-AX58U_V2" ]
+then
+   cp -a ./release/src-rt-5.04axhnd.675x/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o $REPO/release/src-rt-5.04axhnd.675x/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o
+fi
 
 # Anything newer than SDK6
 if [ "$SDK" != "" ]
