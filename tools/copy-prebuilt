@@ -306,6 +306,7 @@ fi
 if [ "$BUILD_NAME" == "RT-AX58U_V2" ]
 then
    cp -a ./release/src-rt-5.04axhnd.675x/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o $REPO/release/src-rt-5.04axhnd.675x/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o
+   cp -a ./release/src/router/hnd_extra/prebuilt/* $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt
 fi
 
 # Anything newer than SDK6
