@@ -207,6 +207,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			}
 			else if (get_model() == MODEL_RTAX58U || get_model() == MODEL_RTAX56U || get_model() == MODEL_DSLAX82U || get_model() == MODEL_RTAX95Q )
 				strcpy(result, "1500");
+			else if (get_model() == MODEL_TUFAX3000_V2)
+				strcpy(result, "1700");
 			else
 #endif // BCM4912
 #endif
