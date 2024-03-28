@@ -1,7 +1,8 @@
 Asuswrt-Merlin Changelog
 
 3004.388.6_2-gnuton1 (xx-xxxx-2024)
-  - ADDED: Support for TUF-AX3000_V2
+  - ADDED: Support for TUF-AX3000 V2
+  - ADDED: Support for RT-AX58U V2
 
 3004.388.6_2 (26-Feb-2024)
   - UPDATED: dnsmasq to 2.90 (resolves CVE 2023-50868 and CVE 2023-50387).
