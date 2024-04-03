@@ -224,6 +224,8 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 
 	while (fgets(line, sizeof(line), fp) != NULL)
 	{
+		desc[0] = '\0';
+
 		if (sscanf(line,
 			"%3[^:]:"
 			"%5[^:]:"
@@ -231,7 +233,7 @@ ej_get_upnp_array(int eid, webs_t wp, int argc, char_t **argv)
 			"%5[^:]:"
 			"%14[^:]:"
 			"%199[^\n]",
-			proto, eport, iaddr, iport, timestamp, desc) < 6) continue;
+			proto, eport, iaddr, iport, timestamp, desc) < 5) continue;
 
 		if (str_escape_quotes(desc2, desc, sizeof(desc2)) == 0)
 			strlcpy(desc2, desc, sizeof(desc2));
@@ -672,8 +674,129 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 	ret += websWrite(wp, "[]];\n");
 	return ret;
 }
+
+int
+ej_lan_ipv6_clients_array(int eid, webs_t wp, int argc, char_t **argv)
+{
+	FILE *fp;
+	char buf[64+32+8192+1];
+	char addrbuf[64];
+	char *hostname, *macaddr;
+	int ret = 0, len;
+
+	ret += websWrite(wp, "var ipv6clientarray = {};\n");
+
+	if (!(ipv6_enabled() && is_routing_enabled()))
+		return ret;
+
+	/* Refresh lease file to get actual expire time */
+	killall("dnsmasq", SIGUSR2);
+	usleep(100 * 1000);
+
+	get_ipv6_client_info();
+	get_ipv6_client_list();
+
+	if ((fp = fopen(IPV6_CLIENT_LIST, "r")) == NULL) {
+		_dprintf("can't open %s: %s", IPV6_CLIENT_LIST, strerror(errno));
+		return ret;
+	}
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		char *ptr = buf;
+
+		ptr = strsep(&ptr, "\n");
+		hostname = strsep(&ptr, " ");
+		macaddr = strsep(&ptr, " ");
+		if (!macaddr || *macaddr == '\0' ||
+		    !ptr || *ptr == '\0' ||
+		    !strcmp(hostname, "*") ||
+		    !strcmp(hostname, "<unknown>"))
+			continue;
+
+		if (strlen(hostname) > 32)
+			sprintf(hostname + 29, "...");
+
+		while (ptr && *ptr) {
+			char *next = strsep(&ptr, ",\n");
+			if (next && *next) {
+				/* Workaround - TrendMicro truncates last two bytes, and we pad them with "00" to generate a valid IP  */
+				strlcpy(addrbuf, next, sizeof(addrbuf));
+				len = strlen(addrbuf);
+				if (len > 2) {
+					addrbuf[len-1] = '0';
+					addrbuf[len-2] = '0';
+				}
+				ret += websWrite(wp, "ipv6clientarray[\"%s\"] = \"%s\";\n", addrbuf, hostname);
+			}
+		}
+	}
+	fclose(fp);
+
+	return ret;
+}
 #endif
 
+
+#ifdef RTCONFIG_BWDPI
+int parseTcFilter(webs_t wp, const char *interface) {
+	char command[256];
+	char buffer[1024];
+	int foundmark=-1, foundflowid=-1, lastmark=-1;
+	FILE *fp;
+	int ret;
+	char *mark = NULL;
+	char *flowid = NULL;
+	int value, value2;
+
+	ret = websWrite(wp, "var tcdata_filter_array = [];\n");
+
+	if (nvram_get_int("qos_type") != 1 || nvram_get_int("qos_enable") == 0)
+		return ret;
+
+	snprintf(command, sizeof(command), "tc filter show dev %s", interface);
+
+	if ((fp = popen(command, "r")) == NULL)
+		return ret;
+
+	while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+		flowid = strstr(buffer, "flowid ");
+		if (flowid) {
+			sscanf(flowid, "flowid 1:%d", &foundflowid);
+			if (foundflowid < 10 || foundflowid > 20)
+				foundflowid = -1;
+				continue;
+		}
+
+		mark = strstr(buffer, "mark ");
+		if (mark) {
+			if (sscanf(mark, "mark %x %x", &value, &value2) != 2 || value2 != 0xc03f0000) {
+				foundflowid = -1;
+				continue;
+			}
+			foundmark = (value & 0x3F0000)/0xFFFF;
+			if (foundmark == lastmark) {
+				foundmark += 50;
+			}
+		}
+
+		if (foundflowid != -1 && foundmark != -1) {
+			ret += websWrite(wp, "tcdata_filter_array[%d] = %d;\n", foundmark,foundflowid);
+			lastmark = foundmark;
+			foundflowid = -1;
+			foundmark = -1;
+		}
+	}
+
+	pclose(fp);
+	return ret;
+}
+
+
+int ej_tcfilter_array(int eid, webs_t wp, int argc, char_t **argv) {
+
+	return parseTcFilter(wp, "br0");
+}
+#endif
 
 int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	FILE *fp;
@@ -725,6 +848,7 @@ int ej_tcclass_dump_array(int eid, webs_t wp, int argc, char_t **argv) {
 	        }
 		unlink("/tmp/tcclass.txt");
 	}
+
 	return ret;
 }
 

@@ -24,8 +24,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -37,8 +35,6 @@
 
 #include "packet_id.h"
 #include "reliable.h"
-
-#include "mock_msg.h"
 
 struct test_packet_id_write_data {
     struct {

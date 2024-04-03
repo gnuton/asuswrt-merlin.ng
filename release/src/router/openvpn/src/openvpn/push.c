@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -248,8 +246,14 @@ server_pushed_info(struct context *c, const struct buffer *buffer,
          * for management greeting and we don't want to confuse the client
          */
         struct buffer out = alloc_buf_gc(256, &gc);
-        buf_printf(&out, ">%s:%s", "INFOMSG", m);
-        management_notify_generic(management, BSTR(&out));
+        if (buf_printf(&out, ">%s:%s", "INFOMSG", m))
+        {
+            management_notify_generic(management, BSTR(&out));
+        }
+        else
+        {
+            msg(D_PUSH_ERRORS, "WARNING: Received INFO command is too long, won't notify management client.");
+        }
 
         gc_free(&gc);
     }

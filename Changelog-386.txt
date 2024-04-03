@@ -1,8 +1,61 @@
 Asuswrt-Merlin Changelog
 ========================
 
+386.13_0-gnuton1 (xx-xx-xxxx)
+- Merged upstream 386.13
+
+386.13 (xx-xx-xxxx)
+  - NOTE: all the models supported by Asuswrt-Merlin on the
+          386_xx series are now officialy on Asus' End of Life
+          list, which means unless there are new major security
+          issues, no new updates will be provided by Asus.
+
+          Asuswrt-Merlin will tentatively attempt to continue to
+          provide updates and fixes until the end of 2024, at which
+          point all the 386_xx models will no longer be actively
+          maintained.
+
+  - UPDATED: openvpn to 2.6.10.
+  - UPDATED: miniupnpd to 2.3.6.
+  - UPDATED: tor to 0.4.7.16.
+  - UPDATED: OUI database used by networkmap and the webui.
+  - CHANGED: QOS/Classification page can now resolve local IPv6
+             addresses.
+  - CHANGED: Display tracked connections on the QoS/Classification
+             page even if QoS isn't set to Adaptive QoS.
+  - CHANGED: Prevent the use of Apple's iCloud Private Relay
+             when enabling "Prevent client auto DoH".
+  - FIXED: CVE-2023-48795 in dropbear.
+  - FIXED: Various issues with the QOS Classification page.
+  - FIXED: UPNP leases without a description would not appear
+           on the Forwarded Ports page.
+  - FIXED: web server crashing when entering certain settings on
+           the Network Filter Page.  Bypassed bug in closed source
+           validation code for now.
+  - FIXED: Concurrent cronjob changes through cru could cause
+           collisions, leading to missing jobs (dave14305)
+
 386.12_0-gnuton1 (3-Apr-2024)
  - UPDATED: Merged with GPL 386_51997.
+
+386.12_6 (26-Feb-2024)
+  - UPDATED: dnsmasq to 2.90 (resolves CVE 2023-50868 and CVE 2023-50387).
+
+
+386.12_4 (21-Nov-2023)
+  - UPDATED: openvpn to 2.6.8 (fixes a crash introduced in 2.6.7)
+
+
+386.12_2 (12-Nov-2023)
+  - UPDATED: openssl to 1.1.1w.
+  - UPDATED: curl to 8.4.0.
+  - UPDATED: openvpn to 2.6.7.
+  - FIXED: WPS not working on SDK6/SDK7 devices (affecting
+           RT-AC68U and RT-AC88U/3100/5300)
+  - FIXED: dcd constantly crashing (updated Trend Micro
+           components)
+
+>>>>>>> 386.13-beta1
 
 386.12 (4-Sept-2023)
   - UPDATED: Merged with GPL 386_51997.

@@ -5,9 +5,9 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2021-2023 Arne Schwabe <arne@rfc2549.org>
- *  Copyright (C) 2021-2023 Antonio Quartulli <a@unstable.cc>
- *  Copyright (C) 2021-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2021-2024 Arne Schwabe <arne@rfc2549.org>
+ *  Copyright (C) 2021-2024 Antonio Quartulli <a@unstable.cc>
+ *  Copyright (C) 2021-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -26,8 +26,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #if defined(ENABLE_DCO)
@@ -389,6 +387,12 @@ dco_check_startup_option(int msglevel, const struct options *o)
         return false;
     }
 
+    if (o->management_flags & MF_QUERY_PROXY)
+    {
+        msg(msglevel, "Note: --management-query-proxy disables data channel offload.");
+        return false;
+    }
+
     /* now that all options have been confirmed to be supported, check
      * if DCO is truly available on the system
      */
@@ -402,7 +406,7 @@ dco_check_option(int msglevel, const struct options *o)
     if (o->enable_ncp_fallback
         && !tls_item_in_cipher_list(o->ciphername, dco_get_supported_ciphers()))
     {
-        msg(msglevel, "Note: --data-cipher-fallback with cipher '%s' "
+        msg(msglevel, "Note: --data-ciphers-fallback with cipher '%s' "
             "disables data channel offload.", o->ciphername);
         return false;
     }
@@ -511,7 +515,7 @@ dco_multi_get_localaddr(struct multi_context *m, struct multi_instance *mi,
 #if ENABLE_IP_PKTINFO
     struct context *c = &mi->context;
 
-    if (!(c->options.sockflags & SF_USE_IP_PKTINFO))
+    if (!proto_is_udp(c->c2.link_socket->info.proto) || !(c->options.sockflags & SF_USE_IP_PKTINFO))
     {
         return false;
     }

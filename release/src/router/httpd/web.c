@@ -4316,9 +4316,13 @@ int validate_apply(webs_t wp, json_object *root)
 				/* Validating input value
 				 * return 1:pass 0:fail
 				 */
-				if(!validate_apply_input_value(name, value)){
-					dbg("validate %s=%s is illegal\n", name, value);
-					continue;
+
+// KLUDGE - temporary woarkaround for port validation
+				if(strcmp(name, "filter_lwlist")) {
+					if(!validate_apply_input_value(name, value)){
+						dbg("validate %s=%s is illegal\n", name, value);
+						continue;
+					}
 				}
 
 #ifdef RTCONFIG_CFGSYNC
@@ -32558,6 +32562,7 @@ struct ej_handler ej_handlers[] = {
 #endif
 #ifdef RTCONFIG_BWDPI
 	{ "bwdpi_conntrack", ej_bwdpi_conntrack},
+	{ "get_tcfilter_array", ej_tcfilter_array},
 #endif
 	{ "bandwidth", ej_bandwidth},
 #ifdef RTCONFIG_DSL
@@ -32856,6 +32861,7 @@ struct ej_handler ej_handlers[] = {
 	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
 #endif
 	{ "get_ipv6net_array", ej_lan_ipv6_network_array},
+	{ "get_ipv6clients_array" , ej_lan_ipv6_clients_array},
 #endif
 	{ "get_leases_array", ej_get_leases_array},
 	{ "get_vserver_array", ej_get_vserver_array},

@@ -5,9 +5,9 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
- *  Copyright (C) 2008-2023 David Sommerseth <dazo@eurephia.org>
+ *  Copyright (C) 2008-2024 David Sommerseth <dazo@eurephia.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -24,7 +24,7 @@
  */
 
 /**
- * @file Control Channel SSL/Data dynamic negotion Module
+ * @file Control Channel SSL/Data dynamic negotiation Module
  * This file is split from ssl.c to be able to unit test it.
  */
 
@@ -37,8 +37,6 @@
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -260,8 +258,8 @@ ncp_get_best_cipher(const char *server_list, const char *peer_info,
 
     const char *peer_ncp_list = tls_peer_ncp_list(peer_info, &gc_tmp);
 
-    /* non-NCP client without OCC?  "assume nothing" */
-    /* For client doing the newer version of NCP (that send IV_CIPHER)
+    /* non-NCP clients without OCC?  "assume nothing" */
+    /* For client doing the newer version of NCP (that send IV_CIPHERS)
      * we cannot assume that they will accept remote_cipher */
     if (remote_cipher == NULL
         || (peer_info && strstr(peer_info, "IV_CIPHERS=")))

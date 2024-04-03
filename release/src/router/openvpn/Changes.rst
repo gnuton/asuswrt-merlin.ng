@@ -1,3 +1,270 @@
+Overview of changes in 2.6.10
+=============================
+Security fixes
+--------------
+- CVE-2024-27459: Windows: fix a possible stack overflow in the
+  interactive service component which might lead to a local privilege
+  escalation.
+  Reported-by: Vladimir Tokarev <vtokarev@microsoft.com>
+
+- CVE-2024-24974: Windows: disallow access to the interactive service
+  pipe from remote computers.
+  Reported-by: Vladimir Tokarev <vtokarev@microsoft.com>
+
+- CVE-2024-27903: Windows: disallow loading of plugins from untrusted
+  installation paths, which could be used to attack openvpn.exe via
+  a malicious plugin.  Plugins can now only be loaded from the OpenVPN
+  install directory, the Windows system directory, and possibly from
+  a directory specified by HKLM\SOFTWARE\OpenVPN\plugin_dir.
+  Reported-by: Vladimir Tokarev <vtokarev@microsoft.com>
+
+Bug fixes
+---------
+- Windows: if the win-dco driver is used (default) and the GUI requests
+  use of a proxy server, the connection would fail.  Disable DCO in
+  this case.  (Github: #522)
+
+- Compression: minor bugfix in checking option consistency vs. compiled-in
+  algorithm support
+
+- systemd unit files: remove obsolete syslog.target
+
+User visible changes
+--------------------
+- Update copyright notices to 2024
+
+New features
+------------
+- t_client.sh can now run pre-tests and skip a test block if needed
+  (e.g. skip NTLM proxy tests if SSL library does not support MD4)
+
+Documentation
+-------------
+- remove license warnings about mbedTLS linking (README.mbedtls)
+
+- update documentation references in systemd unit files
+
+- sample config files: remove obsolete tls-*.conf files
+
+- document that auth-user-pass may be inlined
+
+
+Overview of changes in 2.6.9
+============================
+
+Security fixes
+--------------
+- Windows Installer: fix CVE 2023-7235 where installing to a non-default
+  directory could lead to a local privilege escalation.
+  Reported by Will Dormann <will.dormann@analygence.com>.
+
+New features
+------------
+- add support for building with mbedTLS 3.x.x
+
+- new option "--force-tls-key-material-export" to only accept clients
+  that can do TLS keying material export to generate session keys
+  (mostly an internal option to better deal with TLS 1.0 PRF failures).
+
+- Windows: bump vcpkg-ports/pkcs11-helper to 1.30
+
+- Log incoming SSL alerts in easier to understand form and move logging
+  from "--verb 8" to "--verb 3".
+
+- protocol_dump(): add support for printing "--tls-crypt" packets
+
+
+User visible changes
+--------------------
+- license change is now complete, and all code has been re-licensed
+  under the new license (still GPLv2, but with new linking exception
+  for Apache2 licensed code).  See COPYING for details.
+
+  Code that could not be re-licensed has been removed or rewritten.
+
+- the original code for the "--tls-export-cert" feature has been removed
+  (due to the re-licensing effort) and rewritten without looking at the
+  original code.  Feature-compatibility has been tested by other developers,
+  looking at both old and new code and documentation, so there *should*
+  not be a user-visible change here.
+
+- IPv6 route addition/deletion are now logged on the same level (3) as
+  for IPv4.  Previously IPv6 was always logged at "--verb 1".
+
+- better handling of TLS 1.0 PRF failures in the underlying SSL library
+  (e.g. on some FIPS builds) - this is now reported on startup, and
+  clients before 2.6.0 that can not use TLS EKM to generate key material
+  are rejected by the server.  Also, error messages are improved to see
+  what exactly failed.
+
+- packaged sample-keys renewed (old keys due to expire in October 2024)
+
+
+Bug fixes / Code cleanup
+------------------------
+- Windows GUI: always update tray icon on state change (Github: #669)
+  (for persistent connection profiles, "connecting" state would not show)
+
+- FreeBSD: for servers with multiple clients, reporting of peer traffic
+  statistics would fail due to insufficient buffer space (Github: #487)
+
+- make interaction between "--http-proxy-user-pass" and "--http-proxy"
+  more consistent
+
+- doc: improve documentation on "--http-proxy-user-pass"
+
+- doc: improve documentation for IV_ variables and IV_PROTO bits
+
+- doc: improve documentation on CMake requirements
+
+- fix various coverity-reported complains (signed/unsigned comparison etc),
+  none of them actual bugs
+
+- NTLMv2: increase phase 2 buffers so things actually work
+
+- NTLM: add extra buffer size verification checks
+
+- doc: improve documentation on "--tls-crypt-v2-verify"
+
+- autoconf on Linux: improve error reporting for missing libraries - in
+  case the problem came due to missing "pkg-config" the previous error
+  was misleading.  Now clearly report that Linux builds require "pkg-config"
+  and abort if not found.
+
+- MacOS X: fix "undefined behaviour" found by UBSAN in get_default_gateway()
+  (IV_HWADDR), using getifaddrs(3) instead of old and convoluted
+  SIOCGIFCONF API.
+
+- OpenSolaris: correctly implement get_default_gateway() (IV_HWADDR), using
+  SIOCGIFHWADDR instead of SIOCGIFCONF API.
+
+- OpenBSD: work around route socket issue in get_default_gateway()
+  ("--show-gateway") where RA_IFP must not be set on the query message,
+  otherwise kernel will return EINVAL.
+
+- doc: improve documentation of --x509-track
+
+- bugfix: in UDP mode when exceeding "--max-clients", OpenVPN would
+  incorrectly close the connection to "peer-id 0".  Fix by correctly
+  initializing peer_id with MAX_PEER_ID.
+
+- Windows: do not attempt to delete DNS or WINS servers if they are not set
+
+- configure: get rid of AC_TYPE_SIGNAL macro (unused)
+
+- Linux DCO: add missing check for nl_socket_alloc() failure
+
+- bugfix: check_session_buf_not_used() was not working as planned
+
+- remove dead test code for TEST_GET_DEFAULT_GATEWAY (use "--show-gateway")
+
+- doc: better document "--tls-exit" option
+
+- Github Actions: clean up LibreSSL builds
+
+
+
+Overview of changes in 2.6.8
+============================
+
+Bug fixes / Code cleanup
+------------------------
+- SIGSEGV crash: Do not check key_state buffers that are in S_UNDEF state
+  (Github #449) - the new sanity check function introduced in 2.6.7
+  sometimes tried to use a NULL pointer after an unsuccessful TLS handshake
+
+- Windows: --dns option did not work when tap-windows6 driver was used,
+  because internal flag for "apply DNS option to DHCP server" wasn't set
+  (Github #447)
+
+- Windows: fix status/log file permissions, caused by regression after
+  changing to CMake build system (Github: #454, Trac: #1430)
+
+- Windows: fix --chdir failures, also caused by error in CMake build system
+  (Github #448)
+
+- doc: fix typos in documentation
+
+User visible changes
+--------------------
+- Windows: print warning if pushed options require DHCP (e.g. DOMAIN-SEARCH)
+  and driver in use does not use DHCP (wintun, dco).
+
+
+Overview of changes in 2.6.7
+============================
+
+Bug fixes / Code cleanup
+------------------------
+- CVE-2023-46850 OpenVPN versions between 2.6.0 and 2.6.6 incorrectly use
+  a send buffer after it has been free()d in some circumstances, causing
+  some free()d memory to be sent to the peer.  All configurations using TLS
+  (e.g. not using --secret) are affected by this issue.
+  (found while tracking down CVE-2023-46849 / Github #400, #417)
+
+- CVE-2023-46849 OpenVPN versions between 2.6.0 and 2.6.6 incorrectly
+  restore "--fragment" configuration in some circumstances, leading to
+  a division by zero when "--fragment" is used.  On platforms where
+  division by zero is fatal, this will cause an OpenVPN crash.
+
+  Reported by Niccolo Belli <niccolo.belli@linuxsystems.it> and WIPocket
+  (Github #400, #417).
+
+- cleanup bits and pieces of documentation
+
+- cleanup code to remove strlen() related warnings in buf_catrunc()
+
+- DCO on Linux: fix NULL-pointer crash if "--multihome" is used together
+  with "--proto tcp"
+
+- work around build fails caused by LibreSSL not longer having engine support
+
+
+User visible changes
+--------------------
+- DCO: warn if DATA_V1 packets are sent by the other side - this a hard
+  incompatibility between a 2.6.x client connecting to a 2.4.0-2.4.4 server,
+  and the only fix is to use "--disable-dco".
+
+- Remove OpenSSL Engine method for loading a key.  This had to be removed
+  because the original author did not agree to relicensing the code with
+  the new linking exception added.  This was a somewhat obsolete feature
+  anyway as it only worked with OpenSSL 1.x, which is end-of-support.
+
+- add warning if p2p NCP client connects to a p2mp server - this is a
+  combination that used to work without cipher negotiation (pre 2.6 on
+  both ends), but would fail in non-obvious ways with 2.6 to 2.6.
+
+- add warning to "--show-groups" that not all supported groups are listed
+  (this is due the internal enumeration in OpenSSL being a bit weird,
+  omitting X448 and X25519 curves).
+
+- "--dns": remove support for "exclude-domains" argument
+  (this was a new 2.6 option, with no backend support implemented yet
+  on any platform, and it turns out that no platform supported it at all -
+  so remove option again)
+
+- warn user if INFO control message too long, do not forward to management
+  client (safeguard against protocol-violating server implementations)
+
+
+New features
+------------
+- DCO-WIN: get and log driver version (for easier debugging).
+
+- print "peer temporary key details" in TLS handshake
+
+- log OpenSSL errors on failure to set certificate, for example if the
+  algorithms used are in acceptable to OpenSSL (misleading message would
+  be printed in cryptoapi / pkcs#11 scenarios)
+
+- add CMake build system for MinGW and MSVC builds
+
+- remove old MSVC build system
+
+- improve cmocka unit test building for Windows
+
+
 Overview of changes in 2.6.6
 ============================
 
@@ -425,7 +692,7 @@ Improve DCO-related logging in many places.
 DCO/Linux robustness fixes.
 
 DCO/Linux TCP crashbug (recvfrom(-1) endless loop) worked around - root
-    cause has not been found, but the condition is detected and the 
+    cause has not been found, but the condition is detected and the
     offending client is removed, instead of crashing the server.
 
 Rename internal TLS state TM_UNTRUSTED to TM_INITIAL, always start new
@@ -1237,7 +1504,7 @@ Control channel encryption (``--tls-crypt``)
 Asynchronous push reply
     Plug-ins providing support for deferred authentication can benefit from a more
     responsive authentication where the server sends PUSH_REPLY immediately once
-    the authentication result is ready, instead of waiting for the the client to
+    the authentication result is ready, instead of waiting for the client to
     to send PUSH_REQUEST once more.  This requires OpenVPN to be built with
     ``./configure --enable-async-push``.  This is a compile-time only switch.
 

@@ -5,7 +5,7 @@
 #             packet encryption, packet authentication, and
 #             packet compression.
 #
-#  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
 #  Copyright (C) 2006-2012 Alon Bar-Lev <alon.barlev@gmail.com>
 #
 
@@ -63,7 +63,8 @@ dist_noinst_DATA = \
 	README.plugins \
 	tls-crypt-v2.txt \
 	$(openvpn_sections) \
-	$(openvpn_examples_sections)
+	$(openvpn_examples_sections) \
+	CMakeLists.txt
 
 EXTRA_DIST = tests
 
