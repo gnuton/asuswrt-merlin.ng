@@ -1,7 +1,7 @@
 Asuswrt-Merlin Changelog
 ========================
 
-386.12_0-gnuton1 (XX-XXX-2023)
+386.12_0-gnuton1 (3-Apr-2024)
  - UPDATED: Merged with GPL 386_51997.
 
 386.12 (4-Sept-2023)
