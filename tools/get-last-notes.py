@@ -29,5 +29,5 @@ with open(CHANGELOG_FILE) as f:
     
     print(MSG)
     print('Date: %s' % today.strftime("%B %d, %Y"))
-    #print('Release: %s\n' % latest_release)
+    print('Release: %s\n' % latest_release)
     print("".join(latest_changes))
