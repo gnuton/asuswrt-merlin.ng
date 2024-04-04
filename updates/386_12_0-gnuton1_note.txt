@@ -1,0 +1,8 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: April 03, 2024
+Release: 386.12_0-gnuton1
+
+ - UPDATED: Merged with GPL 386_51997.
+
+
