@@ -1,0 +1,9 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: April 04, 2024
+Release: 3004.388.6_2-gnuton1
+
+  - ADDED: Support for TUF-AX3000 V2
+  - ADDED: Support for RT-AX58U V2
+
+
