@@ -79,7 +79,7 @@ Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/
 * [ZenWifi ET8 / RT-AXE95Q](https://www.asus.com/networking-iot-servers/whole-home-mesh-wifi-system/zenwifi-wifi-systems/asus-zenwifi-et8/) 
 
 386.x firmware:
-* [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) ⬇️ Download latest release: [386.10_0-gnuton1](https://github.com/gnuton/asuswrt-merlin.ng/releases/download/388.2_2_0-gnuton1/DSL-AC68U_386.10_0-gnuton1_DSL_1.0.5.3.trx) ⬇️
+* [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) ⬇️ Download latest stable [386.12_0-gnuton1](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/386.12_0-gnuton1) ⬇️
 
 If you cannot find your router in the above list, please read [🔥 here 🔥](https://github.com/gnuton/asuswrt-merlin.ng/issues/523)!
 
