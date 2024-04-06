@@ -44,6 +44,7 @@ else
 	buildno=$(echo $fullver | cut -d. -f3)
 
 	extendno="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#EXT//')"
+	extendno=$(echo $extendno | sed s/#.*//;)
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
 	nvram set webs_state_info=${firmbase}_${firmver}_${buildno}_${extendno}
