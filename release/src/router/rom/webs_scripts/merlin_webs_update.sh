@@ -37,13 +37,13 @@ if [ "$?" != "0" ]; then
 	nvram set webs_state_error=1
 else
 
-	fullver=$(grep $model /tmp/wlan_update.txt | sed s/.*#FW//;)
+	fullver="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#FW//')"
 	fullver=$(echo $fullver | sed s/#.*//;)
 	firmbase=$(echo $fullver | cut -d. -f1)
 	firmver=$(echo $fullver | cut -d. -f2)
 	buildno=$(echo $fullver | cut -d. -f3)
 
-	extendno=$(grep "$model" /tmp/wlan_update.txt | sed -n 's/.*#EXT\([0-9]*\).*/\1/p' | awk 'END {print}')
+	extendno="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#EXT//')"
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
 	nvram set webs_state_info=${firmbase}_${firmver}_${buildno}_${extendno}
