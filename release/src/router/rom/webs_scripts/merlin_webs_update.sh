@@ -1,5 +1,5 @@
 #!/bin/sh
-set -x;
+set -u;
 wget_options="-q -t 2 -T 30"
 
 fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates/"
@@ -37,13 +37,13 @@ if [ "$?" != "0" ]; then
 	nvram set webs_state_error=1
 else
 
-	fullver=$(grep $model /tmp/wlan_update.txt | sed s/.*#FW//;)
+	fullver="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#FW//')"
 	fullver=$(echo $fullver | sed s/#.*//;)
 	firmbase=$(echo $fullver | cut -d. -f1)
 	firmver=$(echo $fullver | cut -d. -f2)
 	buildno=$(echo $fullver | cut -d. -f3)
 
-	extendno=$(grep $model /tmp/wlan_update.txt | sed s/.*#EXT//;)
+	extendno="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#EXT//')"
 	extendno=$(echo $extendno | sed s/#.*//;)
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
