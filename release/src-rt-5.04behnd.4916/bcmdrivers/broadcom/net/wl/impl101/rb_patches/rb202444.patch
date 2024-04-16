@@ -1,0 +1,52 @@
+Index: main/components/apps/wbd2/blanket/blanket.c
+===================================================================
+--- main/components/apps/wbd2/blanket/blanket.c	(revision 834536)
++++ main/components/apps/wbd2/blanket/blanket.c	(working copy)
+@@ -5592,9 +5592,6 @@
+ 	/* Need to keep sign bit in low byte */
+ 	new_txpwr = (uint8)txpwr;
+ 
+-	/* Set override ON */
+-	new_txpwr |= WL_TXPWR_OVERRIDE;
+-
+ 	BKT_INFO("ifname: %s Setting txpwr %ddBm %dqdBm \n", ifname, txpwr/4, txpwr);
+ 
+ 	ret = wl_iovar_setint(ifname, "qtxpower", htod32(new_txpwr));
+Index: main/components/apps/wbd2/slave/wbd_slave_control.c
+===================================================================
+--- main/components/apps/wbd2/slave/wbd_slave_control.c	(revision 834536)
++++ main/components/apps/wbd2/slave/wbd_slave_control.c	(working copy)
+@@ -31,6 +31,7 @@
+ /* Use a possible max data rate to filter bogus phyrate reading */
+ #define WBD_BK_MAX_DATA_RATE  6934
+ #define WBD_BK_MIN_PHYRATE	6
++#define WBD_TXPWRBCKOF_DEF	6
+ 
+ static wbd_wc_thld_t predefined_wbd_wc_thld[] = {
+ 	/* rssi tx_rate flags */
+@@ -1355,7 +1356,7 @@
+ extern void wbd_slave_process_set_tx_power_limit_cb(wbd_info_t *info,
+ 	char *ifname, unsigned char tx_power_limit)
+ {
+-	int txpwr;
++	int txpwr, max_pwr;
+ 
+ 	WBD_ENTER();
+ 
+@@ -1364,10 +1365,14 @@
+ 		goto end;
+ 	}
+ 
++	/* Get the Maximum Tx Power of the radio */
++	blanket_get_txpwr_target_max(ifname, &max_pwr);
++
+ 	/* Convert tx_power_limit to qdBm */
+-	txpwr = tx_power_limit * 4;
++	txpwr = MIN((max_pwr * 4 - WBD_TXPWRBCKOF_DEF), tx_power_limit * 4);
+ 
+-	WBD_ERROR("ifname: %s Setting tx pwr limit: %d \n", ifname, tx_power_limit);
++	WBD_ERROR("ifname: %s Setting tx pwr limit: tx_pwer_limit[%d] max_pwr[%d] txpwr[%d]\n",
++		ifname, tx_power_limit, max_pwr, txpwr);
+ 
+ 	blanket_set_txpwr(ifname, txpwr);
+ end:
