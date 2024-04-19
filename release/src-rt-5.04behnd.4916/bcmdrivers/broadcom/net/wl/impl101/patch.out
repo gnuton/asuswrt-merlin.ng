@@ -1,6 +1,0 @@
-patching file main/components/apps/wbd2/blanket/blanket.c
-Hunk #1 succeeded at 5309 (offset -283 lines).
-patching file main/components/apps/wbd2/slave/wbd_slave_control.c
-Hunk #1 succeeded at 70 (offset 39 lines).
-Hunk #2 succeeded at 1379 (offset 23 lines).
-Hunk #3 succeeded at 1388 (offset 23 lines).
