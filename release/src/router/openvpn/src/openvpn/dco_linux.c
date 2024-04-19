@@ -1,9 +1,9 @@
 /*
  *  Interface to linux dco networking code
  *
- *  Copyright (C) 2020-2023 Antonio Quartulli <a@unstable.cc>
- *  Copyright (C) 2020-2023 Arne Schwabe <arne@rfc2549.org>
- *  Copyright (C) 2020-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2020-2024 Antonio Quartulli <a@unstable.cc>
+ *  Copyright (C) 2020-2024 Arne Schwabe <arne@rfc2549.org>
+ *  Copyright (C) 2020-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -80,6 +80,12 @@ resolve_ovpn_netlink_id(int msglevel)
 {
     int ret;
     struct nl_sock *nl_sock = nl_socket_alloc();
+
+    if (!nl_sock)
+    {
+        msg(msglevel, "Allocating net link socket failed");
+        return -ENOMEM;
+    }
 
     ret = genl_connect(nl_sock);
     if (ret)

@@ -7,6 +7,41 @@ Asuswrt-Merlin Changelog
   - ADDED: Support for TUF-AX3000 V2
   - ADDED: Support for RT-AX58U V2
 
+3004.388.7 (xx-xxx-2024)
+  - NEW: IGD2 support for UPNP/PCP.  This will allow IPv6 pinhole
+         support for clients.  It must be enabled on the WAN
+         page.  Existing pinholes will be listed on the
+         System Log -> IPV6 page.
+
+         Note that IGDv2 has compatibility issues with various
+         clients that do not properly follow the standard.
+  - UPDATED: Openvpn to 2.6.10.
+  - UPDATED: TOR to 0.4.8.10.
+  - UPDATED: wsdd2 to 2023-12-21 snapshot.
+  - UPDATED: miniupnpd to 2.3.6.
+  - UPDATED: wireguard kernel to v1.0.20220627.
+  - UPDATED: wireguard tools to 2023-08-04 snapshot.
+  - UPDATED: dropbear to 2024.84.
+  - CHANGED: Hardcoded location of the CA bundle in inadyn, so it
+             no longer needs to be manually defined in custom
+             configurations.
+  - CHANGED: Re-designed Tools->Sysinfo page, adding graphs
+             and removing useless content.
+  - CHANGED: Updated free memory report on networkmap to also
+             consider reclaimable memory as being free (kjbracey)
+  - FIXED: Concurrent cronjob changes through cru could cause
+           collisions, leading to missing jobs (dave14305)
+  - FIXED: crond would not use the new timezone if it got changed.
+  - FIXED: MiniDLNA web interface could only be accessed through an
+           IP address (regression in 3004.388.6).
+  - FIXED: CVE-2023-5678 & CVE-2024-0727 in openssl (backport from
+           Ubuntu by RSDNTWK)
+  - FIXED: Long lists on System Log -> Connections tab could result
+           in a timeout (Sani Huttunen)
+  - REMOVED: Temperature page (charts are now part of the revised
+             Tools->Sysinfo page).
+
+
 3004.388.6_2 (26-Feb-2024)
   - UPDATED: dnsmasq to 2.90 (resolves CVE 2023-50868 and CVE 2023-50387).
   - FIXED: LACP support was missing on the XT12.

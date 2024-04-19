@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -221,12 +221,6 @@ management_callback_proxy_cmd(void *arg, const char **p)
     }
     else if (p[2] && p[3])
     {
-        if (dco_enabled(&c->options))
-        {
-            msg(M_INFO, "Proxy set via management, disabling Data Channel Offload.");
-            c->options.tuntap_options.disable_dco = true;
-        }
-
         if (streq(p[1], "HTTP"))
         {
             struct http_proxy_options *ho;
@@ -888,17 +882,6 @@ init_static(void)
 #ifdef TIME_TEST
     time_test();
     return false;
-#endif
-
-#ifdef TEST_GET_DEFAULT_GATEWAY
-    {
-        struct route_gateway_info rgi;
-        struct route_ipv6_gateway_info rgi6;
-        get_default_gateway(&rgi);
-        get_default_gateway_ipv6(&rgi6, NULL);
-        print_default_gateway(M_INFO, &rgi, &rgi6);
-        return false;
-    }
 #endif
 
 #ifdef GEN_PATH_TEST
@@ -3335,7 +3318,6 @@ do_init_crypto_tls(struct context *c, const unsigned int flags)
     }
 
     to.verify_command = options->tls_verify;
-    to.verify_export_cert = options->tls_export_cert;
     to.verify_x509_type = (options->verify_x509_type & 0xff);
     to.verify_x509_name = options->verify_x509_name;
     to.crl_file = options->crl_file;
@@ -3370,6 +3352,7 @@ do_init_crypto_tls(struct context *c, const unsigned int flags)
     to.auth_user_pass_verify_script_via_file = options->auth_user_pass_verify_script_via_file;
     to.client_crresponse_script = options->client_crresponse_script;
     to.tmp_dir = options->tmp_dir;
+    to.export_peer_cert_dir = options->tls_export_peer_cert_dir;
     if (options->ccd_exclusive)
     {
         to.client_config_dir_exclusive = options->client_config_dir;

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -318,6 +318,29 @@ backend_x509_get_serial_hex(openvpn_x509_cert_t *cert, struct gc_arena *gc)
     const ASN1_INTEGER *asn1_i = X509_get_serialNumber(cert);
 
     return format_hex_ex(asn1_i->data, asn1_i->length, 0, 1, ":", gc);
+}
+
+result_t
+backend_x509_write_pem(openvpn_x509_cert_t *cert, const char *filename)
+{
+    BIO *out = BIO_new_file(filename, "w");
+    if (!out)
+    {
+        goto err;
+    }
+
+    if (!PEM_write_bio_X509(out, cert))
+    {
+        goto err;
+    }
+    BIO_free(out);
+
+    return SUCCESS;
+err:
+    BIO_free(out);
+    crypto_msg(D_TLS_DEBUG_LOW, "Error writing X509 certificate to file %s",
+               filename);
+    return FAILURE;
 }
 
 struct buffer
@@ -760,17 +783,6 @@ x509_verify_cert_eku(X509 *x509, const char *const expected_oid)
     }
 
     return fFound;
-}
-
-result_t
-x509_write_pem(FILE *peercert_file, X509 *peercert)
-{
-    if (PEM_write_X509(peercert_file, peercert) < 0)
-    {
-        msg(M_NONFATAL, "Failed to write peer certificate in PEM format");
-        return FAILURE;
-    }
-    return SUCCESS;
 }
 
 bool

@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -433,12 +433,6 @@ bool crypto_check_replay(struct crypto_options *opt,
                          struct gc_arena *gc);
 
 
-/** Calculate crypto overhead and adjust frame to account for that */
-void crypto_adjust_frame_parameters(struct frame *frame,
-                                    const struct key_type *kt,
-                                    bool packet_id,
-                                    bool packet_id_long_form);
-
 /** Calculate the maximum overhead that our encryption has
  * on a packet. This does not include needed additional buffer size
  *
@@ -602,5 +596,13 @@ create_kt(const char *cipher, const char *md, const char *optname)
 
     return kt;
 }
+
+/**
+ * Checks if the current TLS library supports the TLS 1.0 PRF with MD5+SHA1
+ * that OpenVPN uses when TLS Keying Material Export is not available.
+ *
+ * @return  true if supported, false otherwise.
+ */
+bool check_tls_prf_working(void);
 
 #endif /* CRYPTO_H */

@@ -68,10 +68,6 @@ typedef unsigned long long u64;
 
 #include "sysinfo.h"
 
-#ifdef RTCONFIG_QTN
-#include "web-qtn.h"
-#endif
-
 #ifdef RTCONFIG_EXT_RTL8365MB
 #include <linux/major.h>
 #include <rtk_switch.h>
@@ -91,12 +87,6 @@ extern int dev_nvram_getall(char *buf, int count);
 unsigned int get_phy_temperature(int radio);
 unsigned int get_wifi_clients(int unit, int querytype);
 
-#ifdef RTCONFIG_QTN
-unsigned int get_qtn_temperature(void);
-unsigned int get_qtn_version(char *version, int len);
-int GetPhyStatus_qtn(void);
-#endif
-
 #ifdef RTCONFIG_EXT_RTL8365MB
 void GetPhyStatus_rtk(int *states);
 #endif
@@ -109,6 +99,66 @@ void GetPhyStatus_rtk(int *states);
 #define SI_WL_QUERY_AUTHE 2
 #define SI_WL_QUERY_AUTHO 3
 
+static const char * const meminfo_name[MI_MAX] =
+{
+	[MI_MemTotal] = "MemTotal",
+	[MI_MemFree] = "MemFree",
+	[MI_MemAvailable] = "MemAvailable",
+	[MI_Buffers] = "Buffers",
+	[MI_Cached] = "Cached",
+	[MI_SwapCached] = "SwapCached",
+	[MI_SwapTotal] = "SwapTotal",
+	[MI_SwapFree] = "SwapFree",
+	[MI_Shmem] = "Shmem",
+	[MI_SReclaimable] = "SReclaimable"
+};
+
+void read_meminfo(meminfo_t *m)
+{
+	FILE *f;
+	char field[64];
+	int i, size;
+
+	for (i = 0; i < MI_MAX; i++) {
+		(*m)[i] = -1;
+	}
+
+	f = fopen("/proc/meminfo", "r");
+	if (!f)
+		return;
+
+	while (fscanf(f, " %63[^:]: %d kB", field, &size) == 2) {
+		for (i = 0; i < MI_MAX; i++) {
+			if (strcmp(field, meminfo_name[i]) == 0) {
+				(*m)[i] = size;
+				break;
+			}
+		}
+	}
+
+	fclose(f);
+}
+
+int meminfo_compute_simple_free(const meminfo_t *m)
+{
+	// Compute a simple free memory number similarly to htop -
+	// this corresponds to its "cached" + "buffered" + "free"
+	// Total minus this is then its "used" + "shared"
+	int mfree = (*m)[MI_MemFree] + (*m)[MI_Cached] - (*m)[MI_Shmem] + (*m)[MI_SReclaimable] + (*m)[MI_Buffers];
+	// In case something goes out-of-range with that calculation, use the basic free number
+	if (mfree < 0 || mfree > (*m)[MI_MemTotal])
+		mfree = (*m)[MI_MemFree];
+	return mfree;
+}
+
+static void write_kb_or_qq(char *result, int size)
+{
+	if (size >= 0) {
+		sprintf(result, "%.2f", (size / (float)KBYTES));
+	} else {
+		strcpy(result, "??");
+	}
+}
 
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 {
@@ -116,6 +166,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 	char result[2048];
 	int retval = 0;
 	struct sysinfo sys;
+	meminfo_t mem;
 	char *tmp;
 
 	strcpy(result,"None");
@@ -134,7 +185,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				int count = 0;
 				char model[64];
 #if defined(BCM4912)
-				strcpy(model, "BCM4912 - Cortex A53 ARMv8");
+				strcpy(model, "BCM4912 - Cortex B53 ARMv8");
 #else
 
 				char impl[8], arch[8], variant[8], part[10], revision[4];
@@ -156,7 +207,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				    && !strcmp(variant, "0x0")
 				    && !strcmp(part, "0x100")
 				    && !strcmp(arch, "8"))
-					sprintf(model, "BCM490x - Cortex A53 ARMv8 revision %s", revision);
+					sprintf(model, "BCM490x - Cortex B53 ARMv8 revision %s", revision);
 				else if (!strcmp(impl, "0x41")
 				    && !strcmp(variant, "0x0")
 				    && !strcmp(part, "0xc07")
@@ -235,18 +286,17 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			sysinfo(&sys);
 			sprintf(result,"%.2f",(float) (sys.totalswap - sys.freeswap) * sys.mem_unit / MBYTES);
 		} else if(strcmp(type,"memory.cache") == 0) {
-			int size = 0;
-			char *buffer = read_whole_file("/proc/meminfo");
-
-			if (buffer) {
-				tmp = strstr(buffer, "Cached");
-				if (tmp)
-					sscanf(tmp, "Cached:            %d kB\n", &size);
-				free(buffer);
-				sprintf(result,"%.2f", (size / (float)KBYTES));
-			} else {
-				strcpy(result,"??");
-			}
+			read_meminfo(&mem);
+			write_kb_or_qq(result, mem[MI_Cached]);
+		} else if(strcmp(type,"memory.available") == 0) {
+			read_meminfo(&mem);
+			write_kb_or_qq(result, mem[MI_MemAvailable]);
+		} else if(strcmp(type,"memory.simple.free") == 0) {
+			read_meminfo(&mem);
+			write_kb_or_qq(result, meminfo_compute_simple_free(&mem));
+		} else if(strcmp(type,"memory.simple.used") == 0) {
+			read_meminfo(&mem);
+			write_kb_or_qq(result, mem[MI_MemTotal] - meminfo_compute_simple_free(&mem));
 		} else if(strcmp(type,"cpu.load.1") == 0) {
 			sysinfo(&sys);
 			sprintf(result,"%.2f",(sys.loads[0] / (float)(1<<SI_LOAD_SHIFT)));
@@ -296,11 +346,20 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 			if (mount_info) free(mount_info);
 
+		} else if(strcmp(type,"jffs.total") == 0) {
+			struct statvfs fiData;
+
+			if (statvfs("/jffs",&fiData) == 0 ) {
+				sprintf(result,"%.2f",((float) fiData.f_blocks * fiData.f_frsize / MBYTES));
+			} else {
+				strcpy(result,"-1");
+			}
+
 		} else if(strcmp(type,"jffs.free") == 0) {
 			struct statvfs fiData;
 
 			if (statvfs("/jffs",&fiData) == 0 ) {
-				sprintf(result,"%llu",((unsigned long long) fiData.f_bfree * fiData.f_frsize / MBYTES));
+				sprintf(result,"%.2f",((float) fiData.f_bfree * fiData.f_frsize / MBYTES));
 			} else {
 				strcpy(result,"-1");
 			}
@@ -312,14 +371,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (sscanf(type,"temperature.%d", &radio) != 1)
 				temperature = 0;
 			else
-			{
-#ifdef RTCONFIG_QTN
-				if (radio == 1)
-					temperature = get_qtn_temperature();
-				else
-#endif
-					temperature = get_phy_temperature(radio);
-			}
+				temperature = get_phy_temperature(radio);
 #ifdef RTAC68U_V4	// Broken on 2.4G, potentially bogus on 5G
 			strcpy(result, "<i>N/A</i>");
 #else
@@ -414,12 +466,6 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				}
 				unlink("/tmp/output.txt");
 			}
-#ifdef RTCONFIG_QTN
-                } else if(strcmp(type,"qtn_version") == 0 ) {
-
-			if (!get_qtn_version(result, sizeof(result)))
-				strcpy(result,"<unknown>");
-#endif
 		} else if(strcmp(type,"cfe_version") == 0 ) {
 #if defined(RTCONFIG_CFEZ)
 			snprintf(result, sizeof result, "%s", nvram_get("bl_version"));
@@ -558,14 +604,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				for (j=0; (j < len); j++) {
 					if (buffer[j] == '\n') buffer[j] = '>';
 				}
-#ifdef RTCONFIG_QTN
-				j = GetPhyStatus_qtn();
-				snprintf(result, sizeof result, (j > 0 ? "%sPort 10: %dFD enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>" :
-							 "%sPort 10: DOWN enabled stp: none vlan: 1 jumbo: off mac: 00:00:00:00:00:00>"),
-							  buffer, j);
-#else
                                 strlcpy(result, buffer, sizeof result);
-#endif
                                 free(buffer);
 
 			}
@@ -610,58 +649,6 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 	return retval;
 }
 
-#ifdef RTCONFIG_QTN
-unsigned int get_qtn_temperature(void)
-{
-        int temp_external, temp_internal, temp_bb;
-	if (!rpc_qtn_ready())
-		return 0;
-
-        if (qcsapi_get_temperature_info(&temp_external, &temp_internal, &temp_bb) >= 0)
-		return temp_internal / 1000000.0f;
-
-	return 0;
-}
-
-int GetPhyStatus_qtn(void)
-{
-	int ret;
-
-	if (!rpc_qtn_ready()) {
-		return -1;
-	}
-	ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_1000m");
-	if (ret < 0) {
-		ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_100m");
-		if (ret < 0) {
-			ret = qcsapi_wifi_run_script("set_test_mode", "get_eth_10m");
-			if (ret < 0) {
-				// fprintf(stderr, "ATE command error\n");
-				return 0;
-			}else{
-				return 10;
-			}
-		}else{
-			return 100;
-		}
-		return -1;
-	}else{
-		return 1000;
-	}
-	return 0;
-}
-
-unsigned int get_qtn_version(char *version, int len)
-{
-        if (!rpc_qtn_ready())
-                return 0;
-
-        if (qcsapi_firmware_get_version(version, len) >= 0)
-                return 1;
-
-        return 0;
-}
-#endif
 
 unsigned int get_phy_temperature(int radio)
 {
@@ -703,9 +690,6 @@ unsigned int get_wifi_clients(int unit, int querytype)
 	struct maclist *clientlist;
 	int max_sta_count, maclist_size;
 	int val, count = 0, subunit;
-#ifdef RTCONFIG_QTN
-	qcsapi_unsigned_int association_count = 0;
-#endif
 #ifdef RTCONFIG_WIRELESSREPEATER
 	int isrepeater = 0;
 #endif
@@ -737,20 +721,6 @@ unsigned int get_wifi_clients(int unit, int querytype)
 
 		name = nvram_pf_safe_get(prefix, "ifname");
 		if (*name == '\0') continue;
-
-#ifdef RTCONFIG_QTN
-		if (unit == 1) {
-			if ((nvram_match("wl1_radio", "0")) || (!rpc_qtn_ready()))
-				count = -1;
-			else if ((querytype == SI_WL_QUERY_ASSOC) &&
-				 (qcsapi_wifi_get_count_associations(name, &association_count) >= 0))
-					count = association_count;
-			else	// All other queries aren't support by QTN
-				count = -1;
-
-			goto exit;
-		}
-#endif
 
 		if (subunit == 0) {
 			wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
