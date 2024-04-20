@@ -292,8 +292,9 @@ fi
 if [ "$BUILD_NAME" == "RT-AX82U_V2" ]
 then
    cp -a release/src/router/rom/dhd/6715b0_mfg/$BUILD_NAME $REPO/release/src/router/rom/dhd/6715b0_mfg/$BUILD_NAME
-   #cp -a release/src-rt-5.04axhnd.675x/hostTools/prebuilt/* $REPO/release/src-rt-5.04axhnd.675x/hostTools/prebuilt/$BUILD_NAME
-   cp -a release/src/router/hnd_extra/prebuilt/* $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.rt-ax82u_v2/hnd_extra/prebuilt
+   cp -a ./release/src/router/hnd_extra/prebuilt/* $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt
+   cp -a ./release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/*  $REPO/release/src-rt-5.04axhnd.675x/bcmdrivers/opensource/phy/prebuilt/$BUILD_NAME/
+
 fi
 
 if [ "$BUILD_NAME" == "RT-AX5400" ] || [ "$BUILD_NAME" == "TUF-AX3000_V2" ]
