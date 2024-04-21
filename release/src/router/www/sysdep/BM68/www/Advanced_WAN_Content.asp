@@ -1585,6 +1585,7 @@ function initial(){
 					$("#dot_presets_tr").hide();
 			};
 			gen_dotPresets(local_data);
+/*
 			$.getJSON("https://nw-dlcdnet.asus.com/plugin/js/dot-servers.json",
 				function(cloud_data){
 					if(JSON.stringify(local_data) != JSON.stringify(cloud_data)){
@@ -1594,6 +1595,7 @@ function initial(){
 					}
 				}
 			);
+*/
 		});
 	}
 
@@ -1613,7 +1615,19 @@ function initial(){
 		$("#DNS_Assign_desc").addClass("assign_dns");
 		$("#DNS_Assign_button").css("margin", "-38px 0 5px 0");//margin:-38px 0 5px 0;
 	}
-	
+
+	display_upnp_options();
+}
+
+function display_upnp_options(){
+	document.getElementById("upnp_range_int").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	document.getElementById("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	document.getElementById("upnp_secure_tr").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	if (igd2_support) {
+		document.getElementById("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	} else {
+		document.getElementById("upnp_pinhole").style.display = "none";
+	}
 }
 
 function change_wan_unit(obj){
@@ -1947,8 +1961,8 @@ function validForm(){
 	}
 
 	if(document.form.wan_proto.value == "pppoe"){
-		if(!validator.numberRange(document.form.wan_pppoe_mtu, 128, 1492)
-			|| !validator.numberRange(document.form.wan_pppoe_mru, 128, 1492))
+		if(!validator.numberRange(document.form.wan_pppoe_mtu, 128, 1500)
+			|| !validator.numberRange(document.form.wan_pppoe_mru, 128, 1500))
 			return false;
 
 		if(document.form.wan_mtu.value != "") {
@@ -1976,6 +1990,20 @@ function validForm(){
 				document.form.wan_hwaddr_x.focus();
 				return false;
 		}
+
+	if (document.form.wan_upnp_enable[0].checked) {
+		if((!validator.numberRange(document.form.upnp_min_port_int, 1, 65535))
+			|| (!validator.numberRange(document.form.upnp_max_port_int, 1, 65535))
+			|| (!validator.numberRange(document.form.upnp_min_port_ext, 1, 65535))
+			|| (!validator.numberRange(document.form.upnp_max_port_ext, 1, 65535))) {
+				return false;
+		}
+		if((parseInt(document.form.upnp_max_port_int.value) < parseInt(document.form.upnp_min_port_int.value))
+			|| (parseInt(document.form.upnp_max_port_ext.value) < parseInt(document.form.upnp_min_port_ext.value))) {
+				alert("Invalid UPNP ports!  First port must be lower than last port value.");
+	                        return false;
+		}
+	}
 
 	if(orig_mtu != "" || document.form.wan_mtu.value.length > 0) {
 		if(!validator.numberRange(document.form.wan_mtu, 1280, 1500)) {
@@ -2369,6 +2397,7 @@ function change_wan_proto_type(proto_type){
 		inputCtrl(document.form.wan_vpndhcp[0], 0);
 		inputCtrl(document.form.wan_vpndhcp[1], 0);
 		inputCtrl(document.form.wan_dhcp_qry, 1);
+
 		if(mswan_support){
 			inputCtrl(document.form.wan_dhcpfilter_enable[0], 0);
 			inputCtrl(document.form.wan_dhcpfilter_enable[1], 0);
@@ -3523,9 +3552,40 @@ function change_wizard(o, id){
 										<tr>
 											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a></th>
 											<td>
-												<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
-												<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
+												<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
 											</td>
+										</tr>
+										<tr id="upnp_pinhole">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,5);">Enable IGDv2 (IPv6 pinhole support)</a></th>
+											<td>
+												<input type="radio" name="upnp_pinhole_enable" class="input" value="1" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="upnp_pinhole_enable" class="input" value="0" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="upnp_secure_tr">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,3);">Enable secure UPnP mode</a></th>
+											<td>
+												<input type="radio" name="upnp_secure" class="input" value="1" <% nvram_match_x("", "upnp_secure", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="upnp_secure" class="input" value="0" <% nvram_match_x("", "upnp_secure", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="upnp_range_int">
+											<th>UPNP: Allowed internal port range</th>
+												<td>
+													<input type="text" maxlength="5" name="upnp_min_port_int" class="input_6_table" value="<% nvram_get("upnp_min_port_int"); %>" onkeypress="return validator.isNumber(this,event);">
+														to
+													<input type="text" maxlength="5" name="upnp_max_port_int" class="input_6_table" value="<% nvram_get("upnp_max_port_int"); %>" onkeypress="return validator.isNumber(this,event);">
+												</td>
+										</tr>
+										<tr id="upnp_range_ext">
+
+											<th>UPNP: Allowed external port range</th>
+												<td>
+													<input type="text" maxlength="5" name="upnp_min_port_ext" class="input_6_table" value="<% nvram_get("upnp_min_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
+														to
+													<input type="text" maxlength="5" name="upnp_max_port_ext" class="input_6_table" value="<% nvram_get("upnp_max_port_ext"); %>" onkeypress="return 	validator.isNumber(this,event);">
+												</td>
 										</tr>
 										<tr style="display: none;">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#BasicConfig_EnableMediaServer_itemname#></a></th>
@@ -3776,6 +3836,7 @@ function change_wizard(o, id){
 										<!--option value="3" <% nvram_match("dnspriv_enable", "3", "selected"); %>>DNS-over-TLS/HTTPS (DoT+DoH)</option-->
 									</select>
 									<div id="yadns_hint_dnspriv" style="display:none;"></div>
+									<div id="dnsfilter_hint_dnspriv" style="display:none;"><span><a style="text-decoration:underline; color:#FFCC00;" href="DNSDirector.asp">DNS Director</a> is enabled - anything configured there to something other than No Redirection or Router will bypass DNS Privacy servers.</span></div>
 								</td>
 						</tr>
 						<tr style="display:none">
