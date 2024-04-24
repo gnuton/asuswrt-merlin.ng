@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -541,7 +541,8 @@ struct context
 #define PROTO_DUMP(buf, gc) protocol_dump((buf), \
                                           PROTO_DUMP_FLAGS   \
                                           |(c->c2.tls_multi ? PD_TLS : 0)   \
-                                          |(c->options.tls_auth_file ? md_kt_size(c->c1.ks.key_type.digest) : 0), \
+                                          |(c->options.tls_auth_file ? md_kt_size(c->c1.ks.key_type.digest) : 0) \
+                                          |(c->options.tls_crypt_file || c->options.tls_crypt_v2_file ? PD_TLS_CRYPT : 0), \
                                           gc)
 
 /* this represents "disabled peer-id" */

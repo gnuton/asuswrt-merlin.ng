@@ -159,6 +159,12 @@ lease_file6_add(const char * rem_client,
 	if (timestamp != 0) {
 		timestamp -= upnp_time();
 	}
+	if (rem_client == NULL) {
+		rem_client = "";
+	}
+	if (desc == NULL) {
+		desc = "";
+	}
 
 	fprintf(fd, "%s;%s;%hu;%s;%hu;%u;%u;%s\n",
 	        proto_itoa(proto), int_client, int_port, rem_client, rem_port,
@@ -509,7 +515,7 @@ int reload_from_lease_file6()
 	if(!lease_file6) return -1;
 	fd = fopen( lease_file6, "r");
 	if (fd==NULL) {
-		syslog(LOG_ERR, "could not open lease file: %s", lease_file6);
+//		syslog(LOG_ERR, "could not open lease file: %s", lease_file6);
 		return -1;
 	}
 	if(unlink(lease_file6) < 0) {
