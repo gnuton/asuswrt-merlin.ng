@@ -1,11 +1,7 @@
 Asuswrt-Merlin Changelog
 
-3004.388.6_2-gnuton2 (xx-xxxx-2024)
+3004.388.7_1-gnuton1 (xx-xxxx-2024)
   - ADDED: XT_SET kernel module for TUF-AX3000_V2 and similar models
-
-3004.388.6_2-gnuton1 (4-Apr-2024)
-  - ADDED: Support for TUF-AX3000 V2
-  - ADDED: Support for RT-AX58U V2
 
 3004.388.7 (xx-xxx-2024)
   - NOTE: RT-AX56U is exceptionally included in this release.
@@ -57,6 +53,9 @@ Asuswrt-Merlin Changelog
   - REMOVED: Temperature page (charts are now part of the redesigned
              Tools->Sysinfo page).
 
+3004.388.6_2-gnuton1 (4-Apr-2024)
+  - ADDED: Support for TUF-AX3000 V2
+  - ADDED: Support for RT-AX58U V2
 
 3004.388.6_2 (26-Feb-2024)
   - UPDATED: dnsmasq to 2.90 (resolves CVE 2023-50868 and CVE 2023-50387).
