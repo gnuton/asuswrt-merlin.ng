@@ -388,6 +388,10 @@ define(function(){
 					retArray.push("DNSDirector.asp");
 				}
 
+				if(!wifiRadar_support){
+					retArray.push("WiFi_Insight.asp");
+				}
+
 				if(!multissid_support){
 					retArray.push("menu_GuestNetwork");
 				}
@@ -562,6 +566,9 @@ define(function(){
 					retArray.push("AiProtection_AdBlock.asp");
 					retArray.push("AiProtection_Key_Guard.asp");
 					retArray.push("AiProtection_AdBlock.asp");
+				}
+				if(!wifiRadar_support){
+					retArray.push("WiFi_Insight.asp");
 				}
 
 				if(!bwdpi_mals_support){
