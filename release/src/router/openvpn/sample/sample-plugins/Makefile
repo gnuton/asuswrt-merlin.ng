@@ -21,12 +21,12 @@
 #             packet encryption, packet authentication, and
 #             packet compression.
 #
-#  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
 #
 
 #  SPDX-License-Identifier: GPL-2.0-only
 #
-#  Copyright (C) 2020-2023 OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2020-2024 OpenVPN Inc <sales@openvpn.net>
 #
 
 am__is_gnu_make = { \
@@ -100,8 +100,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = aarch64-apple-darwin22.6.0
-host_triplet = aarch64-apple-darwin22.6.0
+build_triplet = aarch64-apple-darwin23.2.0
+host_triplet = aarch64-apple-darwin23.2.0
 subdir = sample/sample-plugins
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_socklen_t.m4 \
@@ -217,7 +217,7 @@ OPENSSL_CFLAGS = -I/opt/homebrew/Cellar/openssl@3/3.1.2/include
 OPENSSL_LIBS = -L/opt/homebrew/Cellar/openssl@3/3.1.2/lib -lssl -lcrypto
 OPENVPN_VERSION_MAJOR = 2
 OPENVPN_VERSION_MINOR = 6
-OPENVPN_VERSION_PATCH = .8
+OPENVPN_VERSION_PATCH = .10
 OPTIONAL_CRYPTO_CFLAGS =  -I/opt/homebrew/Cellar/openssl@3/3.1.2/include
 OPTIONAL_CRYPTO_LIBS =  -L/opt/homebrew/Cellar/openssl@3/3.1.2/lib -lssl -lcrypto
 OPTIONAL_DL_LIBS = -ldl
@@ -238,10 +238,10 @@ P11KIT_LIBS =
 PACKAGE = openvpn
 PACKAGE_BUGREPORT = openvpn-users@lists.sourceforge.net
 PACKAGE_NAME = OpenVPN
-PACKAGE_STRING = OpenVPN 2.6.8
+PACKAGE_STRING = OpenVPN 2.6.10
 PACKAGE_TARNAME = openvpn
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.6.8
+PACKAGE_VERSION = 2.6.10
 PATH_SEPARATOR = :
 PKCS11_HELPER_CFLAGS = 
 PKCS11_HELPER_LIBS = 
@@ -271,7 +271,7 @@ TAP_WIN_MIN_MINOR = 9
 TEST_CFLAGS =  -I/opt/homebrew/Cellar/openssl@3/3.1.2/include   -I$(top_srcdir)/include -I/opt/homebrew/Cellar/cmocka/1.1.7/include
 TEST_LDFLAGS =  -L/opt/homebrew/Cellar/openssl@3/3.1.2/lib -lssl -lcrypto   -L/opt/homebrew/Cellar/cmocka/1.1.7/lib -lcmocka
 TMPFILES_DIR = 
-VERSION = 2.6.8
+VERSION = 2.6.10
 WOLFSSL_CFLAGS = 
 WOLFSSL_INCLUDEDIR = 
 WOLFSSL_LIBS = 
@@ -288,10 +288,10 @@ am__quote =
 am__tar = $${TAR-tar} chof - "$$tardir"
 am__untar = $${TAR-tar} xf -
 bindir = ${exec_prefix}/bin
-build = aarch64-apple-darwin22.6.0
+build = aarch64-apple-darwin23.2.0
 build_alias = 
 build_cpu = aarch64
-build_os = darwin22.6.0
+build_os = darwin23.2.0
 build_vendor = apple
 builddir = .
 datadir = ${datarootdir}
@@ -299,10 +299,10 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = aarch64-apple-darwin22.6.0
+host = aarch64-apple-darwin23.2.0
 host_alias = 
 host_cpu = aarch64
-host_os = darwin22.6.0
+host_os = darwin23.2.0
 host_vendor = apple
 htmldir = ${docdir}
 includedir = ${prefix}/include

@@ -5122,8 +5122,9 @@ tor: openssl zlib libevent-2.0.21 tor/Makefile
 tor/Makefile:
 	(cd tor ; autoreconf -i -f && $(CONFIGURE) --with-libevent-dir=$(STAGEDIR)/usr \
 		--with-openssl-dir=$(TOP)/openssl --with-zlib-dir=$(TOP)/zlib \
-		--disable-asciidoc --disable-unittests \
-		--disable-tool-name-check --disable-unittests \
+		--disable-asciidoc --disable-manpage --disable-html-manual \
+		--disable-tool-name-check --disable-unittests --disable-lzma --disable-zstd \
+		--disable-seccomp --disable-libscrypt \
 		CFLAGS="-I$(TOP)/openssl/include" \
 		CPPFLAGS="-I$(TOP)/openssl/include")
 
@@ -5753,7 +5754,7 @@ minidlna-configure: minidlna/configure shared/version.h
 		--with-os-name=asuswrt \
 		--with-os-version=$(shell cat shared/version.h | grep RT_SERIALNO | cut -d'"' -f 2) \
 		--with-os-url=http://www.asus.com/ \
-		--enable-tivo \
+		--enable-tivo --disable-nls \
 		ac_cv_header_stddef_h=no ac_cv_header_stdlib_h=no \
 		$(if $(MSIPK),ac_cv_func_inotify_init=no ac_cv_header_sys_inotify_h=no) \
 		$(if $(MSIPK),$(if $(filter i686,$(PLATFORM)),EXTRACFLAGS="-DLINUX26 -DCONFIG_BCMWL5 -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -DLINUX_KERNEL_VERSION=132630 -DMS_IPK -DMS_I686",EXTRACFLAGS="-DLINUX26 -DCONFIG_BCMWL5 -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32 -DLINUX_KERNEL_VERSION=132630 -DMS_IPK"),) \

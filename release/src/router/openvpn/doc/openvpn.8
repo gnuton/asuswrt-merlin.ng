@@ -158,7 +158,7 @@ to the configuration if no other compression options are present.
 2.4.x or lower: The cipher in \fB\-\-cipher\fP is appended to
 \fB\-\-data\-ciphers\fP\&.
 .IP \(bu 2
-2.3.x or lower: \fB\-\-data\-cipher\-fallback\fP is automatically added with
+2.3.x or lower: \fB\-\-data\-ciphers\-fallback\fP is automatically added with
 the same cipher as \fB\-\-cipher\fP\&.
 .IP \(bu 2
 2.3.6 or lower: \fB\-\-tls\-version\-min 1.0\fP is added to the configuration
@@ -1085,6 +1085,14 @@ Transition window \-\- our old key can live this many seconds after a new
 a key renegotiation begins (default \fB3600\fP seconds). This feature
 allows for a graceful transition from old to new key, and removes the key
 renegotiation sequence from the critical path of tunnel data forwarding.
+.TP
+.B  \-\-force\-tls\-key\-material\-export
+This option is only available in \-\-mode server and forces to use
+Keying Material Exporters (RFC 5705) for clients. This can be used to
+simulate an environment where the cryptographic library does not support
+the older method to generate data channel keys anymore. This option is
+intended to be a test option and might be removed in a future OpenVPN
+version without notice.
 .UNINDENT
 .SS Client Options
 .sp
@@ -1175,6 +1183,24 @@ lines. If the password line is missing, OpenVPN will prompt for one.
 .sp
 If \fBup\fP is omitted, username/password will be prompted from the
 console.
+.sp
+This option can also be inlined
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+<auth\-user\-pass>
+username
+[password]
+</auth\-user\-pass>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+where password is optional, and will be prompted from the console if
+missing.
 .sp
 The server configuration must specify an \fB\-\-auth\-user\-pass\-verify\fP
 script to verify the username/password provided by the client.
@@ -1500,17 +1526,12 @@ The client OpenVPN version
 .B \fBIV_PLAT=[linux|solaris|openbsd|mac|netbsd|freebsd|win]\fP
 The client OS platform
 .TP
-.B \fBIV_LZO_STUB=1\fP
-If client was built with LZO stub capability
-.TP
-.B \fBIV_LZ4=1\fP
-If the client supports LZ4 compressions.
-.TP
 .B \fBIV_PROTO\fP
 Details about protocol extensions that the peer supports. The
-variable is a bitfield and the bits are defined as follows
-(starting a bit 0 for the first (unused) bit:
+variable is a bitfield and the bits are defined as follows:
 .INDENT 7.0
+.IP \(bu 2
+bit 0: Reserved, should always be zero
 .IP \(bu 2
 bit 1: The peer supports peer\-id floating mechanism
 .IP \(bu 2
@@ -1521,15 +1542,26 @@ bit 3: The client is capable of doing key derivation using
 RFC5705 key material exporter.
 .IP \(bu 2
 bit 4: The client is capable of accepting additional arguments
-to the \fIAUTH_PENDING\fP message.
+to the \fBAUTH_PENDING\fP message.
+.IP \(bu 2
+bit 5: The client supports doing feature negotiation in P2P mode
+.IP \(bu 2
+bit 6: The client is capable of parsing and receiving the \fB\-\-dns\fP pushed option
+.IP \(bu 2
+bit 7: The client is capable of sending exit notification via control channel using \fBEXIT\fP message. Also, the client is accepting the protocol\-flags pushed option for the EKM capability
+.IP \(bu 2
+bit 8: The client is capable of accepting \fBAUTH_FAILED,TEMP\fP messages
+.IP \(bu 2
+bit 9: The client is capable of dynamic tls\-crypt
 .UNINDENT
 .TP
 .B \fBIV_NCP=2\fP
 Negotiable ciphers, client supports \fB\-\-cipher\fP pushed by
 the server, a value of 2 or greater indicates client supports
-\fIAES\-GCM\-128\fP and \fIAES\-GCM\-256\fP\&.
+\fIAES\-GCM\-128\fP and \fIAES\-GCM\-256\fP\&. IV_NCP is \fIdeprecated\fP in
+favor of \fBIV_CIPHERS\fP\&.
 .TP
-.B \fBIV_CIPHERS=<ncp\-ciphers>\fP
+.B \fBIV_CIPHERS=<data\-ciphers>\fP
 The client announces the list of supported ciphers configured with the
 \fB\-\-data\-ciphers\fP option to the server.
 .TP
@@ -1540,10 +1572,36 @@ it is willing to accept.
 .B \fBIV_GUI_VER=<gui_id> <version>\fP
 The UI version of a UI if one is running, for example
 \fBde.blinkt.openvpn 0.5.47\fP for the Android app.
+This may be set by the client UI/GUI using \fB\-\-setenv\fP\&.
 .TP
 .B \fBIV_SSO=[crtext,][openurl,][proxy_url]\fP
 Additional authentication methods supported by the client.
-This may be set by the client UI/GUI using \fB\-\-setenv\fP
+This may be set by the client UI/GUI using \fB\-\-setenv\fP\&.
+.UNINDENT
+.sp
+The following flags depend on which compression formats are compiled in
+and whether compression is allowed by options. See \fI\%Protocol options\fP
+for more details.
+.INDENT 7.0
+.INDENT 3.5
+.INDENT 0.0
+.TP
+.B \fBIV_LZO=1\fP
+If client supports LZO compression.
+.TP
+.B \fBIV_LZO_STUB=1\fP
+If client was built with LZO stub capability. This is only sent if
+\fBIV_LZO=1\fP is not sent. This means the client can talk to a server
+configured with \fB\-\-comp\-lzo no\fP\&.
+.TP
+.B \fBIV_LZ4=1\fP and \fBIV_LZ4v2=1\fP
+If the client supports LZ4 compression.
+.TP
+.B \fBIV_COMP_STUB=1\fP and \fBIV_COMP_STUBv2=1\fP
+If the client supports stub compression. This means the client can talk
+to a server configured with \fB\-\-compress\fP\&.
+.UNINDENT
+.UNINDENT
 .UNINDENT
 .sp
 When \fB\-\-push\-peer\-info\fP is enabled the additional information consists
@@ -1556,15 +1614,18 @@ The string value can be any readable ASCII string up to 64 bytes.
 OpenVPN 2.x and some other implementations use the MAC address of
 the client\(aqs interface used to reach the default gateway. If this
 string is generated by the client, it should be consistent and
-preserved across independent session and preferably
+preserved across independent sessions and preferably
 re\-installations and upgrades.
 .TP
 .B \fBIV_SSL=<version string>\fP
-The ssl version used by the client, e.g.
+The ssl library version used by the client, e.g.
 \fBOpenSSL 1.0.2f 28 Jan 2016\fP\&.
 .TP
 .B \fBIV_PLAT_VER=x.y\fP
 The version of the operating system, e.g. 6.1 for Windows 7.
+This may be set by the client UI/GUI using \fB\-\-setenv\fP\&.
+On Windows systems it is automatically determined by openvpn
+itself.
 .TP
 .B \fBUV_<name>=<value>\fP
 Client environment variables whose names start with
@@ -1711,17 +1772,13 @@ the OpenVPN challenge/response protocol.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B  \-\-show\-proxy\-settings
-Show sensed HTTP or SOCKS proxy settings. Currently, only Windows
-clients support this option.
-.TP
 .BI \-\-http\-proxy \ args
 Connect to remote host through an HTTP proxy.  This requires at least an
 address \fBserver\fP and \fBport\fP argument.  If HTTP Proxy\-Authenticate
 is required, a file name to an \fBauthfile\fP file containing a username
 and password on 2 lines can be given, or \fBstdin\fP to prompt from
 console. Its content can also be specified in the config file with the
-\fB\-\-http\-proxy\-user\-pass\fP option. (See section on inline files)
+\fB\-\-http\-proxy\-user\-pass\fP option (See \fI\%INLINE FILE SUPPORT\fP).
 .sp
 The last optional argument is an \fBauth\-method\fP which should be one
 of \fBnone\fP, \fBbasic\fP, or \fBntlm\fP\&.
@@ -1745,11 +1802,48 @@ Examples:
 .sp
 .nf
 .ft C
+# no authentication
 http\-proxy proxy.example.net 3128
+# basic authentication, load credentials from file
 http\-proxy proxy.example.net 3128 authfile.txt
+# basic authentication, ask user for credentials
 http\-proxy proxy.example.net 3128 stdin
-http\-proxy proxy.example.net 3128 auto basic
-http\-proxy proxy.example.net 3128 auto\-nct ntlm
+# NTLM authentication, load credentials from file
+http\-proxy proxy.example.net 3128 authfile.txt ntlm2
+# determine which authentication is required, ask user for credentials
+http\-proxy proxy.example.net 3128 auto
+# determine which authentication is required, but reject basic
+http\-proxy proxy.example.net 3128 auto\-nct
+# determine which authentication is required, but set credentials
+http\-proxy proxy.example.net 3128 auto
+http\-proxy\-user\-pass authfile.txt
+# basic authentication, specify credentials inline
+http\-proxy proxy.example.net 3128 \(dq\(dq basic
+<http\-proxy\-user\-pass>
+username
+password
+</http\-proxy\-user\-pass>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.TP
+.BI \-\-http\-proxy\-user\-pass \ userpass
+Overwrite the username/password information for \fB\-\-http\-proxy\fP\&. If specified
+as an inline option (see \fI\%INLINE FILE SUPPORT\fP), it will be interpreted as
+username/password separated by a newline. When specified on the command line
+it is interpreted as a filename same as the third argument to \fB\-\-http\-proxy\fP\&.
+.sp
+Example:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+<http\-proxy\-user\-pass>
+username
+password
+</http\-proxy\-user\-pass>
 .ft P
 .fi
 .UNINDENT
@@ -3571,7 +3665,9 @@ administrators to reject client connections, before exposing the TLS
 stack (including the notoriously dangerous X.509 and ASN.1 stacks) to
 the connecting client.
 .sp
-OpenVPN supplies the following environment variables to the command:
+OpenVPN supplies the following environment variables to the command (and
+only these variables. The normal environment variables available for
+other scripts are NOT present):
 .INDENT 7.0
 .IP \(bu 2
 \fBscript_type\fP is set to \fBtls\-crypt\-v2\-verify\fP
@@ -3588,14 +3684,9 @@ The command can reject the connection by exiting with a non\-zero exit
 code.
 .TP
 .B  \-\-tls\-exit
-Exit on TLS negotiation failure.
-.TP
-.BI \-\-tls\-export\-cert \ directory
-Store the certificates the clients use upon connection to this
-directory. This will be done before \fB\-\-tls\-verify\fP is called. The
-certificates will use a temporary name and will be deleted when the
-tls\-verify script returns. The file name used for the certificate is
-available via the \fBpeer_cert\fP environment variable.
+Exit on TLS negotiation failure. This option can be useful when you only
+want to make one attempt at connecting, e.g. in a test or monitoring script.
+(OpenVPN\(aqs own test suite uses it this way.)
 .TP
 .B  \-\-tls\-server
 Enable TLS and assume server role during TLS handshake. Note that
@@ -3806,9 +3897,36 @@ web CA.
 .BI \-\-x509\-track \ attribute
 Save peer X509 \fBattribute\fP value in environment for use by plugins and
 management interface. Prepend a \fB+\fP to \fBattribute\fP to save values
-from full cert chain. Values will be encoded as
-\fBX509_<depth>_<attribute>=<value>\fP\&. Multiple \fB\-\-x509\-track\fP
+from full cert chain. Otherwise the attribute will only be exported for
+the leaf cert (i.e. depth \fB0\fP of the cert chain). Values will be
+encoded as \fBX509_<depth>_<attribute>=<value>\fP\&. Multiple \fB\-\-x509\-track\fP
 options can be defined to track multiple attributes.
+.sp
+\fBattribute\fP can be any part of the X509 Subject field or any X509v3
+extension (RFC 3280). X509v3 extensions might not be supported when
+not using the default TLS backend library (OpenSSL). You can also
+request the \fBSHA1\fP and \fBSHA256\fP fingerprints of the cert,
+but that is always exported as \fBtls_digest_{n}\fP and
+\fBtls_digest_sha256_{n}\fP anyway.
+.sp
+Note that by default \fBall\fP parts of the X509 Subject field are exported in
+the environment for the whole cert chain. If you use \fB\-\-x509\-track\fP at least
+once \fBonly\fP the attributes specified by these options are exported.
+.sp
+Examples:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+x509\-track CN               # exports only X509_0_CN
+x509\-track +CN              # exports X509_{n}_CN for chain
+x509\-track basicConstraints # exports value of \(dqX509v3 Basic Constraints\(dq
+x509\-track SHA256           # exports SHA256 fingerprint
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
 .TP
 .BI \-\-x509\-username\-field \ args
 Fields in the X.509 certificate subject to be used as the username
@@ -3984,7 +4102,7 @@ different backwards compatibility mechanism with older server and clients.
 .SS OpenVPN 2.5 and later behaviour
 .sp
 When both client and server are at least running OpenVPN 2.5, that the order of
-the ciphers of the server\(aqs \fB\-\-data\-ciphers\fP is used to pick the the data cipher.
+the ciphers of the server\(aqs \fB\-\-data\-ciphers\fP is used to pick the data cipher.
 That means that the first cipher in that list that is also in the client\(aqs
 \fB\-\-data\-ciphers\fP list is chosen. If no common cipher is found the client is rejected
 with a AUTH_FAILED message (as seen in client log):
@@ -4915,7 +5033,7 @@ virtual \(dqmultipoint networks\(dq), \fB\-\-ifconfig\fP is used to set an IP
 address and subnet mask just as a physical ethernet adapter would be
 similarly configured. If you are attempting to connect to a remote
 ethernet bridge, the IP address and subnet should be set to values which
-would be valid on the the bridged ethernet segment (note also that DHCP
+would be valid on the bridged ethernet segment (note also that DHCP
 can be used for the same purpose).
 .sp
 This option, while primarily a proxy for the \fBifconfig\fP(8) command,
@@ -5322,7 +5440,7 @@ deleted or the machine is rebooted.
 One of the advantages of persistent tunnels is that they eliminate the
 need for separate \fB\-\-up\fP and \fB\-\-down\fP scripts to run the appropriate
 \fBifconfig\fP(8) and \fBroute\fP(8) commands. These commands can be
-placed in the the same shell script which starts or terminates an
+placed in the same shell script which starts or terminates an
 OpenVPN session.
 .sp
 Another advantage is that open connections through the TUN/TAP\-based
@@ -5917,6 +6035,14 @@ certificate, see the file \fBverify\-cn\fP in the OpenVPN distribution.
 See the \fI\%Environmental Variables\fP section below for additional
 parameters passed as environmental variables.
 .TP
+.BI \-\-tls\-export\-cert \ dir
+Adds an environment variable \fBpeer_cert\fP when calling the
+\fB\-\-tls\-verify\fP script or executing the OPENVPN_PLUGIN_TLS_VERIFY plugin
+hook to verify the certificate.
+.sp
+The environment variable contains the path to a PEM encoded certificate
+of the current peer certificate in the directory \fBdir\fP\&.
+.TP
 .BI \-\-up \ cmd
 Run command \fBcmd\fP after successful TUN/TAP device open (pre \fB\-\-user\fP
 UID change).
@@ -6292,6 +6418,11 @@ The password provided by a connecting client. Set prior to
 modifier is specified, and deleted from the environment after the script
 returns.
 .TP
+.B \fBpeer_cert\fP
+If the option \fB\-\-tls\-export\-cert\fP is enabled, this option contains
+the path to the current peer certificate to be verified in PEM format.
+See also the argument certificate_depth to the \fB\-\-tls\-verify\fP command.
+.TP
 .B \fBproto\fP
 The \fB\-\-proto\fP parameter. Set on program initiation and reset on
 SIGHUP.
@@ -6341,10 +6472,6 @@ variable.
 If the network or gateway are resolvable DNS names, their IP address
 translations will be recorded rather than their names as denoted on the
 command line or configuration file.
-.TP
-.B \fBpeer_cert\fP
-Temporary file name containing the client certificate upon connection.
-Useful in conjunction with \fB\-\-tls\-verify\fP\&.
 .TP
 .B \fBscript_context\fP
 Set to \(dqinit\(dq or \(dqrestart\(dq prior to up/down script execution. For more
@@ -6448,6 +6575,9 @@ following variables would be set on the OpenVPN server using the sample
 client certificate in sample\-keys (client.crt). Note that the
 verification level is 0 for the client certificate and 1 for the CA
 certificate.
+.sp
+You can use the \fB\-\-x509\-track\fP option to export more or less information
+from the certificates.
 .INDENT 7.0
 .INDENT 3.5
 .sp
@@ -7248,7 +7378,7 @@ OpenVPN allows including files in the main configuration for the \fB\-\-ca\fP,
 \fB\-\-cert\fP, \fB\-\-dh\fP, \fB\-\-extra\-certs\fP, \fB\-\-key\fP, \fB\-\-pkcs12\fP,
 \fB\-\-secret\fP, \fB\-\-crl\-verify\fP, \fB\-\-http\-proxy\-user\-pass\fP, \fB\-\-tls\-auth\fP,
 \fB\-\-auth\-gen\-token\-secret\fP, \fB\-\-peer\-fingerprint\fP, \fB\-\-tls\-crypt\fP,
-\fB\-\-tls\-crypt\-v2\fP and \fB\-\-verify\-hash\fP options.
+\fB\-\-tls\-crypt\-v2\fP, \fB\-\-verify\-hash\fP and \fB\-\-auth\-user\-pass\fP options.
 .sp
 Each inline file started by the line \fB<option>\fP and ended by the line
 \fB</option>\fP

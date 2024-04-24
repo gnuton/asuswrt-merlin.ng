@@ -13,6 +13,14 @@
 #include <linux/siphash.h>
 #include <asm/unaligned.h>
 
+#ifndef __fallthrough
+# if defined(__GNUC__) && __GNUC__ >= 7
+#  define __fallthrough __attribute__ ((fallthrough))
+# else
+#  define __fallthrough
+# endif
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
 #ifdef __LITTLE_ENDIAN
 #define bytemask_from_count(cnt)	(~(~0ul << (cnt)*8))
@@ -57,6 +65,7 @@
 	SIPROUND; \
 	return (v0 ^ v1) ^ (v2 ^ v3);
 
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 u64 __siphash_aligned(const void *data, size_t len, const siphash_key_t *key)
 {
 	const u8 *end = data + len - (len % sizeof(u64));
@@ -76,19 +85,19 @@ u64 __siphash_aligned(const void *data, size_t len, const siphash_key_t *key)
 						  bytemask_from_count(left)));
 #else
 	switch (left) {
-	case 7: b |= ((u64)end[6]) << 48;
-	case 6: b |= ((u64)end[5]) << 40;
-	case 5: b |= ((u64)end[4]) << 32;
+	case 7: b |= ((u64)end[6]) << 48; __fallthrough;
+	case 6: b |= ((u64)end[5]) << 40; __fallthrough;
+	case 5: b |= ((u64)end[4]) << 32; __fallthrough;
 	case 4: b |= le32_to_cpup(data); break;
-	case 3: b |= ((u64)end[2]) << 16;
+	case 3: b |= ((u64)end[2]) << 16; __fallthrough;
 	case 2: b |= le16_to_cpup(data); break;
 	case 1: b |= end[0];
 	}
 #endif
 	POSTAMBLE
 }
+#endif
 
-#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 u64 __siphash_unaligned(const void *data, size_t len, const siphash_key_t *key)
 {
 	const u8 *end = data + len - (len % sizeof(u64));
@@ -108,18 +117,17 @@ u64 __siphash_unaligned(const void *data, size_t len, const siphash_key_t *key)
 						  bytemask_from_count(left)));
 #else
 	switch (left) {
-	case 7: b |= ((u64)end[6]) << 48;
-	case 6: b |= ((u64)end[5]) << 40;
-	case 5: b |= ((u64)end[4]) << 32;
+	case 7: b |= ((u64)end[6]) << 48; __fallthrough;
+	case 6: b |= ((u64)end[5]) << 40; __fallthrough;
+	case 5: b |= ((u64)end[4]) << 32; __fallthrough;
 	case 4: b |= get_unaligned_le32(end); break;
-	case 3: b |= ((u64)end[2]) << 16;
+	case 3: b |= ((u64)end[2]) << 16; __fallthrough;
 	case 2: b |= get_unaligned_le16(end); break;
 	case 1: b |= end[0];
 	}
 #endif
 	POSTAMBLE
 }
-#endif
 
 /**
  * siphash_1u64 - compute 64-bit siphash PRF value of a u64
@@ -250,6 +258,7 @@ u64 siphash_3u32(const u32 first, const u32 second, const u32 third,
 	HSIPROUND; \
 	return (v0 ^ v1) ^ (v2 ^ v3);
 
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 u32 __hsiphash_aligned(const void *data, size_t len, const hsiphash_key_t *key)
 {
 	const u8 *end = data + len - (len % sizeof(u64));
@@ -268,19 +277,19 @@ u32 __hsiphash_aligned(const void *data, size_t len, const hsiphash_key_t *key)
 						  bytemask_from_count(left)));
 #else
 	switch (left) {
-	case 7: b |= ((u64)end[6]) << 48;
-	case 6: b |= ((u64)end[5]) << 40;
-	case 5: b |= ((u64)end[4]) << 32;
+	case 7: b |= ((u64)end[6]) << 48; __fallthrough;
+	case 6: b |= ((u64)end[5]) << 40; __fallthrough;
+	case 5: b |= ((u64)end[4]) << 32; __fallthrough;
 	case 4: b |= le32_to_cpup(data); break;
-	case 3: b |= ((u64)end[2]) << 16;
+	case 3: b |= ((u64)end[2]) << 16; __fallthrough;
 	case 2: b |= le16_to_cpup(data); break;
 	case 1: b |= end[0];
 	}
 #endif
 	HPOSTAMBLE
 }
+#endif
 
-#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 u32 __hsiphash_unaligned(const void *data, size_t len,
 			 const hsiphash_key_t *key)
 {
@@ -300,18 +309,17 @@ u32 __hsiphash_unaligned(const void *data, size_t len,
 						  bytemask_from_count(left)));
 #else
 	switch (left) {
-	case 7: b |= ((u64)end[6]) << 48;
-	case 6: b |= ((u64)end[5]) << 40;
-	case 5: b |= ((u64)end[4]) << 32;
+	case 7: b |= ((u64)end[6]) << 48; __fallthrough;
+	case 6: b |= ((u64)end[5]) << 40; __fallthrough;
+	case 5: b |= ((u64)end[4]) << 32; __fallthrough;
 	case 4: b |= get_unaligned_le32(end); break;
-	case 3: b |= ((u64)end[2]) << 16;
+	case 3: b |= ((u64)end[2]) << 16; __fallthrough;
 	case 2: b |= get_unaligned_le16(end); break;
 	case 1: b |= end[0];
 	}
 #endif
 	HPOSTAMBLE
 }
-#endif
 
 /**
  * hsiphash_1u32 - compute 64-bit hsiphash PRF value of a u32
@@ -412,6 +420,7 @@ u32 hsiphash_4u32(const u32 first, const u32 second, const u32 third,
 	HSIPROUND; \
 	return v1 ^ v3;
 
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 u32 __hsiphash_aligned(const void *data, size_t len, const hsiphash_key_t *key)
 {
 	const u8 *end = data + len - (len % sizeof(u32));
@@ -425,14 +434,14 @@ u32 __hsiphash_aligned(const void *data, size_t len, const hsiphash_key_t *key)
 		v0 ^= m;
 	}
 	switch (left) {
-	case 3: b |= ((u32)end[2]) << 16;
+	case 3: b |= ((u32)end[2]) << 16; __fallthrough;
 	case 2: b |= le16_to_cpup(data); break;
 	case 1: b |= end[0];
 	}
 	HPOSTAMBLE
 }
+#endif
 
-#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 u32 __hsiphash_unaligned(const void *data, size_t len,
 			 const hsiphash_key_t *key)
 {
@@ -447,13 +456,12 @@ u32 __hsiphash_unaligned(const void *data, size_t len,
 		v0 ^= m;
 	}
 	switch (left) {
-	case 3: b |= ((u32)end[2]) << 16;
+	case 3: b |= ((u32)end[2]) << 16; __fallthrough;
 	case 2: b |= get_unaligned_le16(end); break;
 	case 1: b |= end[0];
 	}
 	HPOSTAMBLE
 }
-#endif
 
 /**
  * hsiphash_1u32 - compute 32-bit hsiphash PRF value of a u32
