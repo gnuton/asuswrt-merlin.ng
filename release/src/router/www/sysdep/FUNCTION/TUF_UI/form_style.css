@@ -1631,13 +1631,12 @@ padding-top:1px;
 
 /* 設置主選單dt */
 .navigation li dt {
-	background:url('/images/New_ui/dropdown_bt.png') no-repeat;
+	background:url('/images/New_ui/dropdown_bt.png');
 	padding:8px 8px 0 0;
 	text-align:center;
 	font-size: 13px;
-	height: 34px;
-	overflow:hidden;
-	width: 152px;
+	height: 27px;
+	width: 145px;
 }
 
 .navigation li dt:hover{
