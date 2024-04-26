@@ -3,7 +3,7 @@ Asuswrt-Merlin Changelog
 3004.388.7_1-gnuton1 (xx-xxxx-2024)
   - ADDED: XT_SET kernel module for TUF-AX3000_V2 and similar models
 
-3004.388.7 (xx-xxx-2024)
+3004.388.7 (26-Apr-2024)
   - NOTE: RT-AX56U is exceptionally included in this release.
 
   - NEW: IGD2 support for UPNP/PCP.  This will allow IPv6 pinhole
