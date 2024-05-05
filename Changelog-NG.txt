@@ -7,7 +7,7 @@ Asuswrt-Merlin Changelog
   - ADDED: Support for TUF-AX3000 V2
   - ADDED: Support for RT-AX58U V2
 
-3004.388.7 (xx-xxx-2024)
+3004.388.7 (26-Apr-2024)
   - NOTE: RT-AX56U is exceptionally included in this release.
 
   - NEW: IGD2 support for UPNP/PCP.  This will allow IPv6 pinhole
@@ -24,6 +24,7 @@ Asuswrt-Merlin Changelog
   - UPDATED: wireguard kernel to v1.0.20220627.
   - UPDATED: wireguard tools to 2023-08-04 snapshot.
   - UPDATED: dropbear to 2024.84.
+  - UPDATED: strongswan to 5.9.13 (fixes CVE-2023-41913)
   - CHANGED: Hardcoded location of the CA bundle in inadyn, so it
              no longer needs to be manually defined in custom
              configurations.
