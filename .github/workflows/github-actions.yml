@@ -9,8 +9,8 @@ jobs:
         fail-fast: false
         matrix:
           cfg:
-            - { model: "gt-be98_pro",      sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
+            - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: false }
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
@@ -112,6 +112,10 @@ jobs:
             if [[ ${UI} == "tuf" ]]; then
               echo "Enabling TUF UI"
               sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
+            fi
+            if [[ ${UI} == "rog" ]]; then
+              echo "Enabling ROG UI"
+              sed -i 's/ROG_UI=n/ROG_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
             fi
 
             echo "----- BUILD ${MODEL}-----"
