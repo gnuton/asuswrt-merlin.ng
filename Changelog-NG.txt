@@ -1,7 +1,11 @@
 Asuswrt-Merlin Changelog
 
-3004.388.7_1-gnuton1 (xx-xxxx-2024)
-  - ADDED: XT_SET kernel module for TUF-AX3000_V2 and similar models
+3004.388.7_1-gnuton1 (09-June-2024)
+  - ADDED: XT kernel module for SDK 5.04 models 
+         Allows Skynet and other addons to work
+  - FIXED: RT-AX58U_V2: Fixed errors when changing 2.4 Ghz setting 
+  - FIXED: TUF theme
+  - FIXED: RT-AX82U V2 firmware upgrade not working
 
 3004.388.7 (26-Apr-2024)
   - NOTE: RT-AX56U is exceptionally included in this release.
