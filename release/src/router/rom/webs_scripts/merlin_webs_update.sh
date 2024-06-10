@@ -93,11 +93,11 @@ if [ "$webs_state_flag" -eq "1" ]; then
 	if [ "$forsq" == "1" ]; then
 		echo "---- download SQ release note $fwsite/test/$releasenote_file0_US ----" >> /tmp/webs_upgrade.log
 		/usr/sbin/wget $wget_options $fwsite/test/$releasenote_file0_US -O $releasenote_path0
-		echo "---- $fwsite/test/$releasenote_file0 ----" >> /tmp/webs_upgrade.log
+		echo "---- $fwsite/test/$releasenote_file0_US ----" >> /tmp/webs_upgrade.log
 	else
 		echo "---- download real release note ----" >> /tmp/webs_upgrade.log
 		/usr/sbin/wget $wget_options $fwsite/$releasenote_file0_US -O $releasenote_path0
-		echo "---- $fwsite/$releasenote_file0 ----" >> /tmp/webs_upgrade.log
+		echo "---- $fwsite/$releasenote_file0_US ----" >> /tmp/webs_upgrade.log
 	fi
 
 	if [ "$?" != "0" ]; then
