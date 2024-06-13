@@ -2,7 +2,7 @@
 set -u;
 wget_options="-q -t 2 -T 30"
 
-fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates/"
+fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates"
 
 nvram set webs_state_update=0 # INITIALIZING
 nvram set webs_state_flag=0   # 0: Don't do upgrade  1: Do upgrade
@@ -18,7 +18,7 @@ fi
 current_base=$(nvram get firmver | sed "s/\.//g")
 current_firm=$(nvram get buildno | cut -d. -f1)
 current_buildno=$(nvram get buildno | cut -d. -f2)
-current_extendno=$(nvram get extendno | sed "s/-g.*//" | sed "s/_.*//" | sed "s/alpha\|beta/-1/")
+current_extendno=$(nvram get extendno | awk -F'[_-]' '{n=$1} /[aA]lpha|[bB]eta/{n--} END{print n}') #Extract extendno, subtract value by 1 if it contains "alpha/beta", remove all other values such as "_rog" or "-g*"
 
 # get firmware information
 forsq=$(nvram get apps_sq)
