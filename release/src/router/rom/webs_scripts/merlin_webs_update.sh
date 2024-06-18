@@ -1,5 +1,5 @@
 #!/bin/sh
-set -u;
+
 wget_options="-q -t 2 -T 30"
 
 fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates"
