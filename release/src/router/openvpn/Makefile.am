@@ -5,8 +5,8 @@
 #             packet encryption, packet authentication, and
 #             packet compression.
 #
-#  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
-#  Copyright (C) 2010-2023 David Sommerseth <dazo@eurephia.org>
+#  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
+#  Copyright (C) 2010-2024 David Sommerseth <dazo@eurephia.org>
 #  Copyright (C) 2006-2012 Alon Bar-Lev <alon.barlev@gmail.com>
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,10 @@ CLEANFILES = \
 
 EXTRA_DIST = \
 	contrib \
-	debug
+	debug \
+	CMakeLists.txt \
+	CMakePresets.json \
+	config.h.cmake.in
 
 .PHONY: config-version.h doxygen
 
@@ -64,14 +67,11 @@ dist_noinst_DATA = \
 	.gitattributes \
 	CONTRIBUTING.rst \
 	PORTS \
+	README.cmake.md \
 	README.dco.md \
 	README.ec \
 	README.wolfssl \
-	openvpn.sln
-
-dist_noinst_HEADERS = \
-	config-msvc.h \
-	config-msvc-version.h.in
+	README.mbedtls
 
 if WIN32
 rootdir=$(prefix)

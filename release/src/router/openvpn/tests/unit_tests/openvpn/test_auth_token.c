@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -37,8 +35,6 @@
 #include <cmocka.h>
 
 #include "auth_token.c"
-
-#include "mock_msg.h"
 
 struct test_context {
     struct tls_multi multi;

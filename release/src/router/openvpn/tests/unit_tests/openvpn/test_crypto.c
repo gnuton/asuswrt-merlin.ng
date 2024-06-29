@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -40,7 +38,6 @@
 #include "options.h"
 #include "ssl_backend.h"
 
-#include "mock_msg.h"
 #include "mss.h"
 
 static const char testtext[] = "Dummy text to test PEM encoding";

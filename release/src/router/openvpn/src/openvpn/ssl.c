@@ -5,9 +5,9 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
- *  Copyright (C) 2008-2023 David Sommerseth <dazo@eurephia.org>
+ *  Copyright (C) 2008-2024 David Sommerseth <dazo@eurephia.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -36,8 +36,6 @@
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -66,6 +64,7 @@
 #include "dco.h"
 
 #include "memdbg.h"
+#include "openvpn.h"
 
 #ifdef MEASURE_TLS_HANDSHAKE_STATS
 
@@ -1317,6 +1316,7 @@ tls_multi_init(struct tls_options *tls_options)
     /* get command line derived options */
     ret->opt = *tls_options;
     ret->dco_peer_id = -1;
+    ret->peer_id = MAX_PEER_ID;
 
     return ret;
 }
@@ -1646,7 +1646,12 @@ generate_key_expansion(struct tls_multi *multi, struct key_state *ks,
     {
         if (!generate_key_expansion_openvpn_prf(session, &key2))
         {
-            msg(D_TLS_ERRORS, "TLS Error: PRF calcuation failed");
+            msg(D_TLS_ERRORS, "TLS Error: PRF calculation failed. Your system "
+                "might not support the old TLS 1.0 PRF calculation anymore or "
+                "the policy does not allow it (e.g. running in FIPS mode). "
+                "The peer did not announce support for the modern TLS Export "
+                "feature that replaces the TLS 1.0 PRF (requires OpenVPN "
+                "2.6.x or higher)");
             goto exit;
         }
     }
@@ -2908,7 +2913,13 @@ tls_process_state(struct tls_multi *multi,
                            CONTROL_SEND_ACK_MAX, true);
         *to_link = b;
         dmsg(D_TLS_DEBUG, "Reliable -> TCP/UDP");
-        return true;
+
+        /* This changed the state of the outgoing buffer. In order to avoid
+         * running this function again/further and invalidating the key_state
+         * buffer and accessing the buffer that is now in to_link after it being
+         * freed for a potential error, we shortcircuit exiting of the outer
+         * process here. */
+        return false;
     }
 
     /* Write incoming ciphertext to TLS object */
@@ -3169,6 +3180,69 @@ tls_process(struct tls_multi *multi,
     return false;
 }
 
+
+/**
+ * This is a safe guard function to double check that a buffer from a session is
+ * not used in a session to avoid a use after free.
+ *
+ * @param to_link
+ * @param session
+ */
+static void
+check_session_buf_not_used(struct buffer *to_link, struct tls_session *session)
+{
+    uint8_t *dataptr = to_link->data;
+    if (!dataptr)
+    {
+        return;
+    }
+
+    /* Checks buffers in tls_wrap */
+    if (session->tls_wrap.work.data == dataptr)
+    {
+        msg(M_INFO, "Warning buffer of freed TLS session is "
+            "still in use (tls_wrap.work.data)");
+        goto used;
+    }
+
+    for (int i = 0; i < KS_SIZE; i++)
+    {
+        struct key_state *ks = &session->key[i];
+        if (ks->state == S_UNDEF)
+        {
+            continue;
+        }
+
+        /* we don't expect send_reliable to be NULL when state is
+         * not S_UNDEF, but people have reported crashes nonetheless,
+         * therefore we better catch this event, report and exit.
+         */
+        if (!ks->send_reliable)
+        {
+            msg(M_FATAL, "ERROR: session->key[%d]->send_reliable is NULL "
+                "while key state is %s. Exiting.",
+                i, state_name(ks->state));
+        }
+
+        for (int j = 0; j < ks->send_reliable->size; j++)
+        {
+            if (ks->send_reliable->array[j].buf.data == dataptr)
+            {
+                msg(M_INFO, "Warning buffer of freed TLS session is still in"
+                    " use (session->key[%d].send_reliable->array[%d])",
+                    i, j);
+
+                goto used;
+            }
+        }
+    }
+    return;
+
+used:
+    to_link->len = 0;
+    to_link->data = 0;
+    /* for debugging, you can add an ASSERT(0); here to trigger an abort */
+}
 /*
  * Called by the top-level event loop.
  *
@@ -3267,6 +3341,7 @@ tls_multi_process(struct tls_multi *multi,
                 }
                 else
                 {
+                    check_session_buf_not_used(to_link, session);
                     reset_session(multi, session);
                 }
             }
@@ -4215,6 +4290,32 @@ protocol_dump(struct buffer *buffer, unsigned int flags, struct gc_arena *gc)
             goto done;
         }
         buf_printf(&out, " pid=%s", packet_id_net_print(&pin, (flags & PD_VERBOSE), gc));
+    }
+    /*
+     * packet_id + tls-crypt hmac
+     */
+    if (flags & PD_TLS_CRYPT)
+    {
+        struct packet_id_net pin;
+        uint8_t tls_crypt_hmac[TLS_CRYPT_TAG_SIZE];
+
+        if (!packet_id_read(&pin, &buf, true))
+        {
+            goto done;
+        }
+        buf_printf(&out, " pid=%s", packet_id_net_print(&pin, (flags & PD_VERBOSE), gc));
+        if (!buf_read(&buf, tls_crypt_hmac, TLS_CRYPT_TAG_SIZE))
+        {
+            goto done;
+        }
+        if (flags & PD_VERBOSE)
+        {
+            buf_printf(&out, " tls_crypt_hmac=%s", format_hex(tls_crypt_hmac, TLS_CRYPT_TAG_SIZE, 0, gc));
+        }
+        /*
+         * Remainder is encrypted and optional wKc
+         */
+        goto done;
     }
 
     /*
