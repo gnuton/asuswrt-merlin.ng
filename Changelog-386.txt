@@ -1,6 +1,10 @@
 Asuswrt-Merlin Changelog
 ========================
 
+386.14_0-gnuton1 (xx-xxx-xxxx)
+ - UPDATED: Merged with GPL 386_52805.
+
+
 386.14 (xx-xxx-xxxx)
   - NOTE: Reminder that all models on the 386.xx series will
           stop being supported by Asuswrt-Merlin at the end
