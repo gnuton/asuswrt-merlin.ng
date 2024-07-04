@@ -94,10 +94,15 @@ typedef enum ovpn_auth{
 
 // Rule priority reservations, 200 rules for 5 clients each (OVPN and WG)
 #define VPNDIR_PRIO_MAX_RULES 200
-#define VPNDIR_PRIO_ALL 10000
+#define VPNDIR_PRIO_BASE 10000
+#define VPNDIR_PRIO_ALL VPNDIR_PRIO_BASE
 #define VPNDIR_PRIO_WAN (VPNDIR_PRIO_ALL + OVPN_CLIENT_MAX + WG_CLIENT_MAX)
 #define VPNDIR_PRIO_OPENVPN (VPNDIR_PRIO_WAN + VPNDIR_PRIO_MAX_RULES)
 #define VPNDIR_PRIO_WIREGUARD (VPNDIR_PRIO_OPENVPN + (VPNDIR_PRIO_MAX_RULES * OVPN_CLIENT_MAX))
+// Rules for killswitch (multiple rules per prio)
+#define VPNDIR_PRIO_KS_OPENVPN (VPNDIR_PRIO_WIREGUARD + (VPNDIR_PRIO_MAX_RULES * WG_CLIENT_MAX))
+#define VPNDIR_PRIO_KS_WIREGUARD (VPNDIR_PRIO_KS_OPENVPN + OVPN_CLIENT_MAX)
+#define VPNDIR_PRIO_KS_SDN (VPNDIR_PRIO_KS_WIREGUARD + WG_CLIENT_MAX)
 
 
 typedef struct ovpn_cconf {
@@ -212,4 +217,5 @@ extern int ovpn_write_key(ovpn_type_t type, int unit, ovpn_key_t key_type);
 extern ovpn_cconf_t *ovpn_get_cconf(int unit);
 extern ovpn_sconf_t *ovpn_get_sconf(int unit);
 extern char *get_ovpn_custom_old(ovpn_type_t type, int unit, char* buffer, int bufferlen);
+extern void ovpn_defaults();
 #endif

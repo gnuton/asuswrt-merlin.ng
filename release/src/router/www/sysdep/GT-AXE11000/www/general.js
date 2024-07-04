@@ -348,6 +348,7 @@ function change_common_radio(o, s, v, r){
 			}
 
 			change_ddns_setting(document.form.ddns_server_x.value);
+			inputCtrl(document.form.ddns_refresh_x, 1);
 		}else{
 			if(document.form.ddns_server_x.value == "WWW.ASUS.COM"){
 				document.form.DDNSName.parentNode.parentNode.parentNode.style.display = "none";
@@ -366,6 +367,7 @@ function change_common_radio(o, s, v, r){
 			document.form.ddns_regular_check.value = 0;
 			showhide("check_ddns_field", 0);
 			inputCtrl(document.form.ddns_regular_period, 0);
+			inputCtrl(document.form.ddns_refresh_x, 0);
 
 			document.getElementById("ddns_status_tr").style.display = "none";
 			document.getElementById("ddns_result_tr").style.display = "none";
@@ -1971,7 +1973,7 @@ function gen_switch_menu(_arrayList, _currentItem) {
 		var gen_not_pressed_content = function(_itemArray, _cssMode) {
 			var not_pressed_code = "";
 			not_pressed_code += "<div style='width:110px;height:30px;float:left;" + _cssMode + "' class='block_filter'>";
-			not_pressed_code += "<a href='" + _itemArray[1] + "'>";
+			not_pressed_code += "<a href='" + _itemArray[1] + "' target='_parent'>";
 			not_pressed_code += "<div class='block_filter_name'>" +  _itemArray[0] + "</div>";
 			not_pressed_code += "</a>";
 			not_pressed_code += "</div>";
@@ -2107,14 +2109,14 @@ function is_unit_5g_2(_unit) {
 }
 
 function is_unit_6g(_unit) {
-	if (band6g_support) {
+	if (wl_info.band6g_support) {
 		if (_unit == 2) return true;
 	}
 	return false;
 }
 
-function is_unit_60g(_unit){
-	if (band60g_support) {
+function is_unit_60g(_unit) {
+	if (wl_info.band60g_support) {
 		if (_unit == 3) return true;
 	}
 	return false;
