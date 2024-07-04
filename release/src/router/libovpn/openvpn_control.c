@@ -242,7 +242,6 @@ void ovpn_client_down_handler(int unit)
 	if ((unit < 1) || (unit > OVPN_CLIENT_MAX))
 		return;
 
-	ovpn_set_killswitch(unit);
 	_flush_routing_cache();
 
 	amvpn_clear_exclusive_dns(unit, VPNDIR_PROTO_OPENVPN);
@@ -280,32 +279,34 @@ void ovpn_client_up_handler(int unit)
 	verb = nvram_pf_get_int(prefix, "verb");
 
 	// Routing handling, only for TUN
-	if (!strncmp(_safe_getenv("dev"),"tun", 3)) {
+	if (!strncmp(safe_getenv("dev"),"tun", 3)) {
 		snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route flush table ovpnc%d", unit);
 		system(buffer);
 
-		// Copy main table routes
-		snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route show table main > /tmp/vpnroute%d_tmp", unit);
-		system(buffer);
+		if (!nvram_pf_get_int(prefix, "noroutecopy")) {
+			// Copy main table routes
+			snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route show table main > /tmp/vpnroute%d_tmp", unit);
+			system(buffer);
 
-		snprintf(buffer, sizeof (buffer), "/tmp/vpnroute%d_tmp", unit);
-		fp_route = fopen(buffer, "r");
+			snprintf(buffer, sizeof (buffer), "/tmp/vpnroute%d_tmp", unit);
+			fp_route = fopen(buffer, "r");
 
-		if (fp_route) {
-			while (fgets(buffer2, sizeof(buffer2), fp_route) != NULL) {
-				if (buffer2[strlen(buffer2)-1] == '\n')
-					buffer2[strlen(buffer2)-1] = '\0';
-				snprintf(buffer3, sizeof (buffer3), "/usr/sbin/ip route add %s table ovpnc%d", buffer2, unit);
-				system(buffer3);
-				if (verb >= 6)
-					logmessage("openvpn-routing", "Copy main table route: %s", buffer3);
+			if (fp_route) {
+				while (fgets(buffer2, sizeof(buffer2), fp_route) != NULL) {
+					if (buffer2[strlen(buffer2)-1] == '\n')
+						buffer2[strlen(buffer2)-1] = '\0';
+					snprintf(buffer3, sizeof (buffer3), "/usr/sbin/ip route add %s table ovpnc%d", buffer2, unit);
+					system(buffer3);
+					if (verb >= 6)
+						logmessage("openvpn-routing", "Copy main table route: %s", buffer3);
+				}
+				fclose(fp_route);
 			}
-			fclose(fp_route);
+			unlink(buffer);
 		}
-		unlink(buffer);
 
 		// Apply pushed routes
-		dev_env = _safe_getenv("dev");
+		dev_env = safe_getenv("dev");
 
 		i = 0;
 		while (1) {
@@ -442,34 +443,12 @@ exit:
 }
 
 
-void ovpn_set_killswitch(int unit) {
-	char buffer[64];
-
-	snprintf(buffer, sizeof (buffer), "vpn_client%d_enforce", unit);
-	if (nvram_get_int(buffer)) {
-		snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route del default table ovpnc%d", unit);
-		system(buffer);
-		snprintf(buffer, sizeof (buffer), "/usr/sbin/ip route add prohibit default table ovpnc%d", unit);
-		logmessage("openvpn-routing", "Configured killswitch on VPN client %d", unit);
-		system(buffer);
-	}
-}
-
-
-char *_safe_getenv(const char* name) {
-	char *value;
-
-	value = getenv(name);
-	return (value ? value : "");
-}
-
-
 void _ovpn_run_event_script() {
 	ovpn_if_t type;
 
-	if (!strncmp(_safe_getenv("dev"),"tun", 3))
+	if (!strncmp(safe_getenv("dev"),"tun", 3))
 		type = OVPN_IF_TUN;
-	else if (!strncmp(_safe_getenv("dev"),"tap", 3))
+	else if (!strncmp(safe_getenv("dev"),"tap", 3))
 		type = OVPN_IF_TAP;
 	else
 		return;
@@ -478,8 +457,8 @@ void _ovpn_run_event_script() {
 		if (nvram_get_int("jffs2_scripts") == 0) {
 			logmessage("custom_script", "Found openvpn-event, but custom script execution is disabled!");
 		} else {
-			eval("/jffs/scripts/openvpn-event", _safe_getenv("dev"), (type == OVPN_IF_TUN ? _safe_getenv("tun_mtu") : _safe_getenv("tap_mtu")), _safe_getenv("link_mtu"),
-			      _safe_getenv("ifconfig_local"), _safe_getenv("ifconfig_remote"), _safe_getenv("script_context"));
+			eval("/jffs/scripts/openvpn-event", safe_getenv("dev"), (type == OVPN_IF_TUN ? safe_getenv("tun_mtu") : safe_getenv("tap_mtu")), safe_getenv("link_mtu"),
+			      safe_getenv("ifconfig_local"), safe_getenv("ifconfig_remote"), safe_getenv("script_context"));
 			logmessage("custom_script", "Running openvpn-event");
 		}
 	}
@@ -733,7 +712,8 @@ void ovpn_process_eas(int start) {
 		// Update kill switch states for clients set to auto-start with WAN
 		amvpn_set_wan_routing_rules();
 		amvpn_set_routing_rules(unit, VPNDIR_PROTO_OPENVPN);
-		ovpn_set_killswitch(unit);
+
+		amvpn_set_killswitch_rules(VPNDIR_PROTO_OPENVPN, unit, NULL);
 
 		if (unit > 0 && unit <= OVPN_CLIENT_MAX) {
 			sprintf(buffer2, "vpnclient%d", unit);
