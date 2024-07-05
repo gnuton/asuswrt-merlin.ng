@@ -1,0 +1,12 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: June 10, 2024
+Release: 3004.388.7_1-gnuton1
+
+  - ADDED: XT kernel module for SDK 5.04 models 
+         Allows Skynet and other addons to work
+  - FIXED: RT-AX58U_V2: Fixed errors when changing 2.4 Ghz setting 
+  - FIXED: TUF theme
+  - FIXED: RT-AX82U V2 firmware upgrade not working
+
+
