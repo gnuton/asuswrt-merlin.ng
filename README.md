@@ -39,6 +39,38 @@ My builds are intended to support all features present in the original Merlin fi
 
 If you enjoy this project feel free to scroll all the way down and check on how you can ❤️ this project! 
 
+
+---------------------
+
+### ⬇️ Firmware downloads
+3006.102.x firmware downloads: latest [testing](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/3006.102.1_1-gnuton0_beta1)
+* [GT-BE98](https://rog.asus.com/networking/rog-rapture-gt-be98-model)
+  
+3004.388.x firmware downloads: [stable](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) or [testing](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/3004.388.8_0-gnuton0_alpha1)
+* [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
+* [RT-AX82U v1](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
+* [RT-AX82U v2](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
+* [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/)
+* [TUF-AX5400 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX5400/)
+* [TUF-AX3000 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX3000/)
+* [TUF-AX3000 v2](https://www.asus.com/networking-iot-servers/wifi-routers/asus-gaming-routers/tuf-gaming-ax3000-v2/) - 🔥 [New](https://github.com/gnuton/asuswrt-merlin.ng/issues/529)!
+* [RT-AX58U v2](https://uk.store.asus.com/rt-ac58u-v2-122214131-90ig06q0-mu9b00.html) - 🔥 [New](https://github.com/gnuton/asuswrt-merlin.ng/issues/550)!
+* [ZenWiFi XT8 / RT-AX95Q v1](https://www.asus.com/Networking-IoT-Servers/Whole-Home-Mesh-WiFi-System/ZenWiFi-WiFi-Systems/ASUS-ZenWiFi-AX-XT8/) 
+* [ZenWifi ET8 / RT-AXE95Q](https://www.asus.com/networking-iot-servers/whole-home-mesh-wifi-system/zenwifi-wifi-systems/asus-zenwifi-et8/) 
+
+386.x firmware downloads: [stable](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/386.12_0-gnuton1) or [testing](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/386.14_0-gnuton0_beta1)
+* [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) 
+
+If you cannot find your router in the above list, please read [🔥 here 🔥](https://github.com/gnuton/asuswrt-merlin.ng/issues/523)!
+
+Not sure which version you have? V1? V2? Enable SSH, then ssh into your router and run ```nvram get productid```
+
+---------------------
+
+### Experimental builds:
+* DSL-AC68U & DSL-AX82U
+  * [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/). Please note that AiMesh is supported by standard images and it's much performant than repeater but it works only with other Asus routers.
+
 ---------------------
 
 ### [Stats](https://somsubhra.github.io/github-release-stats/?username=gnuton&repository=asuswrt-merlin.ng)
@@ -61,37 +93,8 @@ All releases:
 
 Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/tag/RMerl/asuswrt-merlin.ng.svg)
 
-
 ---------------------
 
-### Supported Models
-
-388.x firmware: ⬇️ Download latest [release](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) or [testing pre-release](https://github.com/gnuton/asuswrt-merlin.ng/releases/) ⬇️
-* [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
-* [RT-AX82U v1](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
-* [RT-AX82U v2](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
-* [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/)
-* [TUF-AX5400 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX5400/)
-* [TUF-AX3000 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX3000/)
-* [TUF-AX3000 v2](https://www.asus.com/networking-iot-servers/wifi-routers/asus-gaming-routers/tuf-gaming-ax3000-v2/) - 🔥 [New](https://github.com/gnuton/asuswrt-merlin.ng/issues/529)!
-* [RT-AX58U v2](https://uk.store.asus.com/rt-ac58u-v2-122214131-90ig06q0-mu9b00.html) - 🔥 [New](https://github.com/gnuton/asuswrt-merlin.ng/issues/550)!
-* [ZenWiFi XT8 / RT-AX95Q v1](https://www.asus.com/Networking-IoT-Servers/Whole-Home-Mesh-WiFi-System/ZenWiFi-WiFi-Systems/ASUS-ZenWiFi-AX-XT8/) 
-* [ZenWifi ET8 / RT-AXE95Q](https://www.asus.com/networking-iot-servers/whole-home-mesh-wifi-system/zenwifi-wifi-systems/asus-zenwifi-et8/) 
-
-386.x firmware:
-* [DSL-AC68U](https://www.asus.com/Networking-IoT-Servers/Modem-Routers/All-series/DSLAC68U/) ⬇️ Download latest stable [386.12_0-gnuton1](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/386.12_0-gnuton1) ⬇️
-
-If you cannot find your router in the above list, please read [🔥 here 🔥](https://github.com/gnuton/asuswrt-merlin.ng/issues/523)!
-
-Not sure which version you have? V1? V2? Enable SSH, then ssh into your router and run ```nvram get productid```
-
----------------------
-
-### Experimental builds:
-* DSL-AC68U & DSL-AX82U
-  * [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/). Please note that AiMesh is supported by standard images and it's much performant than repeater but it works only with other Asus routers.
-  
----------------------
 ### Thanks to
 - Asus for the GPLs and HW samples.
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
