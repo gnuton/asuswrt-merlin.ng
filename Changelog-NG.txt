@@ -1,6 +1,8 @@
 Asuswrt-Merlin Changelog
 
 3004.388.8_1-gnuton1 (xx-xxx-2024)
+  -
+
 
 3004.388.8 (xx-xxx-2024)
   - NEW: Rewrote VPN killswitch implementation.  The new method

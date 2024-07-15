@@ -12153,14 +12153,14 @@ void hnd_nat_ac_init(int bootup)
 #endif
 
 	if (nvram_match("runner_disable", "1"))
-#if defined(RTCONFIG_HND_ROUTER_AX_675X)
+#if defined(RTCONFIG_HND_ROUTER_AX_675X) || defined(RTCONFIG_HND_ROUTER_AX_6756)
 		/* apply archer instead of runner */
 		eval("fc", "config", "--hw-accel", "0");
 #else
 		eval("runner", "disable");
 #endif
 	else if (!bootup)
-#if defined(RTCONFIG_HND_ROUTER_AX_675X)
+#if defined(RTCONFIG_HND_ROUTER_AX_675X) || defined(RTCONFIG_HND_ROUTER_AX_6756)
 		/* apply archer instead of runner */
 		eval("fc", "config", "--hw-accel", "1");
 		eval("archerctl", "sysport_tm", "disable");
