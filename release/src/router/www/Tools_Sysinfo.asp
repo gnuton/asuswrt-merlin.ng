@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -375,12 +375,12 @@ function update_temperatures(){
 			update_temperatures();
 		},
 		success: function(response){
-			if (based_modelid === 'GT-AXE16000') {
+			if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98') {
 				curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
 				curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
 				curr_coreTmp_52_raw = curr_coreTmp_wl1_raw;
 				curr_coreTmp_6_raw = curr_coreTmp_wl2_raw;
-			} else if (based_modelid === 'GT-BE98_PRO' || based_modelid === 'GT-BE98') {
+			} else if (based_modelid === 'GT-BE98_PRO') {
                 curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
                 curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
                 curr_coreTmp_6_raw = curr_coreTmp_wl1_raw;
@@ -473,12 +473,12 @@ function showbootTime(){
 function show_connstate(){
 	document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " active";
 
-	if (based_modelid === 'GT-AXE16000') {
+	if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98') {
 		wlc_24_arr = wlc_3_arr;
 		wlc_51_arr = wlc_0_arr;
 		wlc_52_arr = wlc_1_arr;
 		wlc_6_arr = wlc_2_arr;
-	} else if (based_modelid === 'GT-BE98_PRO' || based_modelid === 'GT-BE98') {
+	} else if (based_modelid === 'GT-BE98_PRO') {
         wlc_24_arr = wlc_3_arr;
         wlc_51_arr = wlc_0_arr;
         wlc_6_arr = wlc_1_arr;
@@ -822,6 +822,10 @@ function show_wifi_version() {
   </tr>
 </table>
 <div id="footer"></div>
+</body>
+</html>
+
+
 </body>
 </html>
 
