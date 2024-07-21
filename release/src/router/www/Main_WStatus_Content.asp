@@ -115,7 +115,7 @@ function redraw(){
 	var bandname_array = [];
 	var code = "";
 
-	if (based_modelid === 'GT-AXE16000') {
+	if (based_modelid === 'GT-AXE16000' ||  based_modelid === 'GT-BE98') {
 		apinfo_array = [dataarray3, dataarray0, dataarray1, dataarray2];
 		client_array = [wificlients3, wificlients0, wificlients1, wificlients2];
 		dfs_array = [[],dfs_statusarray0, dfs_statusarray1, []];
