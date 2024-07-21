@@ -3,6 +3,12 @@ Asuswrt-Merlin 3006.xxx Changelog
 
 3006.102.1_1-gnuton1 (xx-xxxx-2024)
   - NEW: Added support for GT-BE98.
+  - FIXED: DNSDirector and Tor pages would fail to properly load
+           in some environment.
+
+3006.102.xx (xx-xxx-xxxx)
+  - FIXED: DNSDirector and Tor pages would fail to properly load
+           in some environment.
 
 3006.102.1 (28-Jun-2024)
 

@@ -1562,6 +1562,9 @@ function initial(){
 	}
 
 	if(dnspriv_support){
+                if (dnsfilter_support && "<% nvram_get("dnsfilter_enable_x"); %>" == "1")
+			document.getElementById("dnsfilter_hint_dnspriv").style.display = "";
+
 		$.getJSON("/dot-servers.json", function(local_data){
 			var gen_dotPresets = function(data){
 				$("#dotPresets").children().remove().end().append("<option value='-1'><#Select_menu_default#></option>");
@@ -1585,6 +1588,7 @@ function initial(){
 					$("#dot_presets_tr").hide();
 			};
 			gen_dotPresets(local_data);
+/*
 			$.getJSON("https://nw-dlcdnet.asus.com/plugin/js/dot-servers.json",
 				function(cloud_data){
 					if(JSON.stringify(local_data) != JSON.stringify(cloud_data)){
@@ -1594,6 +1598,7 @@ function initial(){
 					}
 				}
 			);
+*/
 		});
 	}
 
@@ -1601,6 +1606,8 @@ function initial(){
 		document.getElementById("dnssec_tr").style.display = "";
 		showhide("dnssec_strict_tr", "<% nvram_get("dnssec_enable"); %>" == "1" ? 1 : 0);
 	}
+
+	display_upnp_options();
 
 	if(parent.webWrapper){
 		$("#DNS_Assign_splitLine").addClass("splitLine_dns_bussiness");
@@ -1614,6 +1621,17 @@ function initial(){
 		$("#DNS_Assign_button").css("margin", "-38px 0 5px 0");//margin:-38px 0 5px 0;
 	}
 	
+}
+
+function display_upnp_options(){
+	document.getElementById("upnp_range_int").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	document.getElementById("upnp_range_ext").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	document.getElementById("upnp_secure_tr").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	if (igd2_support) {
+		document.getElementById("upnp_pinhole").style.display = (document.form.wan_upnp_enable[0].checked) ? "" : "none";
+	} else {
+		document.getElementById("upnp_pinhole").style.display = "none";
+	}
 }
 
 function change_wan_unit(obj){
@@ -1982,6 +2000,20 @@ function validForm(){
 			document.form.wan_mtu.focus();
 			document.form.wan_mtu.select();
 			return false;
+		}
+	}
+
+	if (document.form.wan_upnp_enable[0].checked) {
+		if((!validator.numberRange(document.form.upnp_min_port_int, 1, 65535))
+			|| (!validator.numberRange(document.form.upnp_max_port_int, 1, 65535))
+			|| (!validator.numberRange(document.form.upnp_min_port_ext, 1, 65535))
+			|| (!validator.numberRange(document.form.upnp_max_port_ext, 1, 65535))) {
+				return false;
+		}
+		if((parseInt(document.form.upnp_max_port_int.value) < parseInt(document.form.upnp_min_port_int.value))
+			|| (parseInt(document.form.upnp_max_port_ext.value) < parseInt(document.form.upnp_min_port_ext.value))) {
+				alert("Invalid UPNP ports!  First port must be lower than last port value.");
+	                        return false;
 		}
 	}
 
@@ -3220,7 +3252,7 @@ function updatDNSListOnline(){
 				return local_data[e];
 		});
 		Update_DNS_status();
-
+/*
 		$.getJSON("https://nw-dlcdnet.asus.com/plugin/js/DNS_List.json",
 			function(cloud_data){
 				if(JSON.stringify(local_data) != JSON.stringify(cloud_data)){
@@ -3233,6 +3265,7 @@ function updatDNSListOnline(){
 				}
 			}
 		);
+*/
 	});
 }
 
@@ -3521,12 +3554,44 @@ function change_wizard(o, id){
 											</td>
 										</tr>
 										<tr>
-											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a></th>
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);">Enable UPnP IGD &amp; PCP/NAT-PMP</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">FAQ</a></th>
 											<td>
-												<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
-												<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
+												<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="display_upnp_options();return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
 											</td>
 										</tr>
+										<tr id="upnp_pinhole">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,5);">Enable UPnP IGDv2 (IPv6 support)</a></th>
+											<td>
+												<input type="radio" name="upnp_pinhole_enable" class="input" value="1" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="upnp_pinhole_enable" class="input" value="0" onclick="display_upnp_options();" <% nvram_match("upnp_pinhole_enable", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="upnp_secure_tr">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,3);">Enable secure UPnP IGD mode</a></th>
+											<td>
+												<input type="radio" name="upnp_secure" class="input" value="1" <% nvram_match_x("", "upnp_secure", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="upnp_secure" class="input" value="0" <% nvram_match_x("", "upnp_secure", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr id="upnp_range_int">
+											<th>UPNP: Allowed internal port range</th>
+											<td>
+												<input type="text" maxlength="5" name="upnp_min_port_int" class="input_6_table" value="<% nvram_get("upnp_min_port_int"); %>" onkeypress="return validator.isNumber(this,event);">
+													to
+												<input type="text" maxlength="5" name="upnp_max_port_int" class="input_6_table" value="<% nvram_get("upnp_max_port_int"); %>" onkeypress="return validator.isNumber(this,event);">
+											</td>
+										</tr>
+										<tr id="upnp_range_ext">
+
+											<th>UPNP: Allowed external port range</th>
+											<td>
+													<input type="text" maxlength="5" name="upnp_min_port_ext" class="input_6_table" value="<% nvram_get("upnp_min_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
+														to
+													<input type="text" maxlength="5" name="upnp_max_port_ext" class="input_6_table" value="<% nvram_get("upnp_max_port_ext"); %>" onkeypress="return validator.isNumber(this,event);">
+											</td>
+										</tr>
+
 										<tr style="display: none;">
 											<th><a class="hintstyle" href="javascript:void(0);" onClick=""><#BasicConfig_EnableMediaServer_itemname#></a></th>
 											<td>
@@ -3776,6 +3841,7 @@ function change_wizard(o, id){
 										<!--option value="3" <% nvram_match("dnspriv_enable", "3", "selected"); %>>DNS-over-TLS/HTTPS (DoT+DoH)</option-->
 									</select>
 									<div id="yadns_hint_dnspriv" style="display:none;"></div>
+									<div id="dnsfilter_hint_dnspriv" style="display:none;"><span><a style="text-decoration:underline; color:#FFCC00;" href="DNSDirector.asp">DNS Director</a> is enabled - anything configured there to something other than No Redirection or Router will bypass DNS Privacy servers.</span></div>
 								</td>
 						</tr>
 						<tr style="display:none">
