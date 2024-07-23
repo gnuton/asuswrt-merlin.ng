@@ -381,10 +381,10 @@ function update_temperatures(){
 				curr_coreTmp_52_raw = curr_coreTmp_wl1_raw;
 				curr_coreTmp_6_raw = curr_coreTmp_wl2_raw;
 			} else if (based_modelid === 'GT-BE98_PRO') {
-                curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
-                curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
-                curr_coreTmp_6_raw = curr_coreTmp_wl1_raw;
-                curr_coreTmp_62_raw = curr_coreTmp_wl2_raw;
+                		curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
+               			curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
+                		curr_coreTmp_6_raw = curr_coreTmp_wl1_raw;
+                		curr_coreTmp_62_raw = curr_coreTmp_wl2_raw;
 			} else {
 				curr_coreTmp_24_raw = curr_coreTmp_wl0_raw;
 				if (band5g_support)
@@ -479,10 +479,10 @@ function show_connstate(){
 		wlc_52_arr = wlc_1_arr;
 		wlc_6_arr = wlc_2_arr;
 	} else if (based_modelid === 'GT-BE98_PRO') {
-        wlc_24_arr = wlc_3_arr;
-        wlc_51_arr = wlc_0_arr;
-        wlc_6_arr = wlc_1_arr;
-        wlc_62_arr = wlc_2_arr;
+        	wlc_24_arr = wlc_3_arr;
+        	wlc_51_arr = wlc_0_arr;
+        	wlc_6_arr = wlc_1_arr;
+        	wlc_62_arr = wlc_2_arr;
 	} else {
 		wlc_24_arr = wlc_0_arr;
 		if (band5g_support)
@@ -824,8 +824,3 @@ function show_wifi_version() {
 <div id="footer"></div>
 </body>
 </html>
-
-
-</body>
-</html>
-
