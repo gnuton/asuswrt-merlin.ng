@@ -1,0 +1,10 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: August 04, 2024
+Release: 3004.388.8_2-gnuton1
+
+  - UPDATED: backported all upstream changes up to 3004.388.8_2
+  - FIXED: fixed cake support to 5.04axhnd 6750 and 6756 devices
+  - REMOVED: WiFi radar support from all devices
+
+
