@@ -1,8 +1,9 @@
 Asuswrt-Merlin Changelog
 
-3004.388.8_1-gnuton1 (xx-xxx-2024)
-  -
-
+3004.388.8_2-gnuton1 (04-August-2024)
+  - UPDATED: backported all upstream changes up to 3004.388.8_2
+  - FIXED: fixed cake support to 5.04axhnd 6750 and 6756 devices
+  - REMOVED: WiFi radar support from all devices
 
 3004.388.8_2 (31-July-2024)
   - UPDATED: OpenVPN to 2.6.12.
