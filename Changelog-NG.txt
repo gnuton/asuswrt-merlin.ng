@@ -4,7 +4,20 @@ Asuswrt-Merlin Changelog
   -
 
 
-3004.388.8 (xx-xxx-2024)
+3004.388.8_2 (31-July-2024)
+  - UPDATED: OpenVPN to 2.6.12.
+  - CHANGED: Support importing Wireguard config files that
+             contain multiple AllowedIPs, Address or DNS
+             declarations.
+  - FIXED: OpenVPN client routing not working properly when
+           configuring Internet redirection to "All" or "None".
+  - FIXED: New firmware check button missing for the RT-AX58U.
+  - FIXED: Generated web certificate wasn't using the FQDN
+           for Namecheap DDNS users.
+
+
+3004.388.8 (21-July-2024)
+  - NOTE: RT-AX56U is exceptionally included in this release.
   - NEW: Rewrote VPN killswitch implementation.  The new method
          uses an always present routing rule to prohibit access to
          the main routing table, so it will be active even if the
@@ -12,7 +25,14 @@ Asuswrt-Merlin Changelog
          requires disabling the killswitch on the webui.
          The rules are also created before WAN goes up, to reduce
          the risks of leaks between WAN going up and VPN connecting.
+
+         *** Make sure to double check that you don't have any
+         unwanted killswitch enabled if you have connectivity issues
+         following the upgrade to this firmware.
+
   - NEW: Added killswitch support for WireGuard clients.
+  - NEW: Added mDNS support to the router's local name resolution
+         (nss).
   - UPDATED: Chart.js was upgraded from 2.x to 3.9, to share the
              same version used by Asus.  Any third party addon
              that used it will need to upgrade their charts to
@@ -25,8 +45,18 @@ Asuswrt-Merlin Changelog
              automatically when WAN comes up.  This is to reduce
              confusion, better integrate into SDN, and match how
              WireGuard clients already worked.
+  - CHANGED: Allow text selection on the Wireguard Server settings
+             page.
   - FIXED: JS error on Wifi 6e/7 models when toggling DDNS.
-  - FIXED: Couldn't mount CIFS shares on the router for BCM4912 devices
+  - FIXED: Couldn't mount CIFS shares on the router for BCM4912
+           devices.
+  - FIXED: Wrong band shown when selecting the 5 GHz band on the
+           WPS page for the GT-AXE11000.
+  - FIXED: WPS page wouldn't properly detect if 6 GHz radio is
+           disabled when selecting it for the GT-AXE11000
+  - FIXED: Disabling IGDv2/pinhole support wasn't fully disabling
+           IPv6 support.
+  - FIXED: CVE-2024-3080 issue
   - REMOVED: Wifi Radar was removed (unsupported by Wifi 7 devices,
              and security issues cited by Asus in their own recent
              releases).
