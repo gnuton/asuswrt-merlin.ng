@@ -207,7 +207,6 @@ define(function(){
 					{url: "Advanced_WProxy_Content.asp", tabName: "<#WiFi_Proxy_item#>"},
 					{url: "Advanced_Roaming_Block_Content.asp", tabName: "<#WiFi_Roaming_Block_List#>"},
 					{url: "Advanced_Wireless_Survey.asp", tabName: "Site Survey"},
-					{url: "WiFi_Insight.asp", tabName: "<#WiFi_radar#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
@@ -334,7 +333,6 @@ define(function(){
 					{url: "Main_WOL_Content.asp", tabName: "<#NetworkTools_WOL#>"},
 					{url: "Advanced_Smart_Connect.asp", tabName: "<#smart_connect_rule#>"},
 					{url: "Advanced_Wireless_Survey.asp", tabName: "Site Survey"},
-					{url: "WiFi_Insight.asp", tabName: "<#WiFi_radar#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			}
@@ -346,10 +344,6 @@ define(function(){
 
 				if(!dnsfilter_support){
 					retArray.push("DNSDirector.asp");
-				}
-
-				if(!wifiRadar_support){
-					retArray.push("menu_WifiRadar");
 				}
 
 				if(!multissid_support){
@@ -469,7 +463,6 @@ define(function(){
 					retArray.push("menu_AccessControl");
 					retArray.push("menu_Wtfast");
 					retArray.push("menu_GameProfile");
-					retArray.push("menu_WifiRadar");
 					retArray.push("menu_TrafficAnalyzer");
 					retArray.push("menu_QoS");
 					retArray.push("menu_BandwidthMonitor");
