@@ -111,14 +111,6 @@ define(function(){
 				] 
 			},
 			{
-				menuName: "<#WiFi_radar#>",
-				index: "menu_WifiRadar", 
-				tab: [
-					{url: "WiFi_Insight.asp", tabName: "<#WiFi_radar#>"},
-					{url: "NULL", tabName: "__INHERIT__"}
-				] 
-			},
-			{
 				menuName: "VPN",
 				index: "menu_VPN", 
 				tab: [
@@ -327,9 +319,6 @@ define(function(){
 					retArray.push("DNSFilter.asp");
 				}
 
-				if(!wifiRadar_support){
-					retArray.push("menu_WifiRadar");
-				}
 
 				if(!multissid_support){
 					retArray.push("menu_GuestNetwork");
@@ -436,11 +425,6 @@ define(function(){
 					retArray.push("menu_VLAN");
 					retArray.push("menu_Firewall");
 					retArray.push("menu_ParentalControl");
-				}
-
-				/*MODEL DEPENDENT*/
-				if(based_modelid == "GT-AXY16000" || based_modelid == "RT-AX89U"){
-					retArray.push("menu_WifiRadar");
 				}
 
 				return retArray;
