@@ -25,7 +25,7 @@
  ****************************************************************************
  * vFlash Block IO Oops log driver
  *
- * Author: Jayesh Patel <jayeshp@broadcom.com>
+ * Author: Jayesh Patel <jayesh.patel@broadcom.com>
  ****************************************************************************/
 
 #include <linux/kernel.h>
@@ -87,6 +87,11 @@ module_param(rw_blocks, ulong, 0400);
 MODULE_PARM_DESC(rw_blocks,
 		"record size for in blocks (default 16)");
 
+static int dump_panic = 0;
+module_param(dump_panic, int, 0600);
+MODULE_PARM_DESC(dump_panic,
+		"set to 1 to only dump panics, 0 to dump oopses (default 0)");
+
 static struct vfbio_oops_context {
 	struct kmsg_dumper	dump;
 	struct file		*file;
@@ -141,7 +146,7 @@ int file_read(struct file *file, unsigned long long offset,
 	oldfs = get_fs();
 	set_fs(get_ds());
 
-	ret = vfs_read(file, data, size, &offset);
+	ret = kernel_read(file, data, size, &offset);
 
 	set_fs(oldfs);
 	return ret;
@@ -157,7 +162,7 @@ int file_write(struct file *file, unsigned long long offset,
 	oldfs = get_fs();
 	set_fs(get_ds());
 
-	ret = vfs_write(file, data, size, &offset);
+	ret = kernel_write(file, data, size, &offset);
 
 	set_fs(oldfs);
 	return ret;
@@ -202,10 +207,15 @@ static void vfbio_oops_do_dump(struct kmsg_dumper *dumper,
 	bool rc = true;
 	size_t header_size, text_len = 0;
 	int text_length = 0, read_cnt = 0;
+	int i = 0;
+
+	/* Only dump panics if dump_panic is set */
+	if (reason == KMSG_DUMP_OOPS && dump_panic)
+		return;
 
 	if (!in_irq()) {
-		pr_info("vfbio_oops_do_dump: Not in IRQ Routine...\n");
-		return;
+		pr_info("%s: Not in IRQ Routine...\n", __FUNCTION__);
+		//return; /* Comment out, leaving the atomic context check to vfbio_crash_write() */
 	}
 	/* Add Dump signature and
 	* block size before kernel log
@@ -217,23 +227,22 @@ static void vfbio_oops_do_dump(struct kmsg_dumper *dumper,
 						+ sizeof(int);
 	read_cnt = cxt->num_rw_bytes-header_size-text_length;
 	buff += header_size;
-	while (1) {
+	while (i++ < 10) {
 		rc = kmsg_dump_get_buffer(dumper, false,
 				buff, read_cnt, &text_len);
 		text_length += text_len;
 		if (!rc) {
-			pr_err("vfbio_oops_do_dump: end of read from the kmsg dump\n");
+			pr_err("%s: end of read from the kmsg dump\n", __FUNCTION__);
 			break;
 		}
 		buff = (char *)cxt->buff+header_size+text_length;
 		read_cnt = cxt->num_rw_bytes-header_size-text_length;
 		if (read_cnt<=0) {
-			pr_err("vfbio_oops_do_dump: read limit reached from the kmsg dump\n");
+			pr_err("%s: read limit reached from the kmsg dump\n", __FUNCTION__);
 			break;
 		}
 	}
-	pr_info("vfbio_oops_do_dump: writing to VFBIO = %d\n",
-				text_length);
+	pr_info("%s: writing to VFBIO = %d\n", __FUNCTION__, text_length);
 	buff = (char *)cxt->buff+strlen(VFBIO_OOPS_DUMP_SIGNATURE);
 	memcpy(buff, &text_length, sizeof(int));
 	//file_write(cxt->file, cxt->offset, cxt->buff, cxt->num_rw_bytes);
@@ -252,21 +261,21 @@ static int __init vfbio_oops_probe(struct platform_device *pdev)
 	loff_t pos = 0;
 	struct file *file = NULL;
 	mm_segment_t old_fs;
-	char marker_string[200]="";
+	char marker_string[200]={0};
 
 	if (!pdata) {
-		pr_err("vfbio_oops_probe: No platform data. Error!\n");
+		pr_err("%s: No platform data. Error!\n", __FUNCTION__);
 		return -EINVAL;
 	}
 
 	if (pdata->devname == NULL) {
-		pr_err("vfbio_oops_probe: devname is NULL\n");
+		pr_err("%s: devname is NULL\n", __FUNCTION__);
 		return err;
 	}
 
 	cxt->file = file_open(blkdev, O_RDWR, 0);
 	if (!cxt->file) {
-		pr_err("vfbio_oops_probe: %s open failed\n", blkdev);
+		pr_err("%s: %s open failed\n", __FUNCTION__, blkdev);
 		goto kmalloc_failed;
 	}
 	cxt->bdev = I_BDEV(cxt->file->f_mapping->host);
@@ -274,8 +283,8 @@ static int __init vfbio_oops_probe(struct platform_device *pdev)
 	cxt->blk_sz = bdev_logical_block_size(cxt->bdev);
 	cxt->n_blks = cxt->i_size / cxt->blk_sz;
 	cxt->num_rw_bytes = cxt->blk_sz * rw_blocks;
-	pr_alert("vfbio_oops_probe: %s blk_sz=%d blocks=%d\n", blkdev,
-		 cxt->blk_sz, cxt->n_blks);
+	pr_alert("%s: blkdev=%s dump_panic=%d blk_sz=%d blocks=%d rw_blocks=%lu\n",
+		__FUNCTION__, blkdev, dump_panic, cxt->blk_sz, cxt->n_blks, rw_blocks);
 
 	/* Allocate min io size buffer to be used in do_dump */
 	cxt->buff = kmalloc(cxt->num_rw_bytes, GFP_KERNEL);
@@ -287,55 +296,55 @@ static int __init vfbio_oops_probe(struct platform_device *pdev)
 	cxt->dump.dump = vfbio_oops_do_dump;
 	err = kmsg_dump_register(&cxt->dump);
 	if (err) {
-		pr_err("vfbio_oops_probe: registering kmsg dumper failed\n");
+		pr_err("%s: registering kmsg dumper failed, error %d\n", __FUNCTION__, err);
 		goto kmsg_dump_register_failed;
 	}
 
 	if (pdata->dump_file_path) {
-		pr_info("vfbio_oops_probe: dump_file_path = %s\n",
+		pr_info("%s: dump_file_path=%s\n", __FUNCTION__,
 				pdata->dump_file_path);
-		file = filp_open(pdata->dump_file_path, O_WRONLY|O_CREAT, 0644);
-		if (IS_ERR(file)) {
-			pr_err("vfbio_oops_probe: filp_open failed, dump to console only\n");
-			file = NULL;
-		} else {
-			old_fs = get_fs();
-			set_fs(get_ds());
-		}
 	} else if ((pdata->dump_to_console) &&
 			((!strcmp(pdata->dump_to_console, "n")) ||
 			(!strcmp(pdata->dump_to_console, "no"))))
-		pr_info("vfbio_oops_probe: dump_to_console=no,OEM has own script");
+		pr_info("%s: dump_to_console=no,OEM has own script\n", __FUNCTION__);
 	else
-		pr_info("vfbio_oops_probe: If any panic , it will be dumped to console\n");
+		pr_info("%s: If any panic , it will be dumped to console\n", __FUNCTION__);
 
 	buf = (char *)cxt->buff;
 
 	file_read(cxt->file, 0, buf, strlen(VFBIO_OOPS_DUMP_SIGNATURE));
 	if (!strncmp(VFBIO_OOPS_DUMP_SIGNATURE,
 			buf, strlen(VFBIO_OOPS_DUMP_SIGNATURE))) {
-		sprintf(marker_string, "\n%s%s%s\n", dump_mark, dump_start_str, dump_mark);
-		pr_err("%s", marker_string);
-		if (file) {
-			vfs_write(file, marker_string,
-				strlen(marker_string), &pos);
-			pos = pos+strlen(marker_string);
-
-		}
-		if (pdata->dump_file_path)
-			pr_info("vfbio_oops_probe: panics dumped to the file [%s]\n",
+		if (pdata->dump_file_path) {
+			pr_info("%s: panics dumped to the file [%s]\n", __FUNCTION__,
 				pdata->dump_file_path);
+			file = filp_open(pdata->dump_file_path, O_WRONLY|O_CREAT, 0644);
+			if (IS_ERR(file)) {
+				pr_err("%s: filp_open failed, dump to console only\n", __FUNCTION__);
+				file = NULL;
+			} else {
+				old_fs = get_fs();
+				set_fs(get_ds());
+			}
+		}
 		else if ((pdata->dump_to_console) &&
 			((!strcmp(pdata->dump_to_console, "n")) ||
 			(!strcmp(pdata->dump_to_console, "no")))) {
-				pr_info("vfbio_oops_probe:OEM has own script to read!\n");
+				pr_info("%s: OEM has own script to read!\n", __FUNCTION__);
 				pr_err("\n%s%s%s\n", dump_mark,
 					dump_end_str, dump_mark);
 				return 0;
 		}
 
+		snprintf(marker_string, sizeof(marker_string), "\n%s%s%s\n", dump_mark, dump_start_str, dump_mark);
+		pr_err("%s", marker_string);
+		if (file) {
+			kernel_write(file, marker_string,
+				strlen(marker_string), &pos);
+		}
+
 		for (i = 0; i < cxt->n_blks; i+=rw_blocks) {
-			file_read(cxt->file, i*cxt->num_rw_bytes, buf, cxt->num_rw_bytes);
+			file_read(cxt->file, i*cxt->blk_sz, buf, cxt->num_rw_bytes);
 			if (strncmp(VFBIO_OOPS_DUMP_SIGNATURE, buf,
 				    strlen(VFBIO_OOPS_DUMP_SIGNATURE))) {
 				break;
@@ -345,16 +354,15 @@ static int __init vfbio_oops_probe(struct platform_device *pdev)
 			buf = buf+strlen(VFBIO_OOPS_DUMP_SIGNATURE)+sizeof(int);
 
 			if ((text_len == 0) || (text_len > cxt->num_rw_bytes)) {
-				pr_info("vfbio_oops_probe:Invalid text length[%d]\n",
+				pr_info("%s: Invalid text length[%d]\n", __FUNCTION__,
 						text_len);
 				break;
 			}
-			pr_info("vfbio_oops_probe: printing text length = %d\n",
+			pr_info("%s: printing text length = %d\n", __FUNCTION__,
 								text_len);
 
 			if (file) {
-				vfs_write(file, buf, text_len, &pos);
-				pos = pos+text_len;
+				kernel_write(file, buf, text_len, &pos);
 			} else {
 				char *ptr = buf;
 				char *line;
@@ -364,21 +372,21 @@ static int __init vfbio_oops_probe(struct platform_device *pdev)
 			}
 			buf = (char *)cxt->buff;
 		}
-		sprintf(marker_string,"\n%s%s%s\n", dump_mark, dump_end_str, dump_mark);
+
+		snprintf(marker_string, sizeof(marker_string), "\n%s%s%s\n", dump_mark, dump_end_str, dump_mark);
 		pr_err("%s", marker_string);
 		if (file) {
-			vfs_write(file, marker_string,
+			kernel_write(file, marker_string,
 				strlen(marker_string), &pos);
-			pos = pos+strlen(marker_string);
 		}
 		/* Clear buffer */
 		buf = (char *)cxt->buff;
 		memset(buf, '\0', cxt->num_rw_bytes);
 		for (i = 0; i < cxt->n_blks; i+=rw_blocks) {
-			file_write(cxt->file, i*cxt->num_rw_bytes, buf, cxt->num_rw_bytes);
+			file_write(cxt->file, i*cxt->blk_sz, buf, cxt->num_rw_bytes);
 		}
 	} else
-		pr_info("vfbio_oops_probe: There was no panic in earlier run\n");
+		pr_info("%s: There was no panic in earlier run\n", __FUNCTION__);
 
 	if (file) {
 		filp_close(file, NULL);
@@ -399,9 +407,9 @@ static int __exit vfbio_oops_remove(struct platform_device *pdev)
 {
 	struct vfbio_oops_context *cxt = &vfbio_oops_context;
 
-	pr_info("vfbio_oops_remove\n");
+	pr_info("%s\n", __FUNCTION__);
 	if (kmsg_dump_unregister(&cxt->dump) < 0)
-		pr_err("vfbio_oops_remove: could not unregister kmsg dumper\n");
+		pr_err("%s: could not unregister kmsg dumper\n", __FUNCTION__);
 	file_close(cxt->file);
 	kfree(cxt->buff);
 	cxt->buff = NULL;
@@ -421,17 +429,17 @@ static int __init vfbio_oops_init(void)
 {
 	int ret;
 
-	pr_info("vfbio_oops_init\n");
+	pr_info("%s\n", __FUNCTION__);
 	ret = platform_driver_probe(&vfbio_oops_driver, vfbio_oops_probe);
 	if (ret == -ENODEV) {
 		/*
 		* If we didn't find a platform device, we use module parameters
 		* building platform data on the fly.
 		*/
-		pr_info("platform device not found, using module parameters\n");
+		pr_info("%s: platform device not found, using module parameters\n", __FUNCTION__);
 
 		if (strlen(blkdev) == 0) {
-			pr_err("vfbio_oops_init: vfbio device (blkdev=name) must be supplied\n");
+			pr_err("%s: vfbio device (blkdev=name) must be supplied\n", __FUNCTION__);
 			return -EINVAL;
 		}
 
@@ -459,7 +467,7 @@ static void __exit vfbio_oops_exit(void)
 {
 	kfree(dummy_data);
 	dummy_data = NULL;
-	pr_info("vfbio_oops_exit\n");
+	pr_info("%s\n", __FUNCTION__);
 	platform_device_unregister(dummy);
 	platform_driver_unregister(&vfbio_oops_driver);
 	dummy = NULL;

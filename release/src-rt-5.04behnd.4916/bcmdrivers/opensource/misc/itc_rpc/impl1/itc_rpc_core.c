@@ -47,6 +47,7 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/seq_file.h>
+#include <linux/dma-mapping.h>
 
 #include <itc_rpc.h>
 #include <itc_msg_q.h>
@@ -207,6 +208,36 @@ static int rpc_tunnel_replay_orphans(fifo_tunnel *ft)
 		rpc_queue_msg_pool_free(msg_pool, qmsg);
 done:
 	return status;
+}
+
+void *rpc_dma_alloc(size_t size, dma_addr_t *dma_handle, gfp_t flag)
+{
+    fifo_tunnel *ft;
+    int i;
+	
+    for (i = 0; i < RPC_TUNNELS_MAX; i++)
+    {
+		if (tunnels[i] != NULL)
+			break;
+    }
+	ft = tunnels[i];
+
+    return dma_alloc_coherent(&ft->pdev->dev, size, dma_handle, flag); 
+}
+
+void rpc_dma_free(size_t size, void *cpu_addr, dma_addr_t dma_handle)
+{
+    fifo_tunnel *ft;
+    int i;
+	
+    for (i = 0; i < RPC_TUNNELS_MAX; i++)
+    {
+		if (tunnels[i] != NULL)
+			break;
+    }
+	ft = tunnels[i];
+
+    dma_free_coherent(&ft->pdev->dev, size, cpu_addr, dma_handle);
 }
 
 int rpc_get_fifo_tunnel_id(char *name)

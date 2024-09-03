@@ -15,17 +15,23 @@
 #include "itc_rpc.h"
 
 enum ba_svc_func_idx {
-    BA_SVC_CPU_ID,
-    BA_SVC_CPU_NAME,
-    BA_SVC_RUN_STATE_ID,
-    BA_SVC_RUN_STATE_NAME,
-    BA_SVC_GET_RUN_STATE,
-    BA_SVC_NOTIFY_RUN_STATE,
-    BA_SVC_REQUEST_RUN_STATE,
-    BA_SVC_REQUEST_RUN_STATE_RESPONSE,
-    BA_SVC_SET_RUN_STATE,
-    BA_SVC_BOOT_FROM_ADDR,
-    BA_SVC_XPORT_SET_PWR,
+    BA_ARMTF_ONLY_BEGIN = 10,
+    BA_SVC_DDR_RANGE_SEC = BA_ARMTF_ONLY_BEGIN,
+
+    /* ATTENTION:
+     *
+     * All ARMTF ONLY RPC commands should be added above this line
+     *
+     * */
+    BA_ARMTF_UBOOT_BEGIN = 20,
+    BA_SVC_BOOT_FROM_ADDR = BA_ARMTF_UBOOT_BEGIN,
+
+    /* ATTENTION:
+     *
+     * All RPC commands issued from ARMTF and Uboot should be added above this line
+     * and synced with .../arch/arm/mach-bcmbca/include/ba_svc.h
+     *
+     * */
     BA_SVC_FUNC_MAX
 };
 
@@ -34,20 +40,6 @@ enum ba_req_rs_rsp {
 	BA_SVC_RESPONSE_BUSY,
 	BA_SVC_RESPONSE_MAX
 };
-
-#define BA_SVC_CPU_ALL		"ALL"
-#define BA_SVC_CPU_RG		"RG"
-#define BA_SVC_CPU_CM		"CM"
-#define BA_SVC_CPU_GFAP		"GFAP"
-#define BA_SVC_CPU_BNE		"BNE"
-#define BA_SVC_CPU_TPMI		"TPMI"
-
-extern uint32_t ba_cpu_all;
-extern uint32_t ba_cpu_rg;
-extern uint32_t ba_cpu_cm;
-extern uint32_t ba_cpu_gfap;
-extern uint32_t ba_cpu_bne;
-extern uint32_t ba_cpu_tpmi;
 
 #define BA_SVC_RS_OFF		"OFF"
 #define BA_SVC_RS_RESET		"RESET"
@@ -95,24 +87,8 @@ static inline uint8_t ba_svc_msg_get_retcode(rpc_msg *msg)
 	struct ba_msg *ba_msg = (struct ba_msg *)msg;
 	return ba_msg->rc;
 }
-static inline void ba_svc_msg_set_retcode(rpc_msg *msg, uint8_t v)
-{
-	struct ba_msg *ba_msg = (struct ba_msg *)msg;
-	ba_msg->rc = v;
-}
 
 /* ba svc functions */
-int ba_svc_cpu_id(char *cpu_name, uint32_t *cpu_id);
-int ba_svc_cpu_name(uint32_t cpu_id, char *cpu_name);
-int ba_svc_run_state_id(char *rs_name, uint32_t *rs_id);
-int ba_svc_run_state_name(uint32_t rs_id, char *rs_name);
-int ba_svc_get_run_state(uint32_t cpu_id, uint32_t *rs_id);
-int ba_svc_notify_run_state(uint32_t cpu_id, uint32_t rs_id);
-int ba_svc_request_run_state(uint32_t cpu_id, uint32_t rs_id, bool be_rude);
-int ba_svc_request_run_state_response(uint32_t cpu_id, uint32_t rs_id,
-	enum ba_req_rs_rsp response);
-int ba_svc_init(void);
 int ba_svc_boot_secondary(uint32_t cpu_mask, uint32_t vector);
-int ba_xport_set_state(uint8_t port_id, uint8_t enable);
-
+int ba_svc_enable_ddr_range_sec(uint64_t addr, uint32_t size);
 #endif

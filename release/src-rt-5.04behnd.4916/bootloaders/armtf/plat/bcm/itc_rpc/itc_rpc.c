@@ -62,7 +62,7 @@ static void tunnel_init_error(void)
 
 	rpc_msg_init(&err_msg, RPC_SERVICE_INIT, INIT_SVC_ERR, version,
 			(-INIT_SVC_ERR_RC_HANDSHAKE & 0xff), 0, 0);
-	rpc_send_message(RPC_TUNNEL_ARM_SMC_NS, &err_msg);
+	rpc_send_message(RPC_TUNNEL_ARMTF_SMC_SEC, &err_msg);
 }
 
 static int check_msg_version(rpc_msg *msg)
@@ -110,7 +110,7 @@ static void msg_version_error(rpc_msg *msg)
 	rpc_dump_msg(msg);
 	rpc_msg_init(&err_msg, RPC_SERVICE_INIT, INIT_SVC_ERR, init_err_ver,
 			(-INIT_SVC_ERR_RC_MSG_VER_MISMATCH & 0xff), 0, 0);
-	rpc_send_message(RPC_TUNNEL_ARM_SMC_NS, &err_msg);
+	rpc_send_message(RPC_TUNNEL_ARMTF_SMC_SEC, &err_msg);
 }
 
 static void tunnel_version_error(void)
@@ -121,7 +121,7 @@ static void tunnel_version_error(void)
 
 	rpc_msg_init(&err_msg, RPC_SERVICE_INIT, INIT_SVC_ERR, version,
 			(-INIT_SVC_ERR_RC_RPC_VER_MISMATCH & 0xff), 0, 0);
-	rpc_send_message(RPC_TUNNEL_ARM_SMC_NS, &err_msg);
+	rpc_send_message(RPC_TUNNEL_ARMTF_SMC_SEC, &err_msg);
 }
 
 /*

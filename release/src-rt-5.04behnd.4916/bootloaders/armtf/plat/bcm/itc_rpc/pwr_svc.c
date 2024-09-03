@@ -23,7 +23,7 @@
 static inline int pwr_svc_request(rpc_msg *msg)
 {
 	int rc = 0;
-	rc = rpc_send_request_timeout(RPC_TUNNEL_ARM_SMC_NS,
+	rc = rpc_send_request_timeout(RPC_TUNNEL_ARMTF_SMC_SEC,
 		msg, PWR_SVC_RPC_REQUEST_TIMEOUT);
 	if (rc) {
 		printf("pwr_svc: rpc_send_request failure (%d)\n", rc);
@@ -38,7 +38,7 @@ done:
 static inline int pwr_svc_message(rpc_msg *msg)
 {
 	int rc = 0;
-	rc = rpc_send_message(RPC_TUNNEL_ARM_SMC_NS, msg);
+	rc = rpc_send_message(RPC_TUNNEL_ARMTF_SMC_SEC, msg);
 	if (rc) {
 		printf("pwr_svc: rpc_send_message failure (%d)\n", rc);
 		rpc_dump_msg(msg);

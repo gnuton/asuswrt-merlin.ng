@@ -15,6 +15,7 @@ enum rpc_tunnel_idx {
 	RPC_TUNNEL_ARM_SMC_NS = 0,	    /* ARM<->SMC NS */
 	RPC_TUNNEL_VFLASH_SMC_NS = 1,	/* VFLASH<->SMC NS */
 	RPC_TUNNEL_AVS_SMC_NS = 2,	    /* AVS<->SMC NS */
+	RPC_TUNNEL_ARMTF_SMC_SEC = 3,	/* ARMTF<->SMC SEC */
 	RPC_TUNNEL_MAX	       	    /* Total number of supported tunnels */
 };
 
