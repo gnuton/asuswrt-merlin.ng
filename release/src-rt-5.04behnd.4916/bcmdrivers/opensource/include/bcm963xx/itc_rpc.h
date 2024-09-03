@@ -186,6 +186,9 @@ void rpc_dump_msg(rpc_msg *msg);
 int rpc_init(void);
 void rpc_cleanup(void);
 
+void *rpc_dma_alloc(size_t size, dma_addr_t *dma_handle, gfp_t flag);
+void rpc_dma_free(size_t size, void *cpu_addr, dma_addr_t dma_handle);
+
 #endif
 
 

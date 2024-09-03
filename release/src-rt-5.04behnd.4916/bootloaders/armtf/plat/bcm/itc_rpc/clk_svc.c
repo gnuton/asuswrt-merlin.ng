@@ -24,7 +24,7 @@
 static inline int clk_svc_request(rpc_msg *msg)
 {
 	int rc = 0;
-	rc = rpc_send_request_timeout(RPC_TUNNEL_ARM_SMC_NS,
+	rc = rpc_send_request_timeout(RPC_TUNNEL_ARM_SMC_SEC,
 		msg, CLK_SVC_RPC_REQUEST_TIMEOUT);
 	if (rc) {
 		printf("clk_svc: rpc_send_request failure (%d)\n", rc);

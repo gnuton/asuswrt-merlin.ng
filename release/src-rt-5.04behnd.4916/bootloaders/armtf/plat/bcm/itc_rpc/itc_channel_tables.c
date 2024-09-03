@@ -104,7 +104,15 @@ fifo_tunnel tunnels[] =
 		.fifo_dev_idx = DQM_DEV_SMC,
 		.tx_fifo_idx = 4,
 		.rx_fifo_idx = 5,
-	}
+	},
+	{
+		.name = "rpcarmtfsmc",
+		.tx_fifo = "dqm3.q0",
+		.rx_fifo = "dqm3.q1",
+		.fifo_dev_idx = DQM_DEV_SMC,
+		.tx_fifo_idx = 8,
+		.rx_fifo_idx = 9,
+	},
 };
 
 #define RPC_MAX_TUNNELS	((int)(sizeof(tunnels)/sizeof(fifo_tunnel)))
