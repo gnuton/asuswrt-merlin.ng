@@ -161,7 +161,7 @@ jobs:
             fi
         - name: "Archive artifacts"
           if: matrix.cfg.skip == false
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v3.1.3
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: "/project/artifacts"
