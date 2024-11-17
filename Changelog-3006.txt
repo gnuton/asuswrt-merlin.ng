@@ -1,14 +1,52 @@
 Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
+
 3006.102.1_1-gnuton1 (xx-xxxx-2024)
   - NEW: Added support for GT-BE98.
   - FIXED: DNSDirector and Tor pages would fail to properly load
            in some environment.
 
-3006.102.xx (xx-xxx-xxxx)
+3006.102.2_2 (17-Nov-2024)
+  - FIXED: Security issues in AiCloud (backports from Asus)
+
+3006.102.2 (3-Nov-2024)
+  - NEW: Added support for RT-BE88U (based on GPL 3.0.0.6.102_33921)
+  - NEW: Added support for RT-BE86U (based on GPL 3.0.0.6.102_36216)
+  - NEW: Added mDNS support to the router's local name resolution
+         (nss).
+  - UPDATED: OpenVPN to 2.6.12.
+  - CHANGED: Support importing Wireguard config files that
+             contain multiple AllowedIPs, Address or DNS
+             declarations.
+  - CHANGED: Re-added firmware version display on Sysinfo page
+             (as you can't copy the version string from the
+             header banner, this one can be).
+  - CHANGED: VPN killswitch will now only be active if the
+             VPN client itself is enabled.  If you stop/start
+             the client yourself over SSH, you need to also
+             update the enabled/disabled nvram setting.
+  - CHANGED: Display public IP address for Wireguard clients.
+  - FIXED: Generated web certificate wasn't using the FQDN
+           for Namecheap DDNS users.
   - FIXED: DNSDirector and Tor pages would fail to properly load
            in some environment.
+  - FIXED: CVE-2024-2511, CVE-2024-4741, CVE-2024-5535 &
+           Implicit rejection for RSA PKCS#1 in openssl
+           (backport from Ubuntu by RSDNTWK)
+  - FIXED: UPnP options were missing on WAN page for models
+           with multiservice WAN support.
+  - FIXED: Guest Network table would still be shown on the
+           DNSDIrector page if DNSDirector isn't enabled.
+  - FIXED: VPN Fusion-related popup showing when editing
+           an existing DHCP reservation - removed.
+  - FIXED: 320 MHz chanspec would show as 160 on the Wifi
+           icon status.
+  - FIXED: Wifi icon status not properly shown on quad-band
+           Wifi 7 models.
+  - FIXED: DNS over TLS broken if IoT Guest Network (or other
+           Guest Network sharing existing VLAN) is disabled.
+           (patch from Asus)
 
 3006.102.1 (28-Jun-2024)
 

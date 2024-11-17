@@ -19564,13 +19564,15 @@ retry_wps_enr:
 			start_ovpn_server(openvpn_unit);
  		}
  	}
-	else if (strncmp(script, "clearvpnserver", 14) == 0)
+	else if (strcmp(script, "clearovpnserver") == 0)
 	{
-		reset_ovpn_setting(OVPN_TYPE_SERVER, nvram_get_int("vpn_server_unit"), 1);
+		if (cmd[1])
+			reset_ovpn_setting(OVPN_TYPE_SERVER, atoi(cmd[1]), 1);
 	}
-        else if (strncmp(script, "clearvpnclient", 14) == 0)
+        else if (strcmp(script, "clearovpnclient") == 0)
 	{
-		reset_ovpn_setting(OVPN_TYPE_CLIENT, nvram_get_int("vpn_client_unit"), 1);
+		if (cmd[1])
+			reset_ovpn_setting(OVPN_TYPE_CLIENT, atoi(cmd[1]), 1);
 	}
 #endif
 #ifdef RTCONFIG_YANDEXDNS
@@ -19813,11 +19815,6 @@ retry_wps_enr:
 		start_firewall(wan_primary_ifunit(), 0);
 	}
 #endif
-	else if (strcmp(script, "sh") == 0) {
-		_dprintf("%s: shell: %s\n", __FUNCTION__, cmd[1]);
-		if(cmd[1]) system(cmd[1]);
-	}
-
 	else if (strcmp(script, "rstats") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_rstats();
