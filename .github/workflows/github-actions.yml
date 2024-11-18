@@ -160,6 +160,9 @@ jobs:
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: "/project/artifacts"
+        - name: Download packages
+          uses: actions/download-artifact@v2
+
     release-job:
       name: Publish
       needs: build-job
