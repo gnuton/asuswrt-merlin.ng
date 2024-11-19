@@ -33,7 +33,7 @@ jobs:
           SDK: ${{ matrix.cfg.sdk }}
           UI: ${{ matrix.cfg.ui }}
           SKIP_BUILD: ${{ matrix.cfg.skip }}
-          GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
+          GIT_REPO: "https://github.com/thaneb/asuswrt-merlin.ng.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
