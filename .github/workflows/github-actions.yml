@@ -161,14 +161,11 @@ jobs:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: "/project/artifacts"
           continue-on-error: true
-        - name: Download packages
-          uses: actions/download-artifact@v4
-
+  
     release-job:
       name: Publish
       needs: build-job
       runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/')
       steps:
         - name: Download packages
           uses: actions/download-artifact@v4
@@ -176,23 +173,12 @@ jobs:
           run: |
             echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
             echo "prerelease=$( [[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False )" >> $GITHUB_ENV
-        - name: Publish archives and packages
-          uses: softprops/action-gh-release@v1
-          with:
-            tag_name: ${{ env.version }}
-            body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-gt-be98-default/CHANGELOG
-            draft: true
-            prerelease: ${{ env.prerelease }}
-            files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     
     manifest-job:
       name: Publish Manifest
       needs: build-job
       runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
       steps:
         - uses: actions/checkout@v4
           with:
@@ -211,13 +197,4 @@ jobs:
             CHANGELOG_FILE: "release-gt-be98-default/CHANGELOG"
           run: |
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
-            MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
-            MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
-            RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
-            echo "Generating manifest file..."
-            echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest_3006.txt
-            cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
-            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
-            git push origin
