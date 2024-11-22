@@ -83,7 +83,8 @@ function initial(){
 
 function applyRule(){
 	if(validForm()){
-		if (enforce_ori != getRadioValue(document.form.wgc_enforce))
+		if (enforce_ori != getRadioValue(document.form.wgc_enforce) ||
+		   (wgc_enable != document.form.wgc_enable[0].checked))
 			document.form.action_script.value += ";start_vpnrouting0";
 
 		showLoading();
@@ -482,6 +483,16 @@ function show_director_rules(){
 	document.getElementById("directorrules_Block").innerHTML = code;
 }
 
+function defaultSettings() {
+	if (confirm("WARNING: This will reset this Wireguard client to factory default settings!\n\nProceed?")) {
+		document.form.action_script.value = "stop_wgc " + wgc_unit + ";clearwgclient " + wgc_unit;
+		document.form.action_wait.value = 15;
+		showLoading();
+		document.form.submit();
+	} else {
+		return false;
+	}
+}
 </script>
 
 </head>
@@ -660,6 +671,7 @@ function show_director_rules(){
 					</table>
 
 					<div class="apply_gen" id="apply_btn">
+						<input type="button" id="restoreButton" class="button_gen" value="<#Setting_factorydefault_value#>" onclick="defaultSettings();">
 						<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>
 					</div>
 
