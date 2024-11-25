@@ -2,10 +2,9 @@ Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
 
-3006.102.1_1-gnuton1 (xx-xxxx-2024)
+3006.102.2_2-gnuton1 (xx-xxxx-2024)
   - NEW: Added support for GT-BE98.
-  - FIXED: DNSDirector and Tor pages would fail to properly load
-           in some environment.
+  - FIXED: Security issues in AiCloud (backports from Asus)
 
 3006.102.2_2 (17-Nov-2024)
   - FIXED: Security issues in AiCloud (backports from Asus)
