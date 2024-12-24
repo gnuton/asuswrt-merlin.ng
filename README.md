@@ -48,6 +48,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
   
 3004.388.x firmware downloads: [stable](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest) or [testing - 3004.388.8_4-gnuton0_alpha1](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/3004.388.8_4-gnuton0_alpha1)
 * [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
+* [RT-AX5400](https://www.asus.com/networking-iot-servers/wifi-routers/asus-wifi-routers/rt-ax5400/) - 🔥 [New](https://github.com/gnuton/asuswrt-merlin.ng/issues/503)!
 * [RT-AX82U v1](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 * [RT-AX82U v2](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 * [RT-AX92U](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/RT-AX92U/)
