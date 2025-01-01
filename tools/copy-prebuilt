@@ -9,7 +9,6 @@
 
 BUILD_NAME=$(echo $1 | tr "[:lower:]" "[:upper:]")
 BUILD_NAME_LC=$(echo $BUILD_NAME | tr "[:upper:]" "[:lower:]")
-REPO=/home/merlin/amng
 
 echo "*** Copying platform-specific files..."
 if [ "$BUILD_NAME" == "RT-AC88U" ] || [ "$BUILD_NAME" == "RT-AC3100" ] || [ "$BUILD_NAME" == "RT-AC5300" ]
@@ -154,12 +153,12 @@ then
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/pktrunner/impl2/pktrunner.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 
-elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ]
+elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "GT-BE98" ]
 then
         SDK="_4916hnd"
         ARCH="_arm"
         HND="_behnd"
-
+	
 	# Must be done first, since we will add hnd_extra files later on
 	rsync -a --del release/src-rt-5.04behnd.4916/router-sysdep/ $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC --exclude "stress/Makefile" --exclude "wlc_types.h"
 
