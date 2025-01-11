@@ -1,6 +1,6 @@
 Asuswrt-Merlin GNUton's builds Changelog
 
-3004.388.8_4-gnuton1 (xx-xx-2024)
+3004.388.8_4-gnuton1 (11-January-2025)
   - CHANGED: VPN killswitch will now only be active if the
              VPN client itself is enabled.  If you stop/start
              the client yourself over SSH, you need to also
