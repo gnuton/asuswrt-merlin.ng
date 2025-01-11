@@ -1,6 +1,9 @@
 Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
+3006.102.3_1-gnuton1 (xx-xxx-xxxx)
+  - ADEED: Support for GT-BE98
+
 3006.102.3 (xx-xxx-xxxx)
   - NOTE: If flashing on top of Asus stock firmware 3006.102_37000
           or greater, then you first need to enable downgrade
