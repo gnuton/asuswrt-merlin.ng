@@ -33,7 +33,7 @@
 ---------------------
 ### Aim
 
-This is an official [Merlin fork](https://github.com/RMerl/asuswrt-merlin) which is supported by [ASUS](https://twitter.com/ASUS) and [RMerlin](https://twitter.com/RMerlinDev?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor): Aim of this project is to make Merlin running on additional routers.
+This is an official [Merlin fork](https://github.com/RMerl/asuswrt-merlin.ng) which is supported by [ASUS](https://twitter.com/ASUS) and [RMerlin](https://twitter.com/RMerlinDev?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor): Aim of this project is to make Merlin running on additional routers.
 
 My builds are intended to support all features present in the original Merlin firmware. Occasionally, I also incorporate additional features for specific models. The images are built in the cloud to ensure transparency, and the open-source code is publicly accessible in this GitHub repository.
 
