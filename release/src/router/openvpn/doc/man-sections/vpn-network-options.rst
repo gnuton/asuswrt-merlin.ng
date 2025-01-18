@@ -235,7 +235,7 @@ routing.
   address and subnet mask just as a physical ethernet adapter would be
   similarly configured. If you are attempting to connect to a remote
   ethernet bridge, the IP address and subnet should be set to values which
-  would be valid on the the bridged ethernet segment (note also that DHCP
+  would be valid on the bridged ethernet segment (note also that DHCP
   can be used for the same purpose).
 
   This option, while primarily a proxy for the ``ifconfig``\(8) command,
@@ -420,7 +420,7 @@ routing.
 
        route-delay
        route-delay n
-       route-delay n m
+       route-delay n w
 
   Delay ``n`` seconds (default :code:`0`) after connection establishment,
   before adding routes. If ``n`` is :code:`0`, routes will be added
@@ -434,7 +434,7 @@ routing.
   to complete before routes are added.
 
   On Windows, ``--route-delay`` tries to be more intelligent by waiting
-  ``w`` seconds (default :code:`30` by default) for the TAP-Win32 adapter
+  ``w`` seconds (default :code:`30`) for the TAP-Win32 adapter
   to come up before adding routes.
 
 --route-ipv6 args
@@ -548,7 +548,7 @@ routing.
   It's best to use the ``--fragment`` and/or ``--mssfix`` options to deal
   with MTU sizing issues.
 
-  Note: Depending on the platform, the operating system allows to receive
+  Note: Depending on the platform, the operating system allows one to receive
   packets larger than ``tun-mtu`` (e.g. Linux and FreeBSD) but other platforms
   (like macOS) limit received packets to the same size as the MTU.
 
@@ -584,7 +584,7 @@ These two standalone operations will require ``--dev`` and optionally
   One of the advantages of persistent tunnels is that they eliminate the
   need for separate ``--up`` and ``--down`` scripts to run the appropriate
   ``ifconfig``\(8) and ``route``\(8) commands. These commands can be
-  placed in the the same shell script which starts or terminates an
+  placed in the same shell script which starts or terminates an
   OpenVPN session.
 
   Another advantage is that open connections through the TUN/TAP-based

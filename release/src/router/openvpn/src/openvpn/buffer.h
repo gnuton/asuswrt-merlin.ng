@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -944,6 +944,17 @@ bool char_class(const unsigned char c, const unsigned int flags);
 bool string_class(const char *str, const unsigned int inclusive, const unsigned int exclusive);
 
 bool string_mod(char *str, const unsigned int inclusive, const unsigned int exclusive, const char replace);
+
+/**
+ * Check a buffer if it only consists of allowed characters.
+ *
+ * @param buf The buffer to be checked.
+ * @param inclusive The character classes that are allowed.
+ * @param exclusive Character classes that are not allowed even if they are also in inclusive.
+ * @return True if the string consists only of allowed characters, false otherwise.
+ */
+bool
+string_check_buf(struct buffer *buf, const unsigned int inclusive, const unsigned int exclusive);
 
 const char *string_mod_const(const char *str,
                              const unsigned int inclusive,

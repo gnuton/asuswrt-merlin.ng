@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -2009,7 +2007,8 @@ static void
 phase2_tcp_server(struct link_socket *sock, const char *remote_dynamic,
                   struct signal_info *sig_info)
 {
-    volatile int *signal_received = sig_info ? &sig_info->signal_received : NULL;
+    ASSERT(sig_info);
+    volatile int *signal_received = &sig_info->signal_received;
     switch (sock->mode)
     {
         case LS_MODE_DEFAULT:
@@ -2035,7 +2034,7 @@ phase2_tcp_server(struct link_socket *sock, const char *remote_dynamic,
                                         false);
             if (!socket_defined(sock->sd))
             {
-                register_signal(sig_info, SIGTERM, "socket-undefiled");
+                register_signal(sig_info, SIGTERM, "socket-undefined");
                 return;
             }
             tcp_connection_established(&sock->info.lsa->actual);
@@ -2079,6 +2078,7 @@ phase2_tcp_client(struct link_socket *sock, struct signal_info *sig_info)
                                            sock->sd,
                                            sock->proxy_dest_host,
                                            sock->proxy_dest_port,
+                                           sock->server_poll_timeout,
                                            sig_info);
         }
         if (proxy_retry)
@@ -2108,6 +2108,7 @@ phase2_socks_client(struct link_socket *sock, struct signal_info *sig_info)
                                    sock->ctrl_sd,
                                    sock->sd,
                                    &sock->socks_relay.dest,
+                                   sock->server_poll_timeout,
                                    sig_info);
 
     if (sig_info->signal_received)

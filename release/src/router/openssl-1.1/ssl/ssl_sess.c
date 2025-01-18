@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -94,16 +94,11 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
-SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
-{
-    return ssl_session_dup(src, 1);
-}
-
 /*
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
  */
-SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
+static SSL_SESSION *ssl_session_dup_intern(SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *dest;
 
@@ -139,8 +134,11 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->references = 1;
 
     dest->lock = CRYPTO_THREAD_lock_new();
-    if (dest->lock == NULL)
+    if (dest->lock == NULL) {
+        OPENSSL_free(dest);
+        dest = NULL;
         goto err;
+    }
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, dest, &dest->ex_data))
         goto err;
@@ -221,6 +219,27 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     SSLerr(SSL_F_SSL_SESSION_DUP, ERR_R_MALLOC_FAILURE);
     SSL_SESSION_free(dest);
     return NULL;
+}
+
+SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
+{
+    return ssl_session_dup_intern(src, 1);
+}
+
+/*
+ * Used internally when duplicating a session which might be already shared.
+ * We will have resumed the original session. Subsequently we might have marked
+ * it as non-resumable (e.g. in another thread) - but this copy should be ok to
+ * resume from.
+ */
+SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
+{
+    SSL_SESSION *sess = ssl_session_dup_intern(src, ticket);
+
+    if (sess != NULL)
+        sess->not_resumable = 0;
+
+    return sess;
 }
 
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)

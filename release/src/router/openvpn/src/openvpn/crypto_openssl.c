@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,8 +28,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -388,7 +386,19 @@ show_available_ciphers(void)
 #else
     for (int nid = 0; nid < 10000; ++nid)
     {
+#if defined(LIBRESSL_VERSION_NUMBER)
+        /* OpenBSD/LibreSSL reimplemented EVP_get_cipherbyname and broke
+         * calling EVP_get_cipherbynid with an invalid nid in the process
+         * so that it would segfault. */
+        const EVP_CIPHER *cipher = NULL;
+        const char *name = OBJ_nid2sn(nid);
+        if (name)
+        {
+            cipher = EVP_get_cipherbyname(name);
+        }
+#else  /* if defined(LIBRESSL_VERSION_NUMBER) */
         const EVP_CIPHER *cipher = EVP_get_cipherbynid(nid);
+#endif
         /* We cast the const away so we can keep the function prototype
          * compatible with EVP_CIPHER_do_all_provided */
         collect_ciphers((EVP_CIPHER *) cipher, &cipher_list);
@@ -442,7 +452,19 @@ show_available_digests(void)
 #else
     for (int nid = 0; nid < 10000; ++nid)
     {
+        /* OpenBSD/LibreSSL reimplemented EVP_get_digestbyname and broke
+         * calling EVP_get_digestbynid with an invalid nid in the process
+         * so that it would segfault. */
+#ifdef LIBRESSL_VERSION_NUMBER
+        const EVP_MD *digest = NULL;
+        const char *name = OBJ_nid2sn(nid);
+        if (name)
+        {
+            digest = EVP_get_digestbyname(name);
+        }
+#else  /* ifdef LIBRESSL_VERSION_NUMBER */
         const EVP_MD *digest = EVP_get_digestbynid(nid);
+#endif
         if (digest)
         {
             /* We cast the const away so we can keep the function prototype
@@ -450,7 +472,7 @@ show_available_digests(void)
             print_digest((EVP_MD *)digest, NULL);
         }
     }
-#endif
+#endif /* if OPENSSL_VERSION_NUMBER >= 0x30000000L */
     printf("\n");
 }
 
@@ -1374,66 +1396,6 @@ int
 memcmp_constant_time(const void *a, const void *b, size_t size)
 {
     return CRYPTO_memcmp(a, b, size);
-}
-
-#if HAVE_OPENSSL_ENGINE
-static int
-ui_reader(UI *ui, UI_STRING *uis)
-{
-    SSL_CTX *ctx = UI_get0_user_data(ui);
-
-    if (UI_get_string_type(uis) == UIT_PROMPT)
-    {
-        pem_password_cb *cb = SSL_CTX_get_default_passwd_cb(ctx);
-        void *d = SSL_CTX_get_default_passwd_cb_userdata(ctx);
-        char password[64];
-
-        cb(password, sizeof(password), 0, d);
-        UI_set_result(ui, uis, password);
-
-        return 1;
-    }
-    return 0;
-}
-#endif
-
-EVP_PKEY *
-engine_load_key(const char *file, SSL_CTX *ctx)
-{
-#if HAVE_OPENSSL_ENGINE
-    UI_METHOD *ui;
-    EVP_PKEY *pkey;
-
-    if (!engine_persist)
-    {
-        return NULL;
-    }
-
-    /* this will print out the error from BIO_read */
-    crypto_msg(M_INFO, "PEM_read_bio failed, now trying engine method to load private key");
-
-    ui = UI_create_method("openvpn");
-    if (!ui)
-    {
-        crypto_msg(M_FATAL, "Engine UI creation failed");
-        return NULL;
-    }
-
-    UI_method_set_reader(ui, ui_reader);
-
-    ENGINE_init(engine_persist);
-    pkey = ENGINE_load_private_key(engine_persist, file, ui, ctx);
-    ENGINE_finish(engine_persist);
-    if (!pkey)
-    {
-        crypto_msg(M_FATAL, "Engine could not load key file");
-    }
-
-    UI_destroy_method(ui);
-    return pkey;
-#else  /* if HAVE_OPENSSL_ENGINE */
-    return NULL;
-#endif /* if HAVE_OPENSSL_ENGINE */
 }
 
 #if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)

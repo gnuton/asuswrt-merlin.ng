@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -37,8 +35,6 @@
 #include <cmocka.h>
 
 #include "tls_crypt.c"
-
-#include "mock_msg.h"
 
 /* Define this function here as dummy since including the ssl_*.c files
  * leads to having to include even more unrelated code */

@@ -19,9 +19,6 @@ which mode OpenVPN is configured as.
   When using ``--auth-nocache`` in combination with a user/password file
   and ``--chroot`` or ``--daemon``, make sure to use an absolute path.
 
-  This directive does not affect the ``--http-proxy`` username/password.
-  It is always cached.
-
 --cd dir
   Change directory to ``dir`` prior to reading any files such as
   configuration files, key files, scripts, etc. ``dir`` should be an
@@ -75,7 +72,7 @@ which mode OpenVPN is configured as.
     to the configuration if no other compression options are present.
   - 2.4.x or lower: The cipher in ``--cipher`` is appended to
     ``--data-ciphers``.
-  - 2.3.x or lower: ``--data-cipher-fallback`` is automatically added with
+  - 2.3.x or lower: ``--data-ciphers-fallback`` is automatically added with
     the same cipher as ``--cipher``.
   - 2.3.6 or lower: ``--tls-version-min 1.0`` is added to the configuration
     when ``--tls-version-min`` is not explicitly set.
@@ -215,7 +212,7 @@ which mode OpenVPN is configured as.
   are supported by OpenSSL.
 
 --fast-io
-  (Experimental) Optimize TUN/TAP/UDP I/O writes by avoiding a call to
+  Optimize TUN/TAP/UDP I/O writes by avoiding a call to
   poll/epoll/select prior to the write operation. The purpose of such a
   call would normally be to block until the device or socket is ready to
   accept the write. Such blocking is unnecessary on some platforms which
@@ -483,7 +480,7 @@ which mode OpenVPN is configured as.
 
   * :code:`OPENVPN_PLUGIN_AUTH_USER_PASS_VERIFY` plug-in hooks returns
     success/failure via :code:`auth_control_file` when using deferred auth
-    method and pending authentification via :code:`pending_auth_file`.
+    method and pending authentication via :code:`pending_auth_file`.
 
 --use-prediction-resistance
   Enable prediction resistance on mbed TLS's RNG.

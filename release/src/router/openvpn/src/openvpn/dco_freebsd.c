@@ -20,8 +20,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #if defined(ENABLE_DCO) && defined(TARGET_FREEBSD)
@@ -221,6 +219,9 @@ create_interface(struct tuntap *tt, const char *dev)
     {
         ifr.ifr_data = (char *)dev;
     }
+
+    snprintf(tt->dco.ifname, IFNAMSIZ, "%s", ifr.ifr_data);
+
     ret = ioctl(tt->dco.fd, SIOCSIFNAME, &ifr);
     if (ret)
     {
@@ -230,16 +231,6 @@ create_interface(struct tuntap *tt, const char *dev)
         msg(M_WARN|M_ERRNO, "Failed to create interface %s (SIOCSIFNAME)", ifr.ifr_data);
         return ret;
     }
-
-    snprintf(tt->dco.ifname, IFNAMSIZ, "%s", ifr.ifr_data);
-
-    /* see "Interface Flags" in ifnet(9) */
-    int i = IFF_POINTOPOINT | IFF_MULTICAST;
-    if (tt->topology == TOP_SUBNET)
-    {
-        i = IFF_BROADCAST | IFF_MULTICAST;
-    }
-    dco_set_ifmode(&tt->dco, i);
 
     return 0;
 }
@@ -267,7 +258,20 @@ remove_interface(struct tuntap *tt)
 int
 open_tun_dco(struct tuntap *tt, openvpn_net_ctx_t *ctx, const char *dev)
 {
-    return create_interface(tt, dev);
+    int ret = create_interface(tt, dev);
+
+    if (ret >= 0 || ret == -EEXIST)
+    {
+        /* see "Interface Flags" in ifnet(9) */
+        int i = IFF_POINTOPOINT | IFF_MULTICAST;
+        if (tt->topology == TOP_SUBNET)
+        {
+            i = IFF_BROADCAST | IFF_MULTICAST;
+        }
+        dco_set_ifmode(&tt->dco, i);
+    }
+
+    return ret;
 }
 
 void
@@ -700,7 +704,8 @@ dco_get_peer_stats_multi(dco_context_t *dco, struct multi_context *m)
 {
 
     struct ifdrv drv;
-    uint8_t buf[4096];
+    uint8_t *buf = NULL;
+    size_t buf_size = 4096;
     nvlist_t *nvl;
     const nvlist_t *const *nvpeers;
     size_t npeers;
@@ -714,17 +719,28 @@ dco_get_peer_stats_multi(dco_context_t *dco, struct multi_context *m)
     CLEAR(drv);
     snprintf(drv.ifd_name, IFNAMSIZ, "%s", dco->ifname);
     drv.ifd_cmd = OVPN_GET_PEER_STATS;
-    drv.ifd_len = sizeof(buf);
+
+retry:
+    buf = realloc(buf, buf_size);
+    drv.ifd_len = buf_size;
     drv.ifd_data = buf;
 
     ret = ioctl(dco->fd, SIOCGDRVSPEC, &drv);
+    if (ret && errno == ENOSPC)
+    {
+        buf_size *= 2;
+        goto retry;
+    }
+
     if (ret)
     {
+        free(buf);
         msg(M_WARN | M_ERRNO, "Failed to get peer stats");
         return -EINVAL;
     }
 
     nvl = nvlist_unpack(buf, drv.ifd_len, 0);
+    free(buf);
     if (!nvl)
     {
         msg(M_WARN, "Failed to unpack nvlist");

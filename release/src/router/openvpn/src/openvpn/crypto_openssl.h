@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -117,17 +117,5 @@ void crypto_print_openssl_errors(const unsigned int flags);
         crypto_print_openssl_errors(nonfatal(flags)); \
         msg((flags), __VA_ARGS__); \
     } while (false)
-
-/**
- * Load a key file from an engine
- *
- * @param file  The engine file to load
- * @param ui    The UI method for the password prompt
- * @param data  The data to pass to the UI method
- *
- * @return      The private key if successful or NULL if not
- */
-EVP_PKEY *
-engine_load_key(const char *file, SSL_CTX *ctx);
 
 #endif /* CRYPTO_OPENSSL_H_ */

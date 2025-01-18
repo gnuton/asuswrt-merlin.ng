@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -23,8 +23,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif defined(_MSC_VER)
-#include "config-msvc.h"
 #endif
 
 #include "syshead.h"
@@ -232,6 +230,51 @@ check_tls(struct context *c)
     }
 }
 
+static void
+parse_incoming_control_channel_command(struct context *c, struct buffer *buf)
+{
+    if (buf_string_match_head_str(buf, "AUTH_FAILED"))
+    {
+        receive_auth_failed(c, buf);
+    }
+    else if (buf_string_match_head_str(buf, "PUSH_"))
+    {
+        incoming_push_message(c, buf);
+    }
+    else if (buf_string_match_head_str(buf, "RESTART"))
+    {
+        server_pushed_signal(c, buf, true, 7);
+    }
+    else if (buf_string_match_head_str(buf, "HALT"))
+    {
+        server_pushed_signal(c, buf, false, 4);
+    }
+    else if (buf_string_match_head_str(buf, "INFO_PRE"))
+    {
+        server_pushed_info(c, buf, 8);
+    }
+    else if (buf_string_match_head_str(buf, "INFO"))
+    {
+        server_pushed_info(c, buf, 4);
+    }
+    else if (buf_string_match_head_str(buf, "CR_RESPONSE"))
+    {
+        receive_cr_response(c, buf);
+    }
+    else if (buf_string_match_head_str(buf, "AUTH_PENDING"))
+    {
+        receive_auth_pending(c, buf);
+    }
+    else if (buf_string_match_head_str(buf, "EXIT"))
+    {
+        receive_exit_message(c);
+    }
+    else
+    {
+        msg(D_PUSH_ERRORS, "WARNING: Received unknown control message: %s", BSTR(buf));
+    }
+}
+
 /*
  * Handle incoming configuration
  * messages on the control channel.
@@ -247,51 +290,14 @@ check_incoming_control_channel(struct context *c)
     struct buffer buf = alloc_buf_gc(len, &gc);
     if (tls_rec_payload(c->c2.tls_multi, &buf))
     {
-        /* force null termination of message */
-        buf_null_terminate(&buf);
+        while (BLEN(&buf) > 1)
+        {
+            struct buffer cmdbuf = extract_command_buffer(&buf, &gc);
 
-        /* enforce character class restrictions */
-        string_mod(BSTR(&buf), CC_PRINT, CC_CRLF, 0);
-
-        if (buf_string_match_head_str(&buf, "AUTH_FAILED"))
-        {
-            receive_auth_failed(c, &buf);
-        }
-        else if (buf_string_match_head_str(&buf, "PUSH_"))
-        {
-            incoming_push_message(c, &buf);
-        }
-        else if (buf_string_match_head_str(&buf, "RESTART"))
-        {
-            server_pushed_signal(c, &buf, true, 7);
-        }
-        else if (buf_string_match_head_str(&buf, "HALT"))
-        {
-            server_pushed_signal(c, &buf, false, 4);
-        }
-        else if (buf_string_match_head_str(&buf, "INFO_PRE"))
-        {
-            server_pushed_info(c, &buf, 8);
-        }
-        else if (buf_string_match_head_str(&buf, "INFO"))
-        {
-            server_pushed_info(c, &buf, 4);
-        }
-        else if (buf_string_match_head_str(&buf, "CR_RESPONSE"))
-        {
-            receive_cr_response(c, &buf);
-        }
-        else if (buf_string_match_head_str(&buf, "AUTH_PENDING"))
-        {
-            receive_auth_pending(c, &buf);
-        }
-        else if (buf_string_match_head_str(&buf, "EXIT"))
-        {
-            receive_exit_message(c);
-        }
-        else
-        {
-            msg(D_PUSH_ERRORS, "WARNING: Received unknown control message: %s", BSTR(&buf));
+            if (cmdbuf.len > 0)
+            {
+                parse_incoming_control_channel_command(c, &cmdbuf);
+            }
         }
     }
     else
@@ -516,17 +522,24 @@ check_server_poll_timeout(struct context *c)
 }
 
 /*
- * Schedule a signal n_seconds from now.
+ * Schedule a SIGTERM signal c->options.scheduled_exit_interval seconds from now.
  */
-void
-schedule_exit(struct context *c, const int n_seconds, const int signal)
+bool
+schedule_exit(struct context *c)
 {
+    const int n_seconds = c->options.scheduled_exit_interval;
+    /* don't reschedule if already scheduled. */
+    if (event_timeout_defined(&c->c2.scheduled_exit))
+    {
+        return false;
+    }
     tls_set_single_session(c->c2.tls_multi);
     update_time();
     reset_coarse_timers(c);
     event_timeout_init(&c->c2.scheduled_exit, n_seconds, now);
-    c->c2.scheduled_exit_signal = signal;
+    c->c2.scheduled_exit_signal = SIGTERM;
     msg(D_SCHED_EXIT, "Delayed exit in %d seconds", n_seconds);
+    return true;
 }
 
 /*
@@ -1049,6 +1062,24 @@ process_incoming_link_part1(struct context *c, struct link_socket_info *lsi, boo
 
         if (c->c2.tls_multi)
         {
+            uint8_t opcode = *BPTR(&c->c2.buf) >> P_OPCODE_SHIFT;
+
+            /*
+             * If DCO is enabled, the kernel drivers require that the
+             * other end only sends P_DATA_V2 packets. V1 are unknown
+             * to kernel and passed to userland, but we cannot handle them
+             * either because crypto context is missing - so drop the packet.
+             *
+             * This can only happen with particular old (2.4.0-2.4.4) servers.
+             */
+            if ((opcode == P_DATA_V1) && dco_enabled(&c->options))
+            {
+                msg(D_LINK_ERRORS,
+                    "Data Channel Offload doesn't support DATA_V1 packets. "
+                    "Upgrade your server to 2.4.5 or newer.");
+                c->c2.buf.len = 0;
+            }
+
             /*
              * If tls_pre_decrypt returns true, it means the incoming
              * packet was a good TLS control channel packet.  If so, TLS code
@@ -1059,19 +1090,9 @@ process_incoming_link_part1(struct context *c, struct link_socket_info *lsi, boo
              * will load crypto_options with the correct encryption key
              * and return false.
              */
-            uint8_t opcode = *BPTR(&c->c2.buf) >> P_OPCODE_SHIFT;
             if (tls_pre_decrypt(c->c2.tls_multi, &c->c2.from, &c->c2.buf, &co,
                                 floated, &ad_start))
             {
-                /* Restore pre-NCP frame parameters */
-                if (is_hard_reset_method2(opcode))
-                {
-                    c->c2.frame = c->c2.frame_initial;
-#ifdef ENABLE_FRAGMENT
-                    c->c2.frame_fragment = c->c2.frame_fragment_initial;
-#endif
-                }
-
                 interval_action(&c->c2.tmp_int);
 
                 /* reset packet received timer if TLS packet */

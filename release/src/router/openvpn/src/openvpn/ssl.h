@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2023 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
  *  Copyright (C) 2010-2021 Fox Crypto B.V. <openvpn@foxcrypto.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -397,6 +397,11 @@ void auth_user_pass_setup(const char *auth_file, bool is_inline,
 void ssl_set_auth_nocache(void);
 
 /*
+ * Getter method for retrieving the auth-nocache option.
+ */
+bool ssl_get_auth_nocache(void);
+
+/*
  * Purge any stored authentication information, both for key files and tunnel
  * authentication. If PCKS #11 is enabled, purge authentication for that too.
  * Note that auth_token is not cleared.
@@ -525,6 +530,7 @@ tls_set_single_session(struct tls_multi *multi)
 #define PD_SHOW_DATA               (1<<8)
 #define PD_TLS                     (1<<9)
 #define PD_VERBOSE                 (1<<10)
+#define PD_TLS_CRYPT               (1<<11)
 
 const char *protocol_dump(struct buffer *buffer,
                           unsigned int flags,

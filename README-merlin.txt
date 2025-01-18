@@ -58,6 +58,12 @@ Fully supported devices:
  * RT-AX86U Pro
  * RT-AX88U Pro
 
+3006.102.x:
+ * RT-BE96U 
+ * GT-BE98_PRO
+ * RT-BE88U
+ * RT-BE86U
+
 No longer supported:
  * RT-N16
  * RT-N66U
@@ -197,7 +203,7 @@ https://github.com/RMerl/asuswrt-merlin
    
 Contact information
 -------------------
-SmallNetBuilder forums (preferred method: http://www.snbforums.com/forums/asuswrt-merlin.42/ as RMerlin)
+SmallNetBuilder forums (preferred method: https://www.snbforums.com/forums/asuswrt-merlin.42/ as RMerlin)
 Website: https://www.asuswrt-merlin.net/
 Github: https://github.com/RMerl
 Email: merlin@asuswrt-merlin.net

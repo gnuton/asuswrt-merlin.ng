@@ -111,7 +111,7 @@ static int connection_del(server *srv, connection *con) {
 
 	/* not last element */
 
-	if (i != conns->used - 1) {
+	if (i >= 0 && i < conns->used && conns->used > 0) {
 		temp = conns->ptr[i];
 		conns->ptr[i] = conns->ptr[conns->used - 1];
 		conns->ptr[conns->used - 1] = temp;
@@ -493,6 +493,12 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		/* only custom body for 4xx and 5xx */
 		if (con->http_status < 400 || con->http_status >= 600) break;
 
+		if (is_valid_string(con->url.rel_path->ptr)!=0) {
+			con->http_status = 451;
+			con->file_finished = 1;
+			break;
+		}
+
 		con->file_finished = 0;
 
 		buffer_reset(con->physical.path);
@@ -516,9 +522,10 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 
 				//- 20130104 Sungmin add
 				if(con->http_status==401){
+
 					buffer *out = buffer_init();					
-					buffer_copy_string_len(out, CONST_STR_LEN("<input class='urlInfo' value='"));				
-					buffer_append_string_buffer(out, con->url.rel_path);				
+					buffer_copy_string_len(out, CONST_STR_LEN("<input class='urlInfo' value='"));
+					buffer_append_string_buffer(out, con->url.rel_path);
 					buffer_append_string_len(out, CONST_STR_LEN("' type='hidden'>"));
 					chunkqueue_append_buffer(con->write_queue, out);
 					buffer_free(out);
@@ -988,12 +995,12 @@ static void check_available_temp_space(server *srv, connection *con){
 			snprintf(disk_full_path, sizeof(disk_full_path), "%s%s", disk_path, de->d_name);
 			snprintf(querycmd, sizeof(querycmd), "df|grep -i '%s'", disk_full_path);
 			
-			char mybuffer[BUFSIZ]="\0";
+			char mybuffer[BUFSIZ] = "\0";
 			FILE* fp = popen( querycmd, "r");
 			if(fp){
-				int len = fread(mybuffer, sizeof(char), BUFSIZ, fp);
+				int len = fread(mybuffer, sizeof(char), BUFSIZ - 1, fp);
 				if(len>0){
-					mybuffer[len-1]="\0";
+					mybuffer[len] = "\0";
 				
 					char * pch;
 					pch = strtok(mybuffer, " ");
@@ -1021,6 +1028,9 @@ static void check_available_temp_space(server *srv, connection *con){
 						count++;
 					}
 
+				}
+				else {
+					mybuffer[0] = "\0";
 				}
 
 				pclose(fp);
@@ -1315,11 +1325,13 @@ int connection_reset(server *srv, connection *con) {
 
 		if (!pd) continue;
 
-		if (con->plugin_ctx[pd->id] != NULL) {
-			log_error_write(srv, __FILE__, __LINE__, "sb", "missing cleanup in", p->name);
-		}
+		if (pd->id >= 0 && pd->id < srv->plugins.used) {
+			if (con->plugin_ctx[pd->id] != NULL) {
+				log_error_write(srv, __FILE__, __LINE__, "sb", "missing cleanup in", p->name);
+			}
 
-		con->plugin_ctx[pd->id] = NULL;
+			con->plugin_ctx[pd->id] = NULL;
+		}
 	}
 
 	/* The cond_cache gets reset in response.c */
@@ -1449,6 +1461,11 @@ found_header_end:
 		if (con->request.content_length <= 64*1024) {
 			/* don't buffer request bodies <= 64k on disk */
 			chunkqueue_steal(dst_cq, cq, con->request.content_length - dst_cq->bytes_in);
+		}
+		else if (con->request.content_length > con->request.free_mem) {
+			con->http_status = 413;
+			con->keep_alive = 0;
+			connection_set_state(srv, con, CON_STATE_HANDLE_REQUEST);
 		}
 		else if (0 != chunkqueue_steal_with_tempfiles(srv, dst_cq, cq, con->request.content_length - dst_cq->bytes_in )) {
 			con->http_status = 413; /* Request-Entity too large */
@@ -1764,7 +1781,9 @@ int connection_state_machine(server *srv, connection *con) {
 				buffer_copy_string_len(tmp, ds_cookie->value->ptr, ds_cookie->value->used);		
 				buffer_urldecode_path(tmp);
 				memset(buf, 0, sizeof(buf));
-				strncpy(buf, tmp->ptr, tmp->used);
+				size_t len = tmp->used > sizeof(buf) ? sizeof(buf) - 1 : tmp->used;
+				strncpy(buf, tmp->ptr, len);
+				buf[len] = '\0';
 				buffer_free(tmp);
 				
 				// check for "<AuthName>=" entry in a cookie
