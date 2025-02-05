@@ -23,7 +23,7 @@
 <p align="center">
   <a href="https://www.snbforums.com/threads/gnutons-merlin-builds-for-dsl-router-386-1_2-released.70980/">Support forum</a>
   ·
-  <a href="https://twitter.com/gnuton">@MyTweets</a>
+  <a href="https://retro.pizza/@gnuton">@Mastodon</a>
   ·  
   <a href="https://discord.gg/pm7q6KFSzp">Chat</a>  
   ·  
