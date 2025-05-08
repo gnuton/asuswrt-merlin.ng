@@ -106,7 +106,6 @@ body{
  	-moz-transition: all 0.5s ease-in-out;
 	-o-transition: all 0.5s ease-in-out;
 	transition: all 0.5s ease-in-out;
-	background-color: deepskyblue;
 }
 .core-color-0{
 	background: linear-gradient(to right, #0bc8ff 0%, #0039ff 100%);
@@ -351,6 +350,7 @@ input[type="text"], input[type="password"], .input_option{
 	line-height: 100%;
 	font-size: 11px;
 	margin-top: 4px;
+	width: 85%;
 }
 .port_status_icon_desc{
 	display: flex;

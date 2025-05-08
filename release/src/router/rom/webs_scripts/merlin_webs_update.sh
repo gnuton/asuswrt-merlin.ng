@@ -2,7 +2,7 @@
 
 wget_options="-q -t 2 -T 30"
 
-fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates"
+fwsite="https://fwupdate.asuswrt-merlin.net"
 
 nvram set webs_state_update=0 # INITIALIZING
 nvram set webs_state_flag=0   # 0: Don't do upgrade  1: Do upgrade
@@ -18,27 +18,26 @@ fi
 current_base=$(nvram get firmver | sed "s/\.//g")
 current_firm=$(nvram get buildno | cut -d. -f1)
 current_buildno=$(nvram get buildno | cut -d. -f2)
-#Extract extendno, subtract value by 1 if it contains "alpha/beta", remove all other values such as "_rog" or "-g*"
-current_extendno="$(nvram get extendno | awk -F'[_-]' '{n=$1} /[aA]lpha|[bB]eta/{n--} END{print n}')"
+current_extendno=$(nvram get extendno | sed "s/-g.*//" | sed "s/_.*//" | sed "s/alpha\|beta/-1/")
 
 # get firmware information
 model=$(nvram get productid)
 model="$model#"
 
-echo "---- update real normal----" > /tmp/webs_upgrade.log
-/usr/sbin/wget $wget_options $fwsite/manifest2.txt -O /tmp/wlan_update.txt
+	echo "---- update real normal----" > /tmp/webs_upgrade.log
+	/usr/sbin/wget $wget_options $fwsite/manifest2.txt -O /tmp/wlan_update.txt
 
 if [ "$?" != "0" ]; then
 	nvram set webs_state_error=1
 else
 
-	fullver="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#FW//')"
+	fullver=$(grep $model /tmp/wlan_update.txt | sed s/.*#FW//;)
 	fullver=$(echo $fullver | sed s/#.*//;)
 	firmbase=$(echo $fullver | cut -d. -f1)
 	firmver=$(echo $fullver | cut -d. -f2)
 	buildno=$(echo $fullver | cut -d. -f3)
 
-	extendno="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#EXT//')"
+	extendno=$(grep $model /tmp/wlan_update.txt | sed s/.*#EXT//;)
 	extendno=$(echo $extendno | sed s/#.*//;)
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
@@ -86,13 +85,12 @@ if [ "$webs_state_flag" -eq "1" ]; then
 	releasenote_file0=$(nvram get webs_state_info)_note.txt
 	releasenote_path0="/tmp/release_note0.txt"
 	echo "---- download real release note ----" >> /tmp/webs_upgrade.log
-	/usr/sbin/wget $wget_options $fwsite/$releasenote_file0_US -O $releasenote_path0
-	echo "---- $fwsite/$releasenote_file0_US ----" >> /tmp/webs_upgrade.log
+	/usr/sbin/wget $wget_options $fwsite/$releasenote_file0 -O $releasenote_path0
 
 	if [ "$?" != "0" ]; then
 		echo "---- download $fwsite/$releasenote_file0 failed ----" >> /tmp/webs_upgrade.log
 		nvram set webs_state_error=1
-  	else
+	else
 		echo "---- $fwsite/$releasenote_file0 ----" >> /tmp/webs_upgrade.log
 	fi
 fi

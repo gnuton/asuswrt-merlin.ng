@@ -15,13 +15,34 @@
 <style>
 	.statcell { width:25% !important; text-align:left !important; }
 	.wgsheader:first-letter { text-transform: capitalize; }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 </style>
 
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
@@ -36,17 +57,13 @@ var wgs_object = {};
 function initial(){
 	show_menu();
 
-	if (openvpnd_support || ipsec_srv_support || pptpd_support) {
-		setTimeout("refresh_vpn_data()",1000);
-	}
+	setTimeout("refresh_vpn_data()",1000);
 
 	if (ipsec_srv_support)
 		setTimeout("refresh_ipsec_data()",1200);
 
-	if (wireguard_support) {
+	if (wireguard_support)
 		build_wgsc_array();
-		setTimeout("display_wg_data()",1200);
-	}
 }
 
 
@@ -58,7 +75,12 @@ function refresh_vpn_data(){
 			refresh_vpn_data();
 		},
 		success: function(response){
+			document.getElementById("pageloading").style.display = "none";
+			document.getElementById("refreshButton").style.display = "";
 			display_vpn_data();
+			if (wireguard_support) {
+				display_wg_data();
+		        }
 		}
 	});
 }
@@ -204,8 +226,12 @@ function display_vpn_data(){
 
 
 function applyRule(){
-	showLoading();
+	document.form.action_mode.value = "reset_vpn_ip";
+	document.form.action = "apply.cgi";
+	$("html, body").animate({ scrollTop: 0 }, "fast");
+	showLoading(2);
 	document.form.submit();
+	setTimeout("window.location = 'Advanced_VPNStatus.asp';", 2000);
 }
 
 
@@ -554,6 +580,8 @@ function display_wg_data(){
 				if (desc == "")
 					desc = "Client " + unit;
 				client_desc = "<span style=\"background-color: transparent; color: white;\">" + desc + "</span>";
+				local_ip = wgc1_ip;
+				remote_ip = wgc1_rip;
 				break;
 			case 2:
 				client_state = "<% sysinfo("wgcstatus.2"); %>";
@@ -564,6 +592,8 @@ function display_wg_data(){
 				if (desc == "")
 					desc = "Client " + unit;
 				client_desc = "<span style=\"background-color: transparent; color: white;\">" + desc + "</span>";
+				local_ip = wgc2_ip;
+				remote_ip = wgc2_rip;
 				break;
 			case 3:
 				client_state = "<% sysinfo("wgcstatus.3"); %>";
@@ -574,6 +604,8 @@ function display_wg_data(){
 				if (desc == "")
 					desc = "Client " + unit;
                                 client_desc = "<span style=\"background-color: transparent; color: white;\">" + desc + "</span>";
+				local_ip = wgc3_ip;
+				remote_ip = wgc3_rip;
 				break;
 			case 4:
 				client_state = "<% sysinfo("wgcstatus.4"); %>";
@@ -584,6 +616,8 @@ function display_wg_data(){
 				if (desc == "")
 					desc = "Client " + unit;
                                 client_desc = "<span style=\"background-color: transparent; color: white;\">" + desc + "</span>";
+				local_ip = wgc4_ip;
+				remote_ip = wgc4_rip;
 				break;
 			case 5:
 				client_state = "<% sysinfo("wgcstatus.5"); %>";
@@ -594,6 +628,8 @@ function display_wg_data(){
 				if (desc == "")
 					desc = "Client " + unit;
                                 client_desc = "<span style=\"background-color: transparent; color: white;\">" + desc + "</span>";
+				local_ip = wgc5_ip;
+				remote_ip = wgc5_rip;
 				break;
 		}
 
@@ -604,7 +640,7 @@ function display_wg_data(){
 				break;
 			case "1":
 				document.getElementById("wgclient"+unit+"_Block_Running").innerHTML = client_desc + state_clnt_ced + client_server;
-				get_wgc_data(unit, "wgclient"+unit+"_Block");
+				get_wgc_data(unit, "wgclient"+unit+"_Block", local_ip, remote_ip);
 				showhide("wgclient"+unit, 1);
 				break;
 		}
@@ -614,7 +650,7 @@ function display_wg_data(){
 }
 
 
-function get_wgc_data(_unit, _block) {
+function get_wgc_data(_unit, _block, _local_ip, _remote_ip) {
 	$.ajax({
 		url: '/appGet.cgi?hook=nvram_dump(\"wgc.log\",\"' + _unit +'\")',
 		dataType: 'text',
@@ -624,6 +660,8 @@ function get_wgc_data(_unit, _block) {
 		success: function(response){
 			var got_peer = 0;
 			var code = "<table width='100%' border='1' align='center' cellpadding='4' cellspacing='0' bordercolor='#6b8fa3' class='FormTable_table'><thead><tr><td colspan='2'>Client Status</tr></thead>";
+			code += "<tr><th class='wgsheader' style='text-align:left;'>Local IP</td><td style='text-align:left;'>" + _local_ip + "</td></tr>";
+			code += "<tr><th class='wgsheader' style='text-align:left;'>Public IP</td><td style='text-align:left;'>" + _remote_ip + "</td></tr>";
 			data = response.toString().slice(23).split("\n");
 			for (i = 0; i < data.length; ++i) {
 				var fields = data[i].split(/:(.*)/s);
@@ -760,7 +798,10 @@ function is_wgsc_connected(_pubkey) {
                 <td valign="top">
                 <div>&nbsp;</div>
                 <div class="formfonttitle">VPN - Status</div>
-		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+				<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+				<div class="spinner-container">
+					<div id="pageloading" class="spinner"></div>
+				</div>
 				<table width="100%" style="margin-bottom:20px;display:none;" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" id="pptpserver" class="FormTable">
 					<thead>
 						<tr>
@@ -971,7 +1012,7 @@ function is_wgsc_connected(_pubkey) {
 
 
 				<div class="apply_gen">
-					<input name="button" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_refresh#>"/>
+					<input name="button" id="refreshButton" type="button" class="button_gen" onclick="applyRule();" value="<#CTL_refresh#>" style="display:none;"/>
 				</div>
 			  </td></tr>
 	        </tbody>

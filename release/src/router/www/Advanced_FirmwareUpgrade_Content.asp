@@ -102,17 +102,17 @@
 	cursor: pointer;	
 }
 </style>
-
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/confirm_block.js"></script>
 <script language="JavaScript" type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js"></script>
 <!-- script language="JavaScript" type="text/javascript" src="/ajax/get_rbk_info.asp"></script -->
 <script>
 $(function () {
@@ -148,9 +148,8 @@ if(cfg_sync_support){
 	var cfg_check = '<% nvram_get("cfg_check"); %>';
 	var cfg_upgrade = '<% nvram_get("cfg_upgrade"); %>';
 }
-
-download_url_redir = "https://gnuton.github.io/asuswrt-merlin.ng/updates/" + based_modelid;
-download_url = "https://github.com/gnuton/asuswrt-merlin.ng/releases/latest";
+download_url_redir = "https://fwupdate.asuswrt-merlin.net/" + based_modelid;
+download_url = "https://www.asuswrt-merlin.net/download";
 
 /* Disable these for Asuswrt-Merlin */
 afwupg_support=false;
@@ -666,12 +665,11 @@ function initial(){
 		$("#fw_note2").show();
 		$("#fw_note2").html("The firmware of ISP (Internet Service Provider) project is not compatible with the ASUS retail models, and also it’s unavailable for firmware manual update.");	//Untranslated
 	}
-	
-	/*if(isSupport("is_ax5400_i1"))
+	if(isSupport("is_ax5400_i1"))
 	{
 		$("#fw_note3").show();
 		$("#fw_note3").html("Firmware upgrade is only accessible through Optus server.");	//Untranslated
-	}*/
+	}
 
 	if(gobi_support && (usb_index != -1) && (sim_state != "")){
 		$("#modem_fw_upgrade").css("display", "");
@@ -1441,7 +1439,7 @@ function show_fw_release_note(event) {
 	if (event.data.isMerlin) {
 		document.amas_release_note.version.value = event.data.newfwver.replace(/^(\d+)\.(\d+)\.(\d+).(\d+)\./, "$1$2$3$4.");
 		if (event.data.product_id)
-			siteurl = "https://gnuton.github.io/asuswrt-merlin.ng/updates/" + event.data.product_id;
+			siteurl = "https://fwupdate.asuswrt-merlin.net/" + event.data.product_id;
 		else
 			siteurl = download_url;
 	} else {
@@ -1936,7 +1934,8 @@ function toggle_fw_check(state) {
 					<li><#FW_n0#></li>
 					<li><#FW_n1#></li>
 					<li id="fw_note2"><#FW_n2#>&nbsp;<#FW_n3#></li>
-					<li id="fw_note3">Get the latest firmware version from the download site at <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="https://github.com/gnuton/asuswrt-merlin.ng/releases/latest" target="_blank">https://github.com/gnuton/asuswrt-merlin.ng/releases/latest</a></li>
+					<li id="fw_note3">Get the latest firmware version from the download site at <a style="font-weight: bolder;text-decoration: underline;color:#FFFFFF;" href="https://www.asuswrt-merlin.net/download/" target="_blank">https://www.asuswrt-merlin.net/download/</a></li>
+					<li style="display:none;"id="fw_note5"><#FW_n5#></li>
 					</ol>
 		  </div>
 		  <br>
@@ -1948,31 +1947,108 @@ function toggle_fw_check(state) {
 			</tr>	
 			</thead>
 			<tr>
-				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11, 14);"><#FW_auto_upgrade#></a></th>
+				<th><#FW_auto_upgrade#></th>
 				<td>
 					<div align="center" class="left" style="width:75px; float:left; cursor:pointer;" id="switch_webs_update_enable"></div>
 					<script type="text/javascript">
 					$('#switch_webs_update_enable').iphoneSwitch('<% nvram_get("webs_update_enable"); %>',
-						function(){
-							hide_upgrade_opt(1);
-							save_update_enable('on');
-						},
-						function(){
-							hide_upgrade_opt(0);
-							save_update_enable('off');
-						}
-					);
+                            function () {
+								const policyStatus = PolicyStatus()
+										.then(data => {
+											if (data.PP == 0 || data.PP_time == "") {
+												const policyModal = new PolicyModalComponent({
+													policy: "PP",
+													policyStatus: data,
+													agreeCallback: () => {
+														hide_upgrade_opt(1);
+														save_update_enable('on');
+													},
+													knowRiskCallback: () => {
+														alert(`<#ASUS_POLICY_Function_Confirm#>`);
+														location.reload();
+													}
+												});
+												policyModal.show();
+												return false;
+											} else {
+												hide_upgrade_opt(1);
+												save_update_enable('on');
+											}
+										});
+							},
+							function () {
+								hide_upgrade_opt(0);
+                                save_update_enable('off');
+                            }
+                    );
 					</script>
 				</td>	
 			</tr>
 			<tr>
 				<th><#FW_auto_time#></th>
 				<td>
-					<select name="webs_update_time_x_hour" class="input_option" onchange="save_update_enable();"></select> : 
-					<select name="webs_update_time_x_min" class="input_option" onchange="save_update_enable();"></select>
+					<select id="webs_update_time_x_hour" name="webs_update_time_x_hour" class="input_option" onchange="save_update_enable();"></select> : 
+					<select id="webs_update_time_x_min" name="webs_update_time_x_min" class="input_option" onchange="save_update_enable();"></select>
 					<span id="system_time" class="devicepin" style="color:#FFFFFF;"></span>
 					<br><span id="dstzone" style="display:none;margin-left:5px;color:#FFFFFF;"></span>
 				</td>	
+			</tr>
+
+			<tr>
+				<td colspan="2">
+					<#FW_auto_upgrade_desc#>
+				</td>
+			</tr>
+		</table>
+
+		<table id="secur_stab_setting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+			<thead>
+			<tr>
+				<td colspan="2"><#Secur_Stab_auto_upgrade#></td>
+			</tr>	
+			</thead>
+			<tr>
+				<th><#Secur_Stab_auto_upgrade#></th>
+				<td>
+					<div align="center" class="left" style="width:75px; float:left; cursor:pointer;" id="switch_security_update_enable"></div>
+					<script type="text/javascript">
+					$('#switch_security_update_enable').iphoneSwitch(httpApi.securityUpdate.get(),
+						function(){
+                            //on
+							const policyStatus = PolicyStatus()
+									.then(data => {
+										if (data.PP == 0 || data.PP_time == "") {
+											const policyModal = new PolicyModalComponent({
+												policy: "PP",
+												policyStatus: data,
+												agreeCallback: () => {
+													httpApi.securityUpdate.set(1);
+												},
+												knowRiskCallback: () => {
+													alert(`<#ASUS_POLICY_Function_Confirm#>`);
+													location.reload();
+												}
+											});
+											policyModal.show();
+											return false;
+										} else {
+											httpApi.securityUpdate.set(1);
+										}
+									});
+						},
+						function(){
+							//off
+							httpApi.securityUpdate.set(0);
+						}
+					);
+					</script>
+				</td>	
+			</tr>
+
+			<tr>
+				<td colspan="2">
+					<#Secur_Stab_auto_upgrade_desc#>
+				</td>
 			</tr>
 		</table>
 

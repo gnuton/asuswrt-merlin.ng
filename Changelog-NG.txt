@@ -1,6 +1,47 @@
 Asuswrt-Merlin GNUton's builds Changelog
+========================
+
+3004.388.8_4-gnuton1 (xx-xxx-2025)
+  - UPDATED: Merlin baseline to 3004.388.9
+
+
+3004.388.9 (9-Apr-2025)
+  - NOTE: BCM4912 models such as the GT-AX6000 have now been
+         migrated to the 3006 firmware series.
+
+  - NEW: (re-added) VPN interface selector on the Speedtest page,
+         to test a VPN tunnel's throughput.
+  - UPDATED: Merged GPL 388_25373.
+  - UPDATED: dropbear to 2025.87.
+  - UPDATED: OpenVPN to 2.6.14.
+  - UPDATED: dnsmasq to 2.91.
+  - UPDATED: miniupnpd to 2.3.7 (20250207 snapshot)
+  - UPDATED: amtm to 5.2 (decoderman)
+  - CHANGED: VPN public IP retrieval now uses HTTP instead of STUN,
+             which should be more reliable through a VPN tunnel.
+  - CHANGED: Model name will be inserted in the filename of JFFS
+             backups.
+  - CHANGED: Improved refresh behaviour of the VPN Status page.
+  - CHANGED: Set rp_filter mode to "loose" on Wireguard client
+             interfaces.
+             Fixes gettunnelip.sh and onboard speedtest.
+  - CHANGED: Display public IP address for Wireguard clients.
+  - CHANGED: Make PCP requests also honor the Secure Mode setting
+             (Self-Hosting-Group)
+  - CHANGED: Settings/JFFS backup uploads file picker  will filter by
+             file extension.
+  - CHANGED: Added dhd userspace tool to RT-AX88U and GT-AX11000.
+  - CHANGED: WAN IPv6 provided as second argument to the ddns-start
+             script.
+  - FIXED: CVE-2024-9143 in OpenSSL (Debian backport by RSDNTWK)
+  - FIXED: Missing icon for the GT-AX11000 on AiMesh page.
+
 
 3004.388.8_4-gnuton1 (11-January-2025)
+  - UPDATED: Merlin baseline to 3004.388.8_4
+
+
+3004.388.8_4 (17-Nov-2024)
   - CHANGED: VPN killswitch will now only be active if the
              VPN client itself is enabled.  If you stop/start
              the client yourself over SSH, you need to also
@@ -10,9 +51,13 @@ Asuswrt-Merlin GNUton's builds Changelog
            Implicit rejection for RSA PKCS#1 in openssl
            (backport from Ubuntu by RSDNTWK)
 
+
 3004.388.8_2-gnuton1 (04-August-2024)
   - FIXED: fixed cake support to 5.04axhnd 6750 and 6756 devices
   - REMOVED: WiFi radar support from all devices
+
+
+3004.388.8_2 (31-July-2024)
   - UPDATED: OpenVPN to 2.6.12.
   - CHANGED: Support importing Wireguard config files that
              contain multiple AllowedIPs, Address or DNS
@@ -70,6 +115,7 @@ Asuswrt-Merlin GNUton's builds Changelog
              releases).
 
 
+<<<<<<< HEAD
 3004.388.7_1-gnuton1 (09-June-2024)
   - ADDED: XT kernel module for SDK 5.04 models
          Allows Skynet and other addons to work
@@ -78,6 +124,8 @@ Asuswrt-Merlin GNUton's builds Changelog
   - FIXED: RT-AX82U V2 firmware upgrade not working
 
 
+=======
+>>>>>>> 3004.388.9
 3004.388.7 (26-Apr-2024)
   - NOTE: RT-AX56U is exceptionally included in this release.
 
@@ -129,17 +177,23 @@ Asuswrt-Merlin GNUton's builds Changelog
   - REMOVED: Temperature page (charts are now part of the redesigned
              Tools->Sysinfo page).
 
+<<<<<<< HEAD
 3004.388.6_2-gnuton1 (4-Apr-2024)
   - ADDED: Support for TUF-AX3000 V2
   - ADDED: Support for RT-AX58U V2
+=======
+>>>>>>> 3004.388.9
 
 3004.388.6_2 (26-Feb-2024)
   - UPDATED: dnsmasq to 2.90 (resolves CVE 2023-50868 and CVE 2023-50387).
   - FIXED: LACP support was missing on the XT12.
 
+<<<<<<< HEAD
 3004.388.6_0-gnuton1 (25-Feb-2024)
   - ADDED: Support for RT-AX5400
 
+=======
+>>>>>>> 3004.388.9
 
 3004.388.6 (20-Jan-2024)
   - NOTE: Since Asus provided GPL code for the RT-AX56U, this model
@@ -166,11 +220,14 @@ Asuswrt-Merlin GNUton's builds Changelog
            on the Forwarded Ports page.
 
 
+<<<<<<< HEAD
 3004.388.5_0-gnuton1 (29-Dec-2023)
   - ADDED: Support for RT-AX82U_V2
   - FIXED: AiMesh icons for TUF UI
 
 
+=======
+>>>>>>> 3004.388.9
 3004.388.5 (2-Dec-2023)
   - UPDATED: OpenSSL to 1.1.1w.
   - UPDATED: Curl to 8.4.0.
@@ -195,10 +252,13 @@ Asuswrt-Merlin GNUton's builds Changelog
            having USB 3.0 ports
 
 
+<<<<<<< HEAD
 3004.388.4_0-gnuton1 (25-Oct-2023)
   - NEW: Merged with GPL 388_23588.
 
 
+=======
+>>>>>>> 3004.388.9
 3004.388.4 (21-Aug-2023)
   - NOTE: In preparation for the new 3.0.0.6 codebase, the version
           string will now start with 3004 or 3006 to match with
@@ -237,12 +297,19 @@ Asuswrt-Merlin GNUton's builds Changelog
 
 388.3 (9-June-2023)
   - NOTE: This release is only available for the RT-AX88U_Pro.
+<<<<<<< HEAD
   - NEW: Merged with GPL 388_23110, adding support for a new
          RT-AX88U PRO hardware revision.
 
 388.2_2_0-gnuton1 (1-Jun-2023)
   - UPDATED: Merged GPL 388_22582 for the ZenWifi devices
   - UPDATED: Merged GPL 388_22525 for all routers but not Zen
+=======
+
+  - NEW: Merged with GPL 388_23110, adding support for a new
+         RT-AX88U PRO hardware revision.
+
+>>>>>>> 3004.388.9
 
 388.2_2 (7-May-2023)
   - UPDATED: Merged GPL 388_22668 for the XT12 (only)
@@ -297,6 +364,10 @@ Asuswrt-Merlin GNUton's builds Changelog
   - FIXED: ICMPv6 pings would be dropped when DoS protection
            was enabled (regression in 388.1).
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3004.388.9
 388.1 (3-Dec-2022)
   - NOTE: This release is only available for AX models.
           AC models will remain on the 386_xx release branch.
@@ -368,11 +439,14 @@ Asuswrt-Merlin GNUton's builds Changelog
              not supported by kernel 4.19, so it wasn't working)
 
 
+<<<<<<< HEAD
 386.08_0-gnuton1 (8-Oct-2022)
   - NOTE: This release is only available for the DSL-AX82U and RT-AX92U.
   - NEW: Added support for the RT-AX92U.
   - FIX: FlexQOS for TUF devices.
   
+=======
+>>>>>>> 3004.388.9
 386.8 (13-Aug-2022)
   - NOTE: This release is only available for the RT-AX88U as
           well as the two new models listed below.
@@ -398,6 +472,7 @@ Asuswrt-Merlin GNUton's builds Changelog
            characters (like emojis or other UTF8 entities)
 
 
+<<<<<<< HEAD
 
 386.07_2-gnuton1 (6-Aug-2022)
   - NEW: Added support for TUF-AX3000
@@ -406,6 +481,8 @@ Asuswrt-Merlin GNUton's builds Changelog
   - FIXED: WiFi insight page for TUF models
 
 
+=======
+>>>>>>> 3004.388.9
 386.7_2 (24-July-2022)
   - UPDATED: openssl to 1.1.1q.
   - UPDATED: RT-AX86U driver + SDK updated to latest upstream version

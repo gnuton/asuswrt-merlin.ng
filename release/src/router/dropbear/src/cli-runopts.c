@@ -182,7 +182,7 @@ void cli_getopts(int argc, char ** argv) {
 	cli_opts.bind_port = NULL;
 	cli_opts.keepalive_arg = NULL;
 #ifndef DISABLE_ZLIB
-	opts.compress_mode = DROPBEAR_COMPRESS_ON;
+	opts.allow_compress = 1;
 #endif
 #if DROPBEAR_USER_ALGO_LIST
 	opts.cipher_list = NULL;
@@ -399,6 +399,11 @@ void cli_getopts(int argc, char ** argv) {
 		}
 	}
 
+#if DROPBEAR_USER_ALGO_LIST
+	/* -c help doesn't need a hostname */
+	parse_ciphers_macs();
+#endif
+
 	if (host_arg == NULL) { /* missing hostname */
 		printhelp();
 		dropbear_exit("Remote host needs to provided.");
@@ -423,11 +428,6 @@ void cli_getopts(int argc, char ** argv) {
 	} else if(!cli_opts.username) {
 		cli_opts.username = m_strdup(cli_opts.own_user);
 	}
-
-#if DROPBEAR_USER_ALGO_LIST
-	/* -c help doesn't need a hostname */
-	parse_ciphers_macs();
-#endif
 
 	/* Done with options/flags; now handle the hostname (which may not
 	 * start with a hyphen) and optional command */
@@ -559,7 +559,9 @@ void loadidentityfile(const char* filename, int warnfail) {
 static char* multihop_passthrough_args(void) {
 	char *args = NULL;
 	unsigned int len, total;
+#if DROPBEAR_CLI_PUBKEY_AUTH
 	m_list_elem *iter;
+#endif
 	/* Sufficient space for non-string args */
 	len = 100;
 
@@ -679,7 +681,7 @@ static void parse_multihop_hostname(const char* orighostarg, const char* argv0) 
 				passthrough_args, remainder);
 #ifndef DISABLE_ZLIB
 		/* The stream will be incompressible since it's encrypted. */
-		opts.compress_mode = DROPBEAR_COMPRESS_OFF;
+		opts.allow_compress = 0;
 #endif
 		m_free(passthrough_args);
 	}

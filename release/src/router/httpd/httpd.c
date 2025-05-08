@@ -60,6 +60,7 @@
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <ctype.h>
+#include <fnmatch.h>
 
 typedef unsigned int __u32;   // 1225 ham
 
@@ -504,8 +505,10 @@ page_default_redirect(int fromapp_flag, char* url)
 {
 	char inviteCode[256]={0};
 
-	if(check_xss_blacklist(url, 1))
+	if(check_xss_blacklist(url, 1)){
 		strncpy(login_url, indexpage, sizeof(login_url));
+		url = indexpage;
+	}
 	else
 		strncpy(login_url, url, sizeof(login_url));
 
@@ -1410,7 +1413,7 @@ handle_request(void)
 		if (do_ssl && !strcmp(url, "offline.htm"))
 			continue;
 #endif
-		if (match(handler->pattern, url) || customized_match(handler->pattern, url))
+		if ((match(handler->pattern, url) || customized_match(handler->pattern, url)) && !httpd_reject_url(url))
 		{	
 			if ( request_content_range!=NULL && strncasecmp( request_content_range, "bytes=", 6 ) == 0) {
 #ifdef RTCONFIG_TC_GAME_ACC
@@ -1553,7 +1556,7 @@ handle_request(void)
 				}
 #endif
 			}
-			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,"uploadIconFile.tar")) && !(strstr(file,"backup_jffs.tar")) && !(strstr(file,"networkmap.tar")) && !(strstr(file,".CFG")) && !(strstr(file,".log")) && !check_if_file_exist(file)
+			if(!strstr(file, ".cgi") && !strstr(file, "syslog.txt") && !(strstr(file,"uploadIconFile.tar")) && (fnmatch("backup_jffs*.tar",file,0) == FNM_NOMATCH) && !(strstr(file,"networkmap.tar")) && !(strstr(file,".CFG")) && !(strstr(file,".log")) && !check_if_file_exist(file)
 #ifdef RTCONFIG_USB_MODEM
 					&& !strstr(file, "modemlog.txt")
 #endif
@@ -1564,6 +1567,7 @@ handle_request(void)
 					&& !strstr(file, "asustitle.png")
 #endif
 					&& !strstr(file,"cert.crt")
+					&& !strstr(file,"cacert_key.tar")
 					&& !strstr(file,"cert_key.tar")
 					&& !strstr(file,"cert.tar")
 #ifdef RTCONFIG_OPENVPN
@@ -2441,7 +2445,7 @@ int main(int argc, char **argv)
 	/* Ignore broken pipes */
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGCHLD, chld_reap);
-	signal(SIGUSR1, update_wlan_log);
+	signal(SIGUSR1, update_wlan_log_sig);
 	signal(SIGALRM, check_alive);
 	signal(SIGTERM, httpd_exit);
 

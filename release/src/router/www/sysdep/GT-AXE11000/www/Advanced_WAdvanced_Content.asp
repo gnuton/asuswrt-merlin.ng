@@ -9,8 +9,10 @@
 	<link rel="stylesheet" href="index_style.css"> 
 	<link rel="stylesheet" href="form_style.css">
 	<link rel="stylesheet" type="text/css" href="/js/weekSchedule/weekSchedule.css">
+
 	<script src="/js/jquery.js"></script>
-	<script src="/calendar/jquery-ui.js"></script> 
+	<script src="/calendar/jquery-ui.js"></script>
+	<script type="text/javascript" src="/js/httpApi.js"></script>
 	<script src="/state.js"></script>
 	<script src="/general.js"></script>
 	<script src="/help.js"></script>
@@ -18,7 +20,6 @@
 	<script src="/validator.js"></script>
 	<script language="JavaScript" type="text/javascript" src="/js/weekSchedule/weekSchedule.js"></script>
 	<script language="JavaScript" type="text/javascript" src="/form.js"></script>
-	<script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <style>
 .ui-slider {
 	position: relative;
@@ -366,7 +367,7 @@ function initial(){
 		 || (based_modelid.substring(0,7) == "RT-AC59" && is_unit_5g(wl_unit_value))){
 			inputCtrl(document.form.wl_itxbf, 1);
 		}
-		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q"
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" 
 		|| based_modelid == "BRT-AC828" || based_modelid == "RT-AD7200" 
 		|| based_modelid == "RT-AC58U" || based_modelid.substring(0,7) == "RT-AC59" || based_modelid == "RT-AC82U" 
 		|| based_modelid == "MAP-AC1300" || based_modelid == "MAP-AC2200" 
@@ -409,7 +410,7 @@ function initial(){
 
 		if((!Qcawifi_support && !Rawifi_support) || based_modelid == "RT-AC87U"
 		    || based_modelid == "MAP-AC1300" || based_modelid == "MAP-AC2200" || based_modelid == "VZW-AC1300" || based_modelid == "RT-AC95U"
-		    || based_modelid == "RT-AC82U" || based_modelid == "RT-AC58U" || based_modelid == "4G-AC53U" || based_modelid == "4G-AC56" || (based_modelid == "RP-AC87" && is_unit_5g(wl_unit_value) )){		// hide on Broadcom platform
+		    || based_modelid == "RT-AC82U" || based_modelid == "RT-AC58U" || based_modelid == "4G-AC53U" || based_modelid == "4G-AC56" || (based_modelid == "RP-AC87" && is_unit_5g(wl_unit_value)) ){		// hide on Broadcom platform
 			document.getElementById("wl_plcphdr_field").style.display = "none";
 		}
 
@@ -479,7 +480,7 @@ function initial(){
 		 || (based_modelid.substring(0,7) == "RT-AC59" && is_unit_5g(wl_unit_value))){
 			inputCtrl(document.form.wl_itxbf, 1);
 		}
-		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q"
+		if(based_modelid == "RT-AC88N" || based_modelid == "RT-AC88Q" 
 		|| based_modelid == "BRT-AC828" || based_modelid == "RT-AD7200" || based_modelid == "RT-AC58U" 
 		|| based_modelid == "RT-AC82U" || based_modelid == "MAP-AC1300" || based_modelid == "MAP-AC2200" 
 		|| based_modelid == "VZW-AC1300" || based_modelid == "RT-AC95U"
@@ -655,8 +656,8 @@ function initial(){
 	if (!Qcawifi_support && !Rawifi_support && !Rtkwifi_support && !lantiq_support && is_unit_24g(wl_unit_value))
 		inputCtrl(document.form.wl_btc_mode, 1);
 	else
-		inputCtrl(document.form.wl_btc_mode, 0);		
-		
+		inputCtrl(document.form.wl_btc_mode, 0);
+	
 	/*location_code Setting*/		
 	if(location_list_support && !cfg_ui_region_disable){
 		generate_country_selection();
@@ -754,19 +755,21 @@ function initial(){
 		}
 
 		document.getElementById("wl_gmode_checkbox").style.display = "";
-		if(document.form.wl_rateset.value == "ofdm"){
-			document.form.wl_rateset_ckb.checked = true;
-		}
-		else{
-			document.form.wl_rateset_ckb.checked = false;
-		}
+		if(disable11b_support){
+			if(document.form.wl_rateset.value == "ofdm"){
+				document.form.wl_rateset_ckb.checked = true;
+			}
+			else{
+				document.form.wl_rateset_ckb.checked = false;
+			}
 
-		wl_mode_change(document.form.wl_nmode_x.value);	
+			wl_mode_change(document.form.wl_nmode_x.value);
+		}
 	}
 }
 
 function wl_mode_change(mode){	
-	if(is_unit_24g(wl_unit_value)){
+	if(is_unit_24g(wl_unit_value)) {
 		if(mode == '0'){
 			document.form.wl_rateset.disabled = false;
 			document.getElementById("wl_rateset_checkbox").style.display = "";
@@ -916,7 +919,7 @@ function changeRSSI(_switch){
 
 function applyRule(){
 	if(lantiq_support && wave_ready != 1){
-		alert("Please wait a minute for wireless ready");
+		alert(`<#Wireless_ready#>`);
 		return false;
 	}
 	
@@ -1092,7 +1095,7 @@ power_table_desc = ["<#WLANConfig11b_TxPower1#>", "<#WLANConfig11b_TxPower2#>", 
 //power_table_desc = ["省電", "弱", "平衡", "強", "效能"];
 function register_event(){
 	
-	$(function() {
+
 		$( "#slider" ).slider({
 			orientation: "horizontal",
 			range: "min",
@@ -1106,7 +1109,7 @@ function register_event(){
 				set_power(ui.value);	  
 			}
 		}); 
-	});
+
 }
 
 function set_power(power_value){	
@@ -1324,12 +1327,12 @@ function check_nodes_support_wireless_scheduler() {
 
 function he_frame_mode(obj) {
 	if (obj.value == '0' && (is_unit_5g(wl_unit_value) || is_unit_5g_2(wl_unit_value))) {
-		document.form.acs_dfs.value = 0;		
+		document.form.acs_dfs.value = 0;
 	}
 }
 function regen_mode(){	//please sync to initial() : //Change wireless mode help desc
 	var _nmode_x = '<% nvram_get("wl_nmode_x"); %>';
-	if(is_unit_24g(wl_unit_value)){		
+	if(is_unit_24g(wl_unit_value)){
 		_temp = ['<#Auto#>', 'N only', 'Legacy'];
 		_temp_value = ['0', '1', '2'];
 		add_options_x2(document.form.wl_nmode_x, _temp, _temp_value, _nmode_x);

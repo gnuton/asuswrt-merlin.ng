@@ -14,16 +14,16 @@
 <link rel="stylesheet" type="text/css" href="pwdmeter.css">
 <link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <link rel="stylesheet" type="text/css" href="css/icon.css">
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/js/httpApi.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js"></script>
 <style>
 .cancel{
 	border: 2px solid #898989;
@@ -197,10 +197,12 @@ function change_boostkey(_id){
 		return false;
 	}
 
-	var tm_status = httpApi.nvramGet(["TM_EULA", "TM_EULA_time"], true);
-	if(_id == '3' && (tm_status.TM_EULA == "0" || tm_status.TM_EULA_time == "")){
-		ASUS_EULA.check("tm");
-		document.getElementById("boostkey_modes").value = _nvram.turbo_mode;
+
+	if(_id == '3' && (policy_status.TM == "0" || policy_status.TM_time == "")){
+		const policyModal = new PolicyModalComponent({
+			policy: "TM"
+		});
+		policyModal.show();
 		return false;
 	}
 
@@ -359,7 +361,7 @@ function initial(){
 	}
 	else{
 
-		if((wan_proto == "v6plus" || wan_proto == "ocnvc") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
+		if((wan_proto == "v6plus" || wan_proto == "ocnvc" || wan_proto == "v6opt") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
 			$(".setup_info_icon.https").show();
 			$(".setup_info_icon.https").click(
 				function() {
@@ -379,12 +381,13 @@ function initial(){
 			);
 		}
 		hideport(document.form.misc_http_x[0].checked);
-	}	
+	}
+
 	if(ssh_support){
 		check_sshd_enable('<% nvram_get("sshd_enable"); %>');
 		document.form.sshd_authkeys.value = document.form.sshd_authkeys.value.replace(/>/gm,"\r\n");
 
-		if((wan_proto == "v6plus" || wan_proto == "ocnvc") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
+		if((wan_proto == "v6plus" || wan_proto == "ocnvc" || wan_proto == "v6opt") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
 			$(".setup_info_icon.ssh").show();
 			$(".setup_info_icon.ssh").click(
 				function() {
@@ -416,10 +419,18 @@ function initial(){
 		document.getElementById("ntp_pull_arrow").style.display = "";
 	}
 
-	document.getElementById("telnetd_sshd_table").style.display = "";
-//	document.form.telnetd_enable[0].disabled = false;
-//	document.form.telnetd_enable[1].disabled = false;
-	telnet_enable(httpApi.nvramGet(["telnetd_enable"]).telnetd_enable);
+	if(isSupport("is_ax5400_i1n") || tmo_support){
+		document.getElementById("telnetd_sshd_table").style.display = "none";
+		document.form.telnetd_enable[0].disabled = true;
+		document.form.telnetd_enable[1].disabled = true;
+		document.form.sshd_enable.disabled = true;
+	}
+	else{
+		document.getElementById("telnetd_sshd_table").style.display = "";
+//		document.form.telnetd_enable[0].disabled = false;
+//		document.form.telnetd_enable[1].disabled = false;
+		telnet_enable(httpApi.nvramGet(["telnetd_enable"]).telnetd_enable);
+	}
 
 	document.getElementById("telnet_tr").style.display = "none";
 	document.form.telnetd_enable[0].disabled = true;
@@ -485,7 +496,27 @@ function initial(){
 		showhide("ntpd_redir_tr", 0);
 	}
 
-	$("#https_download_cert").css("display", (le_enable == "0" && orig_http_enable != "0")? "": "none");
+	$("#https_download_cert").css("display", (orig_http_enable != "0")? "": "none");
+	if(orig_http_enable != "0"){
+		if(le_enable == "1"){
+			$("#download_cert_btn").css("display", "");
+			$("#clear_cert_btn").css("display", "none");
+			$("#download_cacert_btn").css("display", "none");
+			$("#clear_cacert_btn").css("display", "none");
+			$("#download_cacert_desc").css("display", "none");
+		}else if(le_enable == "2"){
+			$("#download_cert_btn").css("display", "");
+			if(document.form.casignedcert.value != "1"){
+				$("#clear_cert_btn").css("display", "none");
+				$("#download_cacert_btn").css("display", "none");
+			}else{
+				$("#clear_cert_btn").css("display", "");
+				$("#download_cacert_btn").css("display", "");
+			}
+			$("#clear_cacert_btn").css("display", "none");
+			$("#download_cacert_desc").css("display", "");
+		}
+	}
 
 	$("#login_captcha_tr").css("display", captcha_support? "": "none");
 
@@ -496,9 +527,9 @@ function initial(){
 
 	if (boostKey_support) {
 		document.getElementById("boostkey_tr").style.display = "";
-
 		build_boostkey_options();
-		if (!ASUS_EULA.status("tm") &&
+
+		if ((policy_status.TM == "0" || policy_status.TM_time == "") &&
 		    ("<% nvram_get("turbo_mode"); %>" == "3")) {
 			httpApi.nvramSet({
 				"turbo_mode": '0',
@@ -735,7 +766,6 @@ function applyRule(){
 		else
 			action_script_tmp += "restart_upnp;";	// Normally done by restart_firewall
 
-
 		if(ncb_enable_option_flag)
 			action_script_tmp += "restart_bhblock;";
 
@@ -748,7 +778,6 @@ function applyRule(){
 			action_script_tmp += "pwrsave;";
 		if(pagecache_ratio_support)
 			action_script_tmp += "pagecache_ratio;";
-
                 
 		if (getRadioItemCheck(document.form.ntpd_enable) != '<% nvram_get("ntpd_enable"); %>')
 			action_script_tmp += "restart_dnsmasq;";
@@ -781,7 +810,13 @@ function validForm(){
 			$('input[name="usb_idle_timeout"]').prop("disabled", true);
 		}
 	}
-	
+
+	if(document.form.time_zone_select.value == "select"){
+		alert(`<#JS_fieldblank#>`);
+		document.form.time_zone_select.focus();
+		return false;
+	}
+
 	if((document.form.time_zone_select.value.search("DST") >= 0 || document.form.time_zone_select.value.search("TDT") >= 0)			// DST area
 			&& document.form.dst_start_m.value == document.form.dst_end_m.value
 			&& document.form.dst_start_w.value == document.form.dst_end_w.value
@@ -806,7 +841,7 @@ function validForm(){
 			return false;
 		}
 
-		if((wan_proto == "v6plus" || wan_proto == "ocnvc") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1 && document.form.sshd_enable.value == 1){
+		if((wan_proto == "v6plus" || wan_proto == "ocnvc" || wan_proto == "v6opt") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1 && document.form.sshd_enable.value == 1){
 			if (!validator.range_s46_ports(document.form.sshd_port, "none")){
 				if(!confirm(port_confirm)){
 					document.form.sshd_port.focus();
@@ -835,7 +870,7 @@ function validForm(){
 			if (!validator.range(document.form.misc_httpsport_x, 1024, 65535))
 				return false;
 
-			if ((wan_proto == "v6plus" || wan_proto == "ocnvc") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
+			if ((wan_proto == "v6plus" || wan_proto == "ocnvc" || wan_proto == "v6opt") && s46_ports_check_flag && array_ipv6_s46_ports.length > 1){
 				if (!validator.range_s46_ports(document.form.misc_httpsport_x, "none")){
 					if(!confirm(port_confirm)){
 						document.form.misc_httpsport_x.focus();
@@ -968,6 +1003,7 @@ function corrected_timezone(){
 }
 
 var timezones = [
+	["select",      "<#Select_menu_default#>"],
 	["UTC12",	"(GMT-12:00) <#TZ01#>"],
 	["UTC11",	"(GMT-11:00) <#TZ02#>"],
 	["UTC10",	"(GMT-10:00) <#TZ03#>"],
@@ -987,13 +1023,13 @@ var timezones = [
 	["UTC4_1",	"(GMT-04:00) <#TZ18#>"],
 	["UTC4_2",	"(GMT-04:00) <#TZ18_1#>"],
 	["UTC4DST_2",	"(GMT-04:00) <#TZ19#>"],
-	["UTC4DST_3",	"(GMT-04:00) <#TZ19_1#>"],
 	["NST3.30DST",	"(GMT-03:30) <#TZ20#>"],
 	["EBST3",	"(GMT-03:00) <#TZ21#>"],	//EBST3DST_1
 	["UTC3",	"(GMT-03:00) <#TZ22#>"],
+	["UTC3_1",   "(GMT-03:00) <#TZ19_1#>"],  //UTC4DST_3
 	["UTC3DST",     "(GMT-03:00) <#TZ87#>"],        //UTC2DST
-	["UTC2_1",	"(GMT-02:00) <#TZ23#>"],	//EBST3DST_2
 	["UTC2",	"(GMT-02:00) <#TZ24#>"],
+	["UTC2DST_1",	"(GMT-02:00) <#TZ23#>"],	//UTC2_1 //EBST3DST_2
 	["EUT1DST",	"(GMT-01:00) <#TZ25#>"],
 	["UTC1",	"(GMT-01:00) <#TZ26#>"],
 	["GMT0",	"(GMT) <#TZ27#>"],
@@ -1033,12 +1069,12 @@ var timezones = [
 	["UTC-4.30",	"(GMT+04:30) <#TZ52#>"],
 	["UTC-5",	"(GMT+05:00) <#TZ54#>"],
 	["UTC-5_1",	"(GMT+05:00) <#TZ53#>"],
+	["UTC-5_2",	"(GMT+05:00) <#TZ60#>, <#TZ58_2#>"],	//RFT-6
 	["UTC-5.30_2",	"(GMT+05:30) <#TZ55#>"],
 	["UTC-5.30_1",	"(GMT+05:30) <#TZ56#>"],
 	["UTC-5.30",	"(GMT+05:30) <#TZ59#>"],
 	["UTC-5.45",	"(GMT+05:45) <#TZ57#>"],
-	["RFT-6",	"(GMT+06:00) <#TZ60#>"],
-	["UTC-6",	"(GMT+06:00) <#TZ58#>"],
+	["UTC-6",	"(GMT+06:00) <#TZ58_1#>"],
 	["UTC-6.30",	"(GMT+06:30) <#TZ61#>"],
 	["UTC-7",	"(GMT+07:00) <#TZ62#>"],
 	["UTC-7_2",	"(GMT+07:00) <#TZ63#>"],
@@ -1091,7 +1127,7 @@ var dstoff_end_m,dstoff_end_w,dstoff_end_d,dstoff_end_h;
 function parse_dstoffset(_dstoffset){     //Mm.w.d/h,Mm.w.d/h
 	if(_dstoffset){
 		var dstoffset_startend = _dstoffset.split(",");
-			
+
 		if(dstoffset_startend[0] != "" && dstoffset_startend[0] != undefined){
 			var dstoffset_start = trim(dstoffset_startend[0]);
 			var dstoff_start = dstoffset_start.split(".");
@@ -1165,11 +1201,10 @@ function hide_https_lanport(_value){
 		return false;
 	}
 
+	document.getElementById("https_lanport_tr").style.display = (_value == "0") ? "none" : "";
+	document.form.https_lanport.disabled = (_value == "0") ? true : false;
 	if(sw_mode == '1' || sw_mode == '2' || sw_mode == '3'){
 		var https_lanport_num = "<% nvram_get("https_lanport"); %>";
-		document.getElementById("https_lanport").style.display = (_value == "0") ? "none" : "";
-		document.form.https_lanport.disabled = (_value == "0") ? true : false;
-		document.form.https_lanport.value = "<% nvram_get("https_lanport"); %>";
 		document.getElementById("https_access_page").innerHTML = "<#https_access_url#> ";
 		document.getElementById("https_access_page").innerHTML += "<a href=\"https://"+theUrl+":"+https_lanport_num+"\" target=\"_blank\" style=\"color:#FC0;text-decoration: underline; font-family:Lucida Console;\">http<span>s</span>://"+theUrl+"<span>:"+https_lanport_num+"</span></a>";
 		document.getElementById("https_access_page").style.display = (_value == "0") ? "none" : "";
@@ -1178,32 +1213,39 @@ function hide_https_lanport(_value){
 		document.getElementById("https_access_page").style.display = 'none';
 	}
 
-
-	if(le_enable != "1" && _value != "0"){
+	if(_value != "0"){
 		$("#https_download_cert").css("display", "");
-		if(orig_http_enable == "0"){
-			$("#download_cert_btn").css("display", "none");
-			$("#clear_server_cert_btn").css("display", "none");
+		if(le_enable == "1"){
+			$("#download_cert_btn").css("display", "");
 			$("#clear_cert_btn").css("display", "none");
-			$("#download_cert_desc").css("display", "");
-		}
-		else{
-			if (le_enable == "0") {
-				$("#download_cert_btn").css("display", "");
-				$("#clear_server_cert_btn").css("display", "");
-				$("#clear_cert_btn").css("display", "");
-				$("#download_cert_desc").css("display", "");
-			} else {
-				$("#download_cert_btn").css("display", "none");
-				$("#clear_server_cert_btn").css("display", "none");
+			$("#download_cacert_btn").css("display", "none");
+			$("#clear_cacert_btn").css("display", "none");
+			$("#download_cacert_desc").css("display", "none");
+		}else if (le_enable == "2"){
+			$("#download_cert_btn").css("display", "");
+			if(document.form.casignedcert.value != "1"){
 				$("#clear_cert_btn").css("display", "none");
-				$("#download_cert_desc").css("display", "none");
+				$("#download_cacert_btn").css("display", "none");
+			}else{
+				$("#clear_cert_btn").css("display", "");
+				$("#download_cacert_btn").css("display", "");
 			}
+			$("#clear_cacert_btn").css("display", "none");
+			$("#download_cacert_desc").css("display", "");
+		}else{
+			$("#download_cert_btn").css("display", "");
+			$("#clear_cert_btn").css("display", "");
+			$("#download_cacert_btn").css("display", "");
+			$("#clear_cacert_btn").css("display", "");
+			$("#download_cacert_desc").css("display", "");
 		}
-	}
-	else{
+		if(orig_http_enable == "0"){
+			$("#clear_cert_btn").css("display", "none");
+			$("#clear_cacert_btn").css("display", "none");
+		}
+	}else{
 		$("#https_download_cert").css("display", "none");
-	}
+ 	}
 }
 
 // show clientlist
@@ -1302,7 +1344,7 @@ function addRow(obj, upper){
 		obj.select();
 		return false;
 	}
-	else if(validator.validIPForm(obj, 2) != true){
+	else if(!validator.validIPForm(obj, 4)){
 		return false;
 	}
 	var access_type_value = 0;
@@ -1550,7 +1592,6 @@ function display_spec_IP(flag){
 		setTimeout("showDropdownClientList('setClientIP', 'ip', 'all', 'ClientList_Block_PC', 'pull_arrow', 'online');", 1000);
 	}
 }
-
 
 function hide_reboot_option(flag){
 	document.getElementById("reboot_schedule_date_tr").style.display = (flag == 1) ? "" : "none";
@@ -1841,8 +1882,12 @@ function myisPortConflict(_val, service){
 }
 
 
-function save_cert_key(){
+function save_cacert_key(){
 	location.href = "cert.crt";
+}
+
+function save_cert_key(){
+	location.href = "cert_key.tar";
 }
 
 function clear_server_cert_key(){
@@ -2202,13 +2247,8 @@ function build_boostkey_options() {
 	var obj = document.form.boostkey_modes;
 	var current = "<% nvram_get("turbo_mode"); %>";
 
-	if(based_modelid == "GT-AC2900"){
-		add_option(obj, "<#BoostKey_AURA_Shuffle#>", 4, (current == "4" ? 1 : 0));
-		add_option(obj, "<#BoostKey_GeForce#>", 5, (current == "5" ? 1 : 0));
-	} else {
-		add_option(obj, "<#BoostKey_LED#>", 0, (current == "0" ? 1 : 0));
-		add_option(obj, "<#BoostKey_Aura_RGB#>", 2, (current == "2" ? 1 : 0));
-	}
+	add_option(obj, "<#BoostKey_LED#>", 0, (current == "0" ? 1 : 0));
+	add_option(obj, "<#BoostKey_Aura_RGB#>", 2, (current == "2" ? 1 : 0));
 
 	var wl1_reg_mode = '<% nvram_get("wl1_reg_mode"); %>';
 
@@ -2326,6 +2366,7 @@ function build_boostkey_options() {
 <input type="hidden" name="reboot_schedule_enable" value="<% nvram_get("reboot_schedule_enable"); %>">
 <input type="hidden" name="usb_idle_exclude" value="<% nvram_get("usb_idle_exclude"); %>">
 <input type="hidden" name="shell_timeout" value="<% nvram_get("shell_timeout"); %>">
+<input type="hidden" name="casignedcert" value="<% nvram_get("casignedcert"); %>" disabled>
 <input type="hidden" name="sw_mode" value="<% nvram_get("sw_mode"); %>">
 <input type="hidden" name="ncb_enable" value="<% nvram_get("ncb_enable"); %>">
 <input type="hidden" name="dns_probe" value="<% nvram_get("dns_probe"); %>">
@@ -2822,10 +2863,10 @@ function build_boostkey_options() {
 						<span id="http_access_page"></span>
 					</td>
 				</tr>
-				<tr id="https_lanport">
+				<tr id="https_lanport_tr">
 					<th><#System_HTTPS_LAN_Port#></th>
 					<td>
-						<input type="text" maxlength="5" class="input_6_table" id="https_lanport_input" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return validator.isNumber(this,event);" onBlur="change_url(this.value, 'https_lan');" autocorrect="off" autocapitalize="off" onkeydown="reset_portconflict_hint();" disabled>
+						<input type="text" maxlength="5" class="input_6_table" id="https_lanport_input" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return validator.isNumber(this,event);" onBlur="change_url(this.value, 'https_lan');" autocorrect="off" autocapitalize="off" onkeydown="reset_portconflict_hint();">
 						<span id="port_conflict_httpslanport" style="color: #e68282; display: none;">Port Conflict</span>
 						<div id="https_access_page" style="color: #FFCC00;"></div>
 						<div style="color: #FFCC00; display: none;">* <#HttpsLanport_Hint#></div>
@@ -2852,10 +2893,15 @@ function build_boostkey_options() {
 				<tr id="https_download_cert" style="display: none;">
 					<th><#Local_access_certificate_download#></th>
 					<td>
-						<input id="download_cert_btn" class="button_gen" style="margin-left:10px;margin-bottom:10px;" onclick="save_cert_key();" type="button" value="<#btn_Export#>" /><br>
-						<input id="clear_server_cert_btn" class="button_gen" style="margin-left:10px" onclick="clear_server_cert_key();" type="button" value="<#CTL_renew#> <#vpn_openvpn_KC_SA#>" /><!-- untranslated -->
-						<input id="clear_cert_btn" class="button_gen" style="margin-left:10px" onclick="clear_cert_key();" type="button" value="<#CTL_renew#> Root Certificate" /><!-- untranslated --><br>
-						<span id="download_cert_desc"><#Local_access_certificate_desc#></span><a id="creat_cert_link" href="" style="font-family:Lucida Console;text-decoration:underline;color:#FFCC00; margin-left: 5px;" target="_blank">FAQ</a>
+						<div style="display: flex;">
+							<input id="download_cert_btn" class="button_gen" onclick="save_cert_key();" type="button" value="<#btn_Export#> <#vpn_openvpn_KC_SA#>" />
+							<input id="clear_cert_btn" class="button_gen" style="margin-left:10px" onclick="clear_server_cert_key();" type="button" value="<#CTL_renew#> <#vpn_openvpn_KC_SA#>" /><!-- untranslated -->
+						</div>
+						<div style="display: flex;">
+							<input id="download_cacert_btn" class="button_gen" style="margin-top:10px" onclick="save_cacert_key();" type="button" value="<#btn_Export#> Root Certificate" />
+							<input id="clear_cacert_btn" class="button_gen" style="margin-left:10px;margin-top:10px" onclick="clear_cert_key();" type="button" value="<#CTL_renew#> Root Certificate" /><!-- untranslated -->
+ 						</div>
+						<span id="download_cacert_desc"><#Local_access_certificate_desc#></span><a id="creat_cert_link" href="" style="font-family:Lucida Console;text-decoration:underline;color:#FFCC00; margin-left: 5px;" target="_blank">FAQ</a>
 					</td>
 				</tr>
 			</table>
@@ -2915,7 +2961,7 @@ function build_boostkey_options() {
 					<!-- client info -->
 					<td width="10%">-</td>
 					<td width="40%">
-						<input type="text" class="input_25_table" maxlength="18" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
+						<input type="text" class="input_25_table" maxlength="39" name="http_client_ip_x_0"  onKeyPress="" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off">
 						<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_client#>">	
 						<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:27px;width:235px;"></div>	
 					</td>

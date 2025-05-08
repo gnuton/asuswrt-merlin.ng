@@ -108,6 +108,14 @@ define(function(){
 				] 
 			},
 			{
+				menuName: "<#WiFi_radar#>",
+				index: "menu_WifiRadar", 
+				tab: [
+					{url: "WiFi_Insight.asp", tabName: "<#WiFi_radar#>"},
+					{url: "NULL", tabName: "__INHERIT__"}
+				] 
+			},
+			{
 				menuName: "VPN",
 				index: "menu_VPN", 
 				tab: [
@@ -336,6 +344,9 @@ define(function(){
 			menus: function(){
 				var retArray = [];
 
+                if(!wifiRadar_support){
+                    retArray.push("menu_WifiRadar");
+                }
 				if(!nfsd_support){
 					retArray.push("Advanced_AiDisk_NFS.asp");
 				}
@@ -455,6 +466,7 @@ define(function(){
 					retArray.push("menu_AccessControl");
 					retArray.push("menu_Wtfast");
 					retArray.push("menu_GameProfile");
+					retArray.push("menu_WifiRadar");
 					retArray.push("menu_TrafficAnalyzer");
 					retArray.push("menu_QoS");
 					retArray.push("menu_BandwidthMonitor");
@@ -489,6 +501,10 @@ define(function(){
 					retArray.push("AiProtection_AdBlock.asp");
 					retArray.push("AiProtection_Key_Guard.asp");
 					retArray.push("AiProtection_AdBlock.asp");
+				}
+
+				if(!wifiRadar_support){
+					retArray.push("WiFi_Insight.asp");
 				}
 
 				if(!bwdpi_mals_support){

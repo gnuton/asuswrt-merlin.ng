@@ -92,6 +92,7 @@ time_t monotonic_now(void);
 void gettime_wrapper(struct timespec *now);
 
 char * expand_homedir_path(const char *inpath);
+char * expand_homedir_path_home(const char *inpath, const char *homedir);
 
 void fsync_parent_dir(const char* fn);
 
@@ -110,6 +111,8 @@ int cli_main(int argc, char ** argv);
 int dropbearkey_main(int argc, char ** argv);
 int dropbearconvert_main(int argc, char ** argv);
 int scp_main(int argc, char ** argv);
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 
 #endif /* DROPBEAR_DBUTIL_H_ */

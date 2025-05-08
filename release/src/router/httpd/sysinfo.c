@@ -317,15 +317,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			{
 				char *buf;
 
-			buf = malloc(MAX_NVRAM_SPACE);
-			if (buf) {
-#ifdef HND_ROUTER
-				nvram_getall(buf, MAX_NVRAM_SPACE);
-#else
-				dev_nvram_getall(buf, MAX_NVRAM_SPACE);
-#endif
-				tmp = buf;
-				while (*tmp) tmp += strlen(tmp) +1;
+				buf = malloc(NVRAM_SPACE);
+				if (buf) {
+					nvram_getall(buf, NVRAM_SPACE);
+					tmp = buf;
+					while (*tmp) tmp += strlen(tmp) +1;
 
 					size = sizeof(struct nvram_header) + (int) tmp - (int) buf;
 					free(buf);
@@ -516,11 +512,38 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 						nvram_set(buf, "no Internet traffic");
 					} else if (!strlen(nvram_safe_get(buf))) {
 						sprintf(buf, "%d", instance);
-						eval("/usr/sbin/gettunnelip.sh", buf);
+						eval("/usr/sbin/gettunnelip.sh", buf, "openvpn", (nvram_get_int("vpn_stun") ? "stun" :"http"));
 					}
 				}
 				close(fd);
 			}
+#ifdef RTCONFIG_WIREGUARD
+		} else if(strncmp(type, "wgip",4) == 0 ) {
+			int instance = 1;
+			int fd; struct ifreq ifr;
+			char buf[18];
+
+			strcpy(result, "0.0.0.0");
+
+			fd = socket(AF_INET, SOCK_DGRAM, 0);
+			if (fd) {
+				ifr.ifr_addr.sa_family = AF_INET;
+				sscanf(type,"wgip.%d", &instance);
+				snprintf(ifr.ifr_name, IFNAMSIZ - 1, "wgc%d", instance);
+				if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
+					strlcpy(result, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), sizeof result);
+
+					if (is_wgc_connected(instance)) {
+						snprintf(buf, sizeof buf, "wgc%d_rip", instance);
+						if (!strlen(nvram_safe_get(buf))) {
+							sprintf(buf, "%d", instance);
+							eval("/usr/sbin/gettunnelip.sh", buf, "wireguard", (nvram_get_int("vpn_stun") ? "stun" :"http"));
+						}
+					}
+				}
+				close(fd);
+			}
+#endif
 
 		} else if(strncmp(type,"vpnstatus",9) == 0 ) {
 			int num = 0;

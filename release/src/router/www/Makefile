@@ -24,6 +24,7 @@ MODELS_HAVE_TRAFFIC_ANALYZER = RT-AC3200 RT-AC87U RT-AC88U RT-AX88U RT-AC86U GT-
 	RT-AX86U RT-AX68U RT-AC68U_V4 DSL-AX82U \
 	RT-AX86U_PRO \
 	MAP-AC2200 MAP-AC2200V RT-AC95U \
+	PL-AX56_XP4 \
 	RT-AXE7800 GT10 RT-AX9000 \
 	GT-AXE11000 GT-AX6000 GT-AX11000_PRO GT-AXE16000 ET12 XT12 RT-AX88U_PRO XC5
 
@@ -100,10 +101,6 @@ ifeq ($(RTCONFIG_ROG_UI), y)
 	cp -r $(TOP)/www/sysdep/FUNCTION/ROG_UI/* $(INSTALLDIR)/www/
 endif
 #endif
-
-ifeq ($(RTCONFIG_TUF_UI), y)
-	cp -rL $(TOP)/www/sysdep/FUNCTION/TUF_UI/* $(INSTALLDIR)/www/
-endif
 
 ifeq ($(HND_ROUTER),y)
 	cp $(TOP)/www/sysdep/FUNCTION/SITE_SURVEY/* $(INSTALLDIR)/www/ -rf
@@ -765,7 +762,7 @@ else ifeq ($(BUILD_NAME),MAP-AC1750)
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_TRIO.js modules/menuTree.js
 else ifeq ($(BUILD_NAME),VZW-AC1300)
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_VZW-AC1300.js modules/menuTree.js
-else ifeq ($(RTCONFIG_TUF_UI), y)
+else ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME), TUF-AX3000 TUF-AX3000_V2 TUF-AX5400 TUF-AX5400_V2))
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_TUF.js modules/menuTree.js	
 else ifeq ($(RTCONFIG_BWDPI),y)
 ifeq ($(findstring $(BUILD_NAME),$(MODELS_HAVE_TRAFFIC_ANALYZER)),)
@@ -854,8 +851,6 @@ endif
 
 ifneq ($(RTCONFIG_ROG_UI),y)
 ifneq ($(BUILD_NAME), $(filter $(BUILD_NAME), TUF-AX3000 TUF-AX3000_V2 TUF-AX4200 TUF-AX5400 TUF-AX6000))
-	rm -rf $(INSTALLDIR)/www/fonts/ROG_Fonts-Regular.otf
-	rm -rf $(INSTALLDIR)/www/fonts/ROG_Fonts-Regular.woff
 	rm -rf $(INSTALLDIR)/www/fonts/xolonium.regular.otf
 	rm -rf $(INSTALLDIR)/www/fonts/xolonium.regular.woff
 endif
@@ -985,6 +980,7 @@ endif
 ifeq ($(RTCONFIG_ROG_UI),y)
 	cp -rf $(INSTALLDIR)/www/css/ROG/* $(INSTALLDIR)/www/css/
 	rm -rf $(INSTALLDIR)/www/css/ROG
+	rm -rf $(INSTALLDIR)/www/images/New_ui/RT
 endif
 
 ifneq ($(RTCONFIG_BCM_OAM), y)
@@ -995,7 +991,7 @@ ifneq ($(RTCONFIG_OUTFOX), y)
 	rm -rf $(INSTALLDIR)/www/images/outfox_dark.png
 endif
 
-ifeq ($(RTCONFIG_TUF_UI), y)
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME), TUF-AX3000 TUF-AX3000_V2 TUF-AX5400 TUF-AX5400_V2))
 	cp -rf $(INSTALLDIR)/www/css/TUF/* $(INSTALLDIR)/www/css/
 	rm -rf $(INSTALLDIR)/www/css/TUF
 endif

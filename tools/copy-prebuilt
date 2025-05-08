@@ -169,7 +169,7 @@ then
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/pktrunner/impl2/pktrunner.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 
-elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ]
+elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ]
 then
         SDK="_4916hnd"
         ARCH="_arm"
@@ -177,9 +177,23 @@ then
 
 	# Must be done first, since we will add hnd_extra files later on
 	rsync -a --del release/src-rt-5.04behnd.4916/router-sysdep/ $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC --exclude "stress/Makefile" --exclude "wlc_types.h"
-	rsync -a --del release/src-rt-5.04behnd.4916/bootloaders/obj/ $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC
-#	cp release/src-rt-5.04behnd.4916/wl/exe/prebuilt/* $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
-	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/main/src/wl/exe/prebuilt/* $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
+
+	# bootloaders
+#	rsync -a --del release/src-rt-5.04behnd.4916/bootloaders/obj/ $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC
+	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/net/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/net/
+	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/dt_parsing.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/drivers/net/bcmbca/phy/
+	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/bcmbca_xrdp_eth.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/drivers/net/bcmbca/
+	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/common/autoboot.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/common/
+	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/board/broadcom/bcmbca/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca/
+
+	# Recent GPL don't have it in the SDK, but the wlexe/ version seem to usually be the same anyway
+	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/wl" ]
+	then
+		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/* $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/*
+	else
+		cp release/src/router/wlexe/wl $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/
+	fi
+
 	cp release/src-rt-5.04behnd.4916/hostTools/prebuilt/addvtoken $REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/$BUILD_NAME/
 	cp release/src-rt-5.04behnd.4916/hostTools/prebuilt/lzop $REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/$BUILD_NAME/
 	cp release/src-rt-5.04behnd.4916/hostTools/prebuilt/cmplzma $REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/
@@ -188,11 +202,11 @@ then
 	cp release/src-rt-5.04behnd.4916/hostTools/prebuilt/mkfs.ubifs $REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/
 	cp release/src-rt-5.04behnd.4916/hostTools/prebuilt/mksquashfs $REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/
 	cp release/src-rt-5.04behnd.4916/hostTools/prebuilt/ubinize $REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/
-	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/main/components/apps/acsdv2/prebuilt/* $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/main/components/apps/acsdv2/prebuilt/$BUILD_NAME/
+	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt/* $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt/$BUILD_NAME/
+	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/qosmgmtd $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/prebuilt/$BUILD_NAME/
+	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/qm_cli $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/prebuilt/$BUILD_NAME/
 
-	cp -ar release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/sys/src/dongle/bin/6717a0/release/* $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/sys/src/dongle/sysdeps/$BUILD_NAME/6717a0/
-        cp -ar release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/sys/src/dongle/bin/6726b0/release/* $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl101/sys/src/dongle/sysdeps/$BUILD_NAME/6726b0/
-
+        cp -ar release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/sys/src/dongle/sysdeps/default/6726b0/* $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/sys/src/dongle/sysdeps/$BUILD_NAME/6726b0/
 
 	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/mpm/impl1/bcm_mpm.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/pktrunner/impl2/pktrunner.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
@@ -219,6 +233,7 @@ echo "*** Copying USB-related files..."
 if [ "$BUILD_NAME" != "XT12" ]
 then
 	cp -ar release/src/router/tuxera/broadcom* $REPO/release/src/router/tuxera/
+	rm -rf $REPO/release/src/router/tuxera/broadcom_arm $REPO/release/src/router/tuxera/broadcom_arm_7114
 	cp release/src/router/lighttpd-1.4.39/prebuild/* $REPO/release/src/router/lighttpd-1.4.39/prebuild/$BUILD_NAME/
 	cp release/src/router/dropbox_client/prebuild/* $REPO/release/src/router/dropbox_client/prebuild/$BUILD_NAME/
 	cp release/src/router/ftpclient/prebuild/* $REPO/release/src/router/ftpclient/prebuild/$BUILD_NAME/
@@ -244,9 +259,6 @@ cp release/src/router/sw-hw-auth/prebuild/* $REPO/release/src/router/sw-hw-auth/
 cp release/src/router/bwdpi_source/asus/prebuild/* $REPO/release/src/router/bwdpi_source/asus/prebuild/$BUILD_NAME/
 cp release/src/router/bwdpi_source/asus_sql/prebuild/* $REPO/release/src/router/bwdpi_source/asus_sql/prebuild/$BUILD_NAME/
 cp release/src/router/bwdpi_source/prebuild/* $REPO/release/src/router/bwdpi_source/prebuild/$BUILD_NAME/
-cp release/src/router/dropbox_client/prebuild/* $REPO/release/src/router/dropbox_client/prebuild/$BUILD_NAME/
-
-cp release/src/router/ftpclient/prebuild/* $REPO/release/src/router/ftpclient/prebuild/$BUILD_NAME/
 cp release/src/router/protect_srv/prebuild/* $REPO/release/src/router/protect_srv/prebuild/$BUILD_NAME/
 cp release/src/router/protect_srv/lib/prebuild/* $REPO/release/src/router/protect_srv/lib/prebuild/$BUILD_NAME/
 cp release/src/router/wlc_nt/prebuild/* $REPO/release/src/router/wlc_nt/prebuild/$BUILD_NAME/
@@ -267,6 +279,7 @@ cp release/src/router/dblog/daemon/prebuild/* $REPO/release/src/router/dblog/dae
 cp release/src/router/dblog/commands/prebuild/* $REPO/release/src/router/dblog/commands/prebuild/$BUILD_NAME/
 cp release/src/router/ahs/prebuild/* $REPO/release/src/router/ahs/prebuild/$BUILD_NAME/
 cp release/src/router/asd/prebuild/* $REPO/release/src/router/asd/prebuild/$BUILD_NAME/
+cp release/src/router/asd2.1/prebuild/* $REPO/release/src/router/asd2.1/prebuild/$BUILD_NAME/
 cp release/src/router/libasc/prebuild/* $REPO/release/src/router/libasc/prebuild/$BUILD_NAME/
 cp release/src/router/amas-utils/prebuild/* $REPO/release/src/router/amas-utils/prebuild/$BUILD_NAME/
 cp release/src/router/cfg_mnt/prebuild/* $REPO/release/src/router/cfg_mnt/prebuild/$BUILD_NAME/
@@ -277,6 +290,11 @@ cp release/src/router/sysstate/log_daemon/prebuild/* $REPO/release/src/router/sy
 cp release/src/router/sysstate/commands/prebuild/* $REPO/release/src/router/sysstate/commands/prebuild/$BUILD_NAME/
 cp release/src/router/wb/prebuild/* $REPO/release/src/router/wb/prebuild/$BUILD_NAME/
 cp release/src/router/eventd/prebuilt/* $REPO/release/src/router/eventd/prebuilt/$BUILD_NAME/
+cp release/src/router/dnsspoof/prebuilt/* $REPO/release/src/router/dnsspoof/prebuilt/$BUILD_NAME/
+cp release/src/router/vpmstats/prebuilt/* $REPO/release/src/router/vpmstats/prebuilt/$BUILD_NAME/
+cp release/src/router/asus_rbd/prebuild/* $REPO/release/src/router/asus_rbd/prebuild/$BUILD_NAME/
+
+
 echo "*** Copying exceptions and special cases..."
 
 # Pre-HND
@@ -297,11 +315,6 @@ then
 	cp release/src/router/nas$ARCH$SDK/nas/prebuilt/* $REPO/release/src/router/nas$ARCH$SDK/nas/prebuilt/
 	cp release/src/router/wlconf$ARCH$SDK/prebuilt/* $REPO/release/src/router/wlconf$ARCH$SDK/prebuilt/
 	cp release/src/router/wps$ARCH$SDK/prebuilt/* $REPO/release/src/router/wps$ARCH$SDK/prebuilt/
-	cp release/src/router/wlceventd/prebuilt/* $REPO/release/src/router/wlceventd/prebuilt/$BUILD_NAME/
-	if [ "$BUILD_NAME" != "DSL-AC68U" ] 
-	then
-		cp release/src/router/eapd$ARCH$SDK/linux/prebuilt/* $REPO/release/src/router/eapd$ARCH$SDK/linux/prebuilt/
-	fi
 	cp release/src/router/dhd_monitor/prebuilt/* $REPO/release/src/router/dhd_monitor/prebuilt/$BUILD_NAME/
 fi
 
@@ -361,6 +374,4 @@ fi
 
 # Cleanup
 rm $REPO/release/src/router/rc/prebuild/$BUILD_NAME/init-broadcom.o
-
-echo "Do not forget to run copy-targets at least once and commit the changes in targets/" 
 #rm $REPO/release/src/router/shared/prebuild/$BUILD_NAME/api-broadcom.o

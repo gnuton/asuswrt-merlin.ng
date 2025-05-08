@@ -26,7 +26,11 @@
 
 /*
  * Automatically generated make config: don't edit
+<<<<<<<< HEAD:release/src/router/bwdpi_source/prebuild/RT-AC68U_V4/tmcfg.h
+ * Date: Thu Jan 13 18:26:24 2022
+========
  * Date: Wed May 18 11:54:06 2022
+>>>>>>>> 3004.388.9:release/src/router/bwdpi_source/prebuild/RT-AX88U_PRO/tmcfg.h
  */
 #ifndef __TMCFG__AUTOCONF_OUTPUT_H_
 #define __TMCFG__AUTOCONF_OUTPUT_H_
@@ -42,12 +46,16 @@
 #define TMCFG_ARCH_X86 0 // n
 #define TMCFG_ARCH_X86_64 0 // n
 #define TMCFG_ARCH_MIPS 0 // n
-#define TMCFG_ARCH_ARM 0 // n
-#define TMCFG_ARCH_ARM_64 1 // y
+#define TMCFG_ARCH_ARM 1 // y
+#define TMCFG_ARCH_ARM_64 0 // n
 #define TMCFG_ARCH_POWERPC 0 // n
 #define TMCFG_CPU_BIG_ENDIAN 0 // n
 #define TMCFG_CPU_LITTLE_ENDIAN 1 // y
+<<<<<<<< HEAD:release/src/router/bwdpi_source/prebuild/RT-AC68U_V4/tmcfg.h
+#define TMCFG_KERN_DIR "/opt/ASUS/asuswrt_AX86U_GPL_386_47113/release/src-rt-5.02L.07p2axhnd/kernel/linux-4.1"
+========
 #define TMCFG_KERN_DIR "/opt/ASUS/asuswrt_XT12_GPL_386_48892/release/src-rt-5.04axhnd.675x/kernel/linux-4.19"
+>>>>>>>> 3004.388.9:release/src/router/bwdpi_source/prebuild/RT-AX88U_PRO/tmcfg.h
 #define TMCFG_KERN_ARCH "arm64"
 #define TMCFG_CPU_32BITS 0 // n
 #define TMCFG_CPU_64BITS 1 // y

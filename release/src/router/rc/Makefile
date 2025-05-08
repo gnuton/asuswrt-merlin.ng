@@ -535,6 +535,15 @@ OBJS += moca.o
 endif
 
 #ifeq ($(RTCONFIG_HTTPS),y)
+ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
+OBJS += dsl_fb.o
+endif
+
+ifeq ($(RTCONFIG_MOCA), y)
+OBJS += moca.o
+endif
+
+#ifeq ($(RTCONFIG_HTTPS),y)
 #ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix -  https://github.com/gnuton/asuswrt-merlin.ng/issues/86
 OBJS += dsl_fb.o
 #endif
@@ -1392,6 +1401,7 @@ ifeq ($(RTCONFIG_HTTPS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rsarootca_check
 ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check_update
+	@cd $(INSTALLDIR)/sbin && ln -sf rc sendfeedback
 endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc test_endian
@@ -1563,6 +1573,10 @@ endif
 ifeq ($(RTCONFIG_NORDVPN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc nordvpn
 endif
+endif
+
+ifeq ($(RTCONFIG_WIREGUARD),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc check_wgc_ep
 endif
 
 ifeq ($(RTCONFIG_ISP_CUSTOMIZE_TOOL),y)
