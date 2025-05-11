@@ -1,1 +1,0 @@
-../../DSL-AX82U/www/ISP_PTM_List.txt
