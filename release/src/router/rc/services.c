@@ -4545,12 +4545,6 @@ start_ddns(char *caller, int isAidisk)
 		ddns_act = "register";
 	}
 
-	/* MAX Retry Count mechanism */
-	if (caller == NULL) { // not from watchdog
-		//logmessage("ddns", "Reset DDNS Retry.\n");
-		nvram_set("ddns_check_retry", "10");
-	}
-
 	unit = wan_primary_ifunit();
 #if defined(RTCONFIG_DUALWAN)
 	if (nvram_match("wans_mode", "lb")) {
@@ -4661,57 +4655,6 @@ start_ddns(char *caller, int isAidisk)
 			nvram_set("ddns_return_code_chk", "299");
 			nvram_set_int("ddns_last_wan_unit", unit);
 		}
-		return -1;
-	}
-
-	wan_public = is_private_subnet(wan_ip); // 0 is public IP; 1, 2, 3, 4 is private IP.
-#ifdef RTCONFIG_INADYN
-	if (wan_public) { // private WAN IP
-#ifdef RTCONFIG_GETREALIP
-		if (nvram_get_int(strcat_r(prefix, "realip_state", tmp)) == 2) {
-			wan_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
-			/* use External WAN IP */
-			nvram_set_int("ddns_realip_x", 1);
-			realip = 1;
-		} else {
-#ifdef RTCONFIG_IPV6
-			if (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)
-#endif
-			{
-				/* Trigger watchdog when start fails */
-				logmessage("ddns", "%s not find External WAN IP, go retry.(%d)", wan_ifname, ddns_check_retry);
-				nvram_unset("ddns_updated");
-				nvram_set("ddns_return_code", "ddns_query"); /* for Retry mechanism */
-				nvram_set("ddns_return_code_chk", "-1");
-				return -1;
-			}
-		}
-#endif
-	} else {
-		/* use Internal WAN IP */
-		nvram_set_int("ddns_realip_x", 0);
-	}
-#endif
-
-	if (!wan_ip || (inet_addr_(wan_ip) == INADDR_ANY) || (nvram_get_int("link_internet") != 2)) {
-		logmessage("ddns", "WAN(%d) IP is empty.(%d)", unit, ddns_check_retry);
-		nvram_unset("ddns_updated");
-		return -1;
-	}
-
-	if (
-#ifdef RTCONFIG_INADYN
-		realip == 0 &&
-#ifdef RTCONFIG_IPV6
-		(!nvram_get_int("ddns_ipv6_update") || (strnlen(ip6_addr, INET6_ADDRSTRLEN) == 0)) &&
-#endif
-#endif
-		wan_public) { // private WAN IP
-		logmessage("ddns", "use Private WAN IP (%s).(%d)", wan_ip, ddns_check_retry);
-		nvram_unset("ddns_updated");
-		nvram_set("ddns_return_code", "299");
-		nvram_set("ddns_return_code_chk", "299");
-		nvram_set_int("ddns_last_wan_unit", unit);
 		return -1;
 	}
 
@@ -16787,7 +16730,6 @@ check_ddr_done:
 	{
 		start_ddns(NULL, 1);
 	}
-#endif
 	else if(strcmp(script, "asusddns_unregister") == 0)
 	{
 		asusddns_unregister();
@@ -16980,7 +16922,6 @@ check_ddr_done:
 	{
 		start_wrs_wbl_service();
 	}
-#ifndef DSL_AC68U
 	else if (strcmp(script, "mobile_game") == 0)
 	{
 		MobileDevMode_restart();
@@ -18828,14 +18769,6 @@ start_write_smb_conf();
 			eval("brctl", "addif", nvram_safe_get("lan_ifname"), "eth5");
 		}
         }
-#endif
-#if defined(RTAXE7800) && !defined(RTCONFIG_AUTO_WANPORT)
-	else if (strcmp(script, "addif_extwan") == 0)
-	{
-#ifndef RTCONFIG_BCM_MFG
-		eval("brctl", "addif", nvram_safe_get("lan_ifname"), "eth1");
-#endif
-	}
 #endif
 #if defined(RTCONFIG_HND_ROUTER_AX)
 	else if (strcmp(script, "cable_media") == 0)
@@ -20986,15 +20919,6 @@ void setup_leds()
 			eval("wl", "-i", "eth7", "ledbh", "9", "7");
 #elif defined(GTAX6000)
 			eval("wl", "-i", "eth7", "ledbh", "13", "7");
-#elif defined(RTAX95Q) || defined(XT8PRO) || defined(XT8_V2) || defined(RTAXE95Q) || defined(ET8PRO)
-				eval("wl", "-i", "eth4", "ledbh", "10", "7");
-#elif defined(BCM6750)
-#if defined(RTAX82U) && !defined(RTCONFIG_BCM_MFG)
-				if (!nvram_get_int("LED_order"))
-					eval("wl", "-i", "eth5", "ledbh", "0", "1");
-				else
-#endif
-				eval("wl", "-i", "eth5", "ledbh", "0", "25");
 #elif defined(GTAXE16000)
 			eval("wl", "-i", "eth8", "ledbh", "13", "7");
 #elif defined(GTAX11000_PRO)
