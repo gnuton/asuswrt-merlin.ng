@@ -15,14 +15,14 @@
 #define ISRHEL7
 #elif RHEL_MAJOR == 8
 #define ISRHEL8
-#if RHEL_MINOR >= 6
+#if RHEL_MINOR == 4
 #define ISCENTOS8S
 #endif
 #endif
 #endif
 
 /* PaX compatibility */
-#if defined(RAP_PLUGIN) && defined(RAP_ENTRY)
+#if defined(RAP_PLUGIN)
 #undef ENTRY
 #define ENTRY RAP_ENTRY
 #endif
@@ -51,7 +51,7 @@
 #undef pull
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 76) && !defined(ISRHEL8) && !defined(SYM_FUNC_START)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 76) && !defined(ISCENTOS8S)
 #define SYM_FUNC_START ENTRY
 #define SYM_FUNC_END ENDPROC
 #endif

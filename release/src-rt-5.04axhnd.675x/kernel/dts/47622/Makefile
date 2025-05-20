@@ -1,10 +1,9 @@
-dtb-$(CONFIG_OF) += \
-	9$(CONFIG_BCM_CHIP_NUMBER).dtb \
-	96755REF2.dtb \
-	96755REF1.dtb
+9$(CONFIG_BCM_CHIP_NUMBER).dtb := $(shell cp -f $(KERNEL_DIR)/include/generated/autoconf.h $(DTB_DIR)/linux_autoconf.h)
 
-dtb-$(CONFIG_BCM_HND_EAP) += 947622EAP.dtb
-dtb-$(CONFIG_BCM_HND_EAP) += 947622EAPS.dtb
-dtb-$(CONFIG_BCM_HND_EAP) += 947622EAP2.dtb
-dtb-$(CONFIG_BCM_HND_EAP) += 947622LEAP.dtb
-include $(DTS_DIR)/dts/make.dtbs
+dtb-y := $(patsubst $(src)/%.dts,%.dtb, $(wildcard $(src)/*.dts))
+always	:=  $(dtb-y)
+
+.PHONY:dtsb_clean
+dtbs_clean:
+	rm -vf *.dtb .*.tmp .*.cmd linux_autoconf.h
+
