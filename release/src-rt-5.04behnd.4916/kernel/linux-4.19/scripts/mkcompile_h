@@ -39,20 +39,12 @@ else
 	TIMESTAMP=$KBUILD_BUILD_TIMESTAMP
 fi
 if test -z "$KBUILD_BUILD_USER"; then
-<<<<<<< HEAD
-	LINUX_COMPILE_BY=root
-=======
 	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
->>>>>>> 3006.102.4
 else
 	LINUX_COMPILE_BY=$KBUILD_BUILD_USER
 fi
 if test -z "$KBUILD_BUILD_HOST"; then
-<<<<<<< HEAD
-	LINUX_COMPILE_HOST=asus
-=======
 	LINUX_COMPILE_HOST=`hostname`
->>>>>>> 3006.102.4
 else
 	LINUX_COMPILE_HOST=$KBUILD_BUILD_HOST
 fi
