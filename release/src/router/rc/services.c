@@ -2186,6 +2186,7 @@ void start_dnsmasq(void)
 		fprintf(fp,"quiet-dhcp\n");
 #ifdef RTCONFIG_IPV6
 		fprintf(fp,"quiet-dhcp6\n");
+		fprintf(fp,"quiet-ra\n");
 #endif
 	}
 
@@ -7288,6 +7289,7 @@ void start_upnp(void)
 					"enable_nvgfn=%s\n"
 #endif
 					"secure_mode=%s\n"
+					"pcp_allow_thirdparty=%s\n"
 					"upnp_nat_postrouting_chain=PUPNP\n"
 					"upnp_forward_chain=FUPNP\n"
 					"upnp_nat_chain=VUPNP\n"
@@ -7315,6 +7317,7 @@ void start_upnp(void)
 					gfn_mode,
 #endif
 					nvram_get_int("upnp_secure") ? "yes" : "no",	// secure_mode (only forward to self)
+					nvram_get_int("upnp_secure") ? "no" : "yes",	// pcp_allow_thirdparty
 					nvram_get_int("upnp_ssdp_interval"),
 					get_lan_hostname(),
 					"ASUS Wireless Router",
@@ -17147,7 +17150,6 @@ _dprintf("multipath(%s): unit_now: (%d, %d, %s), unit_next: (%d, %d, %s).\n", mo
 			start_amas_adtbw();
 #endif
 		}
-		setup_leds();
 		nvram_set("restart_wifi", "0");
 	}
 #if defined(RTCONFIG_POWER_SAVE)
@@ -19921,6 +19923,14 @@ retry_wps_enr:
 			reset_ovpn_setting(OVPN_TYPE_CLIENT, atoi(cmd[1]), 1);
 	}
 #endif
+#ifdef RTCONFIG_WIREGUARD
+	else if (strcmp(script, "clearwgclient") == 0)
+	{
+		if (cmd[1])
+			reset_wgc_setting(atoi(cmd[1]));
+	}
+#endif
+
 #ifdef RTCONFIG_YANDEXDNS
 	else if (strcmp(script, "yadns") == 0)
 	{

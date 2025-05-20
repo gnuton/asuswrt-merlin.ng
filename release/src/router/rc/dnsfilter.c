@@ -126,9 +126,7 @@ int get_dns_filter(int proto, int mode, dnsf_srv_entry_t *dnsfsrv)
 				dnsfsrv->server2[0] = '\0';
 				break;
 			case DNSF_SRV_ROUTER:
-				strlcpy(dnsfsrv->server1, nvram_safe_get("dhcp_dns1_x"), 46);
-				if (!*dnsfsrv->server1)	// Empty, default to router's IP
-					strlcpy(dnsfsrv->server1, nvram_safe_get("lan_ipaddr"), 46);
+				strlcpy(dnsfsrv->server1, nvram_safe_get("lan_ipaddr"), 46);
 				dnsfsrv->server2[0] = '\0';
 				break;
 			default:
@@ -175,6 +173,7 @@ void dnsfilter_settings(FILE *fp) {
 #ifdef RTCONFIG_MULTILAN_CFG
 	int i,j;
 	char buf[32] = {0};
+	char lan_ipaddr[INET_ADDRSTRLEN];
 	MTLAN_T *pmtl = NULL;
 	size_t  mtl_sz = 0;
 #endif
@@ -188,11 +187,11 @@ void dnsfilter_settings(FILE *fp) {
 #ifdef RTCONFIG_OPENVPN
 //		if (nvram_get_int("VPNServer_enable")) {
 			char word[8] = {0};
-			char buf[32] = {0};
+			char nvservers[32] = {0};
 			char *next = NULL;
 			int unit;
-			nvram_safe_get_r("vpn_serverx_eas", buf, sizeof(buf));
-			foreach_44(word, buf, next) {
+			nvram_safe_get_r("vpn_serverx_start", nvservers, sizeof(nvservers));
+			foreach_44(word, nvservers, next) {
 				unit = atoi(word);
 				fprintf(fp, "-A PREROUTING -i tun%d -p udp -m udp --dport 53 -j DNSFILTER\n"
 					"-A PREROUTING -i tun%d -p tcp -m tcp --dport 53 -j DNSFILTER\n"
@@ -249,9 +248,12 @@ void dnsfilter_settings(FILE *fp) {
 			if (dnsmode == DNSF_SRV_UNFILTERED) {
 				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
 					mac);
+			} else if (dnsmode == DNSF_SRV_ROUTER) {
+				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j REDIRECT\n",
+					mac);
 			} else if (get_dns_filter(AF_INET, dnsmode, &dnsfsrv)) {
-					fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-						mac, dnsfsrv.server1);
+				fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+					mac, dnsfsrv.server1);
 			}
 		}
 
@@ -270,6 +272,18 @@ void dnsfilter_settings(FILE *fp) {
 						if(pmtl[i].sdn_t.dnsf_idx == DNSF_SRV_UNFILTERED)
 						{
 							fprintf(fp, "-A DNSFILTER -i %s -j RETURN\n", pmtl[i].nw_t.ifname);
+						}
+						else if (pmtl[i].sdn_t.dnsf_idx == DNSF_SRV_ROUTER)
+						{
+							strlcpy(lan_ipaddr, pmtl[i].nw_t.addr, sizeof(lan_ipaddr));
+							if (*lan_ipaddr)
+							{
+								fprintf(fp, "-A DNSFILTER -i %s -j DNAT --to-destination %s\n", pmtl[i].nw_t.ifname, lan_ipaddr);
+							}
+							else
+							{
+								fprintf(fp, "-A DNSFILTER -i %s -j REDIRECT\n", pmtl[i].nw_t.ifname);
+							}
 						}
 						else if (get_dns_filter(AF_INET, pmtl[i].sdn_t.dnsf_idx, &dnsfsrv))
 						{
@@ -312,7 +326,9 @@ void dnsfilter_settings(FILE *fp) {
 
 		/* Send other queries to the default server */
 		dnsmode = nvram_get_int("dnsfilter_mode");
-		if ((dnsmode != DNSF_SRV_UNFILTERED) && get_dns_filter(AF_INET, dnsmode, &dnsfsrv)) {
+		if (dnsmode == DNSF_SRV_ROUTER) {
+			fprintf(fp, "-A DNSFILTER -j REDIRECT\n");
+		} else if ((dnsmode != DNSF_SRV_UNFILTERED) && get_dns_filter(AF_INET, dnsmode, &dnsfsrv)) {
 			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination %s\n", dnsfsrv.server1);
 		}
 	}
@@ -590,6 +606,11 @@ void dnsfilter_dot_rules(FILE *fp)
 	char *nv, *nvp, *rule;
 	int dnsmode;
 	dnsf_srv_entry_t dnsfsrv;
+#ifdef RTCONFIG_MULTILAN_CFG
+	int i;
+	MTLAN_T *pmtl = NULL;
+	size_t  mtl_sz = 0;
+#endif
 
 	if (nvram_get_int("dnsfilter_enable_x") == 0) return;
 
@@ -615,6 +636,35 @@ void dnsfilter_dot_rules(FILE *fp)
 			fprintf(fp, "-A DNSFILTER_DOT -m mac --mac-source %s -j REJECT\n", mac);
 	}
 	free(nv);
+
+#ifdef RTCONFIG_MULTILAN_CFG
+	pmtl = (MTLAN_T *)INIT_MTLAN(sizeof(MTLAN_T));
+	if(pmtl)
+	{
+		if(get_mtlan(pmtl, &mtl_sz))
+		{
+			for(i = 1; i < mtl_sz; ++i)
+			{
+				if(pmtl[i].enable)
+				{
+					if(pmtl[i].sdn_t.dnsf_idx != DNSF_SRV_UNFILTERED)
+					{
+						if (dnsfilter_support_dot(pmtl[i].sdn_t.dnsf_idx) && get_dns_filter(AF_INET, pmtl[i].sdn_t.dnsf_idx, &dnsfsrv) > 0 )
+						{
+							if (pmtl[i].sdn_t.dnsf_idx == DNSF_SRV_ROUTER && *pmtl[i].nw_t.addr)
+								fprintf(fp, "-A DNSFILTER_DOT -i %s ! -d %s -j REJECT\n", pmtl[i].nw_t.ifname, pmtl[i].nw_t.addr);
+							else
+								fprintf(fp, "-A DNSFILTER_DOT -i %s ! -d %s -j REJECT\n", pmtl[i].nw_t.ifname, dnsfsrv.server1);
+						}
+						else
+							fprintf(fp, "-A DNSFILTER_DOT -i %s -j REJECT\n", pmtl[i].nw_t.ifname);
+					}
+				}
+			}
+		}
+		FREE_MTLAN((void *)pmtl);
+	}
+#endif
 
 	/* Global filtering */
 	dnsmode = nvram_get_int("dnsfilter_mode");

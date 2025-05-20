@@ -115,7 +115,7 @@ function redraw(){
 	var bandname_array = [];
 	var code = "";
 
-	if (based_modelid === 'GT-AXE16000' ||  based_modelid === 'GT-BE98') {
+	if (based_modelid === 'GT-AXE16000') {
 		apinfo_array = [dataarray3, dataarray0, dataarray1, dataarray2];
 		client_array = [wificlients3, wificlients0, wificlients1, wificlients2];
 		dfs_array = [[],dfs_statusarray0, dfs_statusarray1, []];
@@ -147,7 +147,7 @@ function redraw(){
 			bandname_array.push("6 GHz");
 		} else if (wl_info.band5g_2_support) {
 			apinfo_array.push(dataarray2);
-			client_array,push(wificlients2);
+			client_array.push(wificlients2);
 			dfs_array.push(dfs_statusarray2);
 			bandname_array.push("5 GHz-2");
 		}

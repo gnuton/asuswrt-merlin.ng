@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -71,7 +71,6 @@ function draw_mem_charts(){
 			},
 			options: {
 				responsive: false,
-				animation: false,
 				segmentShowStroke : false,
 				segmentStrokeColor : "#000",
 				plugins: {
@@ -122,7 +121,6 @@ function draw_mem_charts(){
 			},
 			options: {
 				responsive: false,
-				animation: false,
 				segmentShowStroke : false,
 				segmentStrokeColor : "#000",
 				plugins: {
@@ -285,7 +283,7 @@ function draw_temps_charts(){
 		type: "line",
 		data: {datasets: datasets},
 		options: {
-			responsive: false,
+			responsive: true,
 			animation: false,
 			segmentShowStroke : false,
 			segmentStrokeColor : "#000",
@@ -319,7 +317,7 @@ function draw_temps_charts(){
 					grace: "5%",
 					ticks: {
 						color: "#CCC",
-						callback: function(value, index, ticks) {return value + "°C";}
+						callback: function(value, index, ticks) {return (Number.isInteger(value) ? value : value.toFixed(1)) + "°C";}
 					}
 				},
 			}
@@ -382,16 +380,16 @@ function update_temperatures(){
 			update_temperatures();
 		},
 		success: function(response){
-			if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98') {
+			if (based_modelid === 'GT-AXE16000') {
 				curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
 				curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
 				curr_coreTmp_52_raw = curr_coreTmp_wl1_raw;
 				curr_coreTmp_6_raw = curr_coreTmp_wl2_raw;
 			} else if (based_modelid === 'GT-BE98_PRO') {
-                		curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
-               			curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
-                		curr_coreTmp_6_raw = curr_coreTmp_wl1_raw;
-                		curr_coreTmp_62_raw = curr_coreTmp_wl2_raw;
+                                curr_coreTmp_24_raw = curr_coreTmp_wl3_raw;
+                                curr_coreTmp_5_raw = curr_coreTmp_wl0_raw;
+                                curr_coreTmp_6_raw = curr_coreTmp_wl1_raw;
+                                curr_coreTmp_62_raw = curr_coreTmp_wl2_raw;
 			} else {
 				curr_coreTmp_24_raw = curr_coreTmp_wl0_raw;
 				if (band5g_support)
@@ -480,16 +478,16 @@ function showbootTime(){
 function show_connstate(){
 	document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " active";
 
-	if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98') {
+	if (based_modelid === 'GT-AXE16000') {
 		wlc_24_arr = wlc_3_arr;
 		wlc_51_arr = wlc_0_arr;
 		wlc_52_arr = wlc_1_arr;
 		wlc_6_arr = wlc_2_arr;
 	} else if (based_modelid === 'GT-BE98_PRO') {
-        	wlc_24_arr = wlc_3_arr;
-        	wlc_51_arr = wlc_0_arr;
-        	wlc_6_arr = wlc_1_arr;
-        	wlc_62_arr = wlc_2_arr;
+                wlc_24_arr = wlc_3_arr;
+                wlc_51_arr = wlc_0_arr;
+                wlc_6_arr = wlc_1_arr;
+                wlc_62_arr = wlc_2_arr;
 	} else {
 		wlc_24_arr = wlc_0_arr;
 		if (band5g_support)
@@ -573,7 +571,7 @@ function show_wifi_version() {
 		buf += "<br><% sysinfo("driver_version.1"); %>";
 	if (wl_info.band5g_2_support || wl_info.band6g_support)
 		buf += "<br><% sysinfo("driver_version.2"); %>";
-	if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98_PRO' || based_modelid === 'GT-BE98')
+	if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98_PRO')
 		buf += "<br><% sysinfo("driver_version.3"); %>";
 	buf += "</td>";
 
@@ -621,7 +619,7 @@ function show_wifi_version() {
                 <tr bgcolor="#4D595D">
                         <td valign="top">
                         <div>&nbsp;</div>
-                        <div class="formfonttitle">Tools - System Information</div>
+                        <div class="formfonttitle">System Information</div>
                         <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -761,7 +759,7 @@ function show_wifi_version() {
 						</tr>
 					</thead>
 					<tr>
-						<td colspan="2"><canvas style="background-color:#2f3e44;border-radius:10px;"id="tempchartId" height="250" width="700"></canvas></td>
+						<td colspan="2" style="padding:14px;" width="100%"><canvas style="background-color:#2f3e44;border-radius:10px;width: 100% !important; height:275px;"id="tempchartId" ></canvas></td>
 					</tr>
 					<tr>
 						<th>Temperatures</th>
@@ -822,3 +820,4 @@ function show_wifi_version() {
 <div id="footer"></div>
 </body>
 </html>
+

@@ -1,14 +1,79 @@
 Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
-3006.102.3_1-gnuton1 (xx-xxx-xxxx)
+3006.102.4_1-gnuton1 (xx-xxx-xxxx)
   - ADEED: Support for GT-BE98
 
-3006.102.3 (xx-xxx-xxxx)
+3006.102.4 (10-May-2025)
+  - NOTE: If migrating from a 3004 firmware, only the first Guest
+          Network will be migrated - any additionnal GN must be
+          manually reconfigured.
+  - NOTE: If migrating from a 3004 firmware, the Wireless Scheduler
+          will need to be manually reconfigured if you were using
+          it.
+  - NOTE: As a reminder, the ROG variant of the webui is not
+          supported in the 3006 firmware series, as maintaining
+          two separate interfaces is too much extra work.
+  - NOTE: Due to numerous webui changes, it's recommended to
+          force refresh the page after first login, or clear
+          your browser cache.
+
+  - NEW: Moved RT-AX86U_PRO, RT-AX88U_PRO, ZenWifi Pro XT12,
+         GT-AX6000, GT-AXE16000 and GT-AX11000_PRO to the
+         3006 firmware series.
+  - NEW: Added RT-BE92U support, based on GPL 102_37526.
+  - NEW: Added Control-D servers to DNS-over-TLS
+         presets (dave14305)
+  - UPDATED: Merged GPL 3006.102_36521 for Wifi 6 models (Wifi 7
+             devices other than the RT-BE92U are still on
+             102_37346).
+  - UPDATED: OpenVPN to 2.6.14.
+  - UPDATED: miniupnpd to 2.3.8.
+  - UPDATED: amtm to 5.2 (decoderman)
+  - UPDATED: dnsmasq to 2.91.
+  - UPDATED: dropbear to 2025.87.
+  - CHANGED: Setting DNS Director to "Router" will now always
+             redirect to the router's own IP.  Previously it
+             would redirect to the first DNS server configured
+             on the DHCP page (which defaults to the router
+             itself).
+             If you need DNS Director to redirect to an IP
+             configured in your DHCP settings, use a Custom DNS
+             entry in DNS Director.  This makes it more consistant
+             with what the name implies, and was also necessary
+             for improved Guest Network support.
+  - CHANGED: Tools category renamed System Info.
+  - CHANGED: Tools -> Other Settings were moved to new tabs
+             (Administration -> Tweaks, and
+             Traffic Analyzer -> Settings).
+  - CHANGED: Moved "Redirect to asusrouter.com " to the new
+             Tweaks tab, and moved "Enable JFFS Custom Scripts"
+             to the Basic Config section on the System page.
+  - FIXED: Missing hostname on Wireless Log for MLO-capable Wifi 7
+           clients.
+  - FIXED: CVE-2024-9143 in OpenSSL (Debian backport by RSDNTWK)
+  - FIXED: CVE-2024-13176 in OpenSSL (Ubuntu backport by RSDNTWK)
+  - FIXED: Guest Networks on an isolated VLAN with DNS Director set
+           to "Router" would fail to do any name resolution (both
+           for whole network and for specific clients).
+  - FIXED: Wrong tab selected when clicking on "Profile" on the
+           VLAN page (dave14305)
+  - FIXED: Missing button to remove entries in the Offline Client
+           List (dave14305)
+  - FIXED: CVE-2025-2492 in AiCloud (backport from upstream)
+  - FIXED: DoT access wasn't properly blocked when appropriate
+           for Guest Networks.
+  - FIXED: DNS-over-TLS presets overwritten by Asus' own (dave14305)
+  - FIXED: Networkmap system status frame failing to load when
+           accessing the router with some particular hostnames.
+  - FIXED: Missing option to disable logging of DHCP/RA queries.
+
+
+3006.102.3 (11-Jan-2025)
   - NOTE: If flashing on top of Asus stock firmware 3006.102_37000
           or greater, then you first need to enable downgrade
           capabilities before flashing Asuswrt-Merlin on top
-          of it.  Over SSH, run the following command:
+          of it.  Connect Over SSH, and run the following command:
 
              nvram set DOWNGRADE_CHECK_PASS=1
 
@@ -25,7 +90,7 @@ Asuswrt-Merlin 3006.xxx Changelog
           existing AiMesh nodes.
 
   - NEW: (re-added) VPN interface selector on the Speedtest page,
-         to test a VPN throughput.
+         to test a VPN tunnel's throughput.
   - UPDATED: Merged with GPL 3006.102_37346 (with the wifi firmware
              from 37038 for the RT-BE96U and GT-BE98_PRO - was missing
              from GPL)
@@ -42,8 +107,11 @@ Asuswrt-Merlin 3006.xxx Changelog
   - FIXED: Site Survey page not loading properly
   - FIXED: Wireless Log would sometimes display the wrong hostnames
   - FIXED: Refresh link not working on OpenVPN/Wireguard client pages.
-  - FIXED: WireGuard client randomly failing to retrieve public IP for
-           display on the webui.
+  - FIXED: WireGuard client randomly failing to retrieve public IP
+           for display on the webui.
+  - FIXED: Some Guest Networks wouldn't properly list their
+           connected clients on the Wireless Log page.
+
 
 3006.102.2_2 (17-Nov-2024)
   - FIXED: Security issues in AiCloud (backports from Asus)
