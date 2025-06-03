@@ -1,1 +1,1 @@
-../../DSL-AC68U/www/start_dsl_autodet.asp
+﻿<% start_dsl_autodet(); %>

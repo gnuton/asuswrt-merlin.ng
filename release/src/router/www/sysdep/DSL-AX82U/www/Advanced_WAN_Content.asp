@@ -11,12 +11,12 @@
 <title><#Web_Title#> - <#menu5_3_1#></title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
-<script type="text/javascript" src="/js/jquery.js"></script>
 <style>
 .FormTable{
 	margin-top:10px;
@@ -783,6 +783,8 @@ function change_wan_proto_type(proto_type){
 	change_dns_enable();
 
 	if(proto_type == "pppoe" || proto_type == "pppoa"){
+		inputCtrl(document.form.wan_dhcpfilter_enable[0], 0);
+		inputCtrl(document.form.wan_dhcpfilter_enable[1], 0);
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
 		showhide("wan_DHCP_opt",0);
@@ -814,6 +816,8 @@ function change_wan_proto_type(proto_type){
 		inputCtrl(document.form.wan_dhcp_qry, 0);
 	}
 	else if(proto_type == "pptp"){
+		inputCtrl(document.form.wan_dhcpfilter_enable[0], 0);
+		inputCtrl(document.form.wan_dhcpfilter_enable[1], 0);
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
 		showhide("wan_DHCP_opt",0);
@@ -845,6 +849,8 @@ function change_wan_proto_type(proto_type){
 		ppp_echo_control();
 	}
 	else if(proto_type == "l2tp"){
+		inputCtrl(document.form.wan_dhcpfilter_enable[0], 0);
+		inputCtrl(document.form.wan_dhcpfilter_enable[1], 0);
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
 		showhide("wan_DHCP_opt",0);
@@ -876,6 +882,8 @@ function change_wan_proto_type(proto_type){
 		ppp_echo_control();
 	}
 	else if(proto_type == "static"){
+		inputCtrl(document.form.wan_dhcpfilter_enable[0], 0);
+		inputCtrl(document.form.wan_dhcpfilter_enable[1], 0);
 		inputCtrl(document.form.wan_dnsenable_x[0], 0);
 		inputCtrl(document.form.wan_dnsenable_x[1], 0);
 		showhide("wan_DHCP_opt",0);
@@ -906,6 +914,8 @@ function change_wan_proto_type(proto_type){
 		inputCtrl(document.form.wan_dhcp_qry, 0);
 	}
 	else if(proto_type == "dhcp"){
+		inputCtrl(document.form.wan_dhcpfilter_enable[0], 0);
+		inputCtrl(document.form.wan_dhcpfilter_enable[1], 0);
 		inputCtrl(document.form.wan_dnsenable_x[0], 1);
 		inputCtrl(document.form.wan_dnsenable_x[1], 1);
 		showhide("wan_DHCP_opt",1);
@@ -938,6 +948,8 @@ function change_wan_proto_type(proto_type){
 		inputCtrl(document.form.wan_dhcp_qry, 1);
 	}
 	else if(proto_type == "bridge") {
+		inputCtrl(document.form.wan_dhcpfilter_enable[0], 1);
+		inputCtrl(document.form.wan_dhcpfilter_enable[1], 1);
 		inputCtrl(document.form.wan_dnsenable_x[0], 0);
 		inputCtrl(document.form.wan_dnsenable_x[1], 0);
 		showhide("wan_DHCP_opt",0);
@@ -1278,6 +1290,9 @@ function addRow_Group(upper){
 		return false;
 	}
 	else{
+		if(document.form.dnspriv_hostname_0.value.indexOf("tls://") != -1){
+			document.form.dnspriv_hostname_0.value = document.form.dnspriv_hostname_0.value.replace("tls://", "");
+		}
 		addRow(document.form.dnspriv_server_0, 1);
 		addRow(document.form.dnspriv_port_0, 0);
 		addRow(document.form.dnspriv_hostname_0, 0);
@@ -1498,6 +1513,13 @@ function showDiableDHCPclientID(clientid_enable){
 											<td>
 												<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
 												<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>
+											</td>
+										</tr>
+										<tr style="display:none">
+											<th><a class="hintstyle" href="javascript:void(0);"">DHCP filter</a></th>
+											<td>
+												<input type="radio" name="wan_dhcpfilter_enable" class="input" value="1" <% nvram_match("wan_dhcpfilter_enable", "1", "checked"); %>><#checkbox_Yes#>
+												<input type="radio" name="wan_dhcpfilter_enable" class="input" value="0" <% nvram_match("wan_dhcpfilter_enable", "0", "checked"); %>><#checkbox_No#>
 											</td>
 										</tr>
 									</table>
