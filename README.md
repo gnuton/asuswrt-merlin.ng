@@ -55,7 +55,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 * [TUF-AX3000 v1](https://www.asus.com/Networking-IoT-Servers/WiFi-Routers/ASUS-Gaming-Routers/TUF-Gaming-AX3000/)
 * [TUF-AX3000 v2](https://www.asus.com/networking-iot-servers/wifi-routers/asus-gaming-routers/tuf-gaming-ax3000-v2/)
 * [RT-AX58U v2](https://uk.store.asus.com/rt-ac58u-v2-122214131-90ig06q0-mu9b00.html) 
-* [RT-AX5400](https://www.asus.com/networking-iot-servers/wifi-routers/asus-wifi-routers/rt-ax5400/)) - 🔥 New 🔥
+* [RT-AX5400](https://www.asus.com/networking-iot-servers/wifi-routers/asus-wifi-routers/rt-ax5400/) - 🔥 New 🔥
 * [ZenWiFi XT8 / RT-AX95Q v1](https://www.asus.com/Networking-IoT-Servers/Whole-Home-Mesh-WiFi-System/ZenWiFi-WiFi-Systems/ASUS-ZenWiFi-AX-XT8/) 
 * [ZenWifi ET8 / RT-AXE95Q](https://www.asus.com/networking-iot-servers/whole-home-mesh-wifi-system/zenwifi-wifi-systems/asus-zenwifi-et8/) 
 
