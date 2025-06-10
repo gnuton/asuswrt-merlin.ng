@@ -1633,6 +1633,10 @@ config RTCONFIG_ROG_UI
 	bool "ROG theme support"
 	default n
 
+config RTCONFIG_TUF_UI
+	bool "TUF theme support"
+	default n
+
 config RTCONFIG_GEOIP
 	bool "determine country by IP address"
 	default n

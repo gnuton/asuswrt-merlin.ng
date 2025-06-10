@@ -18502,6 +18502,10 @@ NO_USB_CAP:
 	add_rc_support("rog");
 #endif
 
+#ifdef RTCONFIG_TUF_UI
+	add_rc_support("tuf");
+#endif
+
 #ifdef RTCONFIG_VISUALIZATION
 	add_rc_support("wifiradar");
 #endif
