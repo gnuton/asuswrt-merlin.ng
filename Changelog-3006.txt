@@ -1,7 +1,7 @@
 Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
-3006.102.4_1-gnuton1 (xx-xxx-xxxx)
+3006.102.4_1-gnuton1 (11-Jun-2025)
   - ADEED: Support for GT-BE98
 
 3006.102.4 (10-May-2025)
