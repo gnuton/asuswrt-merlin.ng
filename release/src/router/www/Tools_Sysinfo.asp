@@ -478,16 +478,16 @@ function showbootTime(){
 function show_connstate(){
 	document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " active";
 
-	if (based_modelid === 'GT-AXE16000') {
+	if (based_modelid === 'GT-AXE16000' || based_modelid === 'GT-BE98') {
 		wlc_24_arr = wlc_3_arr;
 		wlc_51_arr = wlc_0_arr;
 		wlc_52_arr = wlc_1_arr;
 		wlc_6_arr = wlc_2_arr;
 	} else if (based_modelid === 'GT-BE98_PRO') {
-                wlc_24_arr = wlc_3_arr;
-                wlc_51_arr = wlc_0_arr;
-                wlc_6_arr = wlc_1_arr;
-                wlc_62_arr = wlc_2_arr;
+        wlc_24_arr = wlc_3_arr;
+        wlc_51_arr = wlc_0_arr;
+        wlc_6_arr = wlc_1_arr;
+        wlc_62_arr = wlc_2_arr;
 	} else {
 		wlc_24_arr = wlc_0_arr;
 		if (band5g_support)
