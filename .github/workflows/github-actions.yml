@@ -212,26 +212,32 @@ jobs:
             UPDATE_DIR: "updates"
             CHANGELOG_FILE: "release-dsl-ax82u-default/CHANGELOG"
           run: |
-            export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
+            CIRCLE_TAG="${GITHUB_REF#refs/*/}"
             MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
+            BASELINE=${MAJOR_VER%%.*}
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
-            echo "Generating manifest file..."
-            echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"      >  ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX92U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-            echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
-            echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
-            echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"  >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX58U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
-            echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
 
-            cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
-            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
+            echo "Generating manifest file(s)…"
+            if [ "$BASELINE" = "3006" ]; then 
+              echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}" >  ${UPDATE_DIR}/manifest_${BASELINE}.txt
+            else
+              echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"      >  ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX92U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+              echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
+              echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
+              echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"  >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX58U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
+              echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
+            fi
+
+            cp "${CHANGELOG_FILE}" "${UPDATE_DIR}/${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
+            git commit -m "Updating Notes and manifest(s) to version: ${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
             git push origin
+
