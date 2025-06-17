@@ -24,8 +24,14 @@ current_extendno=$(nvram get extendno | sed "s/-g.*//" | sed "s/_.*//" | sed "s/
 model=$(nvram get productid)
 model="$model#"
 
-	echo "---- update real normal----" > /tmp/webs_upgrade.log
-	/usr/sbin/wget $wget_options $fwsite/manifest2.txt -O /tmp/wlan_update.txt
+if [ "$current_base" = "3006" ]; then
+    manifest_file="manifest_3006.txt"
+else
+    manifest_file="manifest2.txt"
+fi
+
+echo "---- update real normal----" > /tmp/webs_upgrade.log
+/usr/sbin/wget $wget_options "$fwsite/$manifest_file" -O /tmp/wlan_update.txt
 
 if [ "$?" != "0" ]; then
 	nvram set webs_state_error=1
