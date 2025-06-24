@@ -1,7 +1,7 @@
 Asuswrt-Merlin GNUton's builds Changelog
 ========================
 
-3004.388.9_2-gnuton1 (xx-xxx-2025)
+3004.388.9_2-gnuton1 (24-Jun-2025)
   - UPDATED: Merlin baseline to 3004.388.9_2
 
 3004.388.9_2 (28-Apr-2025)
