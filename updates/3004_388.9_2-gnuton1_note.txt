@@ -1,0 +1,8 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: June 24, 2025
+Release: 3004.388.9_2-gnuton1
+
+  - UPDATED: Merlin baseline to 3004.388.9_2
+
+
