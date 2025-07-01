@@ -92,8 +92,7 @@ if [ "$webs_state_flag" -eq "1" ]; then
 	releasenote_file0=$(nvram get webs_state_info)_note.txt
 	releasenote_path0="/tmp/release_note0.txt"
 	echo "---- download real release note ----" >> /tmp/webs_upgrade.log
-	/usr/sbin/wget $wget_options $fwsite/$releasenote_file0_US -O $releasenote_path0
-	echo "---- $fwsite/$releasenote_file0_US ----" >> /tmp/webs_upgrade.log
+	/usr/sbin/wget $wget_options $fwsite/$releasenote_file0 -O $releasenote_path0
 
 	if [ "$?" != "0" ]; then
 		echo "---- download $fwsite/$releasenote_file0 failed ----" >> /tmp/webs_upgrade.log
