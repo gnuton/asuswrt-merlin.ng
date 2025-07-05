@@ -1,5 +1,7 @@
 #!/bin/sh
 
+readonly SCRIPT_VERSTAG="25070312"
+
 wget_options="-q -t 2 -T 30"
 
 fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates"
