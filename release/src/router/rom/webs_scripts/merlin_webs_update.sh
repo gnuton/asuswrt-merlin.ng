@@ -1,8 +1,10 @@
 #!/bin/sh
 
+readonly SCRIPT_VERSTAG="25070312"
+
 wget_options="-q -t 2 -T 30"
 
-fwsite="https://fwupdate.asuswrt-merlin.net"
+fwsite="https://raw.githubusercontent.com/gnuton/asuswrt-merlin.ng/master/updates"
 
 nvram set webs_state_update=0 # INITIALIZING
 nvram set webs_state_flag=0   # 0: Don't do upgrade  1: Do upgrade
@@ -18,7 +20,8 @@ fi
 current_base=$(nvram get firmver | sed "s/\.//g")
 current_firm=$(nvram get buildno | cut -d. -f1)
 current_buildno=$(nvram get buildno | cut -d. -f2)
-current_extendno=$(nvram get extendno | sed "s/-g.*//" | sed "s/_.*//" | sed "s/alpha\|beta/-1/")
+#Extract extendno, subtract value by 1 if it contains "alpha/beta", remove all other values such as "_rog" or "-g*"
+current_extendno="$(nvram get extendno | awk -F'[_-]' '{n=$1} /[aA]lpha|[bB]eta/{n--} END{print n}')"
 
 # get firmware information
 model=$(nvram get productid)
@@ -37,13 +40,13 @@ if [ "$?" != "0" ]; then
 	nvram set webs_state_error=1
 else
 
-	fullver=$(grep $model /tmp/wlan_update.txt | sed s/.*#FW//;)
+	fullver="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#FW//')"
 	fullver=$(echo $fullver | sed s/#.*//;)
 	firmbase=$(echo $fullver | cut -d. -f1)
 	firmver=$(echo $fullver | cut -d. -f2)
 	buildno=$(echo $fullver | cut -d. -f3)
 
-	extendno=$(grep $model /tmp/wlan_update.txt | sed s/.*#EXT//;)
+	extendno="$(grep "$model" /tmp/wlan_update.txt | tail -n1 | sed 's/.*#EXT//')"
 	extendno=$(echo $extendno | sed s/#.*//;)
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
