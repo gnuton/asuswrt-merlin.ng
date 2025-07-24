@@ -52,9 +52,9 @@ else
 	extendno=$(echo $extendno | sed s/#.*//;)
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
-    new_gnuton="$(echo $extendno | sed -n 's/.*gnuton\([0-9]\+\).*/\1/p')"
-    [ -z "$new_gnuton" ] && new_gnuton=0
-    echo "$extendno" | grep -qiE 'beta|alpha' && new_is_beta=1 || new_is_beta=0
+	new_gnuton="$(echo $extendno | sed -n 's/.*gnuton\([0-9]\+\).*/\1/p')"
+	[ -z "$new_gnuton" ] && new_gnuton=0
+	echo "$extendno" | grep -qiE 'beta|alpha' && new_is_beta=1 || new_is_beta=0
 
 	nvram set webs_state_info=${firmbase}_${firmver}_${buildno}_${extendno}
 
