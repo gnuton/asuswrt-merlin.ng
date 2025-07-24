@@ -1,6 +1,6 @@
 #!/bin/sh
 
-readonly SCRIPT_VERSTAG="25070312"
+readonly SCRIPT_VERSTAG="25072411"
 
 wget_options="-q -t 2 -T 30"
 
@@ -20,8 +20,10 @@ fi
 current_base=$(nvram get firmver | sed "s/\.//g")
 current_firm=$(nvram get buildno | cut -d. -f1)
 current_buildno=$(nvram get buildno | cut -d. -f2)
-#Extract extendno, subtract value by 1 if it contains "alpha/beta", remove all other values such as "_rog" or "-g*"
-current_extendno="$(nvram get extendno | awk -F'[_-]' '{n=$1} /[aA]lpha|[bB]eta/{n--} END{print n}')"
+current_extendno="$(nvram get extendno | awk -F'[_-]' '{print $1}')"
+current_gnuton="$(nvram get extendno | sed -n 's/.*gnuton\([0-9]\+\).*/\1/p')"
+[ -z "$current_gnuton" ] && current_gnuton=0
+echo "$(nvram get extendno)" | grep -qiE 'beta|alpha' && current_is_beta=1 || current_is_beta=0
 
 # get firmware information
 model=$(nvram get productid)
@@ -50,6 +52,10 @@ else
 	extendno=$(echo $extendno | sed s/#.*//;)
 	lextendno=$(echo $extendno | sed s/-g.*//;)
 
+    new_gnuton="$(echo $extendno | sed -n 's/.*gnuton\([0-9]\+\).*/\1/p')"
+    [ -z "$new_gnuton" ] && new_gnuton=0
+    echo "$extendno" | grep -qiE 'beta|alpha' && new_is_beta=1 || new_is_beta=0
+
 	nvram set webs_state_info=${firmbase}_${firmver}_${buildno}_${extendno}
 
 	rm -f /tmp/wlan_update.*
@@ -71,6 +77,10 @@ else
 	elif [ "$current_base" -eq "$firmbase" ] && [ "$current_firm" -eq "$firmver" ] && [ "$current_buildno" -lt "$buildno" ]; then
 	        newfirm=1
 	elif [ "$current_base" -eq "$firmbase" ] && [ "$current_firm" -eq "$firmver" ] && [ "$current_buildno" -eq "$buildno" ] && [ "$current_extendno" -lt "$lextendno" ]; then
+		newfirm=1
+	elif [ "$current_base" -eq "$firmbase" ] && [ "$current_firm" -eq "$firmver" ] && [ "$current_buildno" -eq "$buildno" ] && [ "$current_extendno" -eq "$lextendno" ] && [ "$current_gnuton" -lt "$new_gnuton" ]; then
+		newfirm=1
+	elif [ "$current_base" -eq "$firmbase" ] && [ "$current_firm" -eq "$firmver" ] && [ "$current_buildno" -eq "$buildno" ] && [ "$current_extendno" -eq "$lextendno" ] && [ "$current_gnuton" -eq "$new_gnuton" ] && [ "$current_is_beta" -eq 1 ] && [ "$new_is_beta" -eq 0 ]; then
 		newfirm=1
 	else
 		newfirm=0
