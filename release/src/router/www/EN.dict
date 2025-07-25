@@ -222,6 +222,7 @@ asusddns_inputhint=Key in the name
 asusddns_rm_account_hint=The host name has been bound to the login account of the Router app, please register/delete it from the Router app.
 Auto=Auto
 Auto_Setting_btn=Automatic Setting
+Assassin_Mode=Assassin Mode
 Bandwidth_Limiter=Bandwidth Limiter
 Bandwidth_Limiter_hint=Bandwidth Limiter lets you set limits on download and upload speeds.
 Bandwidth_Limiter_NAT_hint=QoS function of traffic manager will be enabled and set as Bandwidth Limiter mode by default.
