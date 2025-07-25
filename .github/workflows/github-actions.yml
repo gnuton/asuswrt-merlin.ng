@@ -1,240 +1,152 @@
-name: Images 
+name: Images
 run-name: "Building images 🚀"
-on: [push]
+on: workflow_dispatch
+
 jobs:          
-    build-job:
-      name: Build
-      runs-on: ubuntu-latest
-      strategy:
-        fail-fast: false
-        matrix:
-          cfg:
-            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
-            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax58u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+  build-job:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { model: "tuf-ax3000", sdk: "src-rt-5.02axhnd.675x", ui: "default", skip: false }
 
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
-      container:
-        image: gnuton/asuswrt-merlin-toolchains-docker:latest
-        env:
-          MERLINUPDATE: "y"
-          MODEL: ${{ matrix.cfg.model }}
-          SDK: ${{ matrix.cfg.sdk }}
-          UI: ${{ matrix.cfg.ui }}
-          SKIP_BUILD: ${{ matrix.cfg.skip }}
-          GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
-          PROJECT_DIR: "/project/asuswrt-merlin.ng"
-          ARTIFACTS_DIR: "/project/artifacts"
-          CHANGELOG_FILE: "/tmp/CHANGELOG"
-          PROJECTBASEDIR: "/project" # REMOVE_ME: Fixes https://github.com/SonarSource/sonarcloud-github-action/pull/58
-        options: --user docker 
-        volumes:
-          - /mnt:/project # HACK: Use /mnt partition since bigger than others. This prevents to run out of space
-      steps:
-        - name: Run debug commands - post
-          run: |
-            cd /
-            echo "--- Disk available ----"
-            df -h
-        - name: Fix permissions in docker image
-          if: matrix.cfg.skip == false
-          run: |
-            sudo chown -R docker:docker /github/home /home/docker /project
-        - name: "Fetch code"
-          if: matrix.cfg.skip == false
-          run: |
-            cd /project
-            if [[ $GITHUB_REF_TYPE == "tag" ]]; then
-                export TAG="${GITHUB_REF#refs/tags/}"
-                echo "Fetching code from tag $TAG"
-            else
-                export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-                echo "Fetching code from branch $BRANCH"
-            fi
+    if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
+    container:
+      image: gnuton/asuswrt-merlin-toolchains-docker:latest
+      env:
+        MERLINUPDATE: "y"
+        MODEL: ${{ matrix.cfg.model }}
+        SDK: ${{ matrix.cfg.sdk }}
+        UI: ${{ matrix.cfg.ui }}
+        SKIP_BUILD: ${{ matrix.cfg.skip }}
+        GIT_REPO: "https://github.com/alfky12/asuswrt-merlin.ng.git"
+        PROJECT_DIR: "/project/asuswrt-merlin.ng"
+        ARTIFACTS_DIR: "/project/artifacts"
+        CHANGELOG_FILE: "/tmp/CHANGELOG"
+        PROJECTBASEDIR: "/project"
+      options: --user docker 
+      volumes:
+        - /mnt:/project
+    steps:
+      - name: Run debug commands - post
+        run: |
+          cd /
+          echo "--- Disk available ----"
+          df -h
+      - name: Fix permissions in docker image
+        if: matrix.cfg.skip == false
+        run: |
+          sudo chown -R docker:docker /github/home /home/docker /project
+      - name: "Fetch code"
+        if: matrix.cfg.skip == false
+        run: |
+          cd /project
+          if [[ $GITHUB_REF_TYPE == "tag" ]]; then
+              export TAG="${GITHUB_REF#refs/tags/}"
+              echo "Fetching code from tag $TAG"
+          else
+              export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+              echo "Fetching code from branch $BRANCH"
+          fi
 
-            if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
-                echo "Code fetched successfully."
-            else
-                echo "Failed to fetch code. Check the repository and settings."
-                exit 1
-            fi
+          if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
+              echo "Code fetched successfully."
+          else
+              echo "Failed to fetch code. Check the repository and settings."
+              exit 1
+          fi
 
-            ls /home/docker
-        - name: "Set version"
-          if: matrix.cfg.skip == false
-          run: |
-            cd ${PROJECT_DIR}
-            export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
-            if [[ $GITHUB_REF_TYPE == "branch" ]]; then
-              echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
-            else
-                TAG=$(echo ${CIRCLE_TAG} | sed 's/^[^.]*\.//')
-                MAJOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
-                MINOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
-                sed -i "s/SERIALNO=.*/SERIALNO=${MAJOR_VER}/g" release/src-rt/version.conf
-                sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
-                echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
-            fi
-        - name: Generate changelog
-          if: matrix.cfg.skip == false
-          run: |
-            cd ${PROJECT_DIR}
-            python tools/get-last-notes.py > "${CHANGELOG_FILE}"
-            cat "${CHANGELOG_FILE}"
-        - name: "Build"
-          if: matrix.cfg.skip == false
-          run: |
-            echo "----- Space available -----"
-            df -h
-            echo "----- I am: $(id) -----"
-            cd ${PROJECT_DIR}/release/${SDK}
-            echo "----- Files in dir: $(pwd) -----"
-            ls -alh
-            echo "----- Setting toolchains for ${SDK} -----"
-            if [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
-              source /home/docker/envs/bcm-hnd-ax-4.19.sh
-            elif [[ ${SDK} == "src-rt-5.02axhnd.675x" ]]; then
-              source /home/docker/envs/bcm-hnd.sh
-            elif [[ ${SDK} == "src-rt-5.02axhnd" ]]; then
-              source /home/docker/envs/bcm-hnd.sh
-            else
-              echo "SDK not supported"
-              exit -1
-            fi
-            echo "----- hack-ish fix ---------"
-            sudo ln -sf /home/docker/am-toolchains/brcm-arm-hnd /opt/toolchains
-            echo "----- Check envs dir ---------"
+          ls /home/docker
+      - name: "Set version"
+        if: matrix.cfg.skip == false
+        run: |
+          cd ${PROJECT_DIR}
+          export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
+          if [[ $GITHUB_REF_TYPE == "branch" ]]; then
+            echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
+          else
+              TAG=$(echo ${CIRCLE_TAG} | sed 's/^[^.]*\.//')
+              MAJOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
+              MINOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
+              sed -i "s/SERIALNO=.*/SERIALNO=${MAJOR_VER}/g" release/src-rt/version.conf
+              sed -i "s/EXTENDNO=.*/EXTENDNO=${MINOR_VER}/g" release/src-rt/version.conf
+              echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
+          fi
+      - name: Generate changelog
+        if: matrix.cfg.skip == false
+        run: |
+          cd ${PROJECT_DIR}
+          python tools/get-last-notes.py > "${CHANGELOG_FILE}"
+          cat "${CHANGELOG_FILE}"
+      - name: "Build"
+        if: matrix.cfg.skip == false
+        run: |
+          echo "----- Space available -----"
+          df -h
+          echo "----- I am: $(id) -----"
+          cd ${PROJECT_DIR}/release/${SDK}
+          echo "----- Files in dir: $(pwd) -----"
+          ls -alh
+          echo "----- Setting toolchains for ${SDK} -----"
+          if [[ ${SDK} == "src-rt-5.04axhnd.675x" ]]; then
+            source /home/docker/envs/bcm-hnd-ax-4.19.sh
+          elif [[ ${SDK} == "src-rt-5.02axhnd.675x" ]]; then
+            source /home/docker/envs/bcm-hnd.sh
+          elif [[ ${SDK} == "src-rt-5.02axhnd" ]]; then
+            source /home/docker/envs/bcm-hnd.sh
+          else
+            echo "SDK not supported"
+            exit -1
+          fi
+          echo "----- hack-ish fix ---------"
+          sudo ln -sf /home/docker/am-toolchains/brcm-arm-hnd /opt/toolchains
+          echo "----- Check envs dir ---------"
 
-            ls -alh /home/docker/envs/
-            echo "----- Debugging env vars -----"
-            env
-            echo "------ Setting UI as $UI ---------"
-            if [[ ${UI} == "tuf" ]]; then
-              echo "Enabling TUF UI"
-              sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
-            fi
+          ls -alh /home/docker/envs/
+          echo "----- Debugging env vars -----"
+          env
+          echo "------ Setting UI as $UI ---------"
+          if [[ ${UI} == "tuf" ]]; then
+            echo "Enabling TUF UI"
+            sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
+          fi
 
-            echo "----- BUILD ${MODEL}-----"
-            make "${MODEL}"
-            # #### Just for testing ####
-            # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
-            # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
-            
-        - name: "Prepare artifacts"
-          if: matrix.cfg.skip == false
-          run: |
-            mkdir -p "${ARTIFACTS_DIR}"
-            export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
-            echo "Removing images with boot loader."
-            rm -rf ${IMAGE_PATH}/*cferom*
+          echo "----- BUILD ${MODEL}-----"
+          make "${MODEL}"
+      - name: "Prepare artifacts"
+        if: matrix.cfg.skip == false
+        run: |
+          mkdir -p "${ARTIFACTS_DIR}"
+          export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
+          echo "Removing images with boot loader."
+          rm -rf ${IMAGE_PATH}/*cferom*
 
-            files=("${IMAGE_PATH}"/*squashfs.pkgtb "${IMAGE_PATH}"/*.w)
+          files=("${IMAGE_PATH}"/*squashfs.pkgtb "${IMAGE_PATH}"/*.w)
 
-            if [ ${#files[@]} -gt 0 ]; then
-                for f in "${files[@]}"; do
-                    if [ -f "$f" ] && [ "${f##*.}" != "md5" ]; then
-                        echo "Creating MD5 signature for $f"
-                        md5sum "$f" > "$f.md5"
-                        echo "Copying image $f to workspace"
-                        cp "$f" "${ARTIFACTS_DIR}"
-                        cp "$f.md5" "${ARTIFACTS_DIR}"
-                    fi
-                done
-            else
-                echo "No *.squashfs.pkgtb or *.w files found in ${IMAGE_PATH}"
-            fi
-            
-            # Changelogs are the same for each models since we are building from the same branch. We do use only the one generated by DSL-AX82U for now.
-            if [[ ${MODEL} == "dsl-ax82u" ]]; then
-              cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
-            fi
-        - name: "Archive artifacts"
-          if: matrix.cfg.skip == false
-          uses: actions/upload-artifact@v4
-          with:
-            name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
-            path: "/project/artifacts"
-          continue-on-error: true
-    release-job:
-      name: Publish
-      needs: build-job
-      runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/')
-      steps:
-        - name: Download packages
-          uses: actions/download-artifact@v4
-        - name: Get release version
-          run: |
-            echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-            echo "prerelease=$( [[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False )" >> $GITHUB_ENV
-        - name: Publish archives and packages
-          uses: softprops/action-gh-release@v1
-          with:
-            tag_name: ${{ env.version }}
-            body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-dsl-ax82u-default/CHANGELOG
-            draft: true
-            prerelease: ${{ env.prerelease }}
-            files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    
-    manifest-job:
-      name: Publish Manifest
-      needs: build-job
-      runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            ref: master
-        - name: Setup git config
-          run: |
-            # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
-            git config --global user.email "bot@gnuton.org"
-            git config --global user.name "Circle CI BOT"
-            git config --global push.default simple
-        - name: Download packages
-          uses: actions/download-artifact@v4
-        - name: "Publish Manifest"
-          env:
-            UPDATE_DIR: "updates"
-            CHANGELOG_FILE: "release-dsl-ax82u-default/CHANGELOG"
-          run: |
-            export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
-            MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
-            MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
-            BASELINE=${MAJOR_VER%%.*}
-            RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
+          if [ ${#files[@]} -gt 0 ]; then
+              for f in "${files[@]}"; do
+                  if [ -f "$f" ] && [ "${f##*.}" != "md5" ]; then
+                      echo "Creating MD5 signature for $f"
+                      md5sum "$f" > "$f.md5"
+                      echo "Copying image $f to workspace"
+                      cp "$f" "${ARTIFACTS_DIR}"
+                      cp "$f.md5" "${ARTIFACTS_DIR}"
+                  fi
+              done
+          else
+              echo "No *.squashfs.pkgtb or *.w files found in ${IMAGE_PATH}"
+          fi
 
-            echo "Generating manifest file(s)…"
-            if [ "$BASELINE" = "3006" ]; then 
-              echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}" >  ${UPDATE_DIR}/manifest_${BASELINE}.txt
-            else
-              echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"      >  ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX92U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-              echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
-              echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
-              echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"  >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX58U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
-            fi
-
-            cp "${CHANGELOG_FILE}" "${UPDATE_DIR}/${RELEASE_NOTE_FILE}"
-            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
-            git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest(s) to version: ${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
-            git push origin
-
+          # Changelogs are the same for each models since we are building from the same branch. We do use only the one generated by DSL-AX82U for now.
+          if [[ ${MODEL} == "dsl-ax82u" ]]; then
+            cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
+          fi
+      - name: "Archive artifacts"
+        if: matrix.cfg.skip == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
+          path: "/project/artifacts"
+        continue-on-error: true
