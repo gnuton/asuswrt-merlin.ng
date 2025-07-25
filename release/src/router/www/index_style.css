@@ -902,9 +902,12 @@ width:122px;
 	background: url(images/New_ui/icon_menues.png);
 	background-position: -0px -257px;
 }
-.menu_BandwidthMonitor, .menu_UU{
+.menu_BandwidthMonitor{
 	background: url(images/New_ui/icon_indexes.png);
 	background-position: -0px -108px;
+}
+.menu_UU{
+	background: url(images/New_ui/icon_UU.png);
 }
 .menu_GameBoost{
 	background: url(images/New_ui/game.png);
