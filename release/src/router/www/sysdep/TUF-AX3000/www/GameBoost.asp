@@ -787,7 +787,7 @@ function enableGearUp(){
 												</td>
 												<td style="width:400px;height:120px;">
 													<div class="function_desc"><#Gear_Accelerator_desc1#></div>
-													<div onclick="showGameListField();" class="btn" style="margin: 12px 0;width:100px;height:40px;line-height: 40px;text-align: center;border-radius: 5px;font-size:18px;"><#CTL_add#></div>
+													<div onclick="showGameListField();" class="btn" style="margin: 12px 0;width:100px;height:40px;line-height: 40px;text-align: center;border-radius: 5px;font-size:18px;cursor: pointer;"><#CTL_add#></div>
 												</td>
 												<td>
 													<div class="switch" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px">
