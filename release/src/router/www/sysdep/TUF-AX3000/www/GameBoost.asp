@@ -212,23 +212,7 @@ const gu_url = "https://router.booster.gearupportal.com/h5/acce?gwSn="+label_mac
 
 function initial(){
 	show_menu();
-	if(!rog_support && !tuf_support){
-		$("#FormTitle").addClass("GB_background_rt");
-		$("#FormTitle").find(".splitLine_Game").removeClass("splitLine_Game").addClass("splitLine");
-		$("#FormTitle").find(".switch").addClass("switch2");
-		$(".function_name").css("color", "#00FCFF");
-		$(".function_desc").css("color", "#FFFFFF");
-		$(".btn").css("background-color", "#248DFF");
-		$(".GameBoost_gamePriority_icon").css("background-image", "url('images/New_ui/RT/icon_gamePriority.svg')");
-		$(".GameBoost_mobileGame_icon").css("background-image", "url('images/New_ui/RT/icon_mobileGame.svg')");
-		$(".GameBoost_openNAT_icon").css("background-image", "url('images/New_ui/RT/icon_openNAT.svg')");
-		if(!gameMode_support && isSupport("gu_accel")){
-			$("#gearup_action").css("width", "250px");
-			$("#gearup_go_mask").css("left", "75px");
-		}
-	}
-	else
-		$("#FormTitle").addClass("GB_background");
+	$("#FormTitle").addClass("GB_background");
 
 	if (adaptiveqos_support) {
         if (nvram_get_param.qos_enable == '1' && nvram_get_param.qos_type == '1') {
@@ -342,8 +326,8 @@ function genGameList(){
                 <div style="display: flex; justify-content: center">
                     <div class="clientlist_dropdown_main">
                         <input type="text" class="input_20_table" maxlength="17" id="client" onKeyPress="return validator.isHWAddr(this,event)" onClick="hideClients_Block();" autocorrect="off" autocapitalize="off" placeholder="ex: ${nvram_get_param.lan_hwaddr}">
-                        <img id="pull_arrow" height="14px;" src="/images/unfold_more.svg" onclick="pullLANIPList(this);" title="<#select_MAC#>">
-                        <div id="ClientList_Block_PC" class="clientlist_dropdown"></div>
+                        <img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;*margin-left:-3px;*margin-top:1px;" onclick="pullLANIPList(this);" title="<#select_MAC#>">
+                        <div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-left:138px;"></div>
                     </div>
                 </div>
             </td>
