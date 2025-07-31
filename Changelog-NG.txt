@@ -1,6 +1,11 @@
 Asuswrt-Merlin GNUton's builds Changelog
 ========================
 
+3004.388.9_2-gnuton2 (31-Jul-2025)
+  - FIXED: Resolved flashing issues on RT-AX82U v2 and RT-AX5400
+  - FIXED: Re-enabled Skynet for all models built with SDK 5.04
+  - FIXED: Re-enabled Cake QoS on RT-AX82U
+
 3004.388.9_2-gnuton1 (24-Jun-2025)
   - UPDATED: Merlin baseline to 3004.388.9_2
 
