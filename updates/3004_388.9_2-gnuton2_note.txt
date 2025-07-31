@@ -1,0 +1,10 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: July 31, 2025
+Release: 3004.388.9_2-gnuton2
+
+  - FIXED: Resolved flashing issues on RT-AX82U v2 and RT-AX5400
+  - FIXED: Re-enabled Skynet for all models built with SDK 5.04
+  - FIXED: Re-enabled Cake QoS on RT-AX82U
+
+
