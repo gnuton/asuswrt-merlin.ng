@@ -1429,7 +1429,7 @@ function enableSmartConnect(value){
 		</div>
 		<div id="assassin_mode" class="unit-block" style="display:none;">
 			<div class="display-flex flex-a-center flex-j-spaceB">
-				<div>刺客模式</div>
+				<div><#Assassin_Mode#></div>
 				<div>
 					<div class="left" style="width:94px; " id="assassin_mode_enable"></div>
 					<div class="clear"></div>

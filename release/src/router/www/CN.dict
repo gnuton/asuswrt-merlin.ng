@@ -222,6 +222,7 @@ asusddns_inputhint=请输入名称
 asusddns_rm_account_hint=该主机名称已绑定于路由器应用程序的登录账号，请从路由器应用程序中注销或刪除
 Auto=自动
 Auto_Setting_btn=自动设置
+Assassin_Mode=刺客模式
 Bandwidth_Limiter=带宽限制
 Bandwidth_Limiter_hint=带宽限制有助于控制您客户端设备的最大下载速度和上传速度。
 Bandwidth_Limiter_NAT_hint=流量管理器的 QoS 功能将默认启用，并设置为带宽限制器模式。
