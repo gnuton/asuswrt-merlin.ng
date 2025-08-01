@@ -44,8 +44,8 @@ if (qos_enable > 0 && qos_ibw > 0 && qos_obw > 0) {
 var color_table = ["#c6dafc", "#7baaf7", "#4285f4", "#3367d6"];
 var led_table = ["<#btn_disable#>", "<#Priority_Level_3#>", "<#Medium#>", "<#High#>"];
 $(document).ready(function(){
-	const get_header_info = httpApi.hookGet("get_header_info");
-	window.parent.postMessage('router_status.asp', `${get_header_info.protocol}://${get_header_info.host}:${get_header_info.port}`);
+	window.parent.postMessage('router_status.asp',
+	window.location.protocol.replace(':','') + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : ''));
 	if(system.INTELplatform){
 		register_event();
 		var ledLv = httpApi.nvramGet(["bc_ledLv"]).bc_ledLv;

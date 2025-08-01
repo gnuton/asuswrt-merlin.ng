@@ -51,13 +51,13 @@ $(function () {
 		$('link').last().after('<link group="extend_css" rel="stylesheet" type="text/css" href="/VPN/vpnc' + theme + '.css">');
 	}
 	else{
-		var productid = httpApi.nvramGet(["productid"]).productid;
-		if(productid.substr(0,2) == "GT"){
+		// var productid = httpApi.nvramGet(["productid"]).productid;
+		if(isSupport("rog")) {
 			$('link').last().after('<link group="extend_css" rel="stylesheet" type="text/css" href="/VPN/vpncGT.css">');
 		}
-		else if(productid.substr(0,3) == "TUF"){
-			$('link').last().after('<link group="extend_css" rel="stylesheet" type="text/css" href="/VPN/vpncTUF.css">');
-		}
+		// else if(productid.substr(0,3) == "TUF"){
+		// 	$('link').last().after('<link group="extend_css" rel="stylesheet" type="text/css" href="/VPN/vpncTUF.css">');
+		// }
 	}
 });
 var surfshark_href = "https://nw-dlcdnet.asus.com/support/forward.html?model=&type=sskVPN&lang="+ui_lang+"&kw=&num=&tcode="+ttc;

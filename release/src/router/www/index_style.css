@@ -902,9 +902,13 @@ width:122px;
 	background: url(images/New_ui/icon_menues.png);
 	background-position: -0px -257px;
 }
-.menu_BandwidthMonitor, .menu_UU{
+.menu_BandwidthMonitor{
 	background: url(images/New_ui/icon_indexes.png);
 	background-position: -0px -108px;
+}
+.menu_UU{
+	background: url(images/New_ui/icon_UU.png);
+	background-position: 0px 0px;
 }
 .menu_GameBoost{
 	background: url(images/New_ui/game.png);
@@ -992,11 +996,11 @@ width:122px;
 }
 .menu_AiMesh{
 	background: url(images/New_ui/icon_AiMesh.png);
+	background-position: 0px 0px;
 }
 .menu_OpenNAT{
-	background: url(images/New_ui/open_NAT.svg);
-	background-size: 100%;
-	background-repeat: no-repeat;
+	background: url(images/New_ui/open_NAT.png);
+	background-position: 0px 0px;
 }
 .menu_TencentAcceleration{
 	background: url(images/New_ui/logo_tencent.svg);
@@ -1133,8 +1137,8 @@ width:122px;
   background-position: 4px -32px; width: 43px; height: 43px;
 }
 .menu_Tools{
-	background: url(images/New_ui/icon_indexes.png);
-	background-position: 0px -324px;
+	background: url(images/New_ui/toolsys.png);
+	background-position: 0px 0px;
 }
 .radio_hint{
     background-color: #FA9100;

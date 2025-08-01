@@ -1892,7 +1892,7 @@ function getTrafficUnit(){
 
 						<tr>
 							<td>
-								<div colspan="2" class="monitor_qos_bg" style="width:99%;height:510px;border-radius:4px;margin-left:4px;overflow:auto;">
+								<div colspan="2" class="monitor_qos_bg" style="width:99%;border-radius:4px;margin-left:4px;overflow:auto;">
 									<div id="sortable" style="padding-top:5px;">
 										<div style="width: 100%;text-align: center;margin-top: 50px;">
 											<img src="/images/InternetScan.gif" style="width: 50px;">

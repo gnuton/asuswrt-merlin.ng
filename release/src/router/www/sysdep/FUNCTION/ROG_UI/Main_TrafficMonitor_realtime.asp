@@ -174,7 +174,7 @@ function setUnit(unit){
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 <tr>
-	<td width="23">&nbsp;</td>
+	<td width="17">&nbsp;</td>
 
 <!--=====Beginning of Main Menu=====-->
 	<td valign="top" width="202">
