@@ -182,6 +182,9 @@ body{
 .qr_android_cn{
 	background-image: url('images/New_ui/asus_router_android_qr_cn.png');
 }
+#mainMenu{
+	margin-top: -173px !important;
+}
 </style>
 
 <script>
@@ -718,7 +721,7 @@ function enableGearUp(){
 <div>
 	<table class="content" align="center" cellspacing="0" style="margin:auto;">
 		<tr>
-			<td width="17">&nbsp;</td>
+			<td width="14">&nbsp;</td>
 			<!--=====Beginning of Main Menu=====-->
 			<td valign="top" width="202">
 				<div id="mainMenu"></div>
