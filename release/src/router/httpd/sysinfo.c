@@ -190,6 +190,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				char model[64];
 #if defined(BCM4912)
 				strcpy(model, "BCM4912 - B53 ARMv8");
+#elif defined(BCM6765)
+				strcpy(model, "BCM6765 - ARMv8");
 #elif defined(RTCONFIG_HND_ROUTER_BE_4916)
 				strcpy(model, "BCM4916 - B53 ARMv8");
 #else
@@ -247,7 +249,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 
 		} else if(strcmp(type,"cpu.freq") == 0) {
 #ifdef HND_ROUTER
-#if defined(BCM4912)
+#if defined(BCM4912) || defined(BCM6765)
 			if (1)
 				strcpy(result, "2000");
 			else
@@ -399,18 +401,23 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				fclose(fp);
 			}
 		} else if(strcmp(type,"conn.active") == 0) {
-			char buf[256];
+			char buf[256], proto[20];
 			FILE* fp;
 			unsigned int established = 0;
 
-			fp = fopen("/proc/net/nf_conntrack", "r");
+			eval("cp", "/proc/net/nf_conntrack", "/tmp/conntrack.tmp");
+
+			fp = fopen("/tmp/conntrack.tmp", "r");
 			if (fp) {
 				while (fgets(buf, sizeof(buf), fp) != NULL) {
-				if (strstr(buf,"ESTABLISHED") || ((strstr(buf,"udp")) && (strstr(buf,"ASSURED"))))
-					established++;
+					strlcpy(proto, buf, sizeof(proto));
+					if ((strstr(proto, "tcp") && strstr(buf, "ESTABLISHED")) ||
+					    (strstr(proto, "udp") && strstr(buf, "ASSURED")))
+						established++;
 				}
 				fclose(fp);
 			}
+			unlink("/tmp/conntrack.tmp");
 			sprintf(result,"%u",established);
 
 		} else if(strcmp(type,"conn.max") == 0) {

@@ -522,6 +522,9 @@ define platformKernelConfig
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/nciexLinuxETH.o $(HND_SRC)/bcmdrivers/broadcom/char/tms/impl1/nciexLinuxETH$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmvlan.o $(HND_SRC)/bcmdrivers/broadcom/char/vlan/impl1/bcmvlan$(PRBM_EXT).o ; \
 				cp $(TOP_PLATFORM)/hnd_extra/prebuilt/wlcsm.o $(HND_SRC)/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm$(PRBM_EXT).o ; \
+				if [ -f $(TOP_PLATFORM)/hnd_extra/prebuilt/rtl8372.o ]; then \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/rtl8372.o $(LINUXDIR)/drivers/char/rtl8372/ ; \
+				fi; \
 				if [ "$(DSL_BCM)" = "y" ]; then \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/adsldd.o $(HND_SRC)/bcmdrivers/broadcom/char/adsl/impl1/adsldd$(PRBM_EXT).o ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/adsl_phy.bin $(HND_SRC)/bcmdrivers/broadcom/char/adsl/impl1/adsl_phy.bin ; \
@@ -531,7 +534,7 @@ define platformKernelConfig
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/archer.o $(HND_SRC)/bcmdrivers/broadcom/char/archer/impl1/archer$(PRBM_EXT).o ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmlibs.o $(HND_SRC)/bcmdrivers/broadcom/char/bcmlibs/impl1/bcmlibs$(PRBM_EXT).o ; \
 				fi; \
-				if [ "$(HND_ROUTER_AX_6756)" = "y" ]; then \
+				if [ "$(HND_ROUTER_AX_6756)" = "y" ] || [ $(CUR_CHIP_PROFILE) = "6765" ] ; then \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcmlibs.o $(HND_SRC)/bcmdrivers/broadcom/char/bcmlibs/impl1/ ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/bcm_bpm.o $(HND_SRC)/bcmdrivers/broadcom/char/bpm/impl1/ ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/chipinfo.o $(HND_SRC)/bcmdrivers/broadcom/char/chipinfo/impl1/ ; \
