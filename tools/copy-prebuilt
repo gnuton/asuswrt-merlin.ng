@@ -9,7 +9,7 @@
 
 BUILD_NAME=$(echo $1 | tr "[:lower:]" "[:upper:]")
 BUILD_NAME_LC=$(echo $BUILD_NAME | tr "[:upper:]" "[:lower:]")
-REPO=/home/merlin/amng
+#REPO=/home/merlin/amng
 
 echo "*** Copying platform-specific files..."
 if [ "$BUILD_NAME" == "RT-AC88U" ] || [ "$BUILD_NAME" == "RT-AC3100" ] || [ "$BUILD_NAME" == "RT-AC5300" ]
@@ -196,6 +196,7 @@ then
 
 	# Realtek driver used by some models
 	if [ -f "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtl8372/rtl8372.o" ]
+	then
 		cp release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtl8372/rtl8372.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	fi
 
