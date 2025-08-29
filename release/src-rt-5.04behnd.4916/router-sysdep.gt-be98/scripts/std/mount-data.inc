@@ -154,7 +154,9 @@ mount_data() {
 			if [ $? -ne 0 ]; then
 				echo ">>>>> ERROR: Failed to fix GPT inconsistencies! Run sgdisk from linux for more info <<<<<"
 			else
-				echo ">>>>> GPT updated successfully!  <<<<<"
+				echo ">>>>> GPT updated successfully! -- Reboot required! <<<<<"
+				# Log that GPT was modified
+				touch /var/gpt_modified.txt
 			fi
 		fi
 		# For new flash layout mount mandatory defaults partition
@@ -211,12 +213,22 @@ mount_data() {
 		# Check if the symbolic link to the emmc jffs partition exists
 		if [ -L /dev/jffs ]; then
 			echo ">>>>> Mounting eMMC jffs Partition <<<<<"
-			mkdir -p /jffs
 			mount -t ext4 -rw /dev/jffs /jffs
 			if [ ! $? -eq 0 ]; then
 				echo ">>>>> Formatting eMMC jffs Partition <<<<<"
 				mke2fs __MKE2FSOPTIONS__ -I 256 -b 4096 -t ext4 -F /dev/jffs;
 				mount -t ext4 -rw /dev/jffs /jffs;
+			fi
+		fi
+
+		# Check if the symbolic link to the emmc aiboard partition exists
+		if [ -L /dev/aiboard ]; then
+			echo ">>>>> Mounting eMMC aiboard Partition <<<<<"
+			mount -t ext4 -rw /dev/aiboard /ai
+			if [ ! $? -eq 0 ]; then
+				echo ">>>>> Formatting eMMC aiboard Partition <<<<<"
+				mke2fs __MKE2FSOPTIONS__ -I 256 -b 4096 -t ext4 -F /dev/aiboard;
+				mount -t ext4 -rw /dev/aiboard /ai;
 			fi
 		fi
 	elif TEMP=`grep spi-nor.0 /proc/cmdline`; then
