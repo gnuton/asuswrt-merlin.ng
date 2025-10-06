@@ -141,6 +141,48 @@
 			"dnspriv_spkipin" : ""
 		},
 		{
+			"dnspriv_label" : "Control D 1 (Ads & Tracking)",
+			"dnspriv_server" : "76.76.2.11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p2.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 2 (Ads & Tracking)",
+			"dnspriv_server" : "76.76.10.11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p2.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 1 (Family Friendly)",
+			"dnspriv_server" : "76.76.2.11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "family.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 2 (Family Friendly)",
+			"dnspriv_server" : "76.76.10.11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "family.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 1 (Malware)",
+			"dnspriv_server" : "76.76.2.11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p1.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 2 (Malware)",
+			"dnspriv_server" : "76.76.10.11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p1.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
 			"dnspriv_label" : "Google 8.8.8.8",
 			"dnspriv_server" : "8.8.8.8",
 			"dnspriv_port" : "",
@@ -317,6 +359,48 @@
 			"dnspriv_server" : "2606:4700:4700::1001",
 			"dnspriv_port" : "",
 			"dnspriv_hostname" : "cloudflare-dns.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 1 (Ads & Tracking)",
+			"dnspriv_server" : "2606:1a40::11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p2.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 2 (Ads & Tracking)",
+			"dnspriv_server" : "2606:1a40:1::11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p2.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 1 (Family Friendly)",
+			"dnspriv_server" : "2606:1a40::11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "family.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 2 (Family Friendly)",
+			"dnspriv_server" : "2606:1a40:1::11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "family.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 1 (Malware)",
+			"dnspriv_server" : "2606:1a40::11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p1.freedns.controld.com",
+			"dnspriv_spkipin" : ""
+		},
+		{
+			"dnspriv_label" : "Control D 2 (Malware)",
+			"dnspriv_server" : "2606:1a40:1::11",
+			"dnspriv_port" : "",
+			"dnspriv_hostname" : "p1.freedns.controld.com",
 			"dnspriv_spkipin" : ""
 		},
 		{

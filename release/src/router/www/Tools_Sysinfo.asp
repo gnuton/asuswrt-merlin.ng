@@ -11,7 +11,25 @@
 <title><#Web_Title#> - System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
-<link rel="stylesheet" type="text/css" href="/css/networkMap.css">
+<style>
+.bar-container{
+	background-color:#000000;
+	width: 150px;
+	height: 8px;
+	border-radius: 6px;
+	padding: 2px 1px;
+}
+.core-color-container{
+	width: 35%;
+	height: 8px;
+	border-radius: 4px;
+	-webkit-transition: all 0.5s ease-in-out;
+	-moz-transition: all 0.5s ease-in-out;
+	-o-transition: all 0.5s ease-in-out;
+	transition: all 0.5s ease-in-out;
+}
+</style>
+
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -69,7 +87,6 @@ function draw_mem_charts(){
 			},
 			options: {
 				responsive: false,
-				animation: false,
 				segmentShowStroke : false,
 				segmentStrokeColor : "#000",
 				plugins: {
@@ -120,7 +137,6 @@ function draw_mem_charts(){
 			},
 			options: {
 				responsive: false,
-				animation: false,
 				segmentShowStroke : false,
 				segmentStrokeColor : "#000",
 				plugins: {
@@ -266,7 +282,7 @@ function draw_temps_charts(){
 		type: "line",
 		data: {datasets: datasets},
 		options: {
-			responsive: false,
+			responsive: true,
 			animation: false,
 			segmentShowStroke : false,
 			segmentStrokeColor : "#000",
@@ -300,7 +316,7 @@ function draw_temps_charts(){
 					grace: "5%",
 					ticks: {
 						color: "#CCC",
-						callback: function(value, index, ticks) {return value + "°C";}
+						callback: function(value, index, ticks) {return (Number.isInteger(value) ? value : value.toFixed(1)) + "°C";}
 					}
 				},
 			}
@@ -403,11 +419,11 @@ function hwaccel_state(){
 	var qos_type = '<% nvram_get("qos_type"); %>';
 
 	if (hnd_support) {
-		var machine_name = "<% get_machine_name(); %>";
-		if (machine_name.search("aarch64") != -1)
-			code = "<span>Runner:</span> ";
-		else
+		var cpu_model = "<% sysinfo("cpu.model"); %>";
+		if (cpu_model.search("BCM67") != -1)
 			code = "<span>Archer:</span> ";
+		else
+			code = "<span>Runner:</span> ";
 
 		var state = "<% sysinfo("hwaccel.runner"); %>";
 
@@ -489,7 +505,7 @@ function show_memcpu(){
 	document.getElementById("mem_buffer_div").innerHTML = mem_stats_arr[2] + " MB";
 	document.getElementById("mem_cache_div").innerHTML = mem_stats_arr[3] + " MB";
 	if (parseInt(mem_stats_arr[5]) == 0) {
-		document.getElementById("mem_swap_total_div").innerHTML = "<span>No swap configured</span>";
+		document.getElementById("mem_swap_total_div").innerHTML = "<span>No swap</span>";
 		document.getElementById("swap_div").style.display="none";
 	} else {
 		document.getElementById("mem_swap_total_div").innerHTML = mem_stats_arr[5] + " MB";
@@ -587,7 +603,7 @@ function show_wifi_version() {
                 <tr bgcolor="#4D595D">
                         <td valign="top">
                         <div>&nbsp;</div>
-                        <div class="formfonttitle">Tools - System Information</div>
+                        <div class="formfonttitle">System Information</div>
                         <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -654,39 +670,39 @@ function show_wifi_version() {
 						<td>
 							<div style="display: flex;">
 								<div class="hint-color" style="width:20%;"> Total :</div>
-								<div style="width:76%;padding-left: 10px;" id="mem_total_div"></div>
+								<div style="width:25%;padding-left: 10px;text-align:right;" id="mem_total_div"></div>
 							</div>
 							<div style="display: flex;">
-								<div class="hint-color" style="width:20%;">Used</div>
-								<div style="width:76%;padding-left: 10px;" id="mem_used_div"></div>
+								<div class="hint-color" style="width:20%;">Used :</div>
+								<div style="width:25%;padding-left: 10px;text-align:right;" id="mem_used_div"></div>
 							</div>
 
 							<div style="display: flex;">
 								<div class="hint-color" style="width:20%;">Available :</div>
-								<div style="width:76%;padding-left: 10px;" id="mem_available_div"></div>
+								<div style="width:25%;padding-left: 10px;text-align:right;" id="mem_available_div"></div>
 							</div>
 							<div style="display: flex;">
 								<div class="hint-color" style="width:20%;">Free :</div>
-								<div style="width:76%;padding-left: 10px;" id="mem_free_div"></div>
+								<div style="width:25%;padding-left: 10px;text-align:right;" id="mem_free_div"></div>
 							</div>
 							<div style="display: flex;">
 								<div class="hint-color" style="width:20%;">Buffers :</div>
-								<div style="width:76%;padding-left: 10px;" id="mem_buffer_div"></div>
+								<div style="width:25%;padding-left: 10px;text-align:right;" id="mem_buffer_div"></div>
 							</div>
 							<div style="display: flex;">
 								<div class="hint-color" style="width:20%;">Cache :</div>
-								<div style="width:76%;padding-left: 10px;" id="mem_cache_div"></div>
+								<div style="width:25%;padding-left: 10px;text-align:right;" id="mem_cache_div"></div>
 							</div>
 						</td>
 
 						<td style="vertical-align:top;">
 							<div style="display: flex;">
 								<div class="hint-color" style="width:20%;"<th>Total Swap :</div>
-								<div style="width:76%; padding-left: 10px;" id="mem_swap_total_div"></div>
+								<div style="width:25%; padding-left: 10px;text-align:right;" id="mem_swap_total_div"></div>
 							</div>
 							<div id="swap_div" style="display: flex;">
 								<div class="hint-color" style="width:20%;"<th>Used Swap :</div>
-								<div style="width:76%; padding-left: 10px;" id="mem_swap_used_div"></div>
+								<div style="width:25%; padding-left: 10px;text-align:right;" id="mem_swap_used_div"></div>
 							</div>
 						</td>
 
@@ -722,7 +738,7 @@ function show_wifi_version() {
 						</tr>
 					</thead>
 					<tr>
-						<td colspan="2"><canvas style="background-color:#2f3e44;border-radius:10px;"id="tempchartId" height="250" width="700"></canvas></td>
+						<td colspan="2" style="padding:14px;" width="100%"><canvas style="background-color:#2f3e44;border-radius:10px;width: 100% !important; height:275px;"id="tempchartId" ></canvas></td>
 					</tr>
 					<tr>
 						<th>Temperatures</th>

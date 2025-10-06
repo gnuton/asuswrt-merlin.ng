@@ -118,9 +118,7 @@ int get_dns_filter(int proto, int mode, dnsf_srv_entry_t *dnsfsrv)
 				dnsfsrv->server2[0] = '\0';
 				break;
 			case DNSF_SRV_ROUTER:
-				strlcpy(dnsfsrv->server1, nvram_safe_get("dhcp_dns1_x"), 46);
-				if (!*dnsfsrv->server1)	// Empty, default to router's IP
-					strlcpy(dnsfsrv->server1, nvram_safe_get("lan_ipaddr"), 46);
+				strlcpy(dnsfsrv->server1, nvram_safe_get("lan_ipaddr"), 46);
 				dnsfsrv->server2[0] = '\0';
 				break;
 			default:
@@ -187,9 +185,12 @@ void dnsfilter_settings(FILE *fp) {
 				fprintf(fp,
 					"-A DNSFILTER -m mac --mac-source %s -j RETURN\n",
 					mac);
+			} else if (dnsmode == DNSF_SRV_ROUTER) {
+				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j REDIRECT\n",
+					mac);
 			} else if (get_dns_filter(AF_INET, dnsmode, &dnsfsrv)) {
-					fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
-						mac, dnsfsrv.server1);
+				fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination %s\n",
+					mac, dnsfsrv.server1);
 			}
 		}
 
@@ -231,9 +232,11 @@ void dnsfilter6_settings_dnat(FILE *fp) {
 			dnsmode = atoi(mode);
 			if (dnsmode == DNSF_SRV_UNFILTERED) {
 				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j RETURN\n", mac);
+			} else if (dnsmode == DNSF_SRV_ROUTER) {
+				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j REDIRECT\n", mac);
 			} else if (get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {
-					fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination [%s]\n",
-						mac, dnsfsrv.server1);
+				fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination [%s]\n",
+					mac, dnsfsrv.server1);
 			}
 		}
 
@@ -243,6 +246,8 @@ void dnsfilter6_settings_dnat(FILE *fp) {
 		dnsmode = nvram_get_int("dnsfilter_mode");
 		if (dnsmode == DNSF_SRV_UNFILTERED) {
 			return;
+		} else if (dnsmode == DNSF_SRV_ROUTER) {
+			fprintf(fp, "-A DNSFILTER -j REDIRECT\n");
 		} else if (get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {	// Default server (if one exists)
 			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination [%s]\n", dnsfsrv.server1);
 		}

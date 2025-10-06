@@ -2797,11 +2797,8 @@ int update_resolvconf(void)
 	}
 #endif
 #ifdef RTCONFIG_DNSPRIVACY
-	if (dnspriv_enable) {
-		if (!nvram_get_int("dns_local_cache"))
-			fprintf(fp, "nameserver %s\n", "127.0.1.1");
+	if (dnspriv_enable)
 		fprintf(fp_servers, "server=%s\n", "127.0.1.1");
-	}
 #endif
 
 #if (defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(XD6_V2) || defined(ET12))
@@ -2972,10 +2969,16 @@ void wan6_up(const char *pwan_ifname)
 		ipv6_sysconf(wan_ifname, "accept_ra", 1);
 		ipv6_sysconf(wan_ifname, "accept_ra_defrtr", accept_defrtr);
 		ipv6_sysconf(wan_ifname, "forwarding", 0);
+#ifdef RTCONFIG_IPV6_PRIVACY
+		ipv6_sysconf(wan_ifname, "use_tempaddr", 2);
+#endif
 		break;
 	case IPV6_MANUAL:
 		ipv6_sysconf(wan_ifname, "accept_ra", 0);
 		ipv6_sysconf(wan_ifname, "forwarding", 1);
+#ifdef RTCONFIG_IPV6_PRIVACY
+		ipv6_sysconf(wan_ifname, "use_tempaddr", 0);
+#endif
 		break;
 	case IPV6_6RD:
 		update_6rd_info_by_unit(wan_unit);

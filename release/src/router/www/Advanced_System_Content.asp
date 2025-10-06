@@ -233,6 +233,8 @@ function show_boostkey_desc(id) {
 		document.getElementById("boostkey_desc").innerHTML = "<span>" + desc[id] + "</span>";
 }
 
+var secure_default = isSupport("secure_default");
+
 function initial(){	
 	//parse nvram to array
 	var parseNvramToArray = function(oriNvram) {
@@ -1423,7 +1425,6 @@ function pullLANIPList(obj){
 function hideport(flag){
 	document.getElementById("accessfromwan_port").style.display = (flag == 1) ? "" : "none";
 	if(!HTTPS_support){
-		document.getElementById("NSlookup_help_for_WAN_access").style.display = (flag == 1) ? "" : "none";
 		var orig_str = document.getElementById("access_port_title").innerHTML;
 		document.getElementById("access_port_title").innerHTML = orig_str.replace(/HTTPS/, "HTTP");
 		document.getElementById("http_port").style.display = (flag == 1) ? "" : "none";
@@ -1708,11 +1709,6 @@ function show_cert_details(){
 	document.getElementById("issueTo").innerHTML = httpd_cert_info.issueTo;
 	document.getElementById("issueBy").innerHTML = httpd_cert_info.issueBy;
 	document.getElementById("expireOn").innerHTML = httpd_cert_info.expire;
-}
-
-function warn_jffs_format(){
-	alert("WARNING: Erasing the JFFS partition will also wipe out some configuration elements such as OpenVPN certificates, " +
-	      "and various router settings.\n\nMake sure you are certain you wish to proceed with this operation.");
 }
 
 function show_network_monitoring(){
@@ -2067,6 +2063,13 @@ function change_username(){
 
 		$("#http_username_new").val($("#http_username_new").val().trim());
 
+		if($("#http_username_new").val() == $("#http_passwd_cur").val()){
+			showtext(document.getElementById("alert_msg"),"* <#JS_validLoginPWD_same#>");
+			$("#http_username_new").focus();
+			$("#http_username_new").select();
+			return false;
+		}
+
 		if($("#http_username_new").val() == "root"
 				|| $("#http_username_new").val() == "guest"
 				|| $("#http_username_new").val() == "anonymous"
@@ -2131,8 +2134,15 @@ function change_passwd(){
 		return false;
 	}
 
+	var str_valid_max_password = `<#JS_max_password_var#>`;
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default){  /* MODELDEP by Territory Code */
+		str_valid_max_password = `* `+str_valid_max_password.replace("%1$@", "10");
+	}
+	else{
+		str_valid_max_password = `* `+str_valid_max_password.replace("%1$@", "5");
+	}
 	if($("#http_passwd_new").val().length > max_pwd_length){
-		showtext(document.getElementById("new_pwd_msg"),"* <#JS_max_password#>");
+		showtext(document.getElementById("new_pwd_msg"), str_valid_max_password);
 		$("#http_passwd_new").focus();
 		$("#http_passwd_new").select();
 		return false;
@@ -2150,7 +2160,14 @@ function change_passwd(){
 		return false;
 	}
 
-	if(is_KR_sku || is_SG_sku || is_AA_sku){	/* MODELDEP by Territory Code */
+	if($("#http_passwd_new").val() == httpApi.nvramGet(["http_username"]).http_username){
+        showtext(document.getElementById("alert_msg"),"* <#JS_validLoginPWD_same#>");
+        $("#http_passwd_new").focus();
+        $("#http_passwd_new").select();
+        return false;
+	}
+
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default){	/* MODELDEP by Territory Code */
 		if($("#http_passwd_new").val().length > 0){
 			if(!validator.string_KR(document.getElementById("http_passwd_new"))){
 				$("#http_passwd_new").focus();
@@ -2160,7 +2177,7 @@ function change_passwd(){
 		}
 
 		if($("#http_passwd_new").val() == accounts[0]){
-			alert("<#JS_validLoginPWD#>");
+			alert("Password must contain at least 10 characters in length, including 1 letter, 1 special character, and 1 numeric character.");
 			document.form.http_passwd_new.focus();
 			document.form.http_passwd_new.select();
 			return false;
@@ -2223,8 +2240,8 @@ function change_passwd(){
 
 function check_password_length(obj){
 
-	if(is_KR_sku || is_SG_sku || is_AA_sku){     /* MODELDEP by Territory Code */
-		showtext(document.getElementById("new_pwd_msg"),"<#JS_validLoginPWD#>");
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default){     /* MODELDEP by Territory Code */
+		showtext(document.getElementById("new_pwd_msg"),"Password must contain at least 10 characters in length, including 1 letter, 1 special character, and 1 numeric character.");
 		return;
 	}
 	
@@ -2426,34 +2443,6 @@ function build_boostkey_options() {
 					</td>
 				</tr>
 			</table>
-			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
-				<thead>
-					<tr>
-						<td colspan="2">Persistent JFFS2 partition</td>
-					</tr>
-				</thead>
-				<tr id="jffs_format_tr" style="display:none;">
-					<th>Format JFFS partition at next boot</th>
-					<td>
-						<input type="radio" name="jffs2_format" value="1" onclick="warn_jffs_format();" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_format" value="0" <% nvram_match("jffs2_format", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>
-				<tr id="ubifs_format_tr" style="display:none;">
-					<th>Format JFFS partition at next boot</th>
-					<td>
-						<input type="radio" name="ubifs_format" value="1" onclick="warn_jffs_format();" <% nvram_match("ubifs_format", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="ubifs_format" value="0" <% nvram_match("ubifs_format", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>
-				<tr>
-					<th>Enable JFFS custom scripts and configs</th>
-					<td>
-						<input type="radio" name="jffs2_scripts" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="jffs2_scripts" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
-					</td>
-				</tr>
-			</table>
 
 			<table id="hdd_spindown_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;display:none;">
 				<thead>
@@ -2524,6 +2513,13 @@ function build_boostkey_options() {
 					  <td colspan="2"><#t2BC#></td>
 					</tr>
 				</thead>
+				<tr>
+					<th>Enable JFFS custom scripts and configs</th>
+					<td>
+						<input type="radio" name="jffs2_scripts" value="1" <% nvram_match("jffs2_scripts", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="jffs2_scripts" value="0" <% nvram_match("jffs2_scripts", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
 				<tr id="ntpd_server_tr">
 					<th>Enable local NTP server</th>
 					<td>
@@ -2662,14 +2658,6 @@ function build_boostkey_options() {
 						<input type="radio" name="nat_redirect_enable" value="0" <% nvram_match_x("","nat_redirect_enable","0", "checked"); %> ><#checkbox_No#>
 					</td>
 				</tr>
-				<tr>
-					<th>Redirect webui access to www.asusrouter.com</th>
-					<td>
-						<input type="radio" name="http_dut_redir" value="1" <% nvram_match_x("","http_dut_redir","1", "checked"); %> ><#checkbox_Yes#>
-						<input type="radio" name="http_dut_redir" value="0" <% nvram_match_x("","http_dut_redir","0", "checked"); %> ><#checkbox_No#>
-					</td>
-				</tr>
-
 				<tr id="btn_ez_radiotoggle_tr" style="display: none;">
 					<th><#WPS_btn_behavior#></th>
 					<td>
@@ -2920,7 +2908,6 @@ function build_boostkey_options() {
 						<span class="formfontdesc" id="WAN_access_hint" style="color:#FFCC00; display:none;"><#FirewallConfig_x_WanWebEnable_HTTPS_only#> 
 							<a id="faq" href="" target="_blank" style="margin-left: 5px; color:#FFCC00; text-decoration: underline;">FAQ</a>
 						</span>
-						<div class="formfontdesc" id="NSlookup_help_for_WAN_access" style="color:#FFCC00; display:none;"><#NSlookup_help#></div>
 					</td>
 				</tr>
 				<tr id="accessfromwan_port">
