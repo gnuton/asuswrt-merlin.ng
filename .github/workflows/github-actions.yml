@@ -9,16 +9,16 @@ jobs:
         fail-fast: false
         matrix:
           cfg:
-            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
+            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: true }
             - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
+            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: true }
             - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
             - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
             - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
             - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
             - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: true }
             - { model: "rt-ax58u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
 
       if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
@@ -52,6 +52,10 @@ jobs:
           if: matrix.cfg.skip == false
           run: |
             cd /project
+            if [[ $SKIP_BUILD == "true" ]]; then
+              echo "Skipping build!"
+              exit 0
+            fi
             if [[ $GITHUB_REF_TYPE == "tag" ]]; then
                 export TAG="${GITHUB_REF#refs/tags/}"
                 echo "Fetching code from tag $TAG"
@@ -71,6 +75,11 @@ jobs:
         - name: "Set version"
           if: matrix.cfg.skip == false
           run: |
+            if [[ $SKIP_BUILD == "true" ]]; then
+              echo "Skipping build!"
+              exit 0
+            fi
+            
             cd ${PROJECT_DIR}
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
             if [[ $GITHUB_REF_TYPE == "branch" ]]; then
@@ -86,12 +95,20 @@ jobs:
         - name: Generate changelog
           if: matrix.cfg.skip == false
           run: |
+            if [[ $SKIP_BUILD == "true" ]]; then
+              echo "Skipping build!"
+              exit 0
+            fi
             cd ${PROJECT_DIR}
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
           if: matrix.cfg.skip == false
           run: |
+            if [[ $SKIP_BUILD == "true" ]]; then
+              echo "Skipping build!"
+              exit 0
+            fi
             echo "----- Space available -----"
             df -h
             echo "----- I am: $(id) -----"
@@ -131,6 +148,10 @@ jobs:
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
           run: |
+            if [[ $SKIP_BUILD == "true" ]]; then
+              echo "Skipping build!"
+              exit 0
+            fi
             mkdir -p "${ARTIFACTS_DIR}"
             export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
             echo "Removing images with boot loader."
