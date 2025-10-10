@@ -52,7 +52,7 @@ jobs:
           if: matrix.cfg.skip == false
           run: |
             cd /project
-            if [[ $SKIP_BUILD == "true"]]; then
+            if [[ $SKIP_BUILD == "true" ]]; then
               echo "Skipping build!"
               exit 0
             fi
@@ -75,7 +75,7 @@ jobs:
         - name: "Set version"
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true"]]; then
+            if [[ $SKIP_BUILD == "true" ]]; then
               echo "Skipping build!"
               exit 0
             fi
@@ -95,7 +95,7 @@ jobs:
         - name: Generate changelog
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true"]]; then
+            if [[ $SKIP_BUILD == "true" ]]; then
               echo "Skipping build!"
               exit 0
             fi
@@ -105,7 +105,7 @@ jobs:
         - name: "Build"
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true"]]; then
+            if [[ $SKIP_BUILD == "true" ]]; then
               echo "Skipping build!"
               exit 0
             fi
@@ -148,7 +148,7 @@ jobs:
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true"]]; then
+            if [[ $SKIP_BUILD == "true" ]]; then
               echo "Skipping build!"
               exit 0
             fi
