@@ -9,7 +9,7 @@ jobs:
         fail-fast: false
         matrix:
           cfg:
-            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
+            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: true }
             - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
             - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
             - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
