@@ -44,7 +44,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 
 ### ⬇️ Firmware downloads
 3006.102.x firmware downloads: latest [testing](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/3006.102.3_1-gnuton0_beta1)
-* [GT-BE98/GT-BE2500](https://rog.asus.com/networking/rog-rapture-gt-be98-model)
+* [GT-BE98/GT-BE25000](https://rog.asus.com/networking/rog-rapture-gt-be98-model)
   
 3004.388.x firmware downloads: [stable](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest)
 * [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
