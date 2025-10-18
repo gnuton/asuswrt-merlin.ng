@@ -531,10 +531,6 @@ function init(){
         document.querySelector('#ddns_help')?.classList.add('tuf');
         document.querySelector('#ddns_copy')?.classList.add('tuf');
     }
-
-    if(isSupport("noasusddns")){
-        $("#ddns_server_x option[value='WWW.ASUS.COM']").remove();
-    }
 }
 
 function update_ddns_wan_unit_option(){
