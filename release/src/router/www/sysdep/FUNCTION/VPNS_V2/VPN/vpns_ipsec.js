@@ -702,7 +702,8 @@ function validate_format_IPSec(_obj, _validField){
 		const psk_length_trim = str.trim().length;
 		if(psk_length < 8){
 			testResult.isError = true;
-			testResult.errReason = "<#JS_PSK64Hex#>";
+			testResult.errReason = "<#JS_short_password#>";
+			testResult.set_value = "00000000";
 			return testResult;
 		}
 		if(psk_length > 32){
@@ -1077,6 +1078,7 @@ function set_apply_btn_status_IPSec(_obj){
 					showLoading(time);
 					setTimeout(function(){
 						httpApi.nvramGet(["ipsec_profile_1"], true);
+						httpApi.nvramCharToAscii(["ipsec_profile_1"], true);
 						if(!window.matchMedia('(max-width: 575px)').matches)
 							$("#srv_profile_list").children("[type='" + select_vpn_type + "']").addClass("selected").find(".svr_item_text_container").click();
 					}, time*1000);

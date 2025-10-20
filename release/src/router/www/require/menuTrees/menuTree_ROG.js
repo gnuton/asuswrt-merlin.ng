@@ -146,9 +146,6 @@ define(function(){
 					{url: "Main_TrafficMonitor_last24.asp", tabName: "__INHERIT__"},
 					{url: "Main_TrafficMonitor_daily.asp", tabName: "__INHERIT__"},
 					{url: "Main_TrafficMonitor_monthly.asp", tabName: "__INHERIT__"},
-					{url: "Main_TrafficMonitor_devrealtime.asp", tabName: "__INHERIT__"},
-					{url: "Main_TrafficMonitor_devdaily.asp", tabName: "__INHERIT__"},
-					{url: "Main_TrafficMonitor_devmonthly.asp", tabName: "__INHERIT__"},
 					{url: "TrafficAnalyzer_Statistic.asp", tabName: "<#Statistic#>"},
 					{url: "AdaptiveQoS_TrafficLimiter.asp", tabName: "Traffic Limiter"},
 					{url: "AdaptiveQoS_WebHistory.asp", tabName: "<#Adaptive_History#>"},
@@ -199,10 +196,10 @@ define(function(){
 				] 
 			},
 			{
-				menuName: isSupport("sdn_mwl") ? `<#Network#>` : Guest_Network_naming,
+				menuName: Guest_Network_naming,
 				index: "menu_GuestNetwork",
 				tab: [
-					{url: (isSupport("mtlancfg") ? "SDN.asp" : "Guest_network.asp"), tabName: isSupport("sdn_mwl") ? `<#Network#>` : Guest_Network_naming},
+					{url: (isSupport("mtlancfg") ? "SDN.asp" : "Guest_network.asp"), tabName: Guest_Network_naming},
 					{url: "Captive_Portal.asp", tabName: "Free WiFi"},
 					{url: "Captive_Portal_Advanced.asp", tabName: "<#Captive_Portal#>"},
 					{url: "Guest_network_fbwifi.asp", tabName: "Facebook WiFi"},
@@ -792,10 +789,6 @@ define(function(){
 
 				if(!isSupport("mtlancfg") || !isSupport("mlo")){
 					retArray.push("MLO.asp");
-				}
-				
-				if(isSupport("sdn_mainfh")){
-					retArray.push("Advanced_ACL_Content.asp");
 				}
 
 				if(isSupport("BUSINESS")){

@@ -231,11 +231,11 @@
                 let { smartConnectReferenceIndex } = smartConnect;
                 let prefixNvram = prefix === "smart_connect" ? smartConnectReferenceIndex : prefix;
                 let { ssidValue } = wlBandSeq[prefixNvram];
+                ssidValue = ssidValue.replace('"', "&quot;").replace("'", "&apos;");
                 return `
                     <div class="info-block">
                         <div class="info-title"><#QIS_finish_wireless_item1#></div>
                         <div>
-                            <input id="${prefix}_ssid" type="text" class="input-size-25" maxlength="32" value="${ssidValue}" onkeypress="validator.isString(this, event)" autocomplete="off" autocapitalize="off" />
                             <div style="display:flex; align:center;">
                                 <input id="${prefix}_ssid" type="text" class="input-size-25" maxlength="32" value="${ssidValue}" onkeypress="validator.isString(this, event)" autocomplete="off" autocapitalize="off" />
                                 <div id="${prefix}_showqrdiv" class="qrcode_btn" onclick="ShowQRCode('${prefix}');"></div>
@@ -439,6 +439,7 @@
                 let { smartConnectEnable, smartConnectReferenceIndex } = smartConnect;
                 let prefixNvram = prefix === "smart_connect" ? smartConnectReferenceIndex : prefix;
                 let { authMethodValue, wpaKeyValue } = wlBandSeq[prefixNvram];
+                wpaKeyValue = wpaKeyValue.replace('"', "&quot;").replace("'", "&apos;");
                 let displayFlag = (() => {
                     if (
                         authMethodValue === "psk" ||

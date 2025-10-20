@@ -306,6 +306,8 @@ deconfig(int zcip)
 	if (!(unit < 0))
 		update_wan_state(prefix, WAN_STATE_STOPPED, end_wan_sbstate);
 
+	logmessage(zcip ? "zcip client" : "dhcp client", "deconfig");
+
 	_dprintf("udhcpc:: %s done\n", __FUNCTION__);
 	return 0;
 }
@@ -1173,11 +1175,11 @@ expires_lan(char *lan_ifname, unsigned int in)
 	return 0;
 }
 
-#ifdef RTCONFIG_AMAS_WGN
+#if defined(RTCONFIG_AMAS_WGN) || defined(RTCONFIG_MULTILAN_CFG)
 static void restart_re_qos()
 {
-       // AMAS RE mode
-       if (nvram_get_int("re_mode") == 1) start_iQos();
+	// AMAS RE mode
+	if (nvram_get_int("re_mode") == 1) start_iQos();
 }
 #endif
 
@@ -1299,7 +1301,7 @@ bound_lan(void)
 
 _dprintf("%s: IFUP.\n", __FUNCTION__);
 
-#ifdef RTCONFIG_AMAS_WGN
+#if defined(RTCONFIG_AMAS_WGN) || defined(RTCONFIG_MULTILAN_CFG)
 	/* move qos restart here to trigger early */
 	restart_re_qos();
 #endif
@@ -2475,7 +2477,7 @@ int start_mtwan_dhcp6c(int unit)
 	struct duid duid;
 	char duid_arg[sizeof(duid)*2+1];
 	char prefix_arg[sizeof("128:xxxxxxxx")];
-	int service;
+	int service, i;
 #ifdef RTCONFIG_SOFTWIRE46
 	int wan_proto;
 #endif
@@ -2512,7 +2514,10 @@ int start_mtwan_dhcp6c(int unit)
 			((unsigned long)(duid.ea[3] & 0x0f) << 16) |
 			((unsigned long)(duid.ea[4]) << 8) |
 			((unsigned long)(duid.ea[5])) : 1;
-		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", 0, iaid);
+		i = (nvram_get_int(ipv6_nvname("ipv6_prefix_len_wan")) ? : 0);
+		if ((i < 48) || (i > 64))
+			i = 0;
+		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", i, iaid);
 		dhcp6c_argv[index++] = "-P";
 		dhcp6c_argv[index++] = prefix_arg;
 	}

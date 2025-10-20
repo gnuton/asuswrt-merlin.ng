@@ -17,118 +17,20 @@
 #include <httpd.h>
 #endif
 #ifdef RTCONFIG_CFGSYNC
+#include <cfg_capability.h>
 #include <cfg_param.h>
 #include <cfg_slavelist.h>
 #endif
-#if defined(RTCONFIG_AMAS_NEWOB) || defined(RTCONFIG_CFGSYNC)
-#include <cfg_event.h>
-#include <cfg_onboarding.h>
-#include <cfg_lib.h>
-#endif
 
 #ifdef RTCONFIG_CFGSYNC
-#define CFG_JSON_FILE           "/tmp/cfg.json"
+#define CFG_JSON_FILE	"/tmp/cfg.json"
 #endif
-
-#define sys_upload(image) eval("nvram", "restore", image)
 
 void httpd_nvram_commit(void){
 
 	/* 0:nvram 1:openvpn 2:ipsec 3:usericon */
 	sync_profile_update_time(0);
 }
-
-/* Base-64 decoding.  This represents binary data as printable ASCII
-** characters.  Three 8-bit binary bytes are turned into four 6-bit
-** values, like so:
-**
-**   [11111111]  [22222222]  [33333333]
-**
-**   [111111] [112222] [222233] [333333]
-**
-** Then the 6-bit values are represented using the characters "A-Za-z0-9+/".
-*/
-
-static int b64_decode_table[256] = {
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* 00-0F */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* 10-1F */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,62,-1,-1,-1,63,  /* 20-2F */
-    52,53,54,55,56,57,58,59,60,61,-1,-1,-1,-1,-1,-1,  /* 30-3F */
-    -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,  /* 40-4F */
-    15,16,17,18,19,20,21,22,23,24,25,-1,-1,-1,-1,-1,  /* 50-5F */
-    -1,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,  /* 60-6F */
-    41,42,43,44,45,46,47,48,49,50,51,-1,-1,-1,-1,-1,  /* 70-7F */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* 80-8F */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* 90-9F */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* A0-AF */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* B0-BF */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* C0-CF */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* D0-DF */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,  /* E0-EF */
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1   /* F0-FF */
-    };
-
-/* Do base-64 decoding on a string.  Ignore any non-base64 bytes.
-** Return the actual number of bytes generated.  The decoded size will
-** be at most 3/4 the size of the encoded, and may be smaller if there
-** are padding characters (blanks, newlines).
-*/
-int
-b64_decode( const char* str, unsigned char* space, int size )
-{
-    const char* cp;
-    int space_idx, phase;
-    int d, prev_d=0;
-    unsigned char c;
-
-    space_idx = 0;
-    phase = 0;
-    for ( cp = str; *cp != '\0'; ++cp )
-	{
-	d = b64_decode_table[(int)*cp];
-	if ( d != -1 )
-	    {
-	    switch ( phase )
-		{
-		case 0:
-		++phase;
-		break;
-		case 1:
-		c = ( ( prev_d << 2 ) | ( ( d & 0x30 ) >> 4 ) );
-		if ( space_idx < size )
-		    space[space_idx++] = c;
-		++phase;
-		break;
-		case 2:
-		c = ( ( ( prev_d & 0xf ) << 4 ) | ( ( d & 0x3c ) >> 2 ) );
-		if ( space_idx < size )
-		    space[space_idx++] = c;
-		++phase;
-		break;
-		case 3:
-		c = ( ( ( prev_d & 0x03 ) << 6 ) | d );
-		if ( space_idx < size )
-		    space[space_idx++] = c;
-		phase = 0;
-		break;
-		}
-	    prev_d = d;
-	    }
-	}
-    return space_idx;
-}
-
-/*
- * Get the value of an NVRAM variable
- * @param	name	name of variable to get
- * @return	value of variable or NULL if undefined
- */
-char*
-nvram_get_x(const char *sid, const char *name)
-{
-	return (nvram_safe_get(name));
-}
-
 
 #ifndef RTCONFIG_BWDPI
 int check_tcode_blacklist()
@@ -193,145 +95,8 @@ int is_port_in_use(int port)
 	return 0;
 }
 
-#ifdef RTCONFIG_CFGSYNC
-#ifdef RTCONFIG_AMAS_CENTRAL_CONTROL
-#ifdef RTCONFIG_AMAS_CAP_CONFIG
-char *get_ft_name_by_ft_index(int index)
-{
-	struct subfeature_mapping_s *pFeature = NULL;
-	char *ftName = NULL;
-
-	for (pFeature = &subfeature_mapping_list[0]; pFeature->index != 0; pFeature++) {
-		if (index == pFeature->index) {
-			ftName = pFeature->name;
-			break;
-		}
-	}
-
-	return ftName;
-}
-
-int is_cap_private_cfg(char *param)
-{
-	struct param_mapping_s *pParam = &param_mapping_list[0];
-	json_object *privFtArray = json_object_from_file(CAP_PRIVATE_FEATURE_FILE);
-	json_object *ftEntry = NULL;
-	int ret = 0, privFtLen = 0, i = 0;
-	char *ftName = NULL;
-
-	if (privFtArray) {
-		privFtLen = json_object_array_length(privFtArray);
-
-		for (pParam = &param_mapping_list[0]; pParam->param != NULL; pParam++) {
-			if (strcmp(param, pParam->param) == 0) {
-				ftName = get_ft_name_by_ft_index(pParam->subfeature);
-				break;
-			}
-		}
-
-		if (ftName) {
-			for (i = 0; i < privFtLen; i++) {
-				if ((ftEntry = json_object_array_get_idx(privFtArray, i))) {
-					if (strcmp(ftName, json_object_get_string(ftEntry)) == 0) {
-						ret = 1;
-						break;
-					}
-				}
-			}
-		}
-
-		json_object_put(privFtArray);
-	}
-
-	return ret;
-}
-#endif	/* RTCONFIG_AMAS_CAP_CONFIG */
-#endif	/* RTCONFIG_AMAS_CENTRAL_CONTROL */
-
-int is_cfg_server_ready()
-{
-	if (nvram_match("x_Setting", "1") &&
-		pids("cfg_server") && check_if_file_exist(CFG_SERVER_PID))
-		return 1;
-
-	return 0;
-}
-
-int check_cfg_changed(json_object *root)
-{
-	json_object *paramObj = NULL;
-	struct param_mapping_s *pParam = &param_mapping_list[0];
-
-	if (!root)
-		return 0;
-
-	for (pParam = &param_mapping_list[0]; pParam->param != NULL; pParam++) {
-		json_object_object_get_ex(root, pParam->param, &paramObj);
-		if (paramObj)
-			return 1;
-	}
-
-	return 0;
-}
-
-void notify_cfg_server(json_object *cfg_root, int check)
-{
-	char cfg_ver[9];
-	int apply_lock = 0;
-
-	if (is_cfg_server_ready()) {
-		if ((check && check_cfg_changed(cfg_root)) || !check) {
-			/* save the changed nvram parameters */
-			apply_lock = file_lock(CFG_APPLY_LOCK);
-			json_object_to_file(CFG_JSON_FILE, cfg_root);
-			file_unlock(apply_lock);
-
-			/* change cfg_ver when setting changed */
-			srand(time(NULL));
-			snprintf(cfg_ver, sizeof(cfg_ver), "%d%d", rand(), rand());
-			nvram_set("cfg_ver", cfg_ver);
-
-			/* trigger cfg_server to send notification */
-			kill_pidfile_s(CFG_SERVER_PID, SIGUSR2);
-		}
-	}
-}
-
-int save_changed_param(json_object *cfg_root, char *param, const char *value)
-{
-	int ret = 0;
-#if defined(RTCONFIG_AMAS_CENTRAL_CONTROL) && defined(RTCONFIG_AMAS_CAP_CONFIG)
-	int param_is_private = is_cap_private_cfg(param);
-#endif
-
-	if (is_cfg_server_ready()){
-		json_object *tmp = NULL;
-		struct param_mapping_s *pParam = &param_mapping_list[0];
-
-		json_object_object_get_ex(cfg_root, param, &tmp);
-		if (tmp == NULL) {
-			for (pParam = &param_mapping_list[0]; pParam->param != NULL; pParam++) {
-				if (!strcmp(param, pParam->param)) {
-#if defined(RTCONFIG_AMAS_CENTRAL_CONTROL) && defined(RTCONFIG_AMAS_CAP_CONFIG)
-					if (param_is_private && value)
-						json_object_object_add(cfg_root, param,
-							json_object_new_string(value));
-					else
-#endif
-					json_object_object_add(cfg_root, param,
-						json_object_new_string(""));
-					ret = 1;
-					break;
-				}
-			}
-		}
-	}
-
-	return ret;
-}
-#endif	/* RTCONFIG_CFGSYNC */
-
 #ifdef RTCONFIG_OPENVPN
+
 // Using this api need to upload OPENVPN_UPLOAD_FILE first and if upload finish nvram set upload_server_ovpn_cert_temp=1
 int upload_server_ovpn_cert_cgi()
 {
@@ -497,10 +262,6 @@ int get_wl_nband_list()
 	char band_str[8] = {0}, word[256] = {0}, *next = NULL;
 	char tmp[128] = {0}, prefix[] = "wlXXXXXXXXXX_";
 	char wlnband_list[64] = {0};
-#ifdef RTCONFIG_UAWIFI
-	char wlnband_list_conv[64] = {0}, band_str_conv[8] = {0};
-	int count2g_conv = 0, count5g_conv = 0, count6g_conv = 0;
-#endif
 
 	foreach (word, nvram_safe_get("wl_ifnames"), next) {
 
@@ -510,50 +271,24 @@ int get_wl_nband_list()
 		switch (band){
 			case 1:
 				snprintf(band_str, sizeof(band_str), "5g%d", ++count5g);
-#ifdef RTCONFIG_UAWIFI
-				snprintf(band_str_conv, sizeof(band_str_conv), "5g%d", ++count5g_conv);
-#endif
 				break;
 			case 2:
 				snprintf(band_str, sizeof(band_str), "2g%d", ++count2g);
-#ifdef RTCONFIG_UAWIFI
-				snprintf(band_str_conv, sizeof(band_str_conv), "2g%d", ++count2g_conv);
-#endif
 				break;
 			case 4:
 				snprintf(band_str, sizeof(band_str), "6g%d", ++count6g);
-#ifdef RTCONFIG_UAWIFI
-				snprintf(band_str_conv, sizeof(band_str_conv), "6g%d", ++count6g_conv);
-#endif
 				break;
 		}
 
-#ifdef RTCONFIG_UAWIFI
-		if(strncmp(band_str, "6g", 2)){
-#endif
-
-		if(wlnband_list[0] != '\0')
+		if(unit != 0)
 			strlcat(wlnband_list, "<", sizeof(wlnband_list));
 
 		strlcat(wlnband_list, band_str, sizeof(wlnband_list));
-#ifdef RTCONFIG_UAWIFI
-		}
-#endif
-
-
-#ifdef RTCONFIG_UAWIFI
-		if(wlnband_list_conv[0] != '\0')
-			strlcat(wlnband_list_conv, "<", sizeof(wlnband_list_conv));
-		strlcat(wlnband_list_conv, band_str_conv, sizeof(wlnband_list_conv));
-#endif
 
 		unit++;
 	}
 
 	nvram_set("wlnband_list", wlnband_list);
-#ifdef RTCONFIG_UAWIFI
-	nvram_set("wlnband_list_conv", wlnband_list_conv);
-#endif
 
 	return ret;
 }
@@ -566,11 +301,7 @@ char *wl_nband_to_wlx(char *nv_name, char *wl_name, size_t len){
 	char wlnband_list[64] = {0};
 	char word[64] = {0}, *next = NULL;
 
-#ifdef RTCONFIG_UAWIFI
-	strlcpy(wlnband_list, nvram_safe_get("wlnband_list_conv"), sizeof(wlnband_list));
-#else
 	strlcpy(wlnband_list, nvram_safe_get("wlnband_list"), sizeof(wlnband_list));
-#endif
 
 	//for(i=0; i<(sizeof(wl_band_list)/sizeof(wl_band_list[0])) && wl_band_list[i][0] != '\0'; i++){
 	foreach_60(word, wlnband_list, next){
@@ -610,9 +341,6 @@ static int get_sdn_rwd_cap_array(struct json_object *sdn_rwd_cap_array){
 #if defined(RTCONFIG_OPEN_NAT) && defined(RTCONFIG_SDN_PRIORITY)
 		"Gaming",
 #endif
-#if defined(RTCONFIG_MULTILAN_MWL)
-		"MAINFH",
-#endif
 		"Guest", "IoT", "VPN",
 		NULL};
 
@@ -627,7 +355,7 @@ static int get_sdn_rwd_cap_array(struct json_object *sdn_rwd_cap_array){
 
 struct RWD_MAPPING_TABLE rwd_mapping_t[] =
 {
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GTAXE11000) || defined(GTAC2900) || defined(GTAX11000) || defined(GSAX3000) || defined(GSAX5400) || defined(GTAX11000_PRO) || defined(TUFAX5400) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GTAXE11000) || defined(GTAC2900) || defined(GTAX11000) || defined(GSAX3000) || defined(GSAX5400) || defined(GTAX11000_PRO) || defined(TUFAX5400) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO)
 	{"AuraRGB", "light_effect/light_effect.html", "<rt><white>light_effect/light_effect_white.css"},
 	{"AuraRGB_preview", "light_effect/light_effect_pre.html", "<rt>"},
 #endif
@@ -1026,42 +754,9 @@ int get_wgsc_list(int s_unit, struct json_object *wgsc_list_array) {
 		json_object_object_add(wgsc_nv_obj, "index", json_object_new_string(tmp));
 		json_object_array_add(wgsc_list_array, wgsc_nv_obj);
 	}
-	return 0;
 #else
 	return ASUSAPI_NOT_SUPPORT;
 #endif
-}
-
-int set_app_mnt(char *app_mnt)
-{
-	int ret = HTTP_OK;
-	char *p = NULL;
-
-	time_t now = time(NULL);
-
-	if(app_mnt && *app_mnt != '\0' && strlen(app_mnt) < 9){
-		for (p = app_mnt; *p != '\0'; ++p) {
-			if(!isdigit(*p)){
-				ret = HTTP_INVALID_INPUT;
-				goto FINISH;
-			}
-		}
-		nvram_set("app_mnt", app_mnt);
-		nvram_set_int("app_mnt_ts", now);
-		httpd_nvram_commit();
-	}
-
-FINISH:
-	return ret;
-}
-
-int get_app_mnt(struct json_object *app_mnt_obj)
-{
-	if(json_object_get_type(app_mnt_obj) == json_type_object){
-		json_object_object_add(app_mnt_obj, "app_mnt", json_object_new_string(nvram_safe_get("app_mnt")));
-		json_object_object_add(app_mnt_obj, "app_mnt_ts", json_object_new_string(nvram_safe_get("app_mnt_ts")));
-	}
-	return 0;
 }
 
 struct REPLACE_PRODUCTID_S replace_productid_t[] =
@@ -1093,12 +788,16 @@ struct REPLACE_PRODUCTID_S replace_productid_t[] =
 	{"TX-AX6000", "天选游戏路由", "CN"},
 	{"TUF-AX6000",  "TUF GAMING AX6000", "global"},
 	{"GT-BE96",  "ROG 八爪鱼7", "CN"},
-	{"TUF-BE3600", "TUF GAMING 小旋风", "CN"},
-	{"TUF-BE6500", "TUF GAMING 小旋风 Pro", "CN"},
-	{"TUF_3600", "TUF GAMING 小旋风", "CN"},
-	{"TUF_6500", "TUF GAMING 小旋风 Pro", "CN"},
+	{"TUF-BE3600", "TUF GAMING 小旋风 WiFi7", "CN"},
+	{"TUF-BE6500", "TUF GAMING 小旋风 Pro WiFi7", "CN"},
+	{"TUF_3600", "TUF GAMING 小旋风 WiFi7", "CN"},
+	{"TUF_6500", "TUF GAMING 小旋风 Pro WiFi7", "CN"},
 	{"ZenWiFi_BD4", "灵耀魔方 WiFi7 BE3600", "CN"},
 	{"ZenWiFi_BD4_Outdoor", "灵耀魔方 无界", "CN"},
+	{"GS7", "ROG 魔盒", "CN"},
+	{"RP-BE58", "小飞侠组网超人 WiFi7", "CN"},
+	{"GS7_Pro", "ROG 魔盒 Pro", "CN"},
+	{"TUF_3600_V2", "TUF GAMING 小旋风 V2 WiFi7", "CN"},
 	{NULL, NULL, NULL}
 };
 
@@ -1117,184 +816,175 @@ void replace_productid(char *GET_PID_STR, char *RP_PID_STR, int len){
 		}
 	}
 
-	if(strlen(RP_PID_STR))
-		return;
-
-	if ((p_temp = strstr(GET_PID_STR, "ZenWiFi_")) && !strncmp(nvram_safe_get("preferred_lang"), "CN", 2)) {
-		p_temp += strlen("ZenWiFi_");
-		snprintf(RP_PID_STR, len, "灵耀%s", p_temp);
+	if(!strcmp(GET_PID_STR,"RT-AX57M") && !strcmp(nvram_safe_get("preferred_lang"), "CN")){
+		if(!strcmp(nvram_safe_get("CoBrand"), "5"))
+			strlcpy(RP_PID_STR, "RT-AX57 青春版", len);
+		else
+			strlcpy(RP_PID_STR, "RT-AX57 热血版", len);
 	}
-	else{
-		strlcpy(RP_PID_STR, GET_PID_STR, len);
+	else if(!strcmp(GET_PID_STR, "RT-BE57") && !strncmp(nvram_safe_get("preferred_lang"), "CN", 2) && nvram_get_int("CoBrand") == 12){
+		strlcpy(RP_PID_STR, "天选游戏路由2 初音未来版", len);
 	}
-
-	/* general  replace underscore with space */
-	for (; *RP_PID_STR; ++RP_PID_STR)
-	{
-		if (*RP_PID_STR == '_')
-			*RP_PID_STR = ' ';
+	else if(!strcmp(GET_PID_STR, "RT-BE57") && !strncmp(nvram_safe_get("preferred_lang"), "CN", 2) && nvram_get_int("CoBrand") == 11){
+		strlcpy(RP_PID_STR, "天选游戏路由2", len);
 	}
-}
-
-#ifdef RTCONFIG_AMAS
-int do_reboot_action(char *device_list)
-{
-	int ret = HTTP_OK;
-	char word[32] = {0}, *next = NULL;
-	char event_msg[1024] = {0}, mac_list[512] = {0};
-	struct json_object *mac_array = json_object_new_array();
-
-	if(device_list)
-		strlcpy(mac_list, device_list, sizeof(mac_list));
-
-	if(!strcmp(mac_list, "DUT")){
-		notify_rc("reboot");
-		goto FINISH;
+	else if(!strcmp(GET_PID_STR, "GS7") && !strncmp(nvram_safe_get("preferred_lang"), "CN", 2) && nvram_get_int("CoBrand") == 18){
+		strlcpy(RP_PID_STR, "ROG 魔盒 初音未来版", len);
 	}
-
-	foreach_44(word, mac_list, next) {
-		if(!isValidMacAddress(word)){
-			ret = HTTP_INVALID_MAC;
-			goto FINISH;
-		}
-		json_object_array_add(mac_array, json_object_new_string(word));
+	else if(!strcmp(GET_PID_STR, "GS7") && !strncmp(nvram_safe_get("preferred_lang"), "CN", 2) && nvram_get_int("CoBrand") == 17){
+		strlcpy(RP_PID_STR, "ROG 魔盒 透视版", len);
 	}
-
-	snprintf(event_msg, sizeof(event_msg), HTTPD_ACTION_MSG,
-		EID_HTTPD_REBOOT, json_object_to_json_string(mac_array), "{}");
-
-	dbg("event_msg = [%s]\n", event_msg);
-
-	if (strlen(event_msg))
-		send_cfgmnt_event(event_msg);
-
-FINISH:
-	if(mac_array)
-		json_object_put(mac_array);
-
-	return ret;
-}
-#endif
-
-/*
- * Check firmware update status
- * @return	0:No need upgrade 1:need upgrade 2:need Force upgrade 3:Fail to retrieve firmware
- */
-int check_firmware_update_status(void)
-{
-	int count = 60;
-
-	while(count-- > 0){
-		sleep(1);
-#ifdef RTCONFIG_CFGSYNC
-		if(is_cfg_server_ready()){
-			int cfg_check = nvram_get_int("cfg_check");
-
-			if(cfg_check == 0 || cfg_check == 1 || cfg_check == 5)
-				continue;
-			else if(cfg_check == 2 || cfg_check == 3)
-				return 3;
-			else if(cfg_check == 9)
-				return 0;
-			else if(cfg_check == 7)
-				return 1;
+	else if(!strlen(RP_PID_STR)){
+		if((p_temp = strstr(GET_PID_STR, "ZenWiFi_")) && !strncmp(nvram_safe_get("preferred_lang"), "CN", 2)){
+			p_temp += strlen("ZenWiFi_");
+			snprintf(RP_PID_STR, len, "灵耀%s", p_temp);
 		}
 		else
-#endif
+			strlcpy(RP_PID_STR, GET_PID_STR, len);
+
+		/* general replace underscore with space */
+		for (; *RP_PID_STR; ++RP_PID_STR)
 		{
-			if(nvram_get_int("webs_state_update") == 0)
-				continue;
-			else{
-				if(nvram_get_int("webs_state_error") == 1)
-					return 3;
-				else
-					return nvram_get_int("webs_state_flag");
-			}
+			if (*RP_PID_STR == '_')
+				*RP_PID_STR = ' ';
 		}
 	}
-	return 3;
 }
 
-/*
- * Do firmware update to FRS server
- * @param	from_id		trigger service
- * @param	wait_result	0: do not wait 1:watting
- * @return	0:No need upgrade 1:need upgrade 2:need Force upgrade 3:Fail to retrieve firmware
- */
-int do_firmware_check(int from_id, int wait_result)
-{
-	int ret = 0;
-
-	if(from_id == FROM_BROWSER)
-		nvram_set("webs_update_trigger", "GUI_CFG");
-	else if(from_id == FROM_ASUSROUTER)
-		nvram_set("webs_update_trigger", "APP_CFG");
-	else
-		nvram_set("webs_update_trigger", "AWSIOT_CFG");
-
 #ifdef RTCONFIG_CFGSYNC
-	char event_msg[64] = {0};
-	snprintf(event_msg, sizeof(event_msg), HTTPD_GENERIC_MSG, EID_HTTPD_FW_CHECK);
-	if(is_cfg_server_ready())
-	{
-		if (strlen(event_msg))
-			send_cfgmnt_event(event_msg);
-	}
-	else
-#endif
-		notify_rc("start_webs_update");
+#ifdef RTCONFIG_AMAS_CENTRAL_CONTROL
+#ifdef RTCONFIG_AMAS_CAP_CONFIG
+char *get_ft_name_by_ft_index(int index)
+{
+	struct subfeature_mapping_s *pFeature = NULL;
+	char *ftName = NULL;
 
-	if(wait_result)
-		ret = check_firmware_update_status();
+	for (pFeature = &subfeature_mapping_list[0]; pFeature->index != 0; pFeature++) {
+		if (index == pFeature->index) {
+			ftName = pFeature->name;
+			break;
+		}
+	}
+
+	return ftName;
+}
+
+int is_cap_private_cfg(char *param)
+{
+	struct param_mapping_s *pParam = &param_mapping_list[0];
+	json_object *privFtArray = json_object_from_file(CAP_PRIVATE_FEATURE_FILE);
+	json_object *ftEntry = NULL;
+	int ret = 0, privFtLen = 0, i = 0;
+	char *ftName = NULL;
+
+	if (privFtArray) {
+		privFtLen = json_object_array_length(privFtArray);
+
+		for (pParam = &param_mapping_list[0]; pParam->param != NULL; pParam++) {
+			if (strcmp(param, pParam->param) == 0) {
+				ftName = get_ft_name_by_ft_index(pParam->subfeature);
+				break;
+			}
+		}
+
+		if (ftName) {
+			for (i = 0; i < privFtLen; i++) {
+				if ((ftEntry = json_object_array_get_idx(privFtArray, i))) {
+					if (strcmp(ftName, json_object_get_string(ftEntry)) == 0) {
+						ret = 1;
+						break;
+					}
+				}
+			}
+		}
+
+		json_object_put(privFtArray);
+	}
 
 	return ret;
 }
+#endif	/* RTCONFIG_AMAS_CAP_CONFIG */
+#endif	/* RTCONFIG_AMAS_CENTRAL_CONTROL */
 
-int do_firmware_upgrade(void)
+int is_cfg_server_ready()
 {
-#ifdef RTCONFIG_CFGSYNC
-	char event_msg[64] = {0};
+	if (nvram_match("x_Setting", "1") &&
+		pids("cfg_server") && check_if_file_exist(CFG_SERVER_PID))
+		return 1;
 
-	snprintf(event_msg, sizeof(event_msg), HTTPD_GENERIC_MSG, EID_HTTPD_FW_UPGRADE);
-
-	if (strlen(event_msg))
-			send_cfgmnt_event(event_msg);
-#else
-	notify_rc("start_webs_upgrade");
-#endif
 	return 0;
 }
 
-int do_upload_config(void)
+int check_cfg_changed(json_object *root)
+{
+	json_object *paramObj = NULL;
+	struct param_mapping_s *pParam = &param_mapping_list[0];
+
+	if (!root)
+		return 0;
+
+	for (pParam = &param_mapping_list[0]; pParam->param != NULL; pParam++) {
+		json_object_object_get_ex(root, pParam->param, &paramObj);
+		if (paramObj)
+			return 1;
+	}
+
+	return 0;
+}
+
+void notify_cfg_server(json_object *cfg_root, int check)
+{
+	char cfg_ver[9];
+	int apply_lock = 0;
+
+	if (is_cfg_server_ready()) {
+		if ((check && check_cfg_changed(cfg_root)) || !check) {
+			/* save the changed nvram parameters */
+			apply_lock = file_lock(CFG_APPLY_LOCK);
+			json_object_to_file(CFG_JSON_FILE, cfg_root);
+			file_unlock(apply_lock);
+
+			/* change cfg_ver when setting changed */
+			srand(time(NULL));
+			snprintf(cfg_ver, sizeof(cfg_ver), "%d%d", rand(), rand());
+			nvram_set("cfg_ver", cfg_ver);
+
+			/* trigger cfg_server to send notification */
+			kill_pidfile_s(CFG_SERVER_PID, SIGUSR2);
+		}
+	}
+}
+
+int save_changed_param(json_object *cfg_root, char *param, const char *value)
 {
 	int ret = 0;
-#if defined(RTCONFIG_NVSW_IN_JFFS)
-	int nvswid_bk = nvram_get_int("nvswid");
-	int upload_nvswid;
+#if defined(RTCONFIG_AMAS_CENTRAL_CONTROL) && defined(RTCONFIG_AMAS_CAP_CONFIG)
+	int param_is_private = is_cap_private_cfg(param);
 #endif
-#if defined(RTCONFIG_SAVEJFFS)
-	ret = restore_jffs_cfgs("/tmp/settings_u.prf");
-	dbg("Restore jffs cfgs to /jffs, return %d\n", ret);
-	logmessage("savejffs", "Restore jffs cfgs to /jffs. (return %d)", ret);
-#endif
-	sys_upload("/tmp/settings_u.prf");
-#if defined(RTCONFIG_NVSW_IN_JFFS)
-	upload_nvswid = nvram_get_int("nvswid");
-	if (nvswid_bk != upload_nvswid) // won't be changed if not in defaults.c, just in case
-		nvram_set_int("nvswid", nvswid_bk);
-#endif
-#ifdef RTCONFIG_LANTIQ
-	system("rm -f /jffs/db_*.tgz");
-#endif
-#ifdef RTCONFIG_LANTIQ
-	system("rm -f /jffs/db_*.tgz");
-#endif
-	httpd_nvram_commit();
 
-#ifdef RTCONFIG_NVRAM_ENCRYPT
-	start_enc_nvram();
+	if (is_cfg_server_ready()){
+		json_object *tmp = NULL;
+		struct param_mapping_s *pParam = &param_mapping_list[0];
+
+		json_object_object_get_ex(cfg_root, param, &tmp);
+		if (tmp == NULL) {
+			for (pParam = &param_mapping_list[0]; pParam->param != NULL; pParam++) {
+				if (!strcmp(param, pParam->param)) {
+#if defined(RTCONFIG_AMAS_CENTRAL_CONTROL) && defined(RTCONFIG_AMAS_CAP_CONFIG)
+					if (param_is_private && value)
+						json_object_object_add(cfg_root, param,
+							json_object_new_string(value));
+					else
 #endif
-	sys_reboot();
+					json_object_object_add(cfg_root, param,
+						json_object_new_string(""));
+					ret = 1;
+					break;
+				}
+			}
+		}
+	}
 
 	return ret;
 }
+#endif	/* RTCONFIG_CFGSYNC */

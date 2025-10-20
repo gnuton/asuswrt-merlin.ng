@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <conn_diag_log.h>
 
-#define RTCONFIG_UPLOADER
+// #define RTCONFIG_UPLOADER
 
 #define DIAG_TAB_NAME "conn_diag"
 #define DATA_TAB_NAME "diag_data"
@@ -91,6 +91,7 @@ struct amas_eth_port {
 	int ext_port_id;
 	char ifname[32];
 	unsigned int flag;
+	time_t last_notify_ts[2]; // index 0 is for link down, 1 is for link up
 };
 
 struct amas_eth_port_table {
@@ -106,6 +107,9 @@ struct stainfo {
 	double rx_rate;
 	int conn_time;
 	int inactive_flag;
+	char conn_if[16];
+	int conn_if_idx;
+	int conn_if_vidx;
 	//time_t last_update;
 	struct stainfo *next;
 };
@@ -255,6 +259,7 @@ extern int run_upload_file_by_name(const char *uploaded_file);
 extern int run_download_file_at_ts(unsigned long ts, unsigned long ts2);
 extern int run_download_file_by_name(const char *downloaded_file);
 extern int is_valid_event(const char *name);
+#endif
 extern unsigned long get_mem_info(char *name);
 extern int special_alphasort(const void *d1, const void *d2);
 extern struct CONNDIAG_DB_t *find_db_profile_by_mode_and_version(int db_mode,char *version);
@@ -268,7 +273,6 @@ extern int get_eth_txrxbyte_avg(int is_bh,char *mac,double *txbyte,double *rxbyt
 extern int get_ethphy_txrxbyte_avg(int is_bh,char *mac,double *txbyte,double *rxbyte,int diff_range);
 extern int get_sta_txrxbyte_avg(char *sta_mac,char *mac,double *txbyte,double *rxbyte,int diff_range);
 extern int get_staphy_txrxbyte_avg(char *sta_mac,char *mac,double *txbyte,double *rxbyte,int diff_range);
-#endif
 extern int exec_force_cable_diag(char *node_mac,char *label_name);
 extern int exec_wifi_dfs_diag(char *json_data);
 #ifdef RTCONFIG_CD_IPERF

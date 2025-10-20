@@ -267,7 +267,7 @@ void dnsfilter_settings(FILE *fp) {
 			{
 				for(i = 1; i < mtl_sz; ++i)
 				{
-					if(pmtl[i].enable)
+					if(pmtl[i].enable && pmtl[i].sdn_t.sdn_idx && pmtl[i].nw_t.idx)
 					{
 						if(pmtl[i].sdn_t.dnsf_idx == DNSF_SRV_UNFILTERED)
 						{
@@ -362,9 +362,11 @@ void dnsfilter6_settings_dnat(FILE *fp) {
 			dnsmode = atoi(mode);
 			if (dnsmode == DNSF_SRV_UNFILTERED) {
 				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j RETURN\n", mac);
+			} else if (dnsmode == DNSF_SRV_ROUTER) {
+				fprintf(fp, "-A DNSFILTER -m mac --mac-source %s -j REDIRECT\n", mac);
 			} else if (get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {
-					fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination [%s]\n",
-						mac, dnsfsrv.server1);
+				fprintf(fp,"-A DNSFILTER -m mac --mac-source %s -j DNAT --to-destination [%s]\n",
+					mac, dnsfsrv.server1);
 			}
 		}
 
@@ -374,6 +376,8 @@ void dnsfilter6_settings_dnat(FILE *fp) {
 		dnsmode = nvram_get_int("dnsfilter_mode");
 		if (dnsmode == DNSF_SRV_UNFILTERED) {
 			return;
+		} else if (dnsmode == DNSF_SRV_ROUTER) {
+			fprintf(fp, "-A DNSFILTER -j REDIRECT\n");
 		} else if (get_dns_filter(AF_INET6, dnsmode, &dnsfsrv)) {	// Default server (if one exists)
 			fprintf(fp, "-A DNSFILTER -j DNAT --to-destination [%s]\n", dnsfsrv.server1);
 		}
@@ -438,7 +442,7 @@ void dnsfilter6_settings_mangle(FILE *fp) {
 			{
 				for(i = 1; i < mtl_sz; ++i)
 				{
-					if(pmtl[i].enable)
+					if(pmtl[i].enable && pmtl[i].sdn_t.sdn_idx && pmtl[i].nw_t.idx)
 					{
 						if(pmtl[i].sdn_t.dnsf_idx == DNSF_SRV_UNFILTERED)
 						{

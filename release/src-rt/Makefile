@@ -98,19 +98,6 @@ else
   export PROFILE ?= 9$(CUR_CHIP_PROFILE)GW
 endif
 
-ifeq ($(MTLANCFG),y)
-  ifneq ($(MTLANCFG_MWL),)
-    ifeq ($(MTLANCFG_MWL),y)
-      export SDN_MWL = 1
-    else
-      export SDN_MWL = $(MTLANCFG_MWL)
-    endif
-  else
-    export SDN_MWL = 0
-  endif
-endif
-export ASUSFLAG_IN_BOOT=ASUSFLAG\#$(SDN_MWL)
-
 ifeq ($(TRUSTZONE), y)
 $(shell if grep -q "\# BUILD_SECURE_OS is not set" $(HND_SRC)/targets/$(PROFILE)/$(PROFILE).$(BUILD_NAME); then sed -i "s/\# BUILD_SECURE_OS is not set/BUILD_SECURE_OS=y\nBCM_OPTEE=y\nBCM_ARMTF=y/g" $(HND_SRC)/targets/$(PROFILE)/$(PROFILE).$(BUILD_NAME); fi)
 endif
@@ -1707,16 +1694,6 @@ define RouterOptions
 		echo "RTCONFIG_OPENSSL10=y" >>$(1); \
 		echo "# RTCONFIG_OPENSSL11 is not set" >>$(1); \
 	fi;
-	if [ "$(QOSR1)" = "y" ]; then \
-                sed -i "/RTCONFIG_QOSR1/d" $(1); \
-                echo "RTCONFIG_QOSR1=y" >>$(1); \
-                sed -i "/RTCONFIG_IPTABLES1810/d" $(1); \
-                echo "RTCONFIG_IPTABLES1810" >>$(1); \
-        fi;
-	if [ "$(IPTABLES1810)" = "y" ]; then \
-                sed -i "/RTCONFIG_IPTABLES1810/d" $(1); \
-                echo "RTCONFIG_IPTABLES1810=y" >>$(1); \
-        fi;
 	if [ "$(YANDEXDNS)" = "y" ]; then \
 		sed -i "/RTCONFIG_YANDEXDNS/d" $(1); \
 		echo "RTCONFIG_YANDEXDNS=y" >>$(1); \
@@ -2572,6 +2549,8 @@ define RouterOptions
 		echo "RTCONFIG_OCNVC=y" >>$(1); \
 		sed -i "/RTCONFIG_DSLITE/d" $(1); \
 		echo "RTCONFIG_DSLITE=y" >>$(1); \
+		sed -i "/RTCONFIG_V6OPTION/d" $(1); \
+		echo "RTCONFIG_V6OPTION=y" >>$(1); \
 		if [ "$(OCNVC)" = "n" ]; then \
 			sed -i "/RTCONFIG_OCNVC/d" $(1); \
 			echo "# RTCONFIG_OCNVC is not set" >>$(1); \
@@ -2580,12 +2559,15 @@ define RouterOptions
 			sed -i "/RTCONFIG_DSLITE/d" $(1); \
 			echo "# RTCONFIG_DSLITE is not set" >>$(1); \
 		fi; \
-		if [ "$(V6OPTION)" = "y" ]; then \
-			sed -i "/RTCONFIG_V6OPTION/d" $(1); \
-			echo "RTCONFIG_V6OPTION=y" >>$(1); \
-		elif [ "$(V6OPTION)" = "n" ]; then \
+		if [ "$(V6OPTION)" = "n" ]; then \
 			sed -i "/RTCONFIG_V6OPTION/d" $(1); \
 			echo "# RTCONFIG_V6OPTION is not set" >>$(1); \
+		fi; \
+		sed -i "/RTCONFIG_IPV6_PRIVACY/d" $(1); \
+		if [ "$(IPV6_PRIVACY)" = "y" ]; then \
+			echo "RTCONFIG_IPV6_PRIVACY=y" >>$(1); \
+		else\
+			echo "# RTCONFIG_IPV6_PRIVACY is not set" >>$(1); \
 		fi; \
 	fi;
 	if [ "$(IPSEC)" = "y" ] || \
@@ -2851,8 +2833,6 @@ define RouterOptions
 			sed -i "/RTCONFIG_SMART_HOME_MASTER_UI/d" $(1); \
 			echo "RTCONFIG_SMART_HOME_MASTER_UI=y" >>$(1); \
 		fi; \
-		sed -i "/RTCONFIG_MULTILAN_MWL/d" $(1); \
-		echo "RTCONFIG_MULTILAN_MWL=y" >>$(1); \
 		if [ "$(MAX_MTLAN)" != "" ]; then \
 			sed -i "/RTCONFIG_MAX_MTLAN/d" $(1); \
 			echo "RTCONFIG_MAX_MTLAN=$(MAX_MTLAN)" >>$(1); \
@@ -2866,9 +2846,17 @@ define RouterOptions
 			fi; \
 		fi; \
 	fi; \
+	if [ "$(UI4)" = "y" ]; then \
+        sed -i "/RTCONFIG_UI4/d" $(1); \
+        echo "RTCONFIG_UI4=y" >>$(1); \
+        sed -i "/RTCONFIG_DASHBOARD/d" $(1); \
+        echo "RTCONFIG_DASHBOARD=y" >>$(1); \
+    fi; \
 	if [ "$(BUSINESS)" = "y" ]; then \
 		sed -i "/RTCONFIG_BUSINESS/d" $(1); \
 		echo "RTCONFIG_BUSINESS=y" >>$(1); \
+		sed -i "/RTCONFIG_UI4/d" $(1); \
+        echo "RTCONFIG_UI4=y" >>$(1); \
 		sed -i "/RTCONFIG_DASHBOARD/d" $(1); \
 		echo "RTCONFIG_DASHBOARD=y" >>$(1); \
 	fi; \
@@ -2959,13 +2947,41 @@ define RouterOptions
 		sed -i "/RTCONFIG_ROG/d" $(1); \
 		echo "RTCONFIG_ROG=y" >>$(1); \
 	fi;
-	sed -i "/RTCONFIG_ROG_UI/d" $(1); \
 	if [ "$(ROG_UI)" = "y" ]; then \
+		sed -i "/RTCONFIG_ROG_UI/d" $(1); \
 		echo "RTCONFIG_ROG_UI=y" >>$(1); \
 		sed -i "/RTCONFIG_OPEN_NAT/d" $(1); \
 		echo "RTCONFIG_OPEN_NAT=y" >>$(1); \
+		sed -i "/RTCONFIG_NETOOL/d" $(1); \
+		echo "RTCONFIG_NETOOL=y" >>$(1); \
+		if [ "$(MTLANCFG)" = "y" ] && [ "$(WIFI7)" = "y" ]; then \
+			sed -i "/RTCONFIG_SDN_PRIORITY/d" $(1); \
+			echo "RTCONFIG_SDN_PRIORITY=y" >>$(1); \
+		else \
+			sed -i "/RTCONFIG_SDN_PRIORITY/d" $(1); \
+			echo "# RTCONFIG_SDN_PRIORITY is not set" >> $(1); \
+		fi; \
 	else \
 		echo "# RTCONFIG_ROG_UI is not set" >>$(1); \
+	fi;
+	if [ "$(GS_UI)" = "y" ]; then \
+		sed -i "/RTCONFIG_GS_UI/d" $(1); \
+		echo "RTCONFIG_GS_UI=y" >>$(1); \
+		sed -i "/RTCONFIG_ROG_UI/d" $(1); \
+		echo "RTCONFIG_ROG_UI=y" >>$(1); \
+		sed -i "/RTCONFIG_OPEN_NAT/d" $(1); \
+		echo "RTCONFIG_OPEN_NAT=y" >>$(1); \
+		sed -i "/RTCONFIG_NETOOL/d" $(1); \
+		echo "RTCONFIG_NETOOL=y" >>$(1); \
+		sed -i "/RTCONFIG_GAME_MODE/d" $(1); \
+		echo "RTCONFIG_GAME_MODE=y" >>$(1); \
+		if [ "$(MTLANCFG)" = "y" ] && [ "$(WIFI7)" = "y" ]; then \
+			sed -i "/RTCONFIG_SDN_PRIORITY/d" $(1); \
+			echo "RTCONFIG_SDN_PRIORITY=y" >>$(1); \
+		else \
+			sed -i "/RTCONFIG_SDN_PRIORITY/d" $(1); \
+			echo "# RTCONFIG_SDN_PRIORITY is not set" >> $(1); \
+		fi; \
 	fi;
 	if [ "$(TUF_UI)" = "y" ]; then \
 		sed -i "/RTCONFIG_TUF_UI/d" $(1); \
@@ -3029,6 +3045,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_N18UTXBF/d" $(1); \
 		echo "RTCONFIG_N18UTXBF=y" >>$(1); \
 	fi;
+	if [ "$(HNS)" = "y" ]; then \
+		sed -i "/RTCONFIG_HNS\>/d" $(1); \
+		echo "RTCONFIG_HNS=y" >>$(1); \
+	fi;
 	if [ "$(BWDPI)" = "y" ]; then \
 		sed -i "/RTCONFIG_BWDPI\>/d" $(1); \
 		echo "RTCONFIG_BWDPI=y" >>$(1); \
@@ -3039,14 +3059,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_PRESSURE_SENSOR/d" $(1); \
 		echo "RTCONFIG_PRESSURE_SENSOR=y" >>$(1); \
 	fi;
-	if [ "$(SMARTHAUL)" = "y" ]; then \
-                sed -i "/RTCONFIG_SMARTHAUL/d" $(1); \
-                echo "RTCONFIG_SMARTHAUL=y" >>$(1); \
-        fi;
-	if [ "$(BRCM_SMARTHAUL)" = "y" ]; then \
-                sed -i "/RTCONFIG_BRCM_SMARTHAUL/d" $(1); \
-                echo "RTCONFIG_BRCM_SMARTHAUL=y" >>$(1); \
-        fi;
 	if [ "$(NOTIFICATION_CENTER)" = "y" ]; then \
 		sed -i "/RTCONFIG_NOTIFICATION_CENTER/d" $(1); \
 		echo "RTCONFIG_NOTIFICATION_CENTER=y" >>$(1); \
@@ -3512,6 +3524,14 @@ define RouterOptions
 	if [ "$(REBOOT_SCHEDULE)" = "y" ]; then \
 		sed -i "/RTCONFIG_REBOOT_SCHEDULE/d" $(1); \
 		echo "RTCONFIG_REBOOT_SCHEDULE=y" >>$(1); \
+		sed -i "/RTCONFIG_REBOOT_SCHEDULE_V2/d" $(1); \
+		echo "RTCONFIG_REBOOT_SCHEDULE_V2=y" >>$(1); \
+	fi;
+	if [ "$(REBOOT_SCHEDULE_V2)" = "y" ]; then \
+		sed -i "/RTCONFIG_REBOOT_SCHEDULE/d" $(1); \
+		echo "RTCONFIG_REBOOT_SCHEDULE=y" >>$(1); \
+		sed -i "/RTCONFIG_REBOOT_SCHEDULE_V2/d" $(1); \
+		echo "RTCONFIG_REBOOT_SCHEDULE_V2=y" >>$(1); \
 	fi;
 	if [ "$(CAPTIVE_PORTAL)" = "y" ]; then \
 		sed -i "/RTCONFIG_CAPTIVE_PORTAL/d" $(1); \
@@ -3851,6 +3871,12 @@ define RouterOptions
 	if [ "$(TPVPN)" = "n" ]; then \
 		sed -i "/RTCONFIG_TPVPN/d" $(1); \
 		echo "# RTCONFIG_TPVPN is not set" >>$(1); \
+		sed -i "/RTCONFIG_HMA/d" $(1); \
+		echo "# RTCONFIG_HMA is not set" >>$(1); \
+		sed -i "/RTCONFIG_NORDVPN/d" $(1); \
+		echo "# RTCONFIG_NORDVPN is not set" >>$(1); \
+		sed -i "/RTCONFIG_SURFSHARK/d" $(1); \
+		echo "# RTCONFIG_SURFSHARK is not set" >>$(1); \
 	elif [ "$(TPVPN)" != "" ]; then \
 		sed -i "/RTCONFIG_TPVPN/d" $(1); \
 		echo "RTCONFIG_TPVPN=y" >>$(1); \
@@ -3861,6 +3887,10 @@ define RouterOptions
 		if [ "$(findstring nordvpn, $(TPVPN))" = "nordvpn" ]; then \
 			sed -i "/RTCONFIG_NORDVPN/d" $(1); \
 			echo "RTCONFIG_NORDVPN=y" >>$(1); \
+		fi; \
+		if [ "$(findstring surfshark, $(TPVPN))" = "surfshark" ]; then \
+			sed -i "/RTCONFIG_SURFSHARK/d" $(1); \
+			echo "RTCONFIG_SURFSHARK=y" >>$(1); \
 		fi; \
 	fi;
 	if [ "$(MTK_8021X3000)" = "y" ]; then \
@@ -4115,11 +4145,8 @@ define RouterOptions
 				echo "RTCONFIG_MAX_RE=32" >>$(1); \
 			fi; \
 		fi; \
-		if [ "$(AMAS_CAP_CONFIG)" = "y" ]; then \
-			echo "RTCONFIG_AMAS_CAP_CONFIG=y" >>$(1); \
-		else \
-			echo "# RTCONFIG_AMAS_CAP_CONFIG is not set" >>$(1); \
-		fi; \
+		sed -i "/RTCONFIG_AMAS_CAP_CONFIG/d" $(1); \
+		echo "RTCONFIG_AMAS_CAP_CONFIG=y" >>$(1); \
 		if [ "$(AMAS_ENT_FRONTHAUL)" = "y" ]; then \
 			echo "RTCONFIG_AMAS_ENT_FRONTHAUL=y" >>$(1); \
 		else \
@@ -4184,6 +4211,11 @@ define RouterOptions
 			echo "RTCONFIG_AMAS_OB_DISABLE_DSAP=y" >>$(1); \
 		else \
 			echo "# RTCONFIG_AMAS_OB_DISABLE_DSAP is not set" >>$(1); \
+		fi; \
+		if [ "$(AMAS_DIS_HASH_KEY_GEN_CHECK)" = "y" ]; then \
+			echo "RTCONFIG_DIS_HASH_KEY_GEN_CHECK=y" >>$(1); \
+		else \
+			echo "# RTCONFIG_DIS_HASH_KEY_GEN_CHECK is not set" >>$(1); \
 		fi; \
 	fi;
 	sed -i "/RTCONFIG_BATMAN_ADV/d" $(1); \
@@ -4415,6 +4447,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_ADV_RAST/d" $(1); \
 		echo "RTCONFIG_ADV_RAST=y" >>$(1); \
 	fi;
+	if [ "$(RAST_TEST)" = "y" ]; then \
+                sed -i "/RTCONFIG_RAST_TEST/d" $(1); \
+                echo "RTCONFIG_RAST_TEST=y" >>$(1); \
+        fi;
 	if [ "$(NO_TRY_DWB_PROFILE)" = "y" ]; then \
 		sed -i "/RTCONFIG_NO_TRY_DWB_PROFILE/d" $(1); \
 		echo "RTCONFIG_NO_TRY_DWB_PROFILE=y" >>$(1); \
@@ -4540,90 +4576,52 @@ define RouterOptions
 		sed -i "/RTCONFIG_WIFI6E/d" $(1); \
 		echo "RTCONFIG_WIFI6E=y" >>$(1); \
 	fi;
-	if [ "$(DISWIFI7)" = "y" ]; then \
-		sed -i "/RTCONFIG_DISWIFI7/d" $(1); \
-		echo "RTCONFIG_DISWIFI7=y" >>$(1); \
-	fi;
-	if [ "$(UAWIFI)" = "y" ]; then \
-		sed -i "/RTCONFIG_UAWIFI/d" $(1); \
-		echo "RTCONFIG_UAWIFI=y" >>$(1); \
-		sed -i "/RTCONFIG_DISWIFI7/d" $(1); \
-		echo "RTCONFIG_DISWIFI7=y" >>$(1); \
-	fi;
 	if [ "$(MLO)" = "y" ]; then \
-		sed -i "/RTCONFIG_MLO\>/d" $(1); \
+		sed -i "/RTCONFIG_MLO/d" $(1); \
 		echo "RTCONFIG_MLO=y" >>$(1); \
 		sed -i "/RTCONFIG_MULTILAN_CFG/d" $(1); \
 		echo "RTCONFIG_MULTILAN_CFG=y" >>$(1); \
 		if [ "$(MLO_FH)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_FH\>/d" $(1); \
+			sed -i "/RTCONFIG_MLO_FH/d" $(1); \
 			echo "RTCONFIG_MLO_FH=y" >>$(1); \
-		fi; \
-		if [ "$(MLO_BH)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_BH\>/d" $(1); \
-			echo "RTCONFIG_MLO_BH=y" >>$(1); \
 		else \
-			sed -i "/RTCONFIG_MLO_BH\>/d" $(1); \
-			echo "# RTCONFIG_MLO_BH is not set" >>$(1); \
-		fi; \
-		if [ "$(MLO_BH_BAND)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_BH_BAND\>/d" $(1); \
-			echo "RTCONFIG_MLO_BH_BAND=y" >>$(1); \
-		else \
-			sed -i "/RTCONFIG_MLO_BH_BAND\>/d" $(1); \
-			echo "# RTCONFIG_MLO_BH_BAND is not set" >>$(1); \
+			sed -i "/RTCONFIG_MLO_FH/d" $(1); \
+			echo "# RTCONFIG_MLO_FH is not set" >>$(1); \
 		fi; \
 		if [ "$(MLO_CONFIG_566)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_CONFIG_566\>/d" $(1); \
+			sed -i "/RTCONFIG_MLO_CONFIG_566/d" $(1); \
 			echo "RTCONFIG_MLO_CONFIG_566=y" >>$(1); \
 		else \
-			sed -i "/RTCONFIG_MLO_CONFIG_566\>/d" $(1); \
+			sed -i "/RTCONFIG_MLO_CONFIG_566/d" $(1); \
 			echo "# RTCONFIG_MLO_CONFIG_566 is not set" >>$(1); \
 		fi; \
-		if [ "$(MLO_CONFIG_556)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_CONFIG_556\>/d" $(1); \
-			echo "RTCONFIG_MLO_CONFIG_556=y" >>$(1); \
-		else \
-			sed -i "/RTCONFIG_MLO_CONFIG_556\>/d" $(1); \
-			echo "# RTCONFIG_MLO_CONFIG_556 is not set" >>$(1); \
-		fi; \
 	else \
-		sed -i "/RTCONFIG_MLO\>/d" $(1); \
+		sed -i "/RTCONFIG_MLO/d" $(1); \
 		echo "# RTCONFIG_MLO is not set" >>$(1); \
-		sed -i "/RTCONFIG_MULTILAN_CFG/d" $(1); \
-		echo "# RTCONFIG_MULTILAN_CFG is not set" >>$(1); \
-		sed -i "/RTCONFIG_MLO_FH\>/d" $(1); \
+		sed -i "/RTCONFIG_MLO_FH/d" $(1); \
 		echo "# RTCONFIG_MLO_FH is not set" >>$(1); \
-		sed -i "/RTCONFIG_MLO_BH\>/d" $(1); \
-		echo "# RTCONFIG_MLO_BH is not set" >>$(1); \
-		sed -i "/RTCONFIG_MLO_BH_BAND\>/d" $(1); \
-		echo "# RTCONFIG_MLO_BH_BAND is not set" >>$(1); \
-		sed -i "/RTCONFIG_MLO_CONFIG_566\>/d" $(1); \
+		sed -i "/RTCONFIG_MLO_CONFIG_566/d" $(1); \
 		echo "# RTCONFIG_MLO_CONFIG_566 is not set" >>$(1); \
-		sed -i "/RTCONFIG_MLO_CONFIG_556\>/d" $(1); \
-		echo "# RTCONFIG_MLO_CONFIG_556 is not set" >>$(1); \
 	fi;
+
 	if [ "$(DIS_MLO_QIS)" = "y" ]; then \
 		sed -i "/RTCONFIG_DIS_MLO_QIS/d" $(1); \
 		echo "RTCONFIG_DIS_MLO_QIS=y" >>$(1); \
 	fi;
+
 	if [ "$(WIFI7)" = "y" ]; then \
 		sed -i "/RTCONFIG_WIFI7/d" $(1); \
 		echo "RTCONFIG_WIFI7=y" >>$(1); \
-		sed -i "/RTCONFIG_MLO\>/d" $(1); \
+		sed -i "/RTCONFIG_MLO/d" $(1); \
 		echo "RTCONFIG_MLO=y" >>$(1); \
 		sed -i "/RTCONFIG_FRONTHAUL_DWB/d" $(1); \
 		echo "# RTCONFIG_FRONTHAUL_DWB is not set" >>$(1); \
-		sed -i "/RTCONFIG_MLO_FH\>/d" $(1); \
-		echo "RTCONFIG_MLO_FH=y" >>$(1); \
-		sed -i "/RTCONFIG_MLO_BH\>/d" $(1); \
-		echo "RTCONFIG_MLO_BH=y" >>$(1); \
-		if [ "$(MLO_BH_BAND)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_BH_BAND\>/d" $(1); \
-			echo "RTCONFIG_MLO_BH_BAND=y" >>$(1); \
+		if [ "$(MLO_FH)" = "y" ]; then \
+			sed -i "/RTCONFIG_MLO_FH/d" $(1); \
+			echo "RTCONFIG_MLO_FH=y" >>$(1); \
 		else \
-			sed -i "/RTCONFIG_MLO_BH_BAND/d" $(1); \
-			echo "# RTCONFIG_MLO_BH_BAND is not set" >>$(1); \
+			sed -i "/RTCONFIG_MLO_FH/d" $(1); \
+			echo "# RTCONFIG_MLO_FH is not set" >>$(1); \
 		fi; \
 		if [ "$(MLO_CONFIG_566)" = "y" ]; then \
 			sed -i "/RTCONFIG_MLO_CONFIG_566/d" $(1); \
@@ -4631,13 +4629,6 @@ define RouterOptions
 		else \
 			sed -i "/RTCONFIG_MLO_CONFIG_566/d" $(1); \
 			echo "# RTCONFIG_MLO_CONFIG_566 is not set" >>$(1); \
-		fi; \
-		if [ "$(MLO_CONFIG_556)" = "y" ]; then \
-			sed -i "/RTCONFIG_MLO_CONFIG_556/d" $(1); \
-			echo "RTCONFIG_MLO_CONFIG_556=y" >>$(1); \
-		else \
-			sed -i "/RTCONFIG_MLO_CONFIG_556/d" $(1); \
-			echo "# RTCONFIG_MLO_CONFIG_556 is not set" >>$(1); \
 		fi; \
 		sed -i "/RTCONFIG_MULTILAN_CFG/d" $(1); \
 		echo "RTCONFIG_MULTILAN_CFG=y" >>$(1); \
@@ -4895,13 +4886,9 @@ define RouterOptions
 		sed -i "/RTCONFIG_DHDAP/d" $(1); \
 		echo "# RTCONFIG_DHDAP is not set" >>$(1); \
 	fi;
-	if [ "$(KNV_BP)" = "y" ]; then \
-		sed -i "/RTCONFIG_KNV_BACKUP/d" $(1); \
-		echo "RTCONFIG_KNV_BACKUP=y" >>$(1); \
-	fi;
-	if [ "$(NV_BP2)" = "y" ]; then \
-		sed -i "/RTCONFIG_NV_BACKUP2/d" $(1); \
-		echo "RTCONFIG_NV_BACKUP2=y" >>$(1); \
+	if [ "$(HAS_6G)" = "y" ]; then \
+		sed -i "/RTCONFIG_HAS_6G\>/d" $(1); \
+		echo "RTCONFIG_HAS_6G=y" >>$(1); \
 	fi;
 	if [ "$(HAS_6G_2)" = "y" ]; then \
 		sed -i "/RTCONFIG_HAS_6G_2\>/d" $(1); \
@@ -4911,29 +4898,34 @@ define RouterOptions
 		sed -i "/RTCONFIG_AUTO_WANPORT/d" $(1); \
 		echo "RTCONFIG_AUTO_WANPORT=y" >>$(1); \
 	fi;
+	if [ "$(FU_TEST)" = "y" ]; then \
+                sed -i "/RTCONFIG_FU_TEST/d" $(1); \
+                echo "RTCONFIG_FU_TEST=y" >>$(1); \
+        fi;
 	if [ "$(PASS_V2)" = "y" ]; then \
 		sed -i "/RTCONFIG_PASS_V2/d" $(1); \
 		echo "RTCONFIG_PASS_V2=y" >>$(1); \
 	fi;
-	echo "# RTCONFIG_WIFI7_NO_6G is not set" >>$(1); \
-	if [ "$(WIFI7_NO_6G)" = "y" ]; then \
-		sed -i "/RTCONFIG_WIFI7_NO_6G\>/d" $(1); \
-		echo "RTCONFIG_WIFI7_NO_6G=y" >>$(1); \
+	if [ "$(BCMLEDG)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCMLEDG/d" $(1); \
+		echo "RTCONFIG_BCMLEDG=y" >>$(1); \
 	fi;
-	if [ "$(DOWNGRADE_CHECK)" = "y" ]; then \
-		sed -i "/RTCONFIG_DOWNGRADE_CHECK/d" $(1); \
-		echo "RTCONFIG_DOWNGRADE_CHECK=y" >>$(1); \
-	fi;
-	if [ "$(OPEN_NAT)" = "y" ] && [ "$(ROG_UI)" = "y" ] && [ "$(MTLANCFG)" = "y" ] &&  [ "$(WIFI7)" = "y" ]; then \
-		sed -i "/RTCONFIG_SDN_PRIORITY/d" $(1); \
-		echo "RTCONFIG_SDN_PRIORITY=y" >>$(1); \
+        if [ "$(BCMLEDG_NIGHT)" = "y" ]; then \
+                sed -i "/RTCONFIG_BCMLEDG_NIGHT/d" $(1); \
+                echo "RTCONFIG_BCMLEDG_NIGHT=y" >>$(1); \
+        fi;
+	if [ "$(SINGLE_LED_NIGHT)" = "y" ]; then \
+		sed -i "/RTCONFIG_SINGLE_LED_NIGHT_MODE/d" $(1); \
+		echo "RTCONFIG_SINGLE_LED_NIGHT_MODE=y" >>$(1); \
 	else \
-		sed -i "/RTCONFIG_SDN_PRIORITY/d" $(1); \
-		echo "# RTCONFIG_SDN_PRIORITY is not set" >> $(1); \
+		echo "# RTCONFIG_SINGLE_LED_NIGHT_MODE is not set" >>$(1); \
 	fi;
-	if [ "$(MLO_DEFAULT_ACTIVE)" = "y" ]; then \
-		sed -i "/RTCONFIG_MLO_DEFAULT_ACTIVE\>/d" $(1); \
-		echo "RTCONFIG_MLO_DEFAULT_ACTIVE=y" >>$(1); \
+	if [ "$(NO_AIDISK)" = "y" ]; then \
+		sed -i "/RTCONFIG_NO_AIDISK/d" $(1); \
+		echo "RTCONFIG_NO_AIDISK=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_NO_AIDISK/d" $(1); \
+		echo "# RTCONFIG_NO_AIDISK is not set" >>$(1); \
 	fi;
 	if [ "$(FLASH_TYPE)" = "EMMC" ]; then \
 		sed -i "/RTCONFIG_FLASH_TYPE_$(FLASH_TYPE)/d" $(1); \
@@ -4942,6 +4934,10 @@ define RouterOptions
 		echo "RTCONFIG_JFFS2USERICON=y" >>$(1); \
 		sed -i "/RTCONFIG_JFFS_PARTITION/d" $(1); \
 		echo "RTCONFIG_JFFS_PARTITION=y" >>$(1); \
+	fi;
+	if [ "$(SECURE_BY_DEFAULT)" = "y" ]; then \
+		sed -i "/RTCONFIG_SECURE_BY_DEFAULT\>/d" $(1); \
+		echo "RTCONFIG_SECURE_BY_DEFAULT=y" >>$(1); \
 	fi;
 
 	$(call platformRouterOptions, $(1))
@@ -5342,6 +5338,8 @@ define BusyboxOptions
 		echo "CONFIG_UNIQ=y" >>$(1); \
 		sed -i "/CONFIG_LSOF/d" $(1); \
 		echo "CONFIG_LSOF=y" >>$(1); \
+		sed -i "/CONFIG_FEATURE_PS_LONG/d" $(1); \
+		echo "CONFIG_FEATURE_PS_LONG=y" >>$(1); \
 	fi;
 	if [ "$(HND_ROUTER_AX_6756)" = "y" ] || [ "$(HND_ROUTER_BE_4916)" = "y" ]; then \
 		sed -i "/CONFIG_SHA256SUM/d" $(1); \
@@ -5372,8 +5370,6 @@ define BusyboxOptions
 		echo "CONFIG_FEATURE_MDEV_RENAME=y" >>$(1); \
 		sed -i "/CONFIG_FEATURE_MDEV_RENAME_REGEXP/d" $(1); \
 		echo "CONFIG_FEATURE_MDEV_RENAME_REGEXP=y" >>$(1); \
-		sed -i "/CONFIG_HEXDUMP/d" $(1); \
-		echo "CONFIG_HEXDUMP=y" >>$(1); \
 	fi;
 	$(call platformBusyboxOptions, $(1))
 endef
@@ -6305,6 +6301,14 @@ fi;
 		sed -i "/CONFIG_NF_CONNTRACK_EVENTS/d" $(1); \
 		echo "CONFIG_NF_CONNTRACK_EVENTS=y" >>$(1); \
 	fi; \
+	if [ "$(HNS)" = "y" ]; then \
+		sed -i "/CONFIG_NETFILTER_NETLINK_GLUE_CT/d" $(1); \
+		echo "CONFIG_NETFILTER_NETLINK_GLUE_CT=y" >>$(1); \
+		sed -i "/CONFIG_BRIDGE_NETFILTER/d" $(1); \
+		echo "CONFIG_BRIDGE_NETFILTER=y" >>$(1); \
+		sed -i "/CONFIG_POSIX_MQUEUE/d" $(1); \
+		echo "CONFIG_POSIX_MQUEUE=y" >>$(1); \
+	fi; \
 	if [ "$(USB_DEBUG)" = "y" ]; then \
 		sed -i "/CONFIG_USB_DEBUG/d" $(1); \
 		echo "CONFIG_USB_DEBUG=y" >>$(1); \
@@ -6481,6 +6485,12 @@ fi;
 	if [ "$(IPV6SUPP)" = "y" -o "$(IPV6FULL)" = "y" ]; then \
 		sed -i "/CONFIG_IPV6_TUNNEL/d" $(1); \
 		echo "CONFIG_IPV6_TUNNEL=m" >>$(1); \
+		sed -i "/CONFIG_IPV6_PRIVACY/d" $(1); \
+		if [ "$(IPV6_PRIVACY)" = "y" ]; then \
+			echo "CONFIG_IPV6_PRIVACY=y" >>$(1); \
+		else \
+			echo "# CONFIG_IPV6_PRIVACY is not set" >>$(1); \
+		fi; \
 	fi;
 	if [ "$(IPSEC)" = "y" ] || \
 	   [ "$(IPSEC)" = "QUICKSEC" ] || \
@@ -6712,8 +6722,28 @@ fi;
 		echo "# CONFIG_SYSFS_DEPRECATED is not set" >>$(1); \
 		sed -i "/CONFIG_SYSFS_DEPRECATED_V2/d" $(1); \
 		echo "# CONFIG_SYSFS_DEPRECATED_V2 is not set" >>$(1); \
-		sed -i "/CONFIG_MMC_OOPS is not set\>/d" $(1); \
-		echo "CONFIG_MMC_OOPS=m" >>$(1); \
+	fi;
+	if [ "$(BUILD_NAME)" = "RT-BE58U_V2" ] || [ "$(BUILD_NAME)" = "TUF-BE3600_V2" ] || [ "$(BUILD_NAME)" = "RT-BE55" ]; then \
+		sed -i "/CONFIG_BCM_PHY_BLACKFIN_B0/d" $(1); \
+		echo "# CONFIG_BCM_PHY_BLACKFIN_B0 is not set" >>$(1); \
+	fi;
+	if [ "$(BUILD_NAME)" = "RT-BE82M" ] || [ "$(BUILD_NAME)" = "GS-BE18000" ] || [ "$(BUILD_NAME)" = "GS-BE12000" ] || [ "$(BUILD_NAME)" = "GS7_PRO" ] || [ "$(BUILD_NAME)" = "GT7" ]; then \
+		sed -i "/CONFIG_BCM_PHY_BLACKFIN_B0/d" $(1); \
+		echo "# CONFIG_BCM_PHY_BLACKFIN_B0 is not set" >>$(1); \
+		sed -i "/CONFIG_BCM_PHY_LANAI_A0/d" $(1); \
+		echo "# CONFIG_BCM_PHY_LANAI_A0 is not set" >>$(1); \
+		sed -i "/CONFIG_BCM_PHY_XPHY/d" $(1); \
+		echo "# CONFIG_BCM_PHY_XPHY is not set" >>$(1); \
+		if [ "$(BUILD_NAME)" = "GT7" ]; then \
+			sed -i "/CONFIG_BCM_PHY_NIIHAU_A0/d" $(1); \
+			echo "CONFIG_BCM_PHY_NIIHAU_A0=y" >>$(1); \
+		fi; \
+	fi;
+	if [ "$(BUILD_NAME)" = "GS-BE18000" ] || [ "$(BUILD_NAME)" = "GS-BE12000" ] || [ "$(BUILD_NAME)" = "GS7_PRO" ] || [ "$(BUILD_NAME)" = "GT7" ]; then \
+		sed -i "/CONFIG_BCM6766_2G/d" $(1); \
+		echo "CONFIG_BCM6766_2G=y" >>$(1); \
+		sed -i "/CONFIG_VMSPLIT_2G_OPT/d" $(1); \
+		echo "CONFIG_VMSPLIT_2G_OPT=y" >>$(1); \
 	fi;
 	$(call platformKernelConfig, $(1))
 	$(call extraKernelConfig, $(1))
@@ -6809,7 +6839,6 @@ else ifeq ($(BCMWL6A),y)
    else
 	-sed -i 's/Broadcom BCA image upgrade package tree binary/$(BUILD_NAME)/g' bootloaders/build/work/generate_bundle_itb
    endif
-	-sed -i 's/ASUSFLAG_IN_BOOT/$(ASUSFLAG_IN_BOOT)/g' bootloaders/build/work/generate_bundle_itb
    ifneq (,$(wildcard $(LINUXDIR)/../dts/$(BCM_CHIP)/$(BCM_CHIP)_pinctrl.dtsi.$(BUILD_NAME)))
 	cp -f $(LINUXDIR)/../dts/$(BCM_CHIP)/$(BCM_CHIP)_pinctrl.dtsi.$(BUILD_NAME) $(LINUXDIR)/../dts/$(BCM_CHIP)/$(BCM_CHIP)_pinctrl.dtsi
    endif
@@ -7012,16 +7041,11 @@ ifeq ($(REALTEK),y)
 	fi;
 endif
 	$(call save_src_config, $@)
-
-ifeq ($(HND_ROUTER),y)
-ifeq ($(or $(HND_ROUTER_AX_675x),$(HND_ROUTER_AX)),y)
-	@echo "Copy router-sysdep.$(lowercase_B) content"
-	@rm -fr router-sysdep
-	@cp -ar router-sysdep.$(lowercase_B)/ router-sysdep
-else	# RT-AC86U or GT-AC2900
-	@cp -ar $(TOP_PLATFORM)/hnd_extra/prebuilt/$(BUILD_NAME)/* $(TOP_PLATFORM)/hnd_extra/prebuilt/
-endif
-endif
+	if [ -d router-sysdep.$(lowercase_B)/ ]; then \
+		echo "Copy router-sysdep.$(lowercase_B) content"; \
+		rm -fr router-sysdep; \
+		cp -ar router-sysdep.$(lowercase_B)/ router-sysdep; \
+	fi
 	$(MAKE) bin
 
 Bluecave bluecave:
@@ -7041,7 +7065,7 @@ ET10 et10 XD4S xd4s:
 	$(call save_src_config,$@,_CFG)
 	$(MAKE) bin
 
-ET12 et12 XT12 xt12 XD4PRO xd4pro XT8PRO xt8pro BM68 bm68 XT8_V2 xt8_v2 ET8PRO et8pro ET8_V2 et8_v2 GT10 gt10 XD6_V2 xd6_v2 BR63 br63 BC109 bc109 BC105 bc105 EBG19 ebg19 EBG15 ebg15 BT12 bt12 BT10 bt10 BQ16 bq16 BQ16_PRO bq16_pro XC5 xc5 eba63:
+ET12 et12 XT12 xt12 XD4PRO xd4pro XT8PRO xt8pro BM68 bm68 XT8_V2 xt8_v2 ET8PRO et8pro ET8_V2 et8_v2 GT10 gt10 XD6_V2 xd6_v2 BR63 br63 BC109 bc109 BC105 bc105 EBG19 ebg19 EBG15 ebg15 BT12 bt12 BT10 bt10 BQ16 bq16 BQ16_PRO bq16_pro XC5 xc5 eba63 GS7_PRO gs7_pro GT7 gt7:
 	$(call save_src_config, $@,_CFG)
 ifeq ($(or $(HND_ROUTER_AX_675x),$(HND_ROUTER_AX)),y)
 	@echo "Copy router-sysdep.$(lowercase_B) content"

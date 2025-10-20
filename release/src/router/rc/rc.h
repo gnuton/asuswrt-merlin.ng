@@ -33,7 +33,6 @@
 
 #include <bcmnvram.h>
 #include <bcmparams.h>
-#include <utils.h>
 #include <shutils.h>
 #include <shared.h>
 
@@ -99,6 +98,10 @@
 
 #ifdef RTBE58U_PRO
 #define RTBE58U_PRO_LED_WAR	1
+#endif
+
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+#include <libnt.h>
 #endif
 
 #ifdef RTCONFIG_EXTPHY_BCM84880
@@ -671,9 +674,7 @@ extern int get_DateCode(void);
 extern int get_Annex();
 extern int set_Annex(const char* annex, const char* modulation);
 #endif
-extern void pre_wlc_connect(int band);
 extern void post_wlc_connected(int band);
-extern void set_wlc_auto_reconnect(int band, int enable);
 #ifdef RTCONFIG_HND_ROUTER_AX
 extern int hnd_boardid_cmp(const char *boardid);
 #endif
@@ -1075,7 +1076,10 @@ extern void update_cfe_ax82u();
 #ifdef GTAX6000
 extern void update_cfe_ax6000();
 #endif
-#if defined(RTAX58U_V2) || defined(GTAX6000) || defined(RTAX86U_PRO) || defined(RTAX3000N) || defined(BR63) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(RTAX88U_PRO) || defined(RTAX5400) || defined(RTBE86U) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE58U_PRO)
+#if defined(GTBE19000AI) || defined(GTBE96_AI)
+void pwr_led_pinmux(int cled);
+#endif
+#if defined(RTAX58U_V2) || defined(GTAX6000) || defined(RTAX86U_PRO) || defined(RTAX3000N) || defined(BR63) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(RTAX88U_PRO) || defined(RTAX5400) || defined(RTBE86U) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE58U_PRO)
 extern void wan_phy_led_pinmux(int force);
 #endif
 #if defined(TUFAX3000_V2) || defined(RTAXE7800) || defined(TUFAX5400_V2) || defined(RTAX5400) || defined(RTAX88U_PRO) || defined(RTBE86U)
@@ -1093,17 +1097,20 @@ extern void setLANLedOn(void);
 extern void setLANLedOff(void);
 #ifdef RTCONFIG_BCM_CLED
 extern int bcm_cled_ctrl(int rgb, int cled_mode);
-#if defined(ET12) || defined(XT12)
+#if defined(ET12) || defined(XT12) || defined(GTBE19000AI) || defined(GTBE96_AI)
 extern int bcm_cled_ctrl_single_white(int rgb, int cled_mode);
 #endif
+#if defined(GTBE19000AI) || defined(GTBE96_AI)
+extern int bcm_cled_ctrl_single_led(int rgb, int cled_mode, int brightness);
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000_AI) || defined(GSBE18000)
+#endif
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000AI) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GTBE96_AI)
 extern void setLEDGroupOn(void);
 extern void setLEDGroupOff(void);
 extern void cled_set(int gpio, uint32_t config0, uint32_t config1, uint32_t config2, uint32_t config3);
 extern void LEDGroupReset(int mode);
 #endif
-#if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(RTBE58U) || defined(TUFBE3600) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000_AI)
+#if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI) || defined(GT7)
 extern int vlan4094_enabled();
 #endif
 extern void activateLANLed();
@@ -1119,7 +1126,7 @@ extern void wl_fail_db(int unit, int state, int count);
 #ifdef RTCONFIG_BCMWL6
 #ifdef RTCONFIG_TCODE
 extern int hw_vht_cap();
-extern int hw_he_cap();
+extern int hw_he_cap(int unit);
 extern void check_wl_country();
 extern int wl_dfs_support(int unit);
 extern void wl_dfs_radarthrs_config(char *ifname, int unit);
@@ -1203,15 +1210,11 @@ extern void start_gpy211_monitor();
 extern int hnd_boardid_cmp();
 #endif
 #if defined(RTCONFIG_MLO)
-extern int mld_ifnames_unset(char *interface, char *mld_group, char *subunit);
+extern int mld_ifnames_unset(char *index);
 extern int mld_ifnames_set(char *mld_group, char *subunit);
 extern int mlo_api(char *mode, char *interface, char *group, char *subunit);
 extern int mld_enable_chk();
 extern void init_mlo_config();
-extern int set_mlo_config();
-#if defined(RTCONFIG_HND_ROUTER_BE_4916)
-extern void mlo_rescue_war();
-#endif
 #endif
 #if defined(RTCONFIG_MULTISERVICE_WAN)
 typedef struct {
@@ -1630,7 +1633,6 @@ extern int wlconf_rtk(const char* ifname);
 extern void gen_rtk_config(const char* ifname);
 extern int rtk_chk_wlc_ssid(const char* ifname);
 #endif /* RTCONFIG_REALTEK */
-extern void dhcp_war(void);
 extern void start_lan(void);
 extern void stop_lan(void);
 extern void do_static_routes(int add);
@@ -2046,20 +2048,26 @@ extern int send_arpreq(void);
 extern int psta_monitor_main(int argc, char *argv[]);
 #endif
 // ledg.c
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000_AI) || defined(GSBE18000)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000AI) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GTBE96_AI) || defined(RTCONFIG_BCMLEDG)
 extern int ledg_main(int argc, char *argv[]);
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GSBE18000)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7)
 extern int ledbtn_main(int argc, char *argv[]);
 #endif
 #ifdef GTAX6000
 extern int antled_main(int argc, char *argv[]);
 #endif
-#if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000_AI)
+#if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI)
 extern int rtkmonitor_main(int argc, char *argv[]);
 #endif
-#if defined(RTBE82M) || defined(GSBE18000)
+#if defined(RTBE82M) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7)
 extern int mxlmonitor_main(int argc, char *argv[]);
+#endif
+#if defined(GT7)
+extern int ext84991_main(int argc, char *argv[]);
+#endif
+#if defined(RTBE92U)
+extern int tempsense_main(int argc, char *argv[]);
 #endif
 #if defined(RTCONFIG_NBR_RPT)
 extern int nbr_monitor_main(int argc, char *argv[]);
@@ -2143,6 +2151,11 @@ extern int ntp_main(int argc, char *argv[]);
 extern void start_sched_daemon(void);
 extern void stop_sched_daemon(void);
 extern int sched_daemon_main(int argc, char *argv[]);
+#endif
+
+#define REBOOT_SCHED_TYPE_WEEKLY 	0
+#ifdef RTCONFIG_REBOOT_SCHEDULE_V2
+#define REBOOT_SCHED_TYPE_MONTHLY	1
 #endif
 
 // pc_reward.c
@@ -2314,17 +2327,21 @@ extern int mount_cifs_main(int argc, char *argv[]);
 static inline void start_cifs(void) {};
 static inline void stop_cifs(void) {};
 #endif
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000_AI) || defined(GSBE18000)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000AI) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GTBE96_AI) || defined(RTCONFIG_BCMLEDG)
 extern int start_ledg(void);
 extern int stop_ledg(void);
 #endif
-#if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000_AI)
+#if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI)
 extern int start_rtkmonitor(void);
 extern int stop_rtkmonitor(void);
 #endif
-#if defined(RTBE82M) || defined(GSBE18000)
+#if defined(RTBE82M) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7)
 extern int start_mxlmonitor(void);
 extern int stop_mxlmonitor(void);
+#endif
+#if defined(RTBE92U)
+extern int start_tempsense(void);
+extern int stop_tempsense(void);
 #endif
 
 // linkmonitor.c
@@ -2388,6 +2405,9 @@ extern int hmavpn_main(int argc, char **argv);
 #endif
 #ifdef RTCONFIG_NORDVPN
 extern int nordvpn_main(int argc, char **argv);
+#endif
+#ifdef RTCONFIG_SURFSHARK
+extern int surfshark_main(int argc, char **argv);
 #endif
 
 // wanduck.c
@@ -2596,9 +2616,11 @@ extern int ce_dad_check(int unit);
 extern int s46_ntt_hgw(int unit);
 extern int wan_hgw_detect(const int wan_unit, const char *wan_ifname, const char *prc);
 extern int is_v6addr(const char *input);
+extern int get_s46_prefer(int unit);
 extern char *get_AFTR_addr(const char *host, char *ip, size_t iplen);
 extern char *get_s46_ra(int unit);
 extern char *get_s46_url(char *s, int sz, int type, ...);
+extern char *get_s46_prefix_host(const char *prefix, char *host, size_t hostlen);
 extern char *calc_s46_port_range(int usable, int psid, int psidlen, int offset, char *ret, int retsz);
 extern void fmrs2file(int unit);
 extern void init_wan46(void);
@@ -2889,6 +2911,9 @@ extern int getPid_fromFile(char *file_name);
 #ifdef RTCONFIG_FRS_LIVE_UPDATE
 extern int firmware_check_update_main(int argc, char *argv[]);
 #endif
+#ifdef RTCONFIG_CFGSYNC
+extern int firmware_webs_update_main(int argc, char *argv[]);
+#endif
 #ifdef RTCONFIG_FRS_FEEDBACK
 extern void start_sendfeedback(void);
 #ifdef RTCONFIG_DBLOG
@@ -3136,6 +3161,10 @@ extern int string_remove(char *string, const char *match);
 #ifdef RTCONFIG_CFGSYNC
 extern void stop_cfgsync(void);
 extern int start_cfgsync(void);
+extern void start_fw_check(void);
+extern void stop_fw_check(void);
+extern void start_firmware_webs_update(void);
+extern void stop_firmware_webs_update(void);
 extern void send_event_to_cfgmnt(int event_id);
 #ifdef RTCONFIG_CONNDIAG
 extern int conn_diag_main(int argc, char *argv[]);
@@ -3145,6 +3174,10 @@ extern void stop_amas_portstatus(void);
 extern void start_amas_portstatus(void);
 extern void stop_conn_diag(void);
 extern void start_conn_diag(void);
+extern int send_reinit_bssinfo_to_conn_diag(void);
+#endif
+#ifdef RTCONFIG_FU_TEST
+extern int futest_main(int argc, char *argv[]);
 #endif
 #if defined(RTCONFIG_WIFI_DRV_DISABLE) /* for IPQ40XX */
 extern int setDisableWifiDrv(const char *);
@@ -3209,12 +3242,21 @@ extern int speedtest_main(int argc, char **argv);
 extern void wan_bandwidth_detect(void);
 extern int speedtest();
 
+#if defined(RTCONFIG_HNS)
+extern int hns_main(int argc, char **argv);
+extern void hns_sig_update_flow();
+#endif
+
+#if defined(RTCONFIG_BWDPI) || defined(RTCONFIG_HNS)
+extern int rsasign_sig_check_main(int argc, char *argv[]);
+extern void sig_update_and_rsa_check();
+#endif
+
 #if defined(RTCONFIG_BWDPI)
 extern int bwdpi_main(int argc, char **argv);
 extern int bwdpi_check_main(int argc, char **argv);
 extern int bwdpi_wred_alive_main(int argc, char **argv);
 extern int show_wrs_main(int argc, char **argv);
-extern int rsasign_sig_check_main(int argc, char *argv[]);
 extern int bwdpi_db_10_main(int argc, char **argv);
 extern void stop_bwdpi_check();
 extern void start_bwdpi_check();
@@ -3377,7 +3419,8 @@ extern int	 	apg_destory_wl_vlan(char *vlan_ifnames);
 extern int	 	apg_create_eth_vlan(int vid, char *ifnames, char *ret_ifnames, size_t ret_ifnames_bsize);
 extern int	 	apg_destory_eth_vlan(char *vlan_ifnames);
 extern void 	init_apg_subunit(void);
-extern void init_apg(void);
+extern void 	apg_init_settings(void);
+extern void 	apg_init_settings_2(void);
 extern void apg_create_vlan_for_lan(void);
 extern void apg_destory_vlan_for_lan(void);
 #endif
@@ -3730,14 +3773,6 @@ extern void asm1042_upgrade(int);
 #endif
 
 // private.c
-#if defined(RTCONFIG_NOTIFICATION_CENTER)
-extern void oauth_google_gen_token_email(void);
-extern void oauth_google_drive_gen_token(void);
-extern void oauth_google_update_token(void);
-extern int oauth_google_send_message(const char* receiver, const char* subject, const char* message, const char* attached_files[], int attached_files_count);
-extern void oauth_google_check_token_status(void);
-extern void oauth_google_drive_check_token_status(void);
-#endif
 #ifdef RTCONFIG_MULTI_PPP
 extern void add_multi_ppp_routes(int wan_unit);
 extern void del_multi_ppp_routes(int wan_unit);

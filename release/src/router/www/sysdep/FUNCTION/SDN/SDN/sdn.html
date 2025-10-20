@@ -102,7 +102,7 @@ function initial(){
 
 	var delay_load = (app_control.type == "") ? 100 : 0;
 	setTimeout(function(){
-		if(theme == "WHITE" || theme == "ROG"){
+		if(theme == "WHITE" || theme == "ROG" || theme == "TUF"){
 			$('link').first().before('<link rel="stylesheet" type="text/css" href="/js/weekSchedule/schedule_ui_' + theme + '.css">');
 		}
 		$('link').first().before('<link rel="stylesheet" type="text/css" href="/js/weekSchedule/schedule_ui.css">');

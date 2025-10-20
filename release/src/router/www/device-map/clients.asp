@@ -42,7 +42,6 @@ p{
 <script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/tmmenu.js"></script>
 <script>
 if(parent.location.pathname.search("index") === -1) top.location.href = "../"+'<% networkmap_page(); %>';
 
@@ -255,7 +254,7 @@ function drawClientList(tab){
 		if(parent.sw_mode != 4) {
 			clientHtmlTd += '<div style="height:28px;width:28px;float:right;margin-right:5px;margin-bottom:-20px;">';
 			var radioIcon_css = "radioIcon";
-			if(clientObj.isGN != "" && clientObj.isGN != undefined)
+			if((clientObj.isGN != "" && clientObj.isGN != undefined) || (isSupport("mtlancfg") && clientObj.sdn_idx > 0))
 				radioIcon_css += " GN";
 			clientHtmlTd += '<div class="' + radioIcon_css + ' radio_' + rssi_t +'" title="' + connectModeTip + '"></div>';
 			if(clientObj.isWL != 0 || (isSupport("mtlancfg") && clientObj.sdn_idx > 0)) {
@@ -454,7 +453,7 @@ function updateClientList(e){
 <body class="statusbody" onload="initial();">
 <iframe name="applyFrame" id="applyFrame" src="" width="0" height="0" frameborder="0" scrolling="no"></iframe>
 <form method="post" name="form" id="refreshForm" action="/apply.cgi" target="applyFrame">
-<input type="hidden" name="action_mode" value="refresh_networkmap">
+<input type="hidden" name="action_mode" value="cleanShm_networkmap">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="current_page" value="device-map/clients.asp">

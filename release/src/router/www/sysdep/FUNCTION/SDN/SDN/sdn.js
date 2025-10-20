@@ -17,46 +17,22 @@ if(typeof get_wl_unit_by_band != "function"){
 		if(_band == undefined) return "";
 
 		_band = (_band).toString().toUpperCase();
-		var wl_nband = "";
+		const wlnband_list = `<% nvram_get("wlnband_list"); %>`.toUpperCase().split("&#60");
 
-		switch(_band){
-			case "2G":
-			case "2G1":
-				wl_nband = "2";
-				break;
-			case "5G":
-			case "5G1":
-			case "5G2":
-				wl_nband = "1";
-				break;
-			case "6G":
-			case "6G1":
-			case "6G2":
-				wl_nband = "4";
-				break;
-			case "60G":
-				wl_nband = "6";
-				break;
+		const bandMap = {
+			"2G": "2G1",
+			"5G": "5G1",
+			"6G": "6G1"
+		};
+
+		_band = bandMap[_band] || _band;
+
+		return findWLUnit(wlnband_list, _band).toString();
+
+		function findWLUnit(array, band) {
+			const idx = $.inArray(band, array);
+			return idx !== -1 ? idx : '';
 		}
-		if(wl_nband == "") return "";
-
-		var wl_unit = "";
-		var suffix_num = _band.substr(_band.indexOf("G") + 1);
-		var ordinal_num = (suffix_num == "") ? 1 : parseInt(suffix_num);
-		var count = 1;
-		var wl_nband_array = httpApi.hookGet("wl_nband_info");
-		$.each(wl_nband_array, function(wlx, value){
-			if(value == wl_nband){
-				if(count == ordinal_num){
-					wl_unit = wlx;
-					return false;
-				}
-				else{
-					count+=1;
-				}
-			}
-		});
-		return wl_unit.toString();
 	}
 }
 if(typeof ui_lang != "string"){
@@ -95,11 +71,11 @@ var sdn_schedule = "";
 var cfg_clientlist = httpApi.hookGet("get_cfg_clientlist");
 const wifi_band_options = (()=>{
 	const options = [
+		{"text":"2.4GHz / 5GHz / 6GHz","value":"6"},
 		{"text":"2.4GHz / 5GHz","value":"3"},
 		{"text":"2.4GHz","value":"1"},
 		{"text":"5GHz","value":"2"},
 		{"text":"6GHz","value":"4"},
-		{"text":"2.4GHz / 5GHz / 6GHz","value":"6"},
 		{"text":"5GHz / 6GHz","value":"5"},
 		{"text":"2.4GHz / 6GHz","value":"7"},
 		{"text":"<#wl_securitylevel_0#>","value":"0"}
@@ -150,49 +126,23 @@ const wifi_band_options = (()=>{
 		})].concat(result);
 	}
 	if(support_6G){
-		result = result.concat(options.find((el) => {
-			return (el.value == "4");
+		result = result.concat(options.filter((el) => {
+			return (el.value == "4" || el.value == "6");
 		}));
 	}
 	if(support_6G && isSupport("mlo")){
 		result = result.concat(options.filter((el) => {
-			return (el.value == "5" || el.value == "6" || el.value == "7");
+			return (el.value == "5" || el.value == "7");
 		}));
 	}
 	result = result.concat(options.find((el) => {
 		return (el.value == "0");
 	}));
-	return result;
-})();
-const wifi_band_options_cb = (()=>{
-	const options = [
-		{"text":"2.4GHz","value":"1"},
-		{"text":"5GHz","value":"2"},
-		{"text":"5GHz-1","value":"4"},
-		{"text":"5GHz-2","value":"8"},
-		{"text":"6GHz","value":"16"},
-		{"text":"6GHz-1","value":"32"},
-		{"text":"6GHz-2","value":"64"}
-	];
-	let result = [];
-	if(isSupport("noWiFi")){
-		return result;
-	}
-	if(get_wl_unit_by_band("2G") != ""){
-		result = result.concat(options.find(el => el.value === "1"));
-	}
-	if(get_wl_unit_by_band("5G2") != ""){
-		result = result.concat(options.filter(el => ["4", "8"].includes(el.value)));
-	}
-	else if(get_wl_unit_by_band("5G") != ""){
-		result = result.concat(options.find(el => el.value === "2"));
-	}
-	if(get_wl_unit_by_band("6G2") != ""){
-		result = result.concat(options.filter(el => ["32", "64"].includes(el.value)));
-	}
-	else if(get_wl_unit_by_band("6G") != ""){
-		result = result.concat(options.find(el => el.value === "16"));
-	}
+
+	const sortOrder = ["6", "3", "1", "2", "4", "5", "7", "0"];
+	result.sort(function(a, b) {
+		return sortOrder.indexOf(a.value) - sortOrder.indexOf(b.value);
+	});
 	return result;
 })();
 var interval_AccTime = false;
@@ -449,7 +399,7 @@ let wizard_type_text = [
 	{"type":"VPN", "text":"<#GuestNetwork_VPN#>", "desc":"<#GuestNetwork_VPN_desc#>"},
 	{"type":"Customized", "text":"<#GuestNetwork_Customized#>", "desc":""},
 	{"type":"MLO", "text":`<#WiFi_mlo_title#>`, "desc":`<#WiFi_mlo_Desc1#>`},
-	{"type":"Gaming", "text":`<#Adaptive_Game#> <#Network#>`, "desc":`<#GuestNetwork_Gaming_desc2#>`}
+	{"type":"Gaming", "text":`<#GuestNetwork_Gaming#>`, "desc":`<#GuestNetwork_Gaming_desc2#>`}
 ];
 if(isSupport("BUSINESS")){
 	var specific_wizard_type = wizard_type_text.filter(function(item, index, array){
@@ -461,81 +411,27 @@ if(isSupport("BUSINESS")){
 		specific_wizard_type.desc = str_GuestNetwork_WiFi_Sche_desc;
 	}
 }
-function Get_Component_Profile_Item_AddNew(_type){
-	const addNewType = (_type === undefined) ? "sdn" : _type;
-	var $profile_item_container = $("<div>").addClass("profile_item_container addnew").attr({"data-add_new":addNewType});
+function Get_Component_Profile_Item_AddNew(){
+	var $profile_item_container = $("<div>").addClass("profile_item_container addnew");
 	$profile_item_container.unbind("click").click(function(e){
 		e = e || event;
 		e.stopPropagation();
-		selected_sdn_idx = "";
-		if(addNewType == "sdn"){
-			let rule_num = 0;
-			if(rule_num >= sdn_maximum){
-				show_customize_alert("<#weekSche_MAX_Num#>".replace("#MAXNUM", sdn_maximum));
-				return false;
-			}
-			if($(".profile_setting_container").css("display") == "none"){
-				$(".popup_element").css("display", "flex");
-				$(".container").addClass("blur_effect");
-				$(".popup_container.popup_element").empty().append(show_Get_Start("popup"));
-			}
-			else{
-				$(this).closest("#profile_list_content").find(".profile_item_container").removeClass("selected");
-				$(this).closest(".profile_item_container").addClass("selected");
-				$(".profile_setting_container").empty().append(show_Get_Start());
-				resize_iframe_height();
-			}
+		var rule_num = 0;
+		if(rule_num >= sdn_maximum){
+			show_customize_alert("<#weekSche_MAX_Num#>".replace("#MAXNUM", sdn_maximum));
+			return false;
 		}
-		else if(addNewType == "mainfh"){
-			const main_fh_json = sdn_all_rl_json.filter(item => item.sdn_rl.sdn_name === "MAINFH");
-			let total_band_bitwise = 0;
-			if(main_fh_json.length > 0){
-				main_fh_json.forEach((item)=>{
-					const apg_dut_list_array = (item.apg_rl.dut_list).split("<");
-					$.each(apg_dut_list_array, function(index, dut_info){
-						if(dut_info != ""){
-							const dut_info_array = dut_info.split(">");
-							total_band_bitwise += parseInt(dut_info_array[1]) || 0;
-							return false;
-						}
-					});
-				});
-			}
-			let available_band_options = JSON.parse(JSON.stringify(wifi_band_options_cb));
-			available_band_options = available_band_options.filter(item => ((item.value & total_band_bitwise) == 0));
-			if(available_band_options.length == 0){
-				show_customize_alert(`<#AiMesh_Binding_Rule_Maxi#>`);
-				return false;
-			}
+		selected_sdn_idx = "";
+		if($(".profile_setting_container").css("display") == "none"){
 			$(".popup_element").css("display", "flex");
 			$(".container").addClass("blur_effect");
-			const $mainfh_profile_cntr = Get_Wizard_MAINFH("popup");
-			$(".popup_container.popup_element").empty().append($mainfh_profile_cntr);
-			$mainfh_profile_cntr.find("#checkbox_wifi_band [data-component=checkbox_val]")
-				.each(function(){
-					$(this).removeClass("clicked");
-					const band_bit = parseInt($(this).attr("value")) || 0;
-					if(total_band_bitwise & band_bit){
-						$(this).addClass("closed disabled");
-					}
-				});
-			if($mainfh_profile_cntr.find("#checkbox_wifi_band [data-component=checkbox_val].clicked").length == 0){
-				$mainfh_profile_cntr.find("#checkbox_wifi_band [data-component=checkbox_val]").not('.closed').eq(0).addClass("clicked");
-			}
-			const smart_connect_count = sdn_all_rl_json.filter(item => item.sdn_rl.sdn_name === "MAINFH" && item.mainfh_smart_connect.status).length;
-			if(smart_connect_count > 0){
-				const $checkbox_wifi_band_cntr = $mainfh_profile_cntr.find("#checkbox_wifi_band").closest(".profile_setting_item");
-				$("<div>").html(`<#SDN_MainFH_Smart_Connect_Hint#>`)
-					.addClass("validate_hint").insertAfter($checkbox_wifi_band_cntr);
-				$mainfh_profile_cntr.find("[data-container='checkbox_option']").click(function(e){
-					e = e || event;
-					e.stopPropagation();
-					let $icon_cb = $(this).find("[data-component='checkbox_val']");
-					if($icon_cb.hasClass("closed")) return;
-					$(this).closest("[data-container='checkboxlist']").find("[data-component=checkbox_val].clicked").removeClass("clicked");
-					$icon_cb.addClass("clicked");
-				});
-			}
+			$(".popup_container.popup_element").empty().append(show_Get_Start("popup"));
+		}
+		else{
+			$(this).closest("#profile_list_content").find(".profile_item_container").removeClass("selected");
+			$(this).closest(".profile_item_container").addClass("selected");
+			$(".profile_setting_container").empty().append(show_Get_Start());
+			resize_iframe_height();
 		}
 	});
 	var $item_text_container = $("<div>").addClass("item_text_container");
@@ -554,9 +450,6 @@ function Get_Component_Profile_Item(_profile_data){
 		if(_profile_data.type == "LEGACY"){
 			return "LEGACY";
 		}
-		else if(_profile_data.type == "MAINFH"){
-			return "MAINFH";
-		}
 		else{
 			let type_exist = wizard_type_text.some(function(item, index, array){
 				return item.type === _profile_data.type;
@@ -567,10 +460,6 @@ function Get_Component_Profile_Item(_profile_data){
 	let $profile_item_container = $("<div>").addClass("profile_item_container profile_list " + sdn_type + "").attr("sdn_idx", _profile_data.sdn_idx);
 	if(support_gaming && sdn_type == "Gaming"){
 		$("<div>").addClass("led_schematic_cntr").appendTo($profile_item_container);
-	}
-
-	if(specific_data.apg_rl.disabled == "1"){
-		$profile_item_container.addClass("disabled");
 	}
 
 	var $item_tag_cntr = $("<div>").addClass("item_tag_container").appendTo($profile_item_container);
@@ -768,10 +657,6 @@ function Get_Component_Profile_Item(_profile_data){
 			});
 		}).appendTo($status_right_cntr);
 
-	if(_profile_data.type == "MAINFH" || specific_data.apg_rl.disabled == "1"){
-		$status_right_cntr.find(".icon_switch").remove();
-	}
-
 	let $bottom_info = $("<div>").addClass("bottom_info").appendTo($item_text_container);
 	if(!($.isEmptyObject(specific_data.vlan_rl))){
 		$("<div>").html(`VLAN<span>${specific_data.vlan_rl.vid}</span>`).appendTo($bottom_info);
@@ -785,7 +670,6 @@ function Get_Component_Profile_Item(_profile_data){
 		let wifi_band = [];
 		let wifi_band_arr = [];
 		const is_mlo_type = (_sdn_data.apg_rl.mlo == "1" || _sdn_data.apg_rl.mlo == "2") ? true : false;
-		const is_mainfh_type = (_sdn_data.sdn_rl.sdn_name == "MAINFH") ? true : false;
 		const cap_band_bitwise = (()=>{
 			let band_bitwise = 0;
 			const apg_dut_list_array = (_sdn_data.apg_rl.dut_list).split("<");
@@ -798,49 +682,19 @@ function Get_Component_Profile_Item(_profile_data){
 			});
 			return band_bitwise;
 		})();
-		const bands_bit_mapping = [
-			{ bit: 1, band: "2G" },
-			{ bit: 2, band: "5G" },
-			{ bit: 4, band: "5G1" },
-			{ bit: 8, band: "5G2" },
-			{ bit: 16, band: "6G" },
-			{ bit: 32, band: "6G1" },
-			{ bit: 64, band: "6G2" }
-		];
 
 		if(is_mlo_type){
 			wifi_band_arr.push("mlo");
-			if(is_mainfh_type){
-				const mlo_band_bitwise = (() => {
-					const all_band_num = aimesh_wifi_mlo_info.cap.all_band_num;
-					const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
-					return (mlo_band_info != undefined) ? mlo_band_info.mlo_band : 0;
-				})();
-				bands_bit_mapping.forEach(({ bit, band }) => {
-					if(cap_band_bitwise & bit && check_support_band_bit(bit) && !(mlo_band_bitwise & bit)){
-						wifi_band_arr.push(band);
-					}
-				});
-			}
 		}
 		else{
-			if(is_mainfh_type){
-				bands_bit_mapping.forEach(({ bit, band }) => {
-					if((cap_band_bitwise & bit) && check_support_band_bit(bit)){
-						wifi_band_arr.push(band);
-					}
-				});
+			if(cap_band_bitwise & 1){
+				wifi_band_arr.push("2G");
 			}
-			else{
-				if(cap_band_bitwise & 1){
-					wifi_band_arr.push("2G");
-				}
-				if(cap_band_bitwise & 2 || cap_band_bitwise & 4 || cap_band_bitwise & 8){
-					wifi_band_arr.push("5G");
-				}
-				if(cap_band_bitwise & 16 || cap_band_bitwise & 32 || cap_band_bitwise & 64){
-					wifi_band_arr.push("6G");
-				}
+			if(cap_band_bitwise & 2 || cap_band_bitwise & 4 || cap_band_bitwise & 8){
+				wifi_band_arr.push("5G");
+			}
+			if(cap_band_bitwise & 16 || cap_band_bitwise & 32 || cap_band_bitwise & 64){
+				wifi_band_arr.push("6G");
 			}
 		}
 
@@ -889,9 +743,6 @@ function Get_Component_Profile_Item(_profile_data){
 			}
 			return conn_type;
 		}
-	}
-	function check_support_band_bit(_band_bitwise){
-		return (wifi_band_options_cb.find(wifi_option => wifi_option.value & _band_bitwise)) ? true : false;
 	}
 }
 function Get_Component_Wizard_Item(_parm){
@@ -1794,7 +1645,7 @@ function show_feature_desc(){
 			},
 			{"type":"VPN", "title":"<#GuestNetwork_VPN#>", "desc":stringSafeGet("<#GuestNetwork_VPN_desc2#>")},
 			{"type":"MLO", "title":`<#WiFi_mlo_title#>`, "desc":`<#WiFi_mlo_Desc#>`},
-			{"type":"Gaming", "title":`<#Adaptive_Game#> <#Network#>`, "desc":`<#GuestNetwork_Gaming_desc2#>`}
+			{"type":"Gaming", "title":`<#GuestNetwork_Gaming#>`, "desc":`<#GuestNetwork_Gaming_desc2#>`}
 		];
 		if(isSwMode("ap")){
 			wizard_type_list = wizard_type_list.filter(function(item, index, array){
@@ -2020,8 +1871,9 @@ function show_Get_Start(view_mode){
 		if($guest_comp != "")
 			$guest_comp.appendTo($gn_list_bg);
 
-		$("<div>").addClass("title").html(htmlEnDeCode.htmlEncode(`SMART HOME MASTER`)).appendTo($content_container);/* untranslated */
+		$("<div>").addClass("title").html(htmlEnDeCode.htmlEncode(`<#GuestNetwork_SHM_title#>`)).appendTo($content_container);
 		let $shm_list_bg = $("<div>").addClass("wizard_list_bg").appendTo($content_container);
+		if($gaming_comp != "") $gaming_comp.appendTo($shm_list_bg);
 		if($kids_sched_comp != "")
 			$kids_sched_comp.appendTo($shm_list_bg);
 		if($iot_comp != "")
@@ -2061,8 +1913,7 @@ function show_popup_Wizard_Setting(_type){
 		return;
 
 	const cap_mac = (httpApi.hookGet('get_lan_hwaddr')) ? httpApi.hookGet('get_lan_hwaddr') : '';
-	const profile_len = sdn_all_rl_json.filter(item => item.sdn_rl.sdn_name != "MAINFH" && item.sdn_rl.sdn_name != "MAINBH").length;
-	if(profile_len >= sdn_maximum){
+	if(sdn_all_rl_json.length >= sdn_maximum){
 		show_customize_alert("<#AiMesh_Binding_Rule_Maxi#>");
 		return;
 	}
@@ -2103,9 +1954,6 @@ function show_popup_Wizard_Setting(_type){
 			break;
 		case "Gaming":
 			$(".popup_container.popup_element_second").append(Get_Wizard_Gaming("popup"));
-			break;
-		case "MAINFH":
-			$(".popup_container.popup_element_second").append(Get_Wizard_MAINFH("popup"));
 			break;
 	}
 
@@ -2209,92 +2057,6 @@ function show_popup_Wizard_Setting(_type){
 				$(this).find(".profile_setting_item").hide();
 			}).filter("[data-portal-type='"+default_select_portal.type+"']").show(0, function(){
 				$(this).find(".profile_setting_item").show();
-			});
-		}
-	}
-
-	if($setting_content_cntr.find("#wizard_dut_list_star").length > 0){
-		const $dut_list_star_cntr = $setting_content_cntr.find("#wizard_dut_list_star").closest(".profile_setting_item");
-		if(sdn_all_rl_json.find(item => item.sdn_rl.sdn_name === "LEGACY") != undefined){
-			$dut_list_star_cntr.addClass("icon_item");
-			$dut_list_star_cntr.find(".title").append(
-				$("<div>").addClass("help_icon").unbind("click").click(function(e){
-					e = e || event;
-					e.stopPropagation();
-					show_customize_alert(`If your Aimesh node(s) are old models or the WiFi has reached its maximum, it will be unable to sync to all AiMesh node(s). Please select the node(s) to sync from the menu below.`);/*untranslated*/
-				})
-			);
-			$dut_list_star_cntr.find("#wizard_dut_list_star").css({"opacity":"0.5"}).attr({"temp_disable":"disabled"});
-		}
-		else{
-			let node_band_is_full = false;
-			for(const dut_mac of Object.keys(aimesh_wifi_band_info)){
-				if(aimesh_wifi_band_full.node[dut_mac].band_2G){
-					node_band_is_full = true;
-				}
-				if(aimesh_wifi_band_full.node[dut_mac].band_5G){
-					node_band_is_full = true;
-				}
-				if(aimesh_wifi_band_full.node[dut_mac].band_6G){
-					node_band_is_full = true;
-				}
-				if(node_band_is_full)
-					break;
-			}
-			if(node_band_is_full){
-				$dut_list_star_cntr.addClass("icon_item");
-				$dut_list_star_cntr.find(".title").append(
-					$("<div>").addClass("help_icon").unbind("click").click(function(e){
-						e = e || event;
-						e.stopPropagation();
-						show_customize_alert(`If your Aimesh node(s) are old models or the WiFi has reached its maximum, it will be unable to sync to all AiMesh node(s). Please select the node(s) to sync from the menu below.`);/*untranslated*/
-					})
-				);
-				$dut_list_star_cntr.find("#wizard_dut_list_star").css({"opacity":"0.5"}).attr({"temp_disable":"disabled"});
-			}
-			else{
-				$setting_content_cntr.find("#wizard_dut_list_star").click();
-			}
-		}
-	}
-	if(_type == "MAINFH"){
-		const main_fh_json = sdn_all_rl_json.filter(item => item.sdn_rl.sdn_name === "MAINFH");
-		let total_band_bitwise = 0;
-		if(main_fh_json.length > 0){
-			main_fh_json.forEach((item)=>{
-				const apg_dut_list_array = (item.apg_rl.dut_list).split("<");
-				$.each(apg_dut_list_array, function(index, dut_info){
-					if(dut_info != ""){
-						const dut_info_array = dut_info.split(">");
-						total_band_bitwise += parseInt(dut_info_array[1]) || 0;
-						return false;
-					}
-				});
-			});
-		}
-		$setting_content_cntr.find("#checkbox_wifi_band [data-component=checkbox_val]")
-			.each(function(){
-				$(this).removeClass("clicked");
-				const band_bit = parseInt($(this).attr("value")) || 0;
-				if(total_band_bitwise & band_bit){
-					$(this).addClass("closed disabled");
-				}
-			});
-		if($setting_content_cntr.find("#checkbox_wifi_band [data-component=checkbox_val].clicked").length == 0){
-			$setting_content_cntr.find("#checkbox_wifi_band [data-component=checkbox_val]").not('.closed').eq(0).addClass("clicked");
-		}
-		const smart_connect_count = sdn_all_rl_json.filter(item => item.sdn_rl.sdn_name === "MAINFH" && item.mainfh_smart_connect.status).length;
-		if(smart_connect_count > 0){
-			const $checkbox_wifi_band_cntr = $setting_content_cntr.find("#checkbox_wifi_band").closest(".profile_setting_item");
-			$("<div>").html(`<#SDN_MainFH_Smart_Connect_Hint#>`)
-				.addClass("validate_hint").insertAfter($checkbox_wifi_band_cntr);
-			$setting_content_cntr.find("[data-container='checkbox_option']").click(function(e){
-				e = e || event;
-				e.stopPropagation();
-				let $icon_cb = $(this).find("[data-component='checkbox_val']");
-				if($icon_cb.hasClass("closed")) return;
-				$(this).closest("[data-container='checkboxlist']").find("[data-component=checkbox_val].clicked").removeClass("clicked");
-				$icon_cb.addClass("clicked");
 			});
 		}
 	}
@@ -2577,7 +2339,7 @@ function show_popup_Wizard_Setting(_type){
 			});
 		}
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-sec-option-id":"pwd", "data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -2981,7 +2743,7 @@ function show_popup_Wizard_Setting(_type){
 				return validator.isString(this, event);
 			});
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -3392,7 +3154,7 @@ function show_popup_Wizard_Setting(_type){
 				return validator.isString(this, event);
 			});
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -3621,11 +3383,10 @@ function show_popup_Wizard_Setting(_type){
 						var sdn_idx = Object.keys(sdn_obj);
 						var sdn_profile = sdn_obj[sdn_idx];
 						selected_sdn_idx = sdn_profile.sdn_rl.idx;
-						const dut_list_star = $(_obj).find("#wizard_dut_list_star").hasClass("on");
 						var nvramSet_obj = {"action_mode": "apply", "rc_service": "restart_wireless;restart_sdn " + selected_sdn_idx + ";"};
 						var rc_append = "";
 						var wifi_band = (!is_cfg_ready) ? 1 : (parseInt($(_obj).find("#select_wifi_band").children(".selected").attr("value")));
-						sdn_profile.sdn_rl.sdn_name = (dut_list_star) ? "LEGACY" : wizard_type;
+						sdn_profile.sdn_rl.sdn_name = wizard_type;
 						sdn_profile.apg_rl.ssid = $(_obj).find("#sdn_name").val();
 						if(wifi_band > 0){
 							let wifi_auth = "psk2";
@@ -3649,32 +3410,27 @@ function show_popup_Wizard_Setting(_type){
 						}
 						sdn_profile.apg_rl.bw_limit = "<0>>";
 						var dut_list = "";
-						if(dut_list_star){
-							dut_list = get_legacy_dut_list(wifi_band);
-						}
-						else{
-							if(is_cfg_ready){
-								if(wifi_band > 0){
-									$(_obj).find("[data-container=AiMesh_List]").find(".node_container").each(function(){
-										if($(this).find(".icon_checkbox").hasClass("clicked")){
-											var node_mac = $(this).attr("data-node-mac");
-											var specific_node = cfg_clientlist.filter(function(item, index, array){
-												return (item.mac == node_mac);
-											})[0];
-											if(specific_node != undefined){
-												dut_list += get_specific_dut_list(wifi_band, specific_node);
-											}
+						if(is_cfg_ready){
+							if(wifi_band > 0){
+								$(_obj).find("[data-container=AiMesh_List]").find(".node_container").each(function(){
+									if($(this).find(".icon_checkbox").hasClass("clicked")){
+										var node_mac = $(this).attr("data-node-mac");
+										var specific_node = cfg_clientlist.filter(function(item, index, array){
+											return (item.mac == node_mac);
+										})[0];
+										if(specific_node != undefined){
+											dut_list += get_specific_dut_list(wifi_band, specific_node);
 										}
-									});
-									dut_list += get_unChecked_dut_list(_obj);
-								}
-								else{
-									dut_list = get_dut_list(wifi_band);
-								}
+									}
+								});
+								dut_list += get_unChecked_dut_list(_obj);
 							}
 							else{
-								dut_list = get_dut_list_by_mac("1", cap_mac);
+								dut_list = get_dut_list(wifi_band);
 							}
+						}
+						else{
+							dut_list = get_dut_list_by_mac("1", cap_mac);
 						}
 						sdn_profile.apg_rl.dut_list = dut_list;
 
@@ -3771,7 +3527,7 @@ function show_popup_Wizard_Setting(_type){
 				return validator.isString(this, event);
 			});
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -3837,56 +3593,10 @@ function show_popup_Wizard_Setting(_type){
 					else
 						$wifi_settings_objs.filter("#container_wizard_schedule").hide();
 				}
-				if(isSupport("sdn_mwl")){
-					const dut_list_star = $profile_setting.find("#wizard_dut_list_star").hasClass("on");
-					const $control_container = $(this).closest(".profile_setting").find("[data-container='wizard_aimesh_cntr']");
-					if(dut_list_star)
-						$control_container.hide();
-					else
-						$control_container.show();
-				}
 				_set_apply_btn_status($profile_setting);
 			}
 			resize_iframe_height();
 		});
-
-		if(!is_QIS_flow){
-			if(isSupport("sdn_mwl")){
-				const wizard_dut_list_star = {"title":`Sync to all AiMesh node(s)`, "type":"switch", "id":"wizard_dut_list_star", "set_value":"off"};/* untranslated */
-				Get_Component_Switch(wizard_dut_list_star).appendTo($more_config_cntr).find("#" + wizard_dut_list_star.id + "").click(function(e){
-					e = e || event;
-					e.stopPropagation();
-					if($(this).attr("temp_disable") == "disabled") return;
-					const $profile_title = $(this).closest(".setting_content_container").find("[data-container='profile_title']");
-					const $profile_setting = $(this).closest(".profile_setting");
-					const $sel_wifi_band = $profile_setting.find("#select_wifi_band");
-					if($(this).hasClass("on")){
-						$profile_title.html(`<#GuestNetwork_IoT_default#>`);
-						$sel_wifi_band.closest(".profile_setting_item")
-							.find(".custom_select_container").click()
-							.find("#select_wifi_band").children("[value=3]").click();
-						/*
-						$sel_wifi_band.closest(".custom_select_container").attr("temp_disable", "disabled").addClass("temp_disable");
-						const $wifi_settings_objs = $profile_setting.find("[data-group=wifi_settings]");
-						$wifi_settings_objs.hide()
-							.filter("#sdn_pwd_strength").show().end()
-							.find("#sdn_pwd").blur().closest(".profile_setting_item").show();
-						$profile_setting.find("#use_main_subnet").closest(".profile_setting_item").hide();
-						*/
-					}
-					else{
-						$profile_title.html(`<#GuestNetwork_IoT#>`);
-						$sel_wifi_band.closest(".profile_setting_item")
-							.find(".custom_select_container").click()
-							.find("#select_wifi_band").children("[value=1]").click();
-						/*
-						$sel_wifi_band.closest(".custom_select_container").removeAttr("temp_disable").removeClass("temp_disable");
-						$profile_setting.find("#use_main_subnet").closest(".profile_setting_item").show();
-						*/
-					}
-				});
-			}
-		}
 
 		var aimesh_parm = {"title":"AiMesh", "id":"wizard_aimesh", "slide_target":"wizard_aimesh_cntr"};
 		var $wizard_slide_aimesh = Get_Component_Slide_Title(aimesh_parm).attr({"data-container":"wizard_aimesh_cntr", "data-group":"wifi_settings"}).addClass("arrow_up").appendTo($more_config_cntr);
@@ -3999,7 +3709,7 @@ function show_popup_Wizard_Setting(_type){
 							}
 							if(wifi_band == 4 || wifi_band == 5 || wifi_band == 6){
 								if(sec_option_id == "open")
-									wifi_auth = "openowe";
+									wifi_auth = "open";
 								else{
 									wifi_auth = wifi_auth_6G;
 								}
@@ -4168,7 +3878,7 @@ function show_popup_Wizard_Setting(_type){
 				_set_apply_btn_status($(this).closest(".profile_setting"));
 			});
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-sec-option-id":"pwd", "data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -4508,7 +4218,7 @@ function show_popup_Wizard_Setting(_type){
 				return validator.isString(this, event);
 			});
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -4712,11 +4422,8 @@ function show_popup_Wizard_Setting(_type){
 						sdn_profile.sdn_rl.sdn_name = wizard_type;
 						sdn_profile.apg_rl.ssid = $(_obj).find("#sdn_name").val();
 						var wifi_pwd = "";
-						var wifi_auth = "open";
+						let wifi_auth = "open";
 						let wifi_auth_6G = "owe";
-						if(wifi_band == 4 || wifi_band == 5 || wifi_band == 6){
-							wifi_auth = "openowe";
-						}
 						const radius_idx = sdn_profile.sdn_rl.idx;
 						sdn_profile.apg_rl.security = "<3>" + wifi_auth + ">aes>" + wifi_pwd + ">" + radius_idx + "";
 						sdn_profile.apg_rl.security += "<13>" + wifi_auth + ">aes>" + wifi_pwd + ">" + radius_idx + "";
@@ -5124,7 +4831,6 @@ function show_popup_Wizard_Setting(_type){
 						if($(_obj).find("#mlo_enabled").length > 0){
 							sdn_profile.apg_rl.mlo = $(_obj).find("#mlo_enabled").hasClass("on") ? "2" : "0";
 							if(sdn_profile.apg_rl.mlo == "2") is_mlo_fh = true;
-							sdn_profile.apg_rl.apg_11be = is_mlo_fh ? "1" : "0";
 						}
 						let dut_list = "";
 						if(wifi_band > 0 || is_mlo_fh){
@@ -5164,7 +4870,7 @@ function show_popup_Wizard_Setting(_type){
 									})[0];
 									if(specific_node != undefined){
 										if(is_mlo_fh)
-											dut_list += get_mlo_dut_list(aimesh_wifi_mlo_info.cap.sdn_mlo_band_num, specific_node);
+											dut_list += get_mlo_dut_list(aimesh_wifi_mlo_info.cap.mlo_band_num, specific_node);
 										else
 											dut_list += get_specific_dut_list(wifi_band, specific_node);
 									}
@@ -5246,7 +4952,7 @@ function show_popup_Wizard_Setting(_type){
 		let $container = $("<div>").addClass("setting_content_container");
 
 		if(view_mode == "popup"){
-			Get_Component_Popup_Profile_Title(`<#Adaptive_Game#> <#Network#>`).appendTo($container)
+			Get_Component_Popup_Profile_Title(`<#GuestNetwork_Gaming#>`).appendTo($container)
 				.find("#title_close_btn").unbind("click").click(function(e){
 					e = e || event;
 					e.stopPropagation();
@@ -5254,7 +4960,7 @@ function show_popup_Wizard_Setting(_type){
 				});
 		}
 		else
-			Get_Component_Profile_Title(`<#Adaptive_Game#> <#Network#>`).appendTo($container);
+			Get_Component_Profile_Title(`<#GuestNetwork_Gaming#>`).appendTo($container);
 
 		let $content_container = $("<div>").addClass("popup_content_container profile_setting").appendTo($container);
 
@@ -5274,7 +4980,7 @@ function show_popup_Wizard_Setting(_type){
 				return validator.isString(this, event);
 			});
 
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -5324,7 +5030,7 @@ function show_popup_Wizard_Setting(_type){
 		});
 
 		if(support_ledg_sdn){
-			const ledg_sdn_parm = {"title":`<#Adaptive_Game#> <#Network#> LED`, "type":"switch", "id":"ledg_sdn", "set_value":"on"};
+			const ledg_sdn_parm = {"title":`<#GuestNetwork_Gaming#> LED`, "type":"switch", "id":"ledg_sdn", "set_value":"on"};
 			let $ledg_sdn = Get_Component_Switch(ledg_sdn_parm).appendTo($content_container);
 			$ledg_sdn.addClass("icon_item").find(".title").append(
 				$("<div>").addClass("help_icon").unbind("click").click(function(e){
@@ -5620,7 +5326,7 @@ function Get_Wizard_MLO(view_mode){
 								return (item.mac == node_mac);
 							})[0];
 							if(specific_node != undefined){
-								dut_list += get_mlo_dut_list(aimesh_wifi_mlo_info.cap.sdn_mlo_band_num, specific_node);
+								dut_list += get_mlo_dut_list(aimesh_wifi_mlo_info.cap.mlo_band_num, specific_node);
 							}
 						}
 					});
@@ -5651,7 +5357,6 @@ function Get_Wizard_MLO(view_mode){
 					}
 
 					sdn_profile.apg_rl.mlo = "2";
-					sdn_profile.apg_rl.apg_11be = "1";
 					const mld_enable = httpApi.nvramGet(["mld_enable"]).mld_enable;
 					const mlo_enable_count = sdn_all_rl_json.filter(function(item, index, array){
 						return (item.sdn_rl.sdn_enable == "1" && item.apg_rl.mlo == "2");
@@ -5730,7 +5435,7 @@ function Get_Wizard_MLO(view_mode){
 			return validator.isString(this, event);
 		});
 
-	let sdn_pwd_parm = {"title":"<#QIS_finish_wireless_item2#>", "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+	let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 	Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
 		.find("#" + sdn_pwd_parm.id + "")
 		.unbind("keyup").keyup(function(){
@@ -5856,161 +5561,6 @@ function Get_Wizard_MLO(view_mode){
 				.css({"width":"100%", "height": "100%", "border": "none"})
 				.appendTo($adguard_container);
 	}
-
-	let $action_container = $("<div>").addClass("action_container").appendTo($content_container);
-	$("<div>").addClass("btn_container apply").html("<#CTL_apply#>").appendTo($action_container);
-
-	$content_container.find("[need_check=true]").keyup(function(){
-		_set_apply_btn_status($content_container);
-	});
-	_set_apply_btn_status($content_container);
-
-	return $container;
-}
-function Get_Wizard_MAINFH(view_mode){
-	let _set_apply_btn_status = function(_obj){
-		let $btn_container_apply = $(_obj).find(".action_container .btn_container.apply");
-		let isBlank = validate_isBlank($(_obj));
-		if(isBlank){
-			$btn_container_apply.removeClass("valid_fail").addClass("valid_fail").unbind("click");
-		}
-		else{
-			$btn_container_apply.removeClass("valid_fail").unbind("click").click(function(e){
-				e = e || event;
-				e.stopPropagation();
-				if($(_obj).find("#checkbox_wifi_band [data-component=checkbox_val].clicked").length == 0){
-					show_customize_alert(`WiFi <#Interface#> : <#JS_fieldblank#>`);
-					return false;
-				}
-				let wizard_type = $(this).closest(".setting_content_container").attr("data-wizard-type");
-				if(validate_format_Wizard_Item($(_obj), wizard_type)){
-					let sdn_obj = get_new_sdn_profile({"ap_prefix":"apm"});
-					let sdn_idx = Object.keys(sdn_obj);
-					let sdn_profile = sdn_obj[sdn_idx];
-					selected_sdn_idx = sdn_profile.sdn_rl.idx;
-					let nvramSet_obj = {"action_mode": "apply", "rc_service": "restart_wireless;restart_sdn " + selected_sdn_idx + ";"};
-					sdn_profile.sdn_rl.sdn_name = "MAINFH";
-					sdn_profile.apg_rl.ssid = $(_obj).find("#sdn_name").val();
-					const wifi_psk = $(_obj).find("#sdn_pwd").val();
-					const wifi_crypto = "aes+gcmp256";
-					const radius_idx = sdn_profile.sdn_rl.idx;
-					const securityConfig = `<3>psk2sae>${wifi_crypto}>${wifi_psk}>${radius_idx}` +
-						`<13>psk2sae>${wifi_crypto}>${wifi_psk}>${radius_idx}` +
-						`<16>sae>${wifi_crypto}>${wifi_psk}>${radius_idx}` +
-						`<96>sae>${wifi_crypto}>${wifi_psk}>${radius_idx}`;
-					sdn_profile.apg_rl.security = securityConfig;
-					sdn_profile.apg_rl.timesched = "0";
-					sdn_profile.apg_rl.bw_limit = "<0>>";
-					const wifi_band_bitwise = (()=>{
-						let band_bitwise = 0;
-						$(_obj).find("[data-component=checkbox_val].clicked").each(function(index, item){
-							band_bitwise += parseInt($(item).attr("value")) || 0;
-						});
-						return band_bitwise;
-					})();
-					sdn_profile.apg_rl.dut_list = get_mainfh_dut_list(wifi_band_bitwise, false);
-					sdn_profile.sdn_access_rl =[{"access_sdn_idx": "0", "sdn_idx": sdn_profile.sdn_rl.idx}];
-					sdn_profile.apg_rl.ap_isolate = "0";
-					sdn_profile.apg_rl.mlo = "0";
-					sdn_profile.apg_rl.apg_11be = "1";
-					sdn_profile.subnet_rl = {};
-					vlan_rl_json = vlan_rl_json.filter(function(item, index, array){
-						return (item.vlan_idx != sdn_profile.vlan_rl.vlan_idx);
-					});
-					sdn_profile.vlan_rl = {};
-					sdn_profile.sdn_rl.subnet_idx = "0";
-					sdn_profile.sdn_rl.vlan_idx = "0";
-					let sdn_all_rl_tmp = JSON.parse(JSON.stringify(sdn_all_rl_json));
-					sdn_all_rl_tmp.push(JSON.parse(JSON.stringify(sdn_profile)));
-					let vlan_rl_tmp = JSON.parse(JSON.stringify(vlan_rl_json));
-					vlan_rl_tmp.push(JSON.parse(JSON.stringify(sdn_profile.vlan_rl)));
-					let sdn_all_list = parse_JSONToStr_sdn_all_list({"sdn_all_rl":sdn_all_rl_tmp, "vlan_rl":vlan_rl_tmp});
-					$.extend(nvramSet_obj, sdn_all_list);
-					let apgX_rl = parse_apg_rl_to_apgX_rl(sdn_profile.apg_rl, "apm");
-					$.extend(nvramSet_obj, apgX_rl);
-					let showLoading_status = get_showLoading_status(nvramSet_obj.rc_service);
-					if(!httpApi.app_dataHandler){
-						showLoading();
-						close_popup_container("all");
-						if(isWLclient()){
-							showLoading(showLoading_status.time);
-							setTimeout(function(){
-								showWlHintContainer();
-							}, showLoading_status.time*1000);
-							check_isAlive_and_redirect({"page": "SDN.asp", "time": showLoading_status.time});
-						}
-					}
-					httpApi.nvramSet(nvramSet_obj, function(){
-						if(isWLclient()) return;
-						showLoading(showLoading_status.time);
-						setTimeout(function(){
-							init_sdn_all_list();
-							show_sdn_profilelist();
-							if(!window.matchMedia('(max-width: 575px)').matches)
-								$("#profile_list_content").find("[sdn_idx=" + selected_sdn_idx + "] .item_text_container").click();
-						}, showLoading_status.time*1000);
-						if(!isMobile()){
-							if(showLoading_status.disconnect){
-								check_isAlive_and_redirect({"page": "SDN.asp", "time": showLoading_status.time});
-							}
-						}
-					});
-				}
-			});
-		}
-	};
-
-	let $container = $("<div>").addClass("setting_content_container").attr({"data-wizard-type": "MAINFH"});
-
-	if(view_mode == "popup"){
-		Get_Component_Popup_Profile_Title(`<#guest_access_main_network#>`).appendTo($container)
-			.find("#title_close_btn").unbind("click").click(function(e){
-				e = e || event;
-				e.stopPropagation();
-				close_popup_container($container);
-			});
-	}
-	else
-		Get_Component_Profile_Title(`<#guest_access_main_network#>`).appendTo($container);
-
-	let $content_container = $("<div>").addClass("popup_content_container profile_setting").appendTo($container);
-
-	let sdn_name_parm = {"title":"<#QIS_finish_wireless_item1#>", "type":"text", "id":"sdn_name", "need_check":true, "maxlength":32, "openHint":"0_1"};
-	Get_Component_Input(sdn_name_parm).appendTo($content_container)
-		.find("#" + sdn_name_parm.id + "")
-		.unbind("keypress").keypress(function(){
-			return validator.isString(this, event);
-		});
-
-	let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
-	Get_Component_Input(sdn_pwd_parm).attr({"data-group":"wifi_settings"}).appendTo($content_container)
-		.find("#" + sdn_pwd_parm.id + "")
-		.unbind("keyup").keyup(function(){
-			chkPass($(this).val(), "rwd_vpn_pwd", $("#sdn_pwd_strength"));
-			resize_iframe_height();
-		})
-		.unbind("blur").blur(function(){
-			if($(this).val() == "")
-				$("#" + sdn_pwd_parm.id + "_strength").hide();
-		});
-	$("<div>").attr({"id":"sdn_pwd_strength", "data-group":"wifi_settings"}).append(Get_Component_PWD_Strength_Meter()).appendTo($content_container).hide();
-
-	let wifi_band_checkbox_parm = {"title": "WiFi <#Interface#>", "id": "wifi_band", "options": wifi_band_options_cb, "set_value": "1"};
-	let $checkboxlist_cntr = Get_Component_CheckBoxList(wifi_band_checkbox_parm).appendTo($content_container).find("#checkbox_" + wifi_band_checkbox_parm.id + "");
-	$checkboxlist_cntr.find("[data-container=checkbox_option]").click(function(e){
-		e = e || event;
-		e.stopPropagation();
-		let $current_checkbox = $(this);
-		let band_bitwise = 0;
-		$checkboxlist_cntr.find("[data-component=checkbox_val].clicked").each(function(index, item){
-			band_bitwise += parseInt($(item).attr("value")) || 0;
-		});
-		if(band_bitwise == 0){
-			show_customize_alert(`<#JS_fieldblank#>`);
-			$current_checkbox.closest("[data-container='checkbox_option']").click();
-			return false;
-		}
-	});
 
 	let $action_container = $("<div>").addClass("action_container").appendTo($content_container);
 	$("<div>").addClass("btn_container apply").html("<#CTL_apply#>").appendTo($action_container);
@@ -6382,47 +5932,6 @@ function Get_Component_Full_Setting(view_mode){
 	function Get_Net_General_Container(){
 		var $net_mode_container = $("<div>").attr({"data-slide_target": "category_general_cntr"});
 
-		if(isSupport("wifi7")){
-			const wifi7_11be_parm = {"title":`<#WiFi7_Mode#>`, "type":"switch", "id":"wifi7_11be"};
-			Get_Component_Switch(wifi7_11be_parm).attr({"data-group":"wifi_settings"}).appendTo($net_mode_container).find("#" + wifi7_11be_parm.id + "").click(function(e){
-				e = e || event;
-				e.stopPropagation();
-				if($(this).hasClass("on")){
-					const $wifi_auth_objs = $(this).closest(".profile_setting").find("[data-wifi-auth]").filter(function(){
-						const $wifi_auth_item = $(this);
-						const wifi_auth = $wifi_auth_item.find(".select_options_container").children(".selected").attr("value");
-						if(wifi_auth != "psk2sae" && wifi_auth != "sae"){
-							const $psk2sae_option = $wifi_auth_item.find(".select_options_container [value='psk2sae']");
-							const $sae_option = $wifi_auth_item.find(".select_options_container [value='sae']");
-							if($psk2sae_option.length > 0) {
-								$psk2sae_option.closest(".select_options_container").click();
-								$psk2sae_option.click();
-							}
-							else if ($sae_option.length > 0) {
-								$sae_option.closest(".select_options_container").click();
-								$sae_option.click();
-							}
-						}
-					});
-				}
-				else{
-					if($(this).closest(".profile_setting").find("#mlo_enabled").hasClass("on")){
-						$(this).toggleClass("off on");
-						let regex = /WiFi7[^\/]*\/\s*/g;
-						show_customize_alert(`<#WiFi7_mlo_adjust_hint#>`.replace(regex, ''));
-						return;
-					}
-				}
-			});
-
-			if(isSupport("mlo")){
-				if(support_gaming || isSupport("sdn_mwl")){
-					const mlo_enabled_parm = {"title":`<#SDN_MainFH_for_clients#>`, "type":"switch", "id":"mlo_enabled"};
-					Get_Component_Switch(mlo_enabled_parm).attr({"data-group":"wifi_settings"}).appendTo($net_mode_container);
-				}
-			}
-		}
-
 		var sdn_name_parm = {"title":"<#QIS_finish_wireless_item1#>", "type":"text", "id":"sdn_name", "need_check":true, "maxlength":32, "openHint":"0_1"};
 		var $sdn_name_cntr = Get_Component_Input(sdn_name_parm).appendTo($net_mode_container)
 		$sdn_name_cntr.find("#" + sdn_name_parm.id + "")
@@ -6484,109 +5993,24 @@ function Get_Component_Full_Setting(view_mode){
 					else
 						$wifi_settings_objs.filter("#container_schedule").hide();
 				}
+				if($wifi_settings_objs.find("#select_macmode").length > 0){
+					const select_macmode =  $wifi_settings_objs.find("#select_macmode").children(".selected").attr("value");
+					$wifi_settings_objs.find("#select_macmode").closest(".profile_setting_item")
+						.find(".custom_select_container").click()
+						.find("#select_macmode").children("[value='"+select_macmode+"']").click();
+				}
+				if($wifi_settings_objs.find("#ipv6_enable").length > 0){
+					if($wifi_settings_objs.find("#ipv6_enable").hasClass("on")){
+						$wifi_settings_objs.filter("[ipv6-group='true']").show();
+					}
+					else{
+						$wifi_settings_objs.filter("[ipv6-group='true']").hide();
+					}
+				}
 
 				set_apply_btn_status($profile_setting);
 			}
 			resize_iframe_height();
-		});
-
-		let wifi_band_checkbox_parm = {"title": "WiFi <#Interface#>", "id": "wifi_band", "options": wifi_band_options_cb, "set_value": "1"};
-		let $checkboxlist_cntr = Get_Component_CheckBoxList(wifi_band_checkbox_parm).appendTo($net_mode_container).find("#checkbox_" + wifi_band_checkbox_parm.id + "");
-		$checkboxlist_cntr.find("[data-container=checkbox_option]").click(function(e){
-			e = e || event;
-			e.stopPropagation();
-			let $current_checkbox = $(this);
-			let cb_count = 0;
-			let band_bitwise = 0;
-			$checkboxlist_cntr.find("[data-component=checkbox_val].clicked").each(function(index, item){
-				band_bitwise += parseInt($(item).attr("value")) || 0;
-				cb_count += 1;
-			});
-			if(band_bitwise == 0){
-				show_customize_alert(`<#JS_fieldblank#>`);
-				$current_checkbox.closest("[data-container='checkbox_option']").click();
-				return false;
-			}
-			let $profile_setting = $(this).closest(".profile_setting");
-			const $wifi_settings_objs = $profile_setting.find("[data-group=wifi_settings]");
-			if($wifi_settings_objs.find(".switch_text_container").length > 0){
-				$wifi_settings_objs.find(".switch_text_container .switch_text_item.selected").click();
-			}
-			else{
-				if($wifi_settings_objs.filter("[data-wifi-auth]").length > 0){
-					$wifi_settings_objs.filter("[data-wifi-auth]").hide()
-						.filter((()=>{
-							const sdn_type = $(this).closest(".setting_content_container").attr("sdn_type");
-							const is_mlo_fh = $(this).closest(".setting_content_container").attr("is_mlo_fh");
-							return get_elem_attr_wifi_auth({"wifi_band_bitwise":band_bitwise, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
-						})()).show();
-				}
-			}
-
-			const sdn_idx = $profile_setting.attr("sdn_idx");
-			let click_band_bitwise = 0;
-			$profile_setting.find("#checkbox_wifi_band [data-component=checkbox_val].clicked").each(function(index, item){
-				click_band_bitwise += parseInt($(item).attr("value")) || 0;
-			});
-			const mainfh_single_json = sdn_all_rl_json.filter(
-				item => item.sdn_rl.sdn_name === "MAINFH" &&
-				item.sdn_rl.idx != sdn_idx &&
-				(item.mainfh_smart_connect.band_bitwise & click_band_bitwise)
-			);
-			let conflict_band_arr = [];
-			mainfh_single_json.forEach((item)=>{
-				let band_text = "";
-				const band_option_list = wifi_band_options_cb.filter(wifi_option => wifi_option.value & item.mainfh_smart_connect.band_bitwise);
-				band_option_list.forEach((band_item)=>{
-					if(band_text != "") band_text += ", ";
-					band_text += band_item.text;
-				});
-				conflict_band_arr.push({"band_text": band_text, "sdn_ssid": item.apg_rl.ssid});
-			});
-			let conflict_band = {"band":"", "profile":""};
-			conflict_band_arr.forEach((item)=>{
-				if(conflict_band.band != "") conflict_band.band += ", ";
-				conflict_band.band += item.band_text;
-				if(conflict_band.profile != "") conflict_band.profile += ", ";
-				conflict_band.profile += `${item.band_text} (${item.sdn_ssid})`;
-			});
-			const mainfh_sc_json = sdn_all_rl_json.filter(
-				item => item.sdn_rl.sdn_name === "MAINFH" &&
-				item.sdn_rl.idx != sdn_idx &&
-				item.mainfh_smart_connect.status &&
-				!(item.mainfh_smart_connect.band_bitwise & click_band_bitwise) &&
-				cb_count > 1
-			);
-			let conflict_sc_arr = [];
-			mainfh_sc_json.forEach((item)=>{
-				let band_text = "";
-				const band_option_list = wifi_band_options_cb.filter(wifi_option => wifi_option.value & item.mainfh_smart_connect.band_bitwise);
-				band_option_list.forEach((band_item)=>{
-					if(band_text != "") band_text += ", ";
-					band_text += band_item.text;
-				});
-				conflict_sc_arr.push({"band_text": band_text, "sdn_ssid": item.apg_rl.ssid});
-			});
-			let conflict_sc = {"band":"", "profile":""};
-			conflict_sc_arr.forEach((item)=>{
-				if(conflict_sc.band != "") conflict_sc.band += ", ";
-				conflict_sc.band += item.band_text;
-				if(conflict_sc.profile != "") conflict_sc.profile += ", ";
-				conflict_sc.profile += `${item.band_text} (${item.sdn_ssid})`;
-			});
-			const $profile_item_cntr = $(this).closest(".profile_setting_item").next(".item_hint").remove().end();
-			if(conflict_band.band != "" || conflict_sc.band != ""){
-				let hint_text = "";
-				if(conflict_band.band != ""){
-					hint_text += `${conflict_band.band} WiFi band(s) have been used. The conflicted ${conflict_band.profile} network(s) will be removed after applying the settings.`;/* untranslated */
-				}
-				if(conflict_sc.band != ""){
-					if(hint_text != "") hint_text += "<br>";
-					hint_text += `The Smart Connect rule has been applied to ${conflict_sc.band} WiFi band(s). The conflicted ${conflict_sc.profile} network(s) will be removed after applying the settings.`;/* untranslated */
-				}
-				const $hint = $("<div>").html(hint_text).addClass("item_hint");
-				$profile_item_cntr.after($hint);
-			}
 		});
 
 		var security_options = [{"text":"Open","option_id":"open"}, {"text":"<#HSDPAConfig_Password_itemname#>","option_id":"pwd"}];
@@ -6602,36 +6026,12 @@ function Get_Component_Full_Setting(view_mode){
 				if(option_id == "pwd"){
 					$(this).closest(".profile_setting").find("#sdn_pwd_strength").hide();
 					let $profile_setting = $(this).closest(".profile_setting");
-					const wifi_band = (()=>{
-						let band = "";
-						if($profile_setting.find("#select_wifi_band").length > 0){
-							band = $profile_setting.find("#select_wifi_band").children(".selected").attr("value");
-						}
-						return band;
-					})();
-					const wifi_band_bitwise = (()=>{
-						let band_bitwise = 0;
-						if($profile_setting.find("#checkbox_wifi_band").length > 0){
-							$profile_setting.find("#checkbox_wifi_band [data-component=checkbox_val].clicked").each(function(index, item){
-								band_bitwise += parseInt($(item).attr("value")) || 0;
-							});
-						}
-						else{
-							band_bitwise = "";
-						}
-						return band_bitwise;
-					})();
-					if(wifi_band == "" && wifi_band_bitwise == ""){
-						wifi_band = "3";
-					}
+					const wifi_band = $profile_setting.find("#select_wifi_band").children(".selected").attr("value");
 					$profile_setting.find("[data-wifi-auth]").hide()
 						.filter((()=>{
 							const sdn_type = $(this).closest(".setting_content_container").attr("sdn_type");
 							const is_mlo_fh = $(this).closest(".setting_content_container").attr("is_mlo_fh");
-							if(wifi_band != "")
-								return get_elem_attr_wifi_auth({"wifi_band_option_value":wifi_band, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
-							else
-								return get_elem_attr_wifi_auth({"wifi_band_bitwise":wifi_band_bitwise, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
+							return get_elem_attr_wifi_auth({"wifi_band_option_value":wifi_band, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
 						})()).show();
 				}
 				resize_iframe_height();
@@ -6671,74 +6071,6 @@ function Get_Component_Full_Setting(view_mode){
 				}
 			});
 
-		const security_all_options = [
-			{"text":"Open","option_id":"open"},
-			{"text":"<#HSDPAConfig_Password_itemname#>","option_id":"pwd"},
-			{"text":"<#menu5_1_5#>","option_id":"radius"}
-		];
-		const security_all_parm = {"title":"<#Security#>", "options": security_all_options, "container_id":"security_all"};
-		Get_Component_Switch_Text(security_all_parm).attr({"data-group":"wifi_settings"}).appendTo($net_mode_container)
-			.find(".switch_text_container > .switch_text_item")
-			.click(function(e){
-				e = e || event;
-				e.stopPropagation();
-				let $profile_setting = $(this).closest(".profile_setting");
-				const is_mlo_fh = $(this).closest(".setting_content_container").attr("is_mlo_fh");
-				const option_id = $(this).attr("data-option-id");
-				$profile_setting.find("[data-sec-option-id]").hide()
-					.next(".validate_hint").remove()
-					.end()
-					.filter("[data-sec-option-id='" + option_id + "']").show();
-				if(option_id == "pwd" || option_id == "radius"){
-					$profile_setting.find("#sdn_pwd_strength").hide();
-					const wifi_band = (()=>{
-						let band = "";
-						if($profile_setting.find("#select_wifi_band").length > 0){
-							band = $profile_setting.find("#select_wifi_band").children(".selected").attr("value");
-						}
-						return band;
-					})();
-					const wifi_band_bitwise = (()=>{
-						let band_bitwise = 0;
-						if($profile_setting.find("#checkbox_wifi_band").length > 0){
-							$profile_setting.find("#checkbox_wifi_band [data-component=checkbox_val].clicked").each(function(index, item){
-								band_bitwise += parseInt($(item).attr("value")) || 0;
-							});
-						}
-						else{
-							band_bitwise = "";
-						}
-						return band_bitwise;
-					})();
-					if(wifi_band == "" && wifi_band_bitwise == ""){
-						wifi_band = "3";
-					}
-					$profile_setting.find("[data-sec-option-id='" + option_id + "'][data-wifi-auth]").hide()
-						.filter((()=>{
-							const sdn_type = $(this).closest(".setting_content_container").attr("sdn_type");
-							if(wifi_band != "")
-								return get_elem_attr_wifi_auth({"wifi_band_option_value":wifi_band, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
-							else
-								return get_elem_attr_wifi_auth({"wifi_band_bitwise":wifi_band_bitwise, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
-						})()).show();
-				}
-				resize_iframe_height();
-				set_apply_btn_status($profile_setting);
-				if($profile_setting.find("[data-container=AiMesh_List]").length > 0){
-					if(isSupport("wpa3-e")){
-						if(is_mlo_fh == "true"){
-							Set_AiMesh_List_CB_MLO($profile_setting.find("[data-container=AiMesh_List]"));
-						}
-						else{
-							Set_AiMesh_List_CB(
-								$profile_setting.find("[data-container=AiMesh_List]"),
-								$profile_setting.find("#select_wifi_band").children(".selected").attr("value")
-							);
-						}
-					}
-				}
-			});
-
 		let wifi_auth_options = [
 			{"text":"WPA2-Personal","value":"psk2"},
 			{"text":"WPA/WPA2-Personal","value":"pskpsk2"},
@@ -6747,14 +6079,6 @@ function Get_Component_Full_Setting(view_mode){
 		];
 		var wifi_auth_options_parm = {"title": "<#WLANConfig11b_AuthenticationMethod_itemname#>", "id": "wifi_auth", "options": wifi_auth_options, "set_value": "psk2"};
 		let $wifi_auth_default = Get_Component_Custom_Select(wifi_auth_options_parm).attr({"data-sec-option-id":"pwd","data-group":"wifi_settings","data-wifi-auth":"default"}).appendTo($net_mode_container);
-		$wifi_auth_default.find("#select_wifi_auth").children("div").click(function(e){
-			const options = $(this).attr("value");
-			const $profile_setting = $(this).closest(".profile_setting");
-			const $wifi7_11be = $profile_setting.find("#wifi7_11be");
-			if($wifi7_11be.length && $wifi7_11be.hasClass("on")) {
-				$wifi7_11be.removeClass("off on").addClass((options === "psk2sae" || options === "sae") ? "on" : "off");
-			}
-		});
 
 		let wifi_auth_options_6G = [{"text":`WPA3-Personal`,"value":"sae"}];
 		let wifi_auth_options_6G_parm = {"title": `<#WLANConfig11b_AuthenticationMethod_itemname#>`, "id": "wifi_auth_6G", "options": wifi_auth_options_6G, "set_value": "sae"};
@@ -6779,18 +6103,15 @@ function Get_Component_Full_Setting(view_mode){
 			wifi_auth_radius_options.push({"text":"WPA3-Enterprise","value":"wpa3"});
 			wifi_auth_radius_options.push({"text":"WPA3-Enterprise 192-bit","value":"suite-b"});
 		}
-		let wifi_auth_radius_options_parm = {"title": `<#WLANConfig11b_AuthenticationMethod_itemname#>`, "id": "wifi_auth_radius", "options": wifi_auth_radius_options, "set_value": "wpa2"};
-		let $wifi_auth_radius = Get_Component_Custom_Select(wifi_auth_radius_options_parm)
-			.attr({"data-sec-option-id":"radius","data-group":"wifi_settings","data-wifi-auth":"default"})
-			.appendTo($net_mode_container);
+		var wifi_auth_radius_options_parm = {"title": "<#WLANConfig11b_AuthenticationMethod_itemname#>", "id": "wifi_auth_radius", "options": wifi_auth_radius_options, "set_value": "wpa2"};
+		var $sel_wifi_auth_radius = Get_Component_Custom_Select(wifi_auth_radius_options_parm).attr({"data-sec-option-id":"radius","data-group":"wifi_settings","data-wifi-auth":"default"})
+			.appendTo($net_mode_container).find("#select_" + wifi_auth_radius_options_parm.id + "");
 		if(isSupport("wpa3-e")){
-			$wifi_auth_radius.find("#select_" + wifi_auth_radius_options_parm.id + "").children("div").click(function(e){
-				if($(this).closest(".profile_setting").find("[data-container=AiMesh_List]").length > 0){
-					Set_AiMesh_List_CB(
-						$(this).closest(".profile_setting").find("[data-container=AiMesh_List]"),
-						$(this).closest(".profile_setting").find("#select_wifi_band").children(".selected").attr("value")
-					);
-				}
+			$sel_wifi_auth_radius.children("div").click(function(e){
+				Set_AiMesh_List_CB(
+					$(this).closest(".profile_setting").find("[data-container=AiMesh_List]"),
+					$(this).closest(".profile_setting").find("#select_wifi_band").children(".selected").attr("value")
+				);
 			});
 		}
 
@@ -6799,52 +6120,19 @@ function Get_Component_Full_Setting(view_mode){
 			wifi_auth_radius_options_6G.push({"text":"WPA3-Enterprise","value":"wpa3"});
 			wifi_auth_radius_options_6G.push({"text":"WPA3-Enterprise 192-bit","value":"suite-b"});
 		}
-		let wifi_auth_radius_options_6G_parm = {"title": `<#WLANConfig11b_AuthenticationMethod_itemname#>`, "id": "wifi_auth_radius_6G", "options": wifi_auth_radius_options_6G, "set_value": "wpa3"};
-		let $wifi_auth_radius_6G = Get_Component_Custom_Select(wifi_auth_radius_options_6G_parm)
-			.attr({"data-sec-option-id":"radius","data-group":"wifi_settings","data-wifi-auth":"6G"})
-			.appendTo($net_mode_container);
+		let wifi_auth_radius_options_6G_parm = {"title": "<#WLANConfig11b_AuthenticationMethod_itemname#>", "id": "wifi_auth_radius_6G", "options": wifi_auth_radius_options_6G, "set_value": "wpa3"};
+		let $sel_wifi_auth_radius_6G = Get_Component_Custom_Select(wifi_auth_radius_options_6G_parm).attr({"data-sec-option-id":"radius","data-group":"wifi_settings","data-wifi-auth":"6G"})
+			.appendTo($net_mode_container).find("#select_" + wifi_auth_radius_options_6G_parm.id + "");
 		if(isSupport("wpa3-e")){
-			$wifi_auth_radius_6G.find("#select_" + wifi_auth_radius_options_6G_parm.id + "").children("div").click(function(e){
-				if($(this).closest(".profile_setting").find("[data-container=AiMesh_List]").length > 0){
-					Set_AiMesh_List_CB(
-						$(this).closest(".profile_setting").find("[data-container=AiMesh_List]"),
-						$(this).closest(".profile_setting").find("#select_wifi_band").children(".selected").attr("value")
-					);
-				}
+			$sel_wifi_auth_radius_6G.children("div").click(function(e){
+				Set_AiMesh_List_CB(
+					$(this).closest(".profile_setting").find("[data-container=AiMesh_List]"),
+					$(this).closest(".profile_setting").find("#select_wifi_band").children(".selected").attr("value")
+				);
 			});
 		}
 
-		let wifi_auth_radius_options_MLO = [];
-		if(isSupport("wpa3-e")){
-			wifi_auth_radius_options_MLO.push({"text":"WPA2/WPA3-Enterprise","value":"wpa2wpa3"});
-			wifi_auth_radius_options_MLO.push({"text":"WPA3-Enterprise","value":"wpa3"});
-			wifi_auth_radius_options_MLO.push({"text":"WPA3-Enterprise 192-bit","value":"suite-b"});
-		}
-		let wifi_auth_radius_options_MLO_parm = {"title": `<#WLANConfig11b_AuthenticationMethod_itemname#>`, "id": "wifi_auth_radius_MLO", "options": wifi_auth_radius_options_MLO, "set_value": "wpa2wpa3"};
-		let $wifi_auth_radius_MLO = Get_Component_Custom_Select(wifi_auth_radius_options_MLO_parm)
-			.attr({"data-sec-option-id":"radius","data-group":"wifi_settings","data-wifi-auth":"MLO"})
-			.appendTo($net_mode_container);
-		if(isSupport("wpa3-e")){
-			$wifi_auth_radius_MLO.find("#select_" + wifi_auth_radius_options_MLO_parm.id + "").children("div").click(function(e){
-				if($(this).closest(".profile_setting").find("[data-container=AiMesh_List]").length > 0){
-					Set_AiMesh_List_CB(
-						$(this).closest(".profile_setting").find("[data-container=AiMesh_List]"),
-						$(this).closest(".profile_setting").find("#select_wifi_band").children(".selected").attr("value")
-					);
-				}
-			});
-		}
-
-		let $help_icon_radius = $("<div>").addClass("help_icon").unbind("click").click(function(e){
-			e = e || event;
-			e.stopPropagation();
-			show_customize_alert(`<#WiFi7_wifi_auth_hint#>`.replace(`%@`, `WPA2/WPA3-Enterprise, WPA3-Enterprise, WPA3-Enterprise 192-bit`));
-		});
-		$wifi_auth_radius.addClass("icon_item").find(".input_container").append($help_icon_radius.clone(true));
-		$wifi_auth_radius_6G.addClass("icon_item").find(".input_container").append($help_icon_radius.clone(true));
-		$wifi_auth_radius_MLO.addClass("icon_item").find(".input_container").append($help_icon_radius.clone(true));
-
-		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item2#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
+		let sdn_pwd_parm = {"title":`<#QIS_finish_wireless_item3#>`, "type":"password", "id":"sdn_pwd", "need_check":true, "maxlength":64, "openHint":"0_7"};
 		Get_Component_Input(sdn_pwd_parm).attr({"data-sec-option-id":"pwd","data-group":"wifi_settings"}).appendTo($net_mode_container)
 			.find("#" + sdn_pwd_parm.id + "")
 			.unbind("keyup").keyup(function(){
@@ -6991,7 +6279,7 @@ function Get_Component_Full_Setting(view_mode){
 				resize_iframe_height();
 			});
 		const macfilterlist_parm = {"title":`<#FirewallConfig_MFList_groupitemname#>`, "id":"macfilterlist", "container_id":"container_macfilterlist"};
-		Get_Component_MacFilterList_Edit(macfilterlist_parm).hide().appendTo($net_mode_container);
+		Get_Component_MacFilterList_Edit(macfilterlist_parm).attr({"data-group":"wifi_settings"}).hide().appendTo($net_mode_container);
 
 		return $net_mode_container;
 	}
@@ -7009,15 +6297,47 @@ function Get_Component_Full_Setting(view_mode){
 					return validator.isIPAddr(this, event);
 				});
 
-			var netmask_options = [
+			let netmask_options = [
 				{"text":"255.255.255.0 (253 <#Full_Clients#>)","value":"255.255.255.0"},
 				{"text":"255.255.255.128 (125 <#Full_Clients#>)","value":"255.255.255.128"},
 				{"text":"255.255.255.192 (61 <#Full_Clients#>)","value":"255.255.255.192"},
 				{"text":"255.255.255.224 (29 <#Full_Clients#>)","value":"255.255.255.224"},
-				{"text":"255.255.255.240 (13 <#Full_Clients#>)","value":"255.255.255.240"},
+				{"text":"255.255.255.240 (13 <#Full_Clients#>)","value":"255.255.255.240"}
 			];
-			var netmask_parm = {"title": "<#IPConnection_x_ExternalSubnetMask_itemname#>", "id": "netmask", "options": netmask_options, "set_value": "255.255.255.0", "openHint":"4_2"};
-			Get_Component_Custom_Select(netmask_parm).appendTo($net_mode_container);
+			if (isSupport("BUSINESS")) {
+				const business_netmask_options = [
+					{"text":"255.255.0.0 (65533 <#Full_Clients#>)","value":"255.255.0.0"},
+					{"text":"255.255.128.0 (32765 <#Full_Clients#>)","value":"255.255.128.0"},
+					{"text":"255.255.192.0 (16381 <#Full_Clients#>)","value":"255.255.192.0"},
+					{"text":"255.255.224.0 (8189 <#Full_Clients#>)","value":"255.255.224.0"},
+					{"text":"255.255.240.0 (4093 <#Full_Clients#>)","value":"255.255.240.0"},
+					{"text":"255.255.248.0 (2045 <#Full_Clients#>)","value":"255.255.248.0"},
+					{"text":"255.255.252.0 (1021 <#Full_Clients#>)","value":"255.255.252.0"},
+					{"text":"255.255.254.0 (509 <#Full_Clients#>)","value":"255.255.254.0"}
+				];
+
+				netmask_options = netmask_options.concat(business_netmask_options);
+			}
+			netmask_options.sort((a, b) => {
+				const valueA = a.value.split('.').map(Number).reduce((acc, octet) => (acc << 8) + octet);
+				const valueB = b.value.split('.').map(Number).reduce((acc, octet) => (acc << 8) + octet);
+				return valueA - valueB;
+			});
+			const netmask_parm = {"title": "<#IPConnection_x_ExternalSubnetMask_itemname#>", "id": "netmask", "options": netmask_options, "set_value": "255.255.255.0", "openHint":"4_2"};
+			Get_Component_Custom_Select(netmask_parm).appendTo($net_mode_container)
+				.find(`#select_${netmask_parm.id}`).children("div").click(function(e){
+					e = e || event;
+					e.stopPropagation();
+					const netmask = $(this).attr("value");
+					if (isClassBMaskRange(netmask)) {
+						const $ipaddr = $(this).closest(".profile_setting").find("#ipaddr");
+						const flag = $ipaddr.attr("have_change_classB");
+						if (flag === undefined) {
+							const classB_new_ip = get_classB_new_ipaddr(netmask);
+							$ipaddr.attr({"have_change_classB": "true"}).val(classB_new_ip);
+						}
+					}
+				});
 
 			const dhcp_lease_parm = {"title":`<#LANHostConfig_LeaseTime_itemname#> (<#Second#>)`, "type":"text", "id":"dhcp_lease", "need_check":true, "maxlength":6, "openHint":"5_5"};
 			Get_Component_Input(dhcp_lease_parm).appendTo($net_mode_container)
@@ -7154,18 +6474,35 @@ function Get_Component_Full_Setting(view_mode){
 
 			var ap_iso_parm = {"title":"<#WLANConfig11b_x_IsolateAP_itemname#>", "type":"switch", "id":"ap_isolate", "openHint":"3_5"};
 			Get_Component_Switch(ap_iso_parm).attr({"data-group":"wifi_settings"}).appendTo($net_mode_container);
-		}
 
-		if(is_Web_iframe){
-			const smart_connect_version = isSupport("smart_connect_v2") ? "v2" : isSupport("smart_connect") || isSupport("bandstr") ? "v1" : "";
-			if(smart_connect_version != ""){
-				const smart_connect_rule_parm = {"title":`<#smart_connect_rule#>`, "id":"smart_connect_rule", "btn_text":`<#btn_goSetting#>`};
-				var $scr_obj = Get_Component_Pure_Text_And_Btn(smart_connect_rule_parm).appendTo($net_mode_container);
-				$scr_obj.find(".profile_btn_container").unbind("click").click(function(e){
+			if(isSupport("ipv6")){
+				const ipv6_enable_parm = {"title":`IPv6`, "type":"switch", "id":"ipv6_enable"};
+				Get_Component_Switch(ipv6_enable_parm).attr({"data-group":"wifi_settings"}).appendTo($net_mode_container).find("#" + ipv6_enable_parm.id + "").click(function(e){
 					e = e || event;
 					e.stopPropagation();
-					top.location.href = "/Advanced_Smart_Connect.asp";
+					const $control_container = $(this).closest(".profile_setting").find("[ipv6-group='true']");
+					if($(this).hasClass("on")){
+						$control_container.show();
+					}
+					else{
+						$control_container.hide().next(".validate_hint").remove();
+					}
+					resize_iframe_height();
+					set_apply_btn_status($(this).closest(".profile_setting"));
 				});
+				const ipv6_autoconf_options = [{"text":`<#Auto#>`,"value":"0"}, {"text":`Stateful`,"value":"1"}];
+				const ipv6_autoconf_parm = {"title": `<#ipv6_auto_config#>`, "id": "ipv6_autoconf", "options": ipv6_autoconf_options, "set_value": "0"};
+				Get_Component_Custom_Select(ipv6_autoconf_parm).attr({"data-group":"wifi_settings", "ipv6-group":"true"}).appendTo($net_mode_container);
+				const ipv6_dhcp_start_parm = {"title":`<#LANHostConfig_MinAddress_itemname#>`, "type":"text", "id":"ipv6_dhcp_start", "need_check":true, "maxlength":4};
+				Get_Component_Input(ipv6_dhcp_start_parm).attr({"data-group":"wifi_settings", "ipv6-group":"true"}).appendTo($net_mode_container);
+				const ipv6_dhcp_end_parm = {"title":`<#LANHostConfig_MaxAddress_itemname#>`, "type":"text", "id":"ipv6_dhcp_end", "need_check":true, "maxlength":4};
+				Get_Component_Input(ipv6_dhcp_end_parm).attr({"data-group":"wifi_settings", "ipv6-group":"true"}).appendTo($net_mode_container);
+				const ipv6_dns1_parm = {"title":`<#ipv6_dns_serv#> 1`, "type":"text", "id":"ipv6_dns1", "maxlength":39};
+				Get_Component_Input(ipv6_dns1_parm).attr({"data-group":"wifi_settings", "ipv6-group":"true"}).appendTo($net_mode_container);
+				const ipv6_dns2_parm = {"title":`<#ipv6_dns_serv#> 2`, "type":"text", "id":"ipv6_dns2", "maxlength":39};
+				Get_Component_Input(ipv6_dns2_parm).attr({"data-group":"wifi_settings", "ipv6-group":"true"}).appendTo($net_mode_container);
+				const ipv6_dns3_parm = {"title":`<#ipv6_dns_serv#> 3`, "type":"text", "id":"ipv6_dns3", "maxlength":39};
+				Get_Component_Input(ipv6_dns3_parm).attr({"data-group":"wifi_settings", "ipv6-group":"true"}).appendTo($net_mode_container);
 			}
 		}
 		return $net_mode_container;
@@ -7197,33 +6534,17 @@ function Update_Setting_Profile(_obj, _profile_data){
 	const is_mlo_bh = check_is_mlo_bh(_profile_data.apg_rl);
 	const is_mlo_fh = (
 		(_profile_data.sdn_rl.sdn_name == "MLO" && _profile_data.apg_rl.mlo == "2") ||
-		(_profile_data.sdn_rl.sdn_name == "Gaming" && _profile_data.apg_rl.mlo == "2") ||
-		(_profile_data.sdn_rl.sdn_name == "MAINFH" && _profile_data.apg_rl.mlo == "2")
+		(_profile_data.sdn_rl.sdn_name == "Gaming" && _profile_data.apg_rl.mlo == "2")
 	) ? true : false;
 	const is_sdn_legacy = (_profile_data.sdn_rl.sdn_name == "LEGACY");
 	const is_sdn_iot = (_profile_data.sdn_rl.sdn_name == "IoT");
-	const is_sdn_mainfh = (_profile_data.sdn_rl.sdn_name == "MAINFH");
-	const is_invalid_sdn = (_profile_data.apg_rl.disabled == "1");
 	const support_sec_guest = (_profile_data.sdn_rl.sdn_name == "Guest" || _profile_data.sdn_rl.sdn_name == "Portal");
 	const support_sec_employee = (_profile_data.sdn_rl.sdn_name == "Employee");
-	const support_sec_all = (_profile_data.sdn_rl.sdn_name == "MAINFH");
 	if(is_mlo_bh){
 		$(_obj).find(`.action_container .btn_container.apply`).remove();
 	}
-	if(is_mlo_bh){
+	if(is_sdn_legacy || is_mlo_bh){
 		$(_obj).find("#title_del_btn, #action_container #del_btn, [data-container=action_container] > [data-component=del_btn]").remove();
-	}
-	if(is_sdn_mainfh){
-		$(_obj).find("#select_wifi_band").closest(".profile_setting_item").remove();
-	}
-	else{
-		$(_obj).find("#checkbox_wifi_band").closest(".profile_setting_item").remove();
-	}
-	if(is_invalid_sdn){
-		$(_obj).find("[data-container=action_container] > [data-component=apply_btn]").remove();
-		$("<div>")
-			.html(`Due to system optimization, this network has to be reconfigured. Please help to create new one.`)/* untranslated */
-			.addClass("item_hint").insertBefore($(_obj).find(".setting_subtab_container"));
 	}
 	const support_portal = (function(){
 		if($.isEmptyObject(_profile_data.subnet_rl))
@@ -7272,10 +6593,9 @@ function Update_Setting_Profile(_obj, _profile_data){
 	const specific_wizard_type = wizard_type_text.find(function(item, index, array){
 		return (item.type == _profile_data.sdn_rl.sdn_name);
 	});
-	if(specific_wizard_type != undefined || is_sdn_legacy || is_sdn_mainfh){
+	if(specific_wizard_type != undefined || is_sdn_legacy){
 		let profile_title_text = "";
 		if(is_sdn_legacy) profile_title_text = `<#GuestNetwork_IoT_default#>`;
-		else if(is_sdn_mainfh) profile_title_text = `<#guest_access_main_network#>`;
 		else{
 			profile_title_text = specific_wizard_type.text;
 			if($.isEmptyObject(_profile_data.subnet_rl)){
@@ -7302,10 +6622,12 @@ function Update_Setting_Profile(_obj, _profile_data){
 	$(_obj).find("#sdn_name").val(_profile_data.apg_rl.ssid);
 	var apg_sec_array = (_profile_data.apg_rl.security).split("<");
 	let cap_wifi_auth = support_sec_guest ? "open" : "psk2";
+	let cap_wifi_crypto = "aes";
 	var cap_wifi_pwd = "";
 	if(apg_sec_array[1] != undefined && apg_sec_array[1] != ""){
 		var cap_sec_array = apg_sec_array[1].split(">");
 		cap_wifi_auth = cap_sec_array[1];
+		cap_wifi_crypto = cap_sec_array[2];
 		cap_wifi_pwd = cap_sec_array[3];
 	}
 	$(_obj).find("#sdn_pwd").val(cap_wifi_pwd);
@@ -7336,7 +6658,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 		let wifi_band_select = {"band_2g":false, "band_5g":false, "band_6g":false};
 		if(first_dut_list != ""){
 			let dut_list_arr = first_dut_list.split(">");
-			if(validator.mac_addr(dut_list_arr[0]) || (is_sdn_legacy || is_sdn_mainfh)){
+			if(validator.mac_addr(dut_list_arr[0]) || is_sdn_legacy){
 				const wifi_band = isNaN(parseInt(dut_list_arr[1])) ? 0 : parseInt(dut_list_arr[1]);
 				if(wifi_band & 1){//2G
 					wifi_band_select.band_2g = true;
@@ -7388,8 +6710,8 @@ function Update_Setting_Profile(_obj, _profile_data){
 					}
 				}
 			}
-			else if(is_sdn_mainfh){
-				return wifi_band_options.filter(({ value }) => value !== "0");
+			else if(is_sdn_legacy){
+				return wifi_band_options.filter(({ value }) => value !== "0" && value !== "5" && value !== "7");
 			}
 			else{
 				return wifi_band_options.filter((el) => {
@@ -7418,31 +6740,6 @@ function Update_Setting_Profile(_obj, _profile_data){
 			wifi_band_value = "0";
 		set_value_Custom_Select(_obj, "wifi_band", wifi_band_value);
 	}
-	if($(_obj).find("#checkbox_wifi_band").length > 0){
-		let $checkbox_wifi_band_cntr = $(_obj).find("#checkbox_wifi_band").closest(".profile_setting_item");
-		let item_title = `WiFi <#Interface#> ${is_mlo_fh ? `<span class='mlo_band'>( \u2605 MLO )</span>` : ``}`;
-		$checkbox_wifi_band_cntr.find(".title").html(item_title);
-		const band_bitwise = (() => {
-			const all_band_num = aimesh_wifi_mlo_info.cap.all_band_num;
-			const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
-			return (mlo_band_info != undefined) ? mlo_band_info.mlo_band : 0;
-		})();
-		const map_band_bitwise = (() => {
-			const all_band_num = aimesh_wifi_mlo_info.cap.all_band_num;
-			const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
-			return (mlo_band_info != undefined) ? mlo_band_info.map_band : 0;
-		})();
-		$(_obj).find("#checkbox_wifi_band [data-component=checkbox_val]").each(function(){
-			$(this).removeClass("clicked");
-			const band_bit = parseInt($(this).attr("value")) || 0;
-			if(cap_wifi_band & band_bit){
-				$(this).addClass(`clicked ${is_mlo_fh && (band_bit & map_band_bitwise) ? "disabled" : ""}`);
-			}
-			if(is_mlo_fh && (band_bitwise & band_bit)){
-				$(this).closest("[data-container='checkbox_option']").addClass("mlo_band");
-			}
-		});
-	}
 	update_aimesh_wifi_band_info(_profile_data);
 	update_aimesh_wifi_band_full();
 
@@ -7466,6 +6763,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 		set_value_Custom_Select(_obj, "wifi_auth", wifi_auth);
 		set_value_Custom_Select(_obj, "wifi_auth_6G", wifi_auth);
 		set_value_Custom_Select(_obj, "wifi_auth_MLO", wifi_auth);
+		$(_obj).find("#wifi_auth").attr({"data-val": wifi_auth});
 	}
 
 	if(support_sec_employee){
@@ -7486,59 +6784,33 @@ function Update_Setting_Profile(_obj, _profile_data){
 		}
 		set_value_Custom_Select(_obj, "wifi_auth", wifi_auth);
 		set_value_Custom_Select(_obj, "wifi_auth_radius", wifi_auth_radius);
+		$(_obj).find("#wifi_auth").attr({"data-val": wifi_auth});
+		$(_obj).find("#wifi_auth_radius").attr({"data-val": wifi_auth_radius});
 	}
 
-	if(support_sec_all){
-		let wifi_auth = "psk2";
-		let wifi_auth_radius = "wpa2";
-		if(is_wifi_open){
-			$(_obj).find("#security_all .switch_text_container").children("[data-option-id=open]").click();
-		}
-		if(is_wifi_psk){
-			$(_obj).find("#security_all .switch_text_container").children("[data-option-id=pwd]").click();
-			wifi_auth = cap_wifi_auth;
-		}
-		if(is_wifi_radius){
-			$(_obj).find("#security_all .switch_text_container").children("[data-option-id=radius]").click();
-			wifi_auth_radius = cap_wifi_auth;
-		}
-
-		$(_obj).find("#radius_ipaddr").val(_profile_data.radius_rl.auth_server_1);
-		$(_obj).find("#radius_port").val(_profile_data.radius_rl.auth_port_1);
-		$(_obj).find("#radius_key").val(_profile_data.radius_rl.auth_key_1);
-
-		set_value_Custom_Select(_obj, "wifi_auth", wifi_auth);
-		set_value_Custom_Select(_obj, "wifi_auth_6G", wifi_auth);
-		set_value_Custom_Select(_obj, "wifi_auth_MLO", wifi_auth);
-		set_value_Custom_Select(_obj, "wifi_auth_radius", wifi_auth_radius);
-		set_value_Custom_Select(_obj, "wifi_auth_radius_6G", wifi_auth_radius);
-		set_value_Custom_Select(_obj, "wifi_auth_radius_MLO", wifi_auth_radius);
-	}
-
-	if(support_sec_guest || support_sec_employee || support_sec_all){
+	if(support_sec_guest || support_sec_employee){
 		if(support_sec_employee){
-			$(_obj).find("#security_guest, #security_all").remove();
+			$(_obj).find("#security_guest").remove();
 		}
 		if(support_sec_guest){
-			$(_obj).find("#security_employee, #security_all, [data-sec-option-id=radius]").remove();
-		}
-		if(support_sec_all){
-			$(_obj).find("#security_guest, #security_employee").remove();
+			$(_obj).find("#security_employee, [data-sec-option-id=radius]").remove();
 		}
 	}
 	else{
-		$(_obj).find("#security_guest, #security_employee, [data-sec-option-id=radius], #security_all").remove();
+		$(_obj).find("#security_guest, #security_employee, [data-sec-option-id=radius]").remove();
 	}
 
 	if(is_mlo_fh){
 		set_value_Custom_Select(_obj, "wifi_auth", cap_wifi_auth);
 		set_value_Custom_Select(_obj, "wifi_auth_6G", cap_wifi_auth);
 		set_value_Custom_Select(_obj, "wifi_auth_MLO", cap_wifi_auth);
+		$(_obj).find("#wifi_auth").attr({"data-val": cap_wifi_auth});
 	}
 
-	if(!support_sec_guest && !support_sec_employee && !support_sec_all && !is_mlo_fh){
+	if(!support_sec_guest && !support_sec_employee && !is_mlo_fh){
 		set_value_Custom_Select(_obj, "wifi_auth", cap_wifi_auth);
 		set_value_Custom_Select(_obj, "wifi_auth_6G", cap_wifi_auth);
+		$(_obj).find("#wifi_auth").attr({"data-val": cap_wifi_auth});
 	}
 
 	var is_radius_server = (cap_wifi_auth == "wpa2" || cap_wifi_auth == "wpawpa2" || cap_wifi_auth == "wpa3" || cap_wifi_auth == "wpa2wpa3" || cap_wifi_auth == "suite-b");
@@ -7735,7 +7007,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 			if(support_portal)
 				return false;
 			else
-				return (!is_sdn_iot && !is_sdn_legacy && !is_sdn_mainfh) ? true : false;
+				return (!is_sdn_iot && !is_sdn_legacy) ? true : false;
 		}
 		else
 			return false;
@@ -7765,7 +7037,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 	const support_access_intranet = (function(){
 		if(isSwMode("rt")){
 			if(!($.isEmptyObject(_profile_data.subnet_rl))){
-				return (!is_sdn_legacy && !is_sdn_mainfh) ? true : false;
+				return (!is_sdn_legacy) ? true : false;
 			}
 			else{
 				return false;
@@ -7814,15 +7086,6 @@ function Update_Setting_Profile(_obj, _profile_data){
 	$(_obj).find("#ap_isolate").removeClass("off on").addClass((function(){
 		return ((_profile_data.apg_rl.ap_isolate == "1") ? "on" : "off");
 	})());
-
-	if(_profile_data.sdn_rl.sdn_name == "MLO"){
-		$(_obj).find("#wifi7_11be").closest(".profile_setting_item").remove();
-	}
-	else{
-		$(_obj).find("#wifi7_11be").removeClass("off on").addClass((function(){
-			return ((_profile_data.apg_rl.apg_11be == "1") ? "on" : "off");
-		})());
-	}
 
 	//if(support_gaming && _profile_data.sdn_rl.sdn_name == "Customized"){
 		//set_value_Custom_Select(_obj, "network_priority", _profile_data.sdn_rl.prio);
@@ -7883,6 +7146,9 @@ function Update_Setting_Profile(_obj, _profile_data){
 		})());
 		$(_obj).find("#ipaddr").val(_profile_data.subnet_rl.addr);
 		set_value_Custom_Select(_obj, "netmask", _profile_data.subnet_rl.netmask);
+		if(isClassBMaskRange(_profile_data.subnet_rl.netmask)){
+			$(_obj).find("#ipaddr").attr({"have_change_classB": "true"});
+		}
 		$(_obj).find("#dhcp_lease").val(_profile_data.subnet_rl.dhcp_lease);
 
 		if(support_adguard_dns && $("#adguard_iframe")[0]){
@@ -7922,7 +7188,20 @@ function Update_Setting_Profile(_obj, _profile_data){
 		}
 
 		$(_obj).find("#manual_dhcp").click(function(){
-			show_manual_dhcp_container(_profile_data, (dhcpres_rl)=>{
+			const $closest_profile_setting = $(_obj).closest('.profile_setting');
+			const $find_profile_setting = $(_obj).find('.profile_setting');
+			const $profile_setting = $(_obj).hasClass('profile_setting') ? $(_obj) :
+					$closest_profile_setting.length > 0 ? $closest_profile_setting :
+					$find_profile_setting;
+			if (!validate_format_Wizard_Item($profile_setting, "ALL")) {
+				return;
+			}
+			const parmData = {
+				"profile_data": _profile_data,
+				"current_lan_ip": $profile_setting.find("#ipaddr").val(),
+				"current_mask": $profile_setting.find("#select_netmask").children(".selected").attr("value")
+			};
+			show_manual_dhcp_container(parmData, (dhcpres_rl)=>{
 				$(this).closest(".profile_setting_item").find("[data-component=comp_text]")
 				.html(()=>{
 					const manual_dhcp_rule = dhcpres_rl?.data.length || 0;
@@ -7936,15 +7215,33 @@ function Update_Setting_Profile(_obj, _profile_data){
 			const manual_dhcp_rule = _profile_data?.dhcpres_rl?.data.length || 0;
 			return `<span>${manual_dhcp_rule}</span> /${manual_dhcp_maximum}`;
 		});
-
+		if(isSupport("ipv6")){
+			$(_obj).find("#ipv6_enable").removeClass("off on").addClass((function(){
+				if(_profile_data.subnet_rl.ipv6_enable == "1"){
+					$(_obj).find("[ipv6-group='true']").show();
+					return "on";
+				}
+				else{
+					$(_obj).find("[ipv6-group='true']").hide();
+					return "off";
+				}
+			})());
+			set_value_Custom_Select(_obj, "ipv6_autoconf", _profile_data.subnet_rl.autoconf);
+			$(_obj).find("#ipv6_dhcp_start").val(_profile_data.subnet_rl.dhcp6_start);
+			$(_obj).find("#ipv6_dhcp_end").val(_profile_data.subnet_rl.dhcp6_end);
+			const ipv6_dns_arr = _profile_data.subnet_rl.dns6.split(",");
+			const ipv6_dns_list = {"dns1":ipv6_dns_arr[0], "dns2":ipv6_dns_arr[1], "dns3":ipv6_dns_arr[2]};
+			$(_obj).find("#ipv6_dns1").val(ipv6_dns_list.dns1);
+			$(_obj).find("#ipv6_dns2").val(ipv6_dns_list.dns2);
+			$(_obj).find("#ipv6_dns3").val(ipv6_dns_list.dns3);
+		}
 	}
 	else{
-		$(_obj).find("#dhcp_enable").closest(".profile_setting_item").remove();
-		$(_obj).find("#ipaddr").closest(".profile_setting_item").remove();
-		$(_obj).find("#netmask").closest(".profile_setting_item").remove();
-		$(_obj).find("#dhcp_lease").closest(".profile_setting_item").remove();
+		$(_obj).find(
+			"#dhcp_enable, #ipaddr, #netmask, #dhcp_lease, #manual_dhcp, #ipv6_enable"
+		).closest(".profile_setting_item").remove();
+		$(_obj).find("[ipv6-group='true']").remove();
 		$(_obj).find("#container_dns").remove();
-		$(_obj).find("#manual_dhcp").closest(".profile_setting_item").remove();
 	}
 	if(!($.isEmptyObject(_profile_data.vlan_rl))){
 		$(_obj).find("#vlan_id").val(_profile_data.vlan_rl.vid);
@@ -8156,48 +7453,19 @@ function Update_Setting_Profile(_obj, _profile_data){
 	});
 
 	if(is_sdn_legacy){
-		$(_obj).find("[data-category-cntr=aimesh]").remove();
-	}
-	if(is_sdn_mainfh){
 		$(_obj).find("[subtab=vpn]").hide();
-		$(_obj).find("[data-category-cntr=aimesh]").remove();
-		const $wifi_settings_objs = $(_obj).find("[data-group=wifi_settings]");
-		if($wifi_settings_objs.find(".switch_text_container").length > 0){
-			$wifi_settings_objs.find(".switch_text_container .switch_text_item.selected").click();
-		}
-		else{
-			if($wifi_settings_objs.filter("[data-wifi-auth]").length > 0){
-				$wifi_settings_objs.filter("[data-wifi-auth]").hide()
-					.filter((()=>{
-						const sdn_type = _profile_data.sdn_rl.sdn_name;
-						const is_mlo_fh = (_profile_data.apg_rl.mlo == "2") ? "true" : "false";
-						return get_elem_attr_wifi_auth({"wifi_band_bitwise":cap_wifi_band, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
-					})()).show();
-			}
-		}
-		let count = 0;
-		wifi_band_options_cb.forEach(item => {
-			count += item.value & cap_wifi_band ? 1 : 0;
-		});
-		//if(count < 2){
-			if($(_obj).find("#smart_connect_rule").length)
-				$(_obj).find("#smart_connect_rule").closest(".profile_setting_two_item").remove();
-		//}
-	}
-	else{
-		if($(_obj).find("#smart_connect_rule").length)
-			$(_obj).find("#smart_connect_rule").closest(".profile_setting_two_item").remove();
+		$(_obj).find("#category_general, [data-category-cntr=aimesh], [data-category-cntr=adv]").hide();
+		$(_obj).find("[data-group=wifi_settings]:visible").filter(":not([data-sec-option-id=pwd])").hide();
+		$(_obj).find("#access_intranet").closest(".profile_setting_item").hide();
+		$sel_wifi_band.closest(".custom_select_container").attr("temp_disable", "disabled").addClass("temp_disable");
+		$(_obj).find("#select_wifi_auth")
+			.closest(".custom_select_container").attr("temp_disable", "disabled").addClass("temp_disable")
+			.closest(".profile_setting_item").show().find(".help_icon").remove();
 	}
 
 	set_apply_btn_status($(_obj).find(".profile_setting"));
 
 	$(_obj).find("#title_del_btn, #action_container #del_btn, [data-container=action_container] > [data-component=del_btn]").click(function(){
-		if(is_sdn_mainfh){
-			if(sdn_all_rl_json.filter(item => item.sdn_rl.sdn_name === "MAINFH").length == 1){
-				show_customize_alert(`<#SDN_MainFH_keep_Hint#>`);
-				return;
-			}
-		}
 		$(".container").addClass("blur_effect");
 		if($(".popup_container.popup_element").css("display") == "flex"){
 			$(".popup_container.popup_element").addClass("blur_effect");
@@ -8219,7 +7487,6 @@ function Update_Setting_Profile(_obj, _profile_data){
 				selected_sdn_idx = "";
 				let sdn_all_rl_tmp = JSON.parse(JSON.stringify(sdn_all_rl_json));
 				let del_sdn_rl = [sdn_all_rl_tmp.find(item => item.sdn_rl.idx == del_idx)];
-				const ap_prefix = (del_sdn_rl[0].sdn_rl.sdn_name === "MAINFH" || del_sdn_rl[0].sdn_rl.sdn_name === "MAINBH") ? "apm": "apg";
 				sdn_all_rl_tmp = sdn_all_rl_tmp.filter(item => item.sdn_rl.idx != del_idx);
 				$.each(sdn_all_rl_tmp, function(index, sdn_all_rl){
 					sdn_all_rl.sdn_access_rl = sdn_all_rl.sdn_access_rl.filter(item => item.access_sdn_idx !== del_idx && item.sdn_idx !== del_idx);
@@ -8279,8 +7546,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 					}
 				}
 
-				nvramSet_obj[ap_prefix + del_sdn_rl[0].apg_rl.apg_idx + "_enable"] = "0";
-				nvramSet_obj[ap_prefix + del_sdn_rl[0].apg_rl.apg_idx + "_disabled"] = "0";
+				nvramSet_obj["apg" + del_sdn_rl[0].apg_rl.apg_idx + "_enable"] = "0";
 				if(httpApi.nvramGet(["qos_enable"]).qos_enable == "1"){
 					nvramSet_obj.rc_service += "restart_qos;restart_firewall;";
 				}
@@ -8336,15 +7602,11 @@ function Update_Setting_Profile(_obj, _profile_data){
 						show_mlo_profilelist();
 					else
 						show_sdn_profilelist();
-
-					if(typeof top.notification == "object"){
-						top.notification.run();
-					}
 					setTimeout(function(){
 						if(parent_cntr != "mlo"){
 							const display_profile_num = $("#profile_list_content .profile_item_container:not(.addnew)").length;
 							if(!window.matchMedia('(max-width: 575px)').matches){
-								$("#profile_list_content .profile_item_container.addnew[data-add_new='sdn']").click();
+								$("#profile_list_content .profile_item_container.addnew").click();
 								if(display_profile_num <= 0){
 									$(".popup_element").css("display", "flex");
 									$(".container").addClass("blur_effect");
@@ -8359,7 +7621,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 							}
 							else{
 								if(display_profile_num <= 0){
-									$("#profile_list_content .profile_item_container.addnew[data-add_new='sdn']").click();
+									$("#profile_list_content .profile_item_container.addnew").click();
 									$(".popup_container.popup_element")
 										.addClass("hide_title_cntr")
 										.find(".popup_title_container").hide();
@@ -8393,7 +7655,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 	$client_num.html("<#ConnectedClient#> : " + sdn_clientlist_data.length + " <#Clientlist_Online#>");
 	Get_Component_ClientList(sdn_clientlist_data).appendTo($clientlist_container);
 
-	if(_profile_data.sdn_rl.sdn_name == "Gaming" || _profile_data.sdn_rl.sdn_name == "MAINFH"){
+	if(_profile_data.sdn_rl.sdn_name == "Gaming"){
 		$(_obj).find("#mlo_enabled")
 			.removeClass("off on").addClass((function(){
 				return ((_profile_data.apg_rl.mlo == "2") ? "on" : "off");
@@ -8440,9 +7702,6 @@ function Update_Setting_Profile(_obj, _profile_data){
 							const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
 							return (mlo_band_info != undefined) ? mlo_band_info.ui_option : mlo_band_num_mapping[0].ui_option;
 						}
-						else if(is_sdn_mainfh){
-							return wifi_band_options;
-						}
 						else{
 							return wifi_band_options.filter(el => el.value != "5" && el.value != "7");
 						}
@@ -8455,130 +7714,9 @@ function Update_Setting_Profile(_obj, _profile_data){
 						});
 						if(!option_exist) $(this).remove();
 					});
-				}
-				if($(_obj).find("#checkbox_wifi_band").length > 0){
-					let $checkbox_wifi_band_cntr = $(_obj).find("#checkbox_wifi_band").closest(".profile_setting_item");
-					const band_bitwise = (() => {
-						if(mlo_switch){
-							const all_band_num = aimesh_wifi_mlo_info.cap.all_band_num;
-							const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
-							return (mlo_band_info != undefined) ? mlo_band_info.mlo_band : 0;
-						}
-						else{
-							return cap_wifi_band;
-						}
-					})();
-					const map_band_bitwise = (() => {
-						const all_band_num = aimesh_wifi_mlo_info.cap.all_band_num;
-						const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
-						return (mlo_band_info != undefined) ? mlo_band_info.map_band : 0;
-					})();
-					$(_obj).find("#checkbox_wifi_band [data-component=checkbox_val]").each(function(){
-						$(this).removeClass("closed disabled");
-						const band_bit = parseInt($(this).attr("value")) || 0;
-						$(this).closest("[data-container='checkbox_option']").removeClass("mlo_band");
-						let item_title = `WiFi <#Interface#>`;
-						if(mlo_switch){
-							item_title += ` <span class='mlo_band'>( \u2605 MLO )</span>`;
-							if(band_bitwise & band_bit){
-								$(this).closest("[data-container='checkbox_option']").addClass("mlo_band");
-							}
-							if(map_band_bitwise & band_bit){
-								$(this).addClass("disabled");
-								$(this).addClass("clicked");
-							}
-						}
-						$checkbox_wifi_band_cntr.find(".title").html(item_title);
-					});
-					const $wifi_settings_objs = $(_obj).find("[data-group=wifi_settings]");
-					if($wifi_settings_objs.find(".switch_text_container").length > 0){
-						$wifi_settings_objs.find(".switch_text_container .switch_text_item.selected").click();
-					}
-					else{
-						if($wifi_settings_objs.filter("[data-wifi-auth]").length > 0){
-							$wifi_settings_objs.filter("[data-wifi-auth]").hide()
-								.filter((()=>{
-									const sdn_type = $(this).closest(".setting_content_container").attr("sdn_type");
-									const is_mlo_fh = $(this).closest(".setting_content_container").attr("is_mlo_fh");
-									return get_elem_attr_wifi_auth({"wifi_band_bitwise":band_bitwise, "sdn_type":sdn_type, "is_mlo_fh":is_mlo_fh});
-								})()).show();
-						}
-					}
-				}
-				if(mlo_switch){
-					if($(_obj).find("#checkbox_wifi_band").length > 0){
-						const $checkbox_wifi_band_cntr = $setting_content_cntr.find("#checkbox_wifi_band").closest(".profile_setting_item");
-						const sdn_idx = _profile_data.sdn_rl.idx;
-						let click_band_bitwise = 0;
-						$(_obj).find("[data-component=checkbox_val].clicked").each(function(index, item){
-							click_band_bitwise += parseInt($(item).attr("value")) || 0;
-						});
-						const mainfh_single_json = sdn_all_rl_json.filter(
-							item => item.sdn_rl.sdn_name === "MAINFH" &&
-							item.sdn_rl.idx != sdn_idx &&
-							(item.mainfh_smart_connect.band_bitwise & click_band_bitwise)
-						);
-						let conflict_band_arr = [];
-						mainfh_single_json.forEach((item)=>{
-							let band_text = "";
-							const band_option_list = wifi_band_options_cb.filter(wifi_option => wifi_option.value & item.mainfh_smart_connect.band_bitwise);
-							band_option_list.forEach((band_item)=>{
-								if(band_text != "") band_text += ", ";
-								band_text += band_item.text;
-							});
-							conflict_band_arr.push({"band_text": band_text, "sdn_ssid": item.apg_rl.ssid});
-						});
-						let conflict_band = {"band":"", "profile":""};
-						conflict_band_arr.forEach((item)=>{
-							if(conflict_band.band != "") conflict_band.band += ", ";
-							conflict_band.band += item.band_text;
-							if(conflict_band.profile != "") conflict_band.profile += ", ";
-							conflict_band.profile += `${item.band_text} (${item.sdn_ssid})`;
-						});
-						const mainfh_sc_json = sdn_all_rl_json.filter(
-							item => item.sdn_rl.sdn_name === "MAINFH" &&
-							item.sdn_rl.idx != sdn_idx &&
-							item.mainfh_smart_connect.status &&
-							!(item.mainfh_smart_connect.band_bitwise & click_band_bitwise)
-						);
-						let conflict_sc_arr = [];
-						mainfh_sc_json.forEach((item)=>{
-							let band_text = "";
-							const band_option_list = wifi_band_options_cb.filter(wifi_option => wifi_option.value & item.mainfh_smart_connect.band_bitwise);
-							band_option_list.forEach((band_item)=>{
-								if(band_text != "") band_text += ", ";
-								band_text += band_item.text;
-							});
-							conflict_sc_arr.push({"band_text": band_text, "sdn_ssid": item.apg_rl.ssid});
-						});
-						let conflict_sc = {"band":"", "profile":""};
-						conflict_sc_arr.forEach((item)=>{
-							if(conflict_sc.band != "") conflict_sc.band += ", ";
-							conflict_sc.band += item.band_text;
-							if(conflict_sc.profile != "") conflict_sc.profile += ", ";
-							conflict_sc.profile += `${item.band_text} (${item.sdn_ssid})`;
-						});
-						if(conflict_band.band != "" || conflict_sc.band != ""){
-							let hint_text = "";
-							if(conflict_band.band != ""){
-								hint_text += `${conflict_band.band} WiFi band(s) have been used. The conflicted ${conflict_band.profile} network(s) will be removed after applying the settings.`;/* untranslated */
-							}
-							if(conflict_sc.band != ""){
-								if(hint_text != "") hint_text += "<br>";
-								hint_text += `The Smart Connect rule has been applied to ${conflict_sc.band} WiFi band(s). The conflicted ${conflict_sc.profile} network(s) will be removed after applying the settings.`;/* untranslated */
-							}
-							const $hint = $("<div>").html(hint_text).addClass("item_hint");
-							$mlo_enabled_cntr.next(".item_hint").remove().end().after($hint.clone(true));
-							$checkbox_wifi_band_cntr.next(".item_hint").remove().end().after($hint.clone(true));
-						}
-					}
-					$(_obj).find("#wifi7_11be").removeClass("off on").addClass("on");
-				}
-				else{
-					$mlo_enabled_cntr.next(".item_hint").remove();
-					$(_obj).find("#wifi7_11be").removeClass("off on").addClass((function(){
-						return ((_profile_data.apg_rl.apg_11be == "1") ? "on" : "off");
-					})());
+					$(_obj).find("#select_wifi_band")
+						.closest(".profile_setting_item").find(".custom_select_container").click()
+						.find("#select_wifi_band").children(":first").click();
 				}
 			});
 	}
@@ -8661,7 +7799,7 @@ function Update_Setting_Profile(_obj, _profile_data){
 			}, true, false);
 		});
 		const led_type = (()=>{
-			if(_profile_data.sdn_rl.sdn_name == "Gaming") return `<#Adaptive_Game#> <#Network#> LED`;
+			if(_profile_data.sdn_rl.sdn_name == "Gaming") return `<#GuestNetwork_Gaming#> LED`;
 			else if(_profile_data.sdn_rl.sdn_name == "Kids") return `<#GuestNetwork_Kid#> LED`;
 			else if(_profile_data.sdn_rl.sdn_name == "VPN") return `<#GuestNetwork_VPN#> LED`;
 			else return `LED`;
@@ -8692,43 +7830,53 @@ function set_apply_btn_status(_obj){
 		$btn_container_apply.removeClass("valid_fail").unbind("click").click(function(e){
 			e = e || event;
 			e.stopPropagation();
+			if (!validate_format_Wizard_Item($(_obj), "ALL")) {
+				return;
+			}
 			if($(_obj).find("[data-viewport='access_time']").length && $(_obj).find("[data-viewport='access_time']").is(":visible")){
 				if($(_obj).find("[data-viewport='access_time']").find(".valid_hint_component").is(":visible")){
 					show_customize_alert(`<#GuestNetwork_WiFi_Sche#>: <#weekSche_format_incorrect#> <#weekSche_check_and_retype#>`);
 					return;
 				}
 			}
+			let confirm_text = ``;
 			const sdn_idx = $(_obj).closest(".setting_content_container").attr("sdn_idx");
 			const sdn_type = $(_obj).closest(".setting_content_container").attr("sdn_type");
-			if(isSupport("sdn_mwl") && sdn_type == "MAINFH"){
-				if($(_obj).find("#mlo_enabled").length > 0){
-					const mlo_enabled = $(_obj).find("#mlo_enabled").hasClass("on");
-					if(mlo_enabled){
-						const mlo_band = (() => {
-							const all_band_num = aimesh_wifi_mlo_info.cap.all_band_num;
-							const mlo_band_info = mlo_band_num_mapping.find(item => item.all_band == all_band_num);
-							return (mlo_band_info != undefined) ? mlo_band_info.mlo_band : 0;
-						})();
-						let mlo_band_clicked = 0;
-						$(_obj).find("#checkbox_wifi_band [data-component=checkbox_val].clicked").each(function(index, item){
-							const band = parseInt($(item).attr("value")) || 0;
-							mlo_band_clicked += (band & mlo_band) ? 1 : 0;
-						});
-						if(mlo_band_clicked < 2){
-							show_customize_alert(`To enable MLO, please select at least two MLO bands.`);/* untranslated */
-							return;
+
+			(()=>{
+				const $ipaddr = $(_obj).find("#ipaddr");
+				const $ipaddr_cntr = $ipaddr.closest(".profile_setting_item");
+				if ($ipaddr_cntr.length > 0 && $ipaddr_cntr.css("display") != "none") {
+					const netmask = $(_obj).find("#select_netmask").children(".selected").attr("value");
+					const current_sdn = sdn_all_rl_json.find(item => item.sdn_rl.idx === sdn_idx);
+					const current_ip_range = calculatorIPPoolRange($ipaddr.val(), netmask);
+					if ((current_sdn.subnet_rl.dhcp_min !== current_ip_range.start)
+						|| (current_sdn.subnet_rl.dhcp_max !== current_ip_range.end)) {
+						if (confirm_text != ``) {
+							confirm_text += `<br><br>`;
 						}
+						confirm_text += `After changing the LAN IP, related feature rules such as "<#LANHostConfig_ManualDHCPList_groupitemdesc#>" will become invalid.`;/* untranslated */
+						confirm_text += `<br>Please update the settings accordingly.`;
 					}
 				}
-				const wifi_band_conflict = $(_obj).find("#checkbox_wifi_band").closest(".profile_setting_item").next(".item_hint").html() || "";
-				if(wifi_band_conflict != ""){
-					show_customize_confirm(wifi_band_conflict);
-					const $confirm_obj = $(".popup_container.popup_customize_alert");
-					$confirm_obj.find("[data-btn=ok]").click(()=>{apply_profile();});
+
+				const $sdn_pwd = $(_obj).find("#sdn_pwd");
+				const $sdn_pwd_cntr = $sdn_pwd.closest(".profile_setting_item");
+				if ($sdn_pwd_cntr.length > 0 && $sdn_pwd_cntr.css("display") != "none") {
+					//confirm common string combination	#JS_common_passwd#
+					const is_common_string = check_common_string($sdn_pwd.val(), "wpa_key");
+					if (is_common_string) {
+						if (confirm_text != ``) {
+							confirm_text += `<br><br>`;
+						}
+						confirm_text += `<#JS_common_passwd#>`;
+					}
 				}
-				else{
-					apply_profile();
-				}
+			})();
+			if (confirm_text !== ``) {
+				show_customize_confirm(confirm_text);
+				const $confirm_obj = $(".popup_container.popup_customize_alert");
+				$confirm_obj.find("[data-btn=ok]").click(()=>{apply_profile();});
 			}
 			else{
 				apply_profile();
@@ -8786,54 +7934,39 @@ function set_apply_btn_status(_obj){
 					}
 					var rc_append = "";
 					var wifi_band = parseInt($(_obj).find("#select_wifi_band").children(".selected").attr("value"));
-					const wifi_band_bitwise = (()=>{
-						let band_bitwise = 0;
-						$(_obj).find("[data-component=checkbox_val].clicked").each(function(index, item){
-							band_bitwise += parseInt($(item).attr("value")) || 0;
-						});
-						return band_bitwise;
-					})();
 					sdn_profile.apg_rl.ssid = $(_obj).find("#sdn_name").val();
 					if($(_obj).find("#mlo_enabled").length > 0){
 						sdn_profile.apg_rl.mlo = $(_obj).find("#mlo_enabled").hasClass("on") ? "2" : "0";
 					}
 					const is_mlo_fh = (
 						(sdn_profile.sdn_rl.sdn_name == "MLO" && sdn_profile.apg_rl.mlo == "2") ||
-						(sdn_profile.sdn_rl.sdn_name == "Gaming" && sdn_profile.apg_rl.mlo == "2") ||
-						(sdn_profile.sdn_rl.sdn_name == "MAINFH" && sdn_profile.apg_rl.mlo == "2")
+						(sdn_profile.sdn_rl.sdn_name == "Gaming" && sdn_profile.apg_rl.mlo == "2")
 					) ? true : false;
 					const is_mlo_bh = (sdn_profile.sdn_rl.sdn_name == "MLO" && sdn_profile.apg_rl.mlo == "1") ? true : false;
 					const is_sdn_legacy = (sdn_profile.sdn_rl.sdn_name == "LEGACY") ? true : false;
-					const is_sdn_mainfh = (sdn_profile.sdn_rl.sdn_name == "MAINFH") ? true : false;
 					const support_sec_guest = (sdn_profile.sdn_rl.sdn_name == "Guest" || sdn_profile.sdn_rl.sdn_name == "Portal");
 					const support_sec_employee = (sdn_profile.sdn_rl.sdn_name == "Employee");
-					const support_sec_all = (sdn_profile.sdn_rl.sdn_name == "MAINFH");
-					if(is_sdn_mainfh){
-						sdn_profile.sdn_rl.sdn_enable = "1";
-						sdn_profile.apg_rl.enable = "1";
-					}
 					var ori_dut_list_json = convertRulelistToJson(["mac","wifiband","lanport"], sdn_profile.apg_rl.dut_list);
 					var dut_list = "";
-					if((wifi_band > 0 || wifi_band_bitwise > 0) || is_mlo_fh || is_sdn_mainfh){
+					if(wifi_band > 0 || is_mlo_fh){
 						var sec_option_id = "pwd";
 						if(support_sec_guest)
 							sec_option_id = $(_obj).find("#security_guest .switch_text_container").children(".selected").attr("data-option-id");
 						else if(support_sec_employee)
 							sec_option_id = $(_obj).find("#security_employee .switch_text_container").children(".selected").attr("data-option-id");
-						else if(support_sec_all)
-							sec_option_id = $(_obj).find("#security_all .switch_text_container").children(".selected").attr("data-option-id");
 
 						const radius_idx = sdn_profile.sdn_rl.idx;
 						var wifi_pwd = "";
 						var wifi_auth = "psk2";
 						let wifi_auth_6G = "sae";
-						const wifi_11be = $(_obj).find("#wifi7_11be").hasClass("on") || is_mlo_fh;
-						let wifi_crypto = wifi_11be ? "aes+gcmp256" : "aes";
+						let wifi_crypto = "aes";
+						let wifi_crypto_6G = wifi_crypto;
 						sdn_profile.radius_rl = {};
 						if(sec_option_id == "open"){
-							wifi_auth = wifi_11be ? "owe" : "open";
+							wifi_auth = "open";
 							wifi_auth_6G = "owe";
 							wifi_pwd = "";
+							wifi_crypto = wifi_crypto_6G = "aes";
 						}
 						else if(sec_option_id == "radius"){
 							wifi_auth = "wpa2wpa3";
@@ -8855,7 +7988,7 @@ function set_apply_btn_status(_obj){
 							}
 							if(wifi_auth == "suite-b"){
 								wifi_auth_6G = "suite-b";
-								wifi_crypto = "suite-b";
+								wifi_crypto = wifi_crypto_6G = "suite-b";
 							}
 						}
 						else if(sec_option_id == "pwd"){
@@ -8873,9 +8006,8 @@ function set_apply_btn_status(_obj){
 						}
 						sdn_profile.apg_rl.security = `<3>${wifi_auth}>${wifi_crypto}>${wifi_pwd}>${radius_idx}`;
 						sdn_profile.apg_rl.security += `<13>${wifi_auth}>${wifi_crypto}>${wifi_pwd}>${radius_idx}`;
-						sdn_profile.apg_rl.security += `<16>${wifi_auth_6G}>${wifi_crypto}>${wifi_pwd}>${radius_idx}`;
-						sdn_profile.apg_rl.security += `<96>${wifi_auth_6G}>${wifi_crypto}>${wifi_pwd}>${radius_idx}`;
-						sdn_profile.apg_rl.apg_11be = wifi_11be ? "1" : "0";
+						sdn_profile.apg_rl.security += `<16>${wifi_auth_6G}>${wifi_crypto_6G}>${wifi_pwd}>${radius_idx}`;
+						sdn_profile.apg_rl.security += `<96>${wifi_auth_6G}>${wifi_crypto_6G}>${wifi_pwd}>${radius_idx}`;
 						sdn_profile.apg_rl.sched = schedule_handle_data.json_array_to_string(sdn_schedule.Get_Value());
 						sdn_profile.apg_rl.expiretime = "";
 						if($(_obj).find("#schedule").hasClass("on")){
@@ -8927,13 +8059,7 @@ function set_apply_btn_status(_obj){
 						else
 							sdn_profile.apg_rl.hide_ssid = "0";
 
-						if(is_sdn_mainfh){
-							dut_list += get_mainfh_dut_list(wifi_band_bitwise, is_mlo_fh);
-						}
-						else if(is_sdn_legacy){
-							dut_list += get_legacy_dut_list(wifi_band);
-						}
-						else{
+						if(!is_sdn_legacy){
 							$(_obj).find("[data-container=AiMesh_List]").find(".node_container").each(function(){
 								if($(this).find(".icon_checkbox").hasClass("clicked")){
 									var node_mac = $(this).attr("data-node-mac");
@@ -8942,7 +8068,7 @@ function set_apply_btn_status(_obj){
 									})[0];
 									if(specific_node != undefined){
 										if(is_mlo_fh)
-											dut_list += get_mlo_dut_list(aimesh_wifi_mlo_info.cap.sdn_mlo_band_num, specific_node, ori_dut_list_json);
+											dut_list += get_mlo_dut_list(aimesh_wifi_mlo_info.cap.mlo_band_num, specific_node, ori_dut_list_json);
 										else
 											dut_list += get_specific_dut_list(wifi_band, specific_node, ori_dut_list_json);
 									}
@@ -8957,7 +8083,7 @@ function set_apply_btn_status(_obj){
 						}
 					}
 					else{
-						const dut_list_is_star = check_dut_list_is_star(sdn_profile.apg_rl.dut_list);
+						const dut_list_is_star = get_dut_list_is_star(sdn_profile.apg_rl.dut_list);
 						if(!is_mlo_bh && !dut_list_is_star){
 							dut_list = get_dut_list(wifi_band, ori_dut_list_json);
 						}
@@ -8965,6 +8091,11 @@ function set_apply_btn_status(_obj){
 					if(dut_list != ""){
 						sdn_profile.apg_rl.dut_list = dut_list;
 					}
+
+					$.each(sdn_all_rl_json, function(index, sdn_all_rl){
+						//remove current sdn idx at sdn_access_rl
+						sdn_all_rl.sdn_access_rl = sdn_all_rl.sdn_access_rl.filter(item => item.access_sdn_idx !== sdn_profile.sdn_rl.idx && item.sdn_idx !== sdn_profile.sdn_rl.idx);
+					});
 					if($(_obj).find("#access_intranet").length > 0){
 						sdn_profile.sdn_access_rl = [];
 						$(_obj).find("[data-container='access_intranet_cntr'] .cb_item_container").each(function(index, item){
@@ -9087,18 +8218,6 @@ function set_apply_btn_status(_obj){
 						sdn_profile.subnet_rl.dhcp_static = "0";
 						sdn_profile.subnet_rl.dhcp_unit = "";
 						if($(_obj).find("#manual_dhcp").length > 0){
-							const sdn_ipaddr_subnet = sdn_profile.subnet_rl.addr.split('.').slice(0, 3).join('.');
-							$.each(sdn_profile.dhcpres_rl.data, function(index, dhcpres){
-								const client_ip_subnet = dhcpres.ip.split('.').slice(0, 3).join('.');
-								if(client_ip_subnet != sdn_ipaddr_subnet){
-									const last_addr = (()=>{
-										const arr = dhcpres.ip.split('.');
-										return parseInt(arr[arr.length - 1]);
-									})();
-									dhcpres.ip = `${sdn_ipaddr_subnet}.${last_addr}`;
-								}
-							});
-
 							const dhcpresX_rl = parse_dhcpres_rl_to_dhcpresX_rl(sdn_profile.dhcpres_rl);
 							if(!$.isEmptyObject(dhcpresX_rl)){
 								$.extend(nvramSet_obj, dhcpresX_rl);
@@ -9107,6 +8226,22 @@ function set_apply_btn_status(_obj){
 							}
 							else{
 								nvramSet_obj["dhcpres" + sdn_profile.dhcpres_rl.idx + "_rl"] = "";
+							}
+						}
+					}
+
+					if(isSupport("ipv6")){
+						if($(_obj).find("#ipv6_enable").length > 0){
+							sdn_profile.subnet_rl.ipv6_enable = $(_obj).find("#ipv6_enable").hasClass("on") ? "1" : "0";
+							if(sdn_profile.subnet_rl.ipv6_enable == "1"){
+								sdn_profile.subnet_rl.autoconf = $(_obj).find("#select_ipv6_autoconf").children(".selected").attr("value");
+								sdn_profile.subnet_rl.addr6 = sdn_profile.sdn_rl.idx;
+								sdn_profile.subnet_rl.dhcp6_start = $(_obj).find("#ipv6_dhcp_start").val();
+								sdn_profile.subnet_rl.dhcp6_end = $(_obj).find("#ipv6_dhcp_end").val();
+								const ipv6_dns1 = $(_obj).find("#ipv6_dns1").val();
+								const ipv6_dns2 = $(_obj).find("#ipv6_dns2").val();
+								const ipv6_dns3 = $(_obj).find("#ipv6_dns3").val();
+								sdn_profile.subnet_rl.dns6 = `${ipv6_dns1},${ipv6_dns2},${ipv6_dns3}`;
 							}
 						}
 					}
@@ -9147,45 +8282,6 @@ function set_apply_btn_status(_obj){
 					if(rc_append != ""){
 						nvramSet_obj.rc_service = nvramSet_obj.rc_service + rc_append;
 					}
-
-					if(isSupport("sdn_mwl")){
-						let sdn_all_rl_tmp = JSON.parse(JSON.stringify(sdn_all_rl_json));
-						let del_sdn_rl = [];
-						const smart_connect_enable = $("[data-component=checkbox_val].clicked").length > 1 ? true : false;
-						if(smart_connect_enable){
-							let del_rl = sdn_all_rl_tmp.find(item =>
-								item.mainfh_smart_connect.status &&
-								item.sdn_rl.sdn_name === "MAINFH" &&
-								item.sdn_rl.idx !== sdn_profile.sdn_rl.idx
-							);
-							if(del_rl){
-								del_sdn_rl.push(del_rl);
-								sdn_all_rl_tmp = sdn_all_rl_tmp.filter(item => item.sdn_rl.idx !== del_rl.sdn_rl.idx);
-								vlan_rl_json = vlan_rl_json.filter(item => item.vlan_idx !== del_rl.vlan_rl.vlan_idx);
-							}
-						}
-						sdn_all_rl_tmp = sdn_all_rl_tmp.filter(item => {
-							if(item.sdn_rl.sdn_name === "MAINFH" &&
-								(wifi_band_bitwise & item.mainfh_smart_connect.band_bitwise) &&
-								item.sdn_rl.idx !== sdn_profile.sdn_rl.idx)
-							{
-								del_sdn_rl.push(item);
-								vlan_rl_json = vlan_rl_json.filter(vlan_item => vlan_item.vlan_idx !== item.vlan_rl.vlan_idx);
-								return false;
-							}
-							return true;
-						});
-						sdn_all_rl_json = JSON.parse(JSON.stringify(sdn_all_rl_tmp));
-						del_sdn_rl.forEach(item => {
-							nvramSet_obj["apm" + item.apg_rl.apg_idx + "_enable"] = "0";
-						});
-						if(del_sdn_rl.length > 0){
-							const del_sdn_all_rl = parse_JSONToStr_del_sdn_all_rl(del_sdn_rl);
-							$.extend(nvramSet_obj, del_sdn_all_rl);
-							nvramSet_obj.rc_service = "start_sdn_del;" + nvramSet_obj.rc_service;
-							nvramSet_obj.rc_service = nvramSet_obj.rc_service.replace(`restart_sdn ${selected_sdn_idx};`, `restart_sdn;`)
-						}
-					}
 					var showLoading_status = get_showLoading_status(nvramSet_obj.rc_service);
 					const parent_cntr = (typeof PAGE_CONTAINER == "string") ? PAGE_CONTAINER : "sdn";
 					if(wifi_band > 0){
@@ -9197,8 +8293,7 @@ function set_apply_btn_status(_obj){
 						sdn_all_rl_json.push(JSON.parse(JSON.stringify(sdn_profile)));
 					var sdn_all_list = parse_JSONToStr_sdn_all_list();
 					$.extend(nvramSet_obj, sdn_all_list);
-					const ap_prefix = (sdn_profile.sdn_rl.sdn_name == "MAINFH" || sdn_profile.sdn_rl.sdn_name == "MAINBH") ? "apm" : "apg";
-					var apgX_rl = parse_apg_rl_to_apgX_rl(sdn_profile.apg_rl, ap_prefix);
+					var apgX_rl = parse_apg_rl_to_apgX_rl(sdn_profile.apg_rl);
 					$.extend(nvramSet_obj, apgX_rl);
 					if(sdn_profile.sdn_rl.cp_idx == "2" || sdn_profile.sdn_rl.cp_idx == "4"){
 						var cpX_rl = parse_cp_rl_to_cpX_rl(sdn_profile.cp_rl);
@@ -9234,13 +8329,8 @@ function set_apply_btn_status(_obj){
 								show_mlo_profilelist();
 							else
 								show_sdn_profilelist();
-
-							if(typeof top.notification == "object"){
-								top.notification.run();
-							}
-
 							if(!window.matchMedia('(max-width: 575px)').matches)
-								$("#profile_list_content").find("[sdn_idx=" + selected_sdn_idx + "] .item_text_container").click();
+								$("#profile_list_content").find("[sdn_idx='" + selected_sdn_idx + "'] .item_text_container").click();
 						}, showLoading_status.time*1000);
 						if(!isMobile()){
 							if(showLoading_status.disconnect){
@@ -9253,6 +8343,81 @@ function set_apply_btn_status(_obj){
 		});
 	}
 }
+const valid_isLegalIP = function(str){
+	let testResult = {
+		'isError': false,
+		'errReason': ''
+	};
+	const A_class_start = inet_network("1.0.0.0");
+	const A_class_end = inet_network("126.255.255.255");
+	const B_class_start = inet_network("127.0.0.0");
+	const B_class_end = inet_network("127.255.255.255");
+	const C_class_start = inet_network("128.0.0.0");
+	const C_class_end = inet_network("255.255.255.255");
+	const ip_num = inet_network(str);
+	if(ip_num > A_class_start && ip_num < A_class_end){
+		return testResult;
+	}
+	else if(ip_num > B_class_start && ip_num < B_class_end){
+		testResult.isError = true;
+		testResult.errReason = str + " <#JS_validip#>";
+		return testResult;
+	}
+	else if(ip_num > C_class_start && ip_num < C_class_end){
+		return testResult;
+	}
+	else{
+		testResult.isError = true;
+		testResult.errReason = str + " <#JS_validip#>";
+		return testResult;
+	}
+};
+const valid_isLegalMask = function(str){
+	let testResult = {
+		'isError': false,
+		'errReason': ''
+	};
+	let wrong_mask = 0;
+	let mask_num = inet_network(str);
+	let mask_reverse_num = 0;
+	let test_num = 0;
+	if(mask_num != -1) {
+		if(mask_num == 0) {
+			mask_reverse_num = 0; //Viz 2011.07 : Let mask 0.0.0.0 pass
+		}
+		else {
+			mask_reverse_num = ~mask_num;
+		}
+
+		if(mask_num < 0) {
+			wrong_mask = 1;
+		}
+
+		test_num = mask_reverse_num;
+		while(test_num != 0){
+			if((test_num + 1) % 2 == 0) {
+				test_num = (test_num + 1) / 2 - 1;
+			}
+			else{
+				wrong_mask = 1;
+				break;
+			}
+		}
+		if(wrong_mask == 1){
+			testResult.isError = true;
+			testResult.errReason = str + " is not a valid Mask address!";
+			return testResult;
+		}
+		else {
+			return testResult;
+		}
+	}
+	else { //null
+		testResult.isError = true;
+		testResult.errReason = "This is not a valid Mask address!";
+		return testResult;
+	}
+};
 function validate_isBlank(_obj){
 	var isBlank = false;
 	$(_obj).find("[need_check=true]").each(function(index){
@@ -9270,7 +8435,7 @@ function validate_isBlank(_obj){
 		if($(_obj).find("[data-category-cntr=aimesh]").length > 0){
 			if($(_obj).find("[data-category-cntr=aimesh]").css("display") != "none"){
 				if($(_obj).find("[data-container=AiMesh_List] .node_container .icon_checkbox").length > 0){
-					if(!$(_obj).find("[data-container=AiMesh_List] .node_container .icon_checkbox:not(.disabled)").hasClass("clicked")){
+					if(!$(_obj).find("[data-container=AiMesh_List] .node_container .icon_checkbox").hasClass("clicked")){
 						isBlank = true;
 					}
 				}
@@ -9279,7 +8444,7 @@ function validate_isBlank(_obj){
 		if($(_obj).find("[data-container='wizard_aimesh_cntr']").length > 0){
 			if($(_obj).find("[data-container='wizard_aimesh_cntr']").css("display") != "none"){
 				if($(_obj).find("[data-container=AiMesh_List] .node_container .icon_checkbox").length > 0){
-					if(!$(_obj).find("[data-container=AiMesh_List] .node_container .icon_checkbox:not(.disabled)").hasClass("clicked")){
+					if(!$(_obj).find("[data-container=AiMesh_List] .node_container .icon_checkbox").hasClass("clicked")){
 						isBlank = true;
 					}
 				}
@@ -9446,35 +8611,6 @@ function validate_format_Wizard_Item(_obj, _type){
 
 		return testResult;
 	};
-	var valid_isLegalIP = function(str){
-		var testResult = {
-			'isError': false,
-			'errReason': ''
-		};
-		var A_class_start = inet_network("1.0.0.0");
-		var A_class_end = inet_network("126.255.255.255");
-		var B_class_start = inet_network("127.0.0.0");
-		var B_class_end = inet_network("127.255.255.255");
-		var C_class_start = inet_network("128.0.0.0");
-		var C_class_end = inet_network("255.255.255.255");
-		var ip_num = inet_network(str);
-		if(ip_num > A_class_start && ip_num < A_class_end){
-			return testResult;
-		}
-		else if(ip_num > B_class_start && ip_num < B_class_end){
-			testResult.isError = true;
-			testResult.errReason = str + " <#JS_validip#>";
-			return testResult;
-		}
-		else if(ip_num > C_class_start && ip_num < C_class_end){
-			return testResult;
-		}
-		else{
-			testResult.isError = true;
-			testResult.errReason = str + " <#JS_validip#>";
-			return testResult;
-		}
-	};
 	var valid_IP_CIDR = function(addr, type, mode){
 		//mode, 0:IP, 1:IP/CIDR, 2:IP or IP/CIDR
 		var testResultPass = {
@@ -9529,52 +8665,7 @@ function validate_format_Wizard_Item(_obj, _type){
 		else
 			return testResultFail;
 	};
-	var valid_isLegalMask = function(str){
-		var testResult = {
-			'isError': false,
-			'errReason': ''
-		};
-		var wrong_netmask = 0;
-		var netmask_num = inet_network(str);
-		var netmask_reverse_num = 0;
-		var test_num = 0;
-		if(netmask_num != -1) {
-			if(netmask_num == 0) {
-				netmask_reverse_num = 0; //Viz 2011.07 : Let netmask 0.0.0.0 pass
-			}
-			else {
-				netmask_reverse_num = ~netmask_num;
-			}
 
-			if(netmask_num < 0) {
-				wrong_netmask = 1;
-			}
-
-			test_num = netmask_reverse_num;
-			while(test_num != 0){
-				if((test_num + 1) % 2 == 0) {
-					test_num = (test_num + 1) / 2 - 1;
-				}
-				else{
-					wrong_netmask = 1;
-					break;
-				}
-			}
-			if(wrong_netmask == 1){
-				testResult.isError = true;
-				testResult.errReason = str + " is not a valid Mask address!";
-				return testResult;
-			}
-			else {
-				return testResult;
-			}
-		}
-		else { //null
-			testResult.isError = true;
-			testResult.errReason = "This is not a valid Mask address!";
-			return testResult;
-		}
-	};
 	var valid_bandwidth = function(str){
 		var testResult = {
 			'isError': false,
@@ -9653,6 +8744,20 @@ function validate_format_Wizard_Item(_obj, _type){
 		var ttc = httpApi.nvramGet(["territory_code"]).territory_code;
 		return (ttc.search(_ptn) == -1) ? false : true;
 	}
+	function valid_ipv6_dhcp(str){
+		let testResult = {
+			'isError': false,
+			'errReason': ''
+		};
+		const dhcpre = new RegExp("^([0-9A-Fa-f]{1,4})$", "gi");
+		if(!dhcpre.test(str)){
+			testResult.isError = true;
+			testResult.errReason = `${str} <#JS_validip#>`;
+			return testResult;
+		}
+		else
+			return testResult;
+	}
 
 	var sdn_idx = $(_obj).attr("sdn_idx");
 	var $sdn_name = $(_obj).find("#sdn_name");
@@ -9668,31 +8773,15 @@ function validate_format_Wizard_Item(_obj, _type){
 		return false;
 	}
 	var specific_sdn_name = "";
-	if(sdn_idx != undefined){//edit
-		const current_sdn = sdn_all_rl_json.find(item => item.sdn_rl.idx == sdn_idx);
-		const current_sdn_type = (current_sdn != undefined) ? current_sdn.sdn_rl.sdn_name : "";
-		if(current_sdn_type == "MAINFH"){
-			specific_sdn_name = sdn_all_rl_json.filter(function(item, index, array){
-				return (item.sdn_rl.idx != sdn_idx && item.apg_rl.ssid == $sdn_name.val() && item.sdn_rl.sdn_name != "MAINFH");
-			});
-		}
-		else{
-			specific_sdn_name = sdn_all_rl_json.filter(function(item, index, array){
-				return (item.sdn_rl.idx != sdn_idx && item.apg_rl.ssid == $sdn_name.val());
-			});
-		}
+	if(sdn_idx != undefined){
+		specific_sdn_name = sdn_all_rl_json.filter(function(item, index, array){
+			return (item.sdn_rl.idx != sdn_idx && item.apg_rl.ssid == $sdn_name.val());
+		});
 	}
-	else{//new
-		if(_type == "MAINFH"){
-			specific_sdn_name = sdn_all_rl_json.filter(function(item, index, array){
-				return (item.apg_rl.ssid == $sdn_name.val() && item.sdn_rl.sdn_name != "MAINFH");
-			});
-		}
-		else{
-			specific_sdn_name = sdn_all_rl_json.filter(function(item, index, array){
-				return (item.apg_rl.ssid == $sdn_name.val());
-			});
-		}
+	else{
+		specific_sdn_name = sdn_all_rl_json.filter(function(item, index, array){
+			return (item.apg_rl.ssid == $sdn_name.val());
+		});
 	}
 	if(specific_sdn_name.length > 0){
 		$sdn_name.show_validate_hint("<#JS_duplicate#>");
@@ -9730,14 +8819,6 @@ function validate_format_Wizard_Item(_obj, _type){
 				$sdn_pwd.focus();
 				if(isValid_pwd.set_value)
 					$sdn_pwd.val(isValid_pwd.set_value);
-				return false;
-			}
-		}
-		//confirm common string combination	#JS_common_passwd#
-		var is_common_string = check_common_string($sdn_pwd.val(), "wpa_key");
-		if(is_common_string){
-			if(!confirm("<#JS_common_passwd#>")){
-				$sdn_pwd.focus();
 				return false;
 			}
 		}
@@ -9839,43 +8920,47 @@ function validate_format_Wizard_Item(_obj, _type){
 			var $ipaddr = $(_obj).find("#ipaddr");
 			if($ipaddr.length != 0){
 				$ipaddr.val($ipaddr.val().replace(/\s+/g, ''));//remove space
-				if($ipaddr.val() == ""){
+				const ipaddr = $ipaddr.val();
+				if(ipaddr === ""){
 					$ipaddr.show_validate_hint("<#JS_fieldblank#>");
 					$ipaddr.focus();
 					return false;
 				}
-				var isValid_ipaddr = valid_isLegalIP($ipaddr.val());
+				var isValid_ipaddr = valid_isLegalIP(ipaddr);
 				if(isValid_ipaddr.isError){
 					$ipaddr.show_validate_hint(isValid_ipaddr.errReason);
 					$ipaddr.focus();
 					return false;
 				}
-				var lan_ipaddr = httpApi.nvramGet(["lan_ipaddr"]).lan_ipaddr;
-				if($ipaddr.val() == lan_ipaddr){
-					$ipaddr.show_validate_hint("<#JS_conflict_LANIP#>");
+				const netmask = $(_obj).find("#select_netmask").children(".selected").attr("value");
+				const ip_info = httpApi.nvramGet(["lan_ipaddr", "lan_netmask", "wan0_ipaddr", "wan0_netmask", "wan1_ipaddr", "wan1_netmask"]);
+				if(checkSubnetConflict(ipaddr, netmask, ip_info.lan_ipaddr, ip_info.lan_netmask)){
+					$ipaddr.show_validate_hint(`<#JS_conflict_LANIP#> : ${ip_info.lan_ipaddr}`);
 					$ipaddr.focus();
 					return false;
 				}
-				var ipaddr_substr = $ipaddr.val().substr(0, $ipaddr.val().lastIndexOf("."));
-				var wan0_ipaddr_substr = httpApi.nvramGet(["wan0_ipaddr"]).wan0_ipaddr.substr(0, httpApi.nvramGet(["wan0_ipaddr"]).wan0_ipaddr.lastIndexOf("."));
-				var wan1_ipaddr_substr = httpApi.nvramGet(["wan1_ipaddr"]).wan1_ipaddr.substr(0, httpApi.nvramGet(["wan1_ipaddr"]).wan1_ipaddr.lastIndexOf("."));
-				if((wan0_ipaddr_substr == ipaddr_substr) || (wan1_ipaddr_substr == ipaddr_substr)){
-					$ipaddr.show_validate_hint("<#JS_conflict_LANIP#>".replace("LAN", "WAN"));
+				if(checkSubnetConflict(ipaddr, netmask, ip_info.wan0_ipaddr, ip_info.wan0_netmask)){
+					$ipaddr.show_validate_hint(`<#JS_conflict_LANIP#> : ${ip_info.wan0_ipaddr}`.replace("LAN", "WAN"));
 					$ipaddr.focus();
 					return false;
 				}
-				var specific_data = sdn_all_rl_json.filter(function(item, index, array){
-					if(item.sdn_rl.idx != sdn_idx && !$.isEmptyObject(item.subnet_rl)){
-						var compare_ipaddr = item.subnet_rl.addr.substr(0, item.subnet_rl.addr.lastIndexOf("."));
-						return (compare_ipaddr == ipaddr_substr);
+				if(checkSubnetConflict(ipaddr, netmask, ip_info.wan1_ipaddr, ip_info.wan1_netmask)){
+					$ipaddr.show_validate_hint(`<#JS_conflict_LANIP#> : ${ip_info.wan1_ipaddr}`.replace("LAN", "WAN"));
+					$ipaddr.focus();
+					return false;
+				}
+				let sdnConflict = false;
+				$.each(sdn_all_rl_json, function(index, sdn_all_rl){
+					if(sdn_all_rl.sdn_rl.idx != sdn_idx && !$.isEmptyObject(sdn_all_rl.subnet_rl)){
+						if(checkSubnetConflict(ipaddr, netmask, sdn_all_rl.subnet_rl.addr, sdn_all_rl.subnet_rl.netmask)){
+							$ipaddr.show_validate_hint(`<#vpn_openvpn_conflict#> : ${sdn_all_rl.apg_rl.ssid}`);
+							$ipaddr.focus();
+							sdnConflict = true;
+							return false;
+						}
 					}
-				})[0];
-				var lan_ipaddr_substr = lan_ipaddr.substr(0, lan_ipaddr.lastIndexOf("."));
-				if(specific_data != undefined || (lan_ipaddr_substr == ipaddr_substr)){
-					$ipaddr.show_validate_hint("<#vpn_openvpn_conflict#>");
-					$ipaddr.focus();
-					return false;
-				}
+				});
+				if(sdnConflict) return false;
 			}
 
 			const $dhcp_lease = $(_obj).find("#dhcp_lease");
@@ -9976,6 +9061,104 @@ function validate_format_Wizard_Item(_obj, _type){
 					}
 				}
 			}
+
+			const $ipv6_enable = $(_obj).find("#ipv6_enable");
+			if($ipv6_enable.hasClass("on")){
+				const $ipv6_dhcp_start = $(_obj).find("#ipv6_dhcp_start");
+				if($ipv6_dhcp_start.length != 0){
+					$ipv6_dhcp_start.val($ipv6_dhcp_start.val().replace(/\s+/g, ''));//remove space
+					if($ipv6_dhcp_start.val() == ""){
+						$ipv6_dhcp_start.show_validate_hint("<#JS_fieldblank#>");
+						$ipv6_dhcp_start.focus();
+						return false;
+					}
+					const isValid_ipv6_dhcp_start = valid_ipv6_dhcp($ipv6_dhcp_start.val());
+					if(isValid_ipv6_dhcp_start.isError){
+						$ipv6_dhcp_start.show_validate_hint(isValid_ipv6_dhcp_start.errReason);
+						$ipv6_dhcp_start.focus();
+						return false;
+					}
+				}
+				const $ipv6_dhcp_end = $(_obj).find("#ipv6_dhcp_end");
+				if($ipv6_dhcp_end.length != 0){
+					$ipv6_dhcp_end.val($ipv6_dhcp_end.val().replace(/\s+/g, ''));//remove space
+					if($ipv6_dhcp_end.val() == ""){
+						$ipv6_dhcp_end.show_validate_hint("<#JS_fieldblank#>");
+						$ipv6_dhcp_end.focus();
+						return false;
+					}
+					const isValid_ipv6_dhcp_end = valid_ipv6_dhcp($ipv6_dhcp_end.val());
+					if(isValid_ipv6_dhcp_end.isError){
+						$ipv6_dhcp_end.show_validate_hint(isValid_ipv6_dhcp_end.errReason);
+						$ipv6_dhcp_end.focus();
+						return false;
+					}
+				}
+				if($ipv6_dhcp_start.length != 0 && $ipv6_dhcp_end.length != 0){
+					if(parseInt("0x"+$ipv6_dhcp_start.val()) > parseInt("0x"+$ipv6_dhcp_end.val())){
+						$ipv6_dhcp_end.show_validate_hint(`<#vlaue_haigher_than#> ${$ipv6_dhcp_start.val()}`);
+						$ipv6_dhcp_end.focus();
+						return false;
+					}
+				}
+				const $ipv6_dns1 = $(_obj).find("#ipv6_dns1");
+				if($ipv6_dns1.length != 0){
+					$ipv6_dns1.val($ipv6_dns1.val().replace(/\s+/g, ''));//remove space
+					if($ipv6_dns1.val() != ""){
+						const isValid_ipv6_dns1 = valid_is_IP_format($ipv6_dns1.val(), "IPv6");
+						if(isValid_ipv6_dns1.isError){
+							$ipv6_dns1.show_validate_hint(isValid_ipv6_dns1.errReason);
+							$ipv6_dns1.focus();
+							return false;
+						}
+					}
+				}
+				const $ipv6_dns2 = $(_obj).find("#ipv6_dns2");
+				if($ipv6_dns2.length != 0){
+					$ipv6_dns2.val($ipv6_dns2.val().replace(/\s+/g, ''));//remove space
+					if($ipv6_dns2.val() != ""){
+						const isValid_ipv6_dns2 = valid_is_IP_format($ipv6_dns2.val(), "IPv6");
+						if(isValid_ipv6_dns2.isError){
+							$ipv6_dns2.show_validate_hint(isValid_ipv6_dns2.errReason);
+							$ipv6_dns2.focus();
+							return false;
+						}
+					}
+				}
+				const $ipv6_dns3 = $(_obj).find("#ipv6_dns3");
+				if($ipv6_dns3.length != 0){
+					$ipv6_dns3.val($ipv6_dns3.val().replace(/\s+/g, ''));//remove space
+					if($ipv6_dns3.val() != ""){
+						const isValid_ipv6_dns3 = valid_is_IP_format($ipv6_dns3.val(), "IPv6");
+						if(isValid_ipv6_dns3.isError){
+							$ipv6_dns3.show_validate_hint(isValid_ipv6_dns3.errReason);
+							$ipv6_dns3.focus();
+							return false;
+						}
+					}
+				}
+			}
+
+			const $select_macmode = $(_obj).find("#select_macmode");
+			const $select_macmode_cntr = $select_macmode.closest(".profile_setting_item");
+			if($select_macmode.length > 0 && $select_macmode_cntr.css("display") != "none"){
+				const macmode = $select_macmode.children(".selected").attr("value");
+				if(macmode === "allow"){
+					let maclist_count = 0;
+					if($(_obj).find("#container_macfilterlist [data-component='device_edit']").attr("data-maclist_arr") != undefined){
+						const maclist_arr = JSON.parse($(_obj).find("#container_macfilterlist [data-component='device_edit']").attr("data-maclist_arr"));
+						maclist_arr.forEach((mac)=>{
+							if(mac != "" && validator.mac_addr(mac)){
+								maclist_count++;
+							}
+						});
+					}
+					if(maclist_count === 0){
+						$(_obj).find("#container_macfilterlist").show_validate_hint(`<#FirewallConfig_MFList_accept_hint1#>`);
+						return false;
+					}
+				}
+			}
 		}
 	}
 	return true;
@@ -9988,60 +9171,18 @@ function show_sdn_profilelist(){
 			return true;
 		if(check_is_mlo_bh(sdn_all_rl.apg_rl))
 			return true;
-		if(sdn_all_rl.sdn_rl.sdn_name === "MAINBH")
-			return true;
-		display_sdn_list.push(sdn_all_rl);
+		var item = {
+			"sdn_idx": sdn_all_rl.sdn_rl.idx,
+			"type": sdn_all_rl.sdn_rl.sdn_name,
+			"name": sdn_all_rl.apg_rl.ssid,
+			"activate": sdn_all_rl.sdn_rl.sdn_enable,
+			"client_num": sdn_all_rl.client_num
+		};
+		$("#profile_list_content").append(Get_Component_Profile_Item(item));
+		display_sdn_list.push(sdn_all_rl)
 	});
-	if(display_sdn_list.length > 0){
-		const $profile_list_content = $("#profile_list_content");
-		if(isSupport("sdn_mwl")){
-			const main_fh_json = display_sdn_list.filter(item => item.sdn_rl.sdn_name === "MAINFH");
-			if(main_fh_json.length > 0){
-				const main_fh_title = `
-					<div class="title_container">
-						<div class="title_text"><#guest_access_main_network#></div>
-						<div class="help_icon mobile"></div>
-					</div>
-				`;
-				$profile_list_content.append(main_fh_title);
-				main_fh_json.forEach((item)=>{
-					const profile_info = {
-						"sdn_idx": item.sdn_rl.idx,
-						"type": item.sdn_rl.sdn_name,
-						"name": item.apg_rl.ssid,
-						"activate": item.sdn_rl.sdn_enable,
-						"client_num": item.client_num
-					};
-					$profile_list_content.append(Get_Component_Profile_Item(profile_info));
-				});
-			}
-			const $AddMAINFH_item = Get_Component_Profile_Item_AddNew("mainfh").appendTo($("#profile_list_content"));
-			$profile_list_content.append($("<div>").addClass("horizontal_line"));
-		}
-
-		const profile_list_title = `
-			<div class="title_container">
-				<div class="title_text">
-					${Guest_Network_naming}
-				</div>
-				${!isSupport("sdn_mwl") ? '<div class="help_icon mobile"></div>' : ""}
-			</div>
-		`;
-		$profile_list_content.append(profile_list_title);
-
-		display_sdn_list.forEach(item => {
-			if(isSupport("sdn_mwl") && item.sdn_rl.sdn_name === "MAINFH") return;
-			const profile_info = {
-				"sdn_idx": item.sdn_rl.idx,
-				"type": item.sdn_rl.sdn_name,
-				"name": item.apg_rl.ssid,
-				"activate": item.sdn_rl.sdn_enable,
-				"client_num": item.client_num
-			};
-			$profile_list_content.append(Get_Component_Profile_Item(profile_info));
-		});
-		$profile_list_content.append($("<div>").addClass("horizontal_line"));
-	}
+	if(display_sdn_list.length > 0)
+		$("#profile_list_content").append($("<div>").addClass("horizontal_line"));
 
 	var $AddNew_item = Get_Component_Profile_Item_AddNew().appendTo($("#profile_list_content"));
 	if($(".profile_setting_container").css("display") != "none"){
@@ -10374,9 +9515,7 @@ var apg_rl_attr = function(){
 	this.mlo = "";
 	this.maclist = "";
 	this.iot_max_cmpt = "";
-	this.apg_11be = "0";
 	this.dut_list = "";
-	this.disabled = "0";//for fw update, the wifi band is full
 };
 var radius_rl_attr = function(){
 	this.radius_idx = "";
@@ -10451,12 +9590,6 @@ function init_sdn_all_list(){
 		httpApi.nvramGet(["qos_enable"], true);
 	}
 	const apg_wifi_sched_on = httpApi.hookGet("apg_wifi_sched_on", true);
-	const apm_wifi_sched_on = (()=>{
-		if(isSupport("sdn_mwl"))
-			return httpApi.hookGet("apm_wifi_sched_on", true);
-		else
-			return {};
-	})();
 	const get_apg_wifi7_onoff = (!isSupport("wifi7") || httpApi.hookGet("get_apg_wifi7_onoff", true) == undefined) ? [] : httpApi.hookGet("get_apg_wifi7_onoff");
 	sdn_all_rl_json = [];
 	cp_type_rl_json.forEach(function(item){
@@ -10530,47 +9663,20 @@ function init_sdn_all_list(){
 					return last_addr_a - last_addr_b;
 				});
 			}
-			sdn_all_rl.mainfh_smart_connect = {"status":false, "band_bitwise":0};
-			const ap_prefix = (sdn_rl_profile.sdn_name == "MAINFH" || sdn_rl_profile.sdn_name == "MAINBH") ? "apm" : "apg";
-			const apg_rl_list = get_apg_rl_list(sdn_rl_profile.apg_idx, ap_prefix);
-			const specific_apg = apg_rl_list.find(item => item.apg_idx == sdn_rl_profile.apg_idx);
+			var apg_rl_list = get_apg_rl_list(sdn_rl_profile.apg_idx);
+			var specific_apg = apg_rl_list.filter(function(item, index, array){
+				return (item.apg_idx == sdn_rl_profile.apg_idx);
+			})[0];
 			if(specific_apg != undefined){
 				sdn_all_rl.apg_rl = specific_apg;
-				if(sdn_rl_profile.sdn_name == "MAINFH"){
-					const dut_list_arr = specific_apg.dut_list.split("<");
-					const first_dut_list = (() => {
-						let result = "";
-						for(const dut_info of dut_list_arr){
-							if(dut_info !== ""){
-								result = dut_info;
-								break;
-							}
-						}
-						return result;
-					})();
-					const first_wifi_band = (() => {
-						let wifi_band = 0;
-						if(first_dut_list !== ""){
-							const dut_list_arr = first_dut_list.split(">");
-							wifi_band = parseInt(dut_list_arr[1]) || 0;
-						}
-						return wifi_band;
-					})();
-					let count = 0;
-					wifi_band_options_cb.forEach(item => {
-						count += item.value & first_wifi_band ? 1 : 0;
-					});
-					sdn_all_rl.mainfh_smart_connect.status = (count > 1) ? true : false;
-					sdn_all_rl.mainfh_smart_connect.band_bitwise = first_wifi_band;
+				var radius_rl_list = parse_StrToJSON_radius_rl_list(radius_rl);
+				var specific_radius = radius_rl_list.filter(function(item, index, array){
+					return (item.radius_idx == specific_apg.apg_idx);
+				})[0];
+				if(specific_radius != undefined){
+					sdn_all_rl.radius_rl = specific_radius;
 				}
 			}
-
-			const radius_rl_list = parse_StrToJSON_radius_rl_list(radius_rl);
-			const specific_radius = radius_rl_list.find(item => item.radius_idx == sdn_all_rl.sdn_rl.idx);
-			if(specific_radius != undefined){
-				sdn_all_rl.radius_rl = specific_radius;
-			}
-
 			var cp_rl_list = get_cp_rl_list(sdn_rl_profile.cp_idx);
 			var specific_cp = cp_rl_list.filter(function(item, index, array){
 				return (item.cp_idx == sdn_rl_profile.cp_idx);
@@ -10635,13 +9741,8 @@ function init_sdn_all_list(){
 		sdn_profile.vlan_idx = profile_data[3];
 		sdn_profile.subnet_idx = profile_data[4];
 		sdn_profile.apg_idx = profile_data[5];
-		sdn_profile.wifi_sched_on = (()=>{
-			const ap_prefix = (sdn_profile.sdn_name == "MAINFH" || sdn_profile.sdn_name == "MAINBH") ? "apm" : "apg";
-			const ap_key = ap_prefix + sdn_profile.apg_idx;
-			const sched_status = (ap_prefix == "apm") ? apm_wifi_sched_on[ap_key] : apg_wifi_sched_on[ap_key];
-			return check_value_is_exist(sched_status) ? sched_status : "1";
-		})();
-		sdn_profile.wifi7_onoff = (get_apg_wifi7_onoff[sdn_profile.idx] == undefined) ? "0" : get_apg_wifi7_onoff[sdn_profile.idx];
+		sdn_profile.wifi_sched_on = (check_value_is_exist(apg_wifi_sched_on["apg" + profile_data[5] + ""]) ? apg_wifi_sched_on["apg" + profile_data[5] + ""] : "1");
+		sdn_profile.wifi7_onoff =  (get_apg_wifi7_onoff[sdn_profile.apg_idx] == undefined) ? "0" : get_apg_wifi7_onoff[sdn_profile.apg_idx];
 		sdn_profile.vpnc_idx = profile_data[6];
 		sdn_profile.vpns_idx = profile_data[7];
 		sdn_profile.dns_filter_idx = profile_data[8];
@@ -10699,14 +9800,14 @@ function init_sdn_all_list(){
 				subnet_profile.wins = profile_data[10];
 				subnet_profile.dhcp_static = profile_data[11];
 				subnet_profile.dhcp_unit = profile_data[12];
-				subnet_profile.ipv6_enable = (check_value_is_exist(profile_data[13]) ? profile_data[13] : "");
-				subnet_profile.autoconf = (check_value_is_exist(profile_data[14]) ? profile_data[14] : "");
+				subnet_profile.ipv6_enable = (check_value_is_exist(profile_data[13]) ? ((profile_data[13] === "disabled") ? "0" : profile_data[13]) : "0");
+				subnet_profile.autoconf = (check_value_is_exist(profile_data[14]) ? profile_data[14] : "0");
 				subnet_profile.addr6 = (check_value_is_exist(profile_data[15]) ? profile_data[15] : "");
-				subnet_profile.dhcp6_start = (check_value_is_exist(profile_data[16]) ? profile_data[16] : "");
-				subnet_profile.dhcp6_end = (check_value_is_exist(profile_data[17]) ? profile_data[17] : "");
-				subnet_profile.dns6 = (check_value_is_exist(profile_data[18]) ? profile_data[18] : "");
-				subnet_profile.dot_enable = (check_value_is_exist(profile_data[19]) ? profile_data[19] : "");
-				subnet_profile.dot_tls = (check_value_is_exist(profile_data[20]) ? profile_data[20] : "");
+				subnet_profile.dhcp6_start = (check_value_is_exist(profile_data[16]) ? profile_data[16] : "1000");
+				subnet_profile.dhcp6_end = (check_value_is_exist(profile_data[17]) ? profile_data[17] : "2000");
+				subnet_profile.dns6 = (check_value_is_exist(profile_data[18]) ? profile_data[18] : ",,");
+				subnet_profile.dot_enable = (check_value_is_exist(profile_data[19]) ? profile_data[19] : "0");
+				subnet_profile.dot_tls = (check_value_is_exist(profile_data[20]) ? profile_data[20] : "1");
 				subnet_rl_list.push(JSON.parse(JSON.stringify(subnet_profile)));
 			}
 		});
@@ -10792,32 +9893,28 @@ function init_sdn_all_list(){
 		}
 		return dot_rl_list;
 	}
-	function get_apg_rl_list(_idx, _prefix){
-		let prefix = (_prefix === "apg" || _prefix === "apm") ? _prefix : "apg";
-		let apg_rl_list = [];
-		if(parseInt(_idx) > 0){
-			let apg_profile = new apg_rl_attr();
-			let apg_info = httpApi.nvramCharToAscii([prefix + _idx + "_enable", prefix + _idx + "_ssid", prefix + _idx + "_hide_ssid", prefix + _idx + "_security",
-				prefix + _idx + "_bw_limit", prefix + _idx + "_timesched", prefix + _idx + "_sched", prefix + _idx + "_expiretime",prefix + _idx + "_ap_isolate",
-				prefix + _idx + "_macmode", prefix + _idx + "_mlo", prefix + _idx + "_maclist", prefix + _idx + "_iot_max_cmpt", prefix + _idx + "_dut_list",
-				prefix + _idx + "_11be", prefix + _idx + "_disabled"], true);
-			apg_profile.apg_idx = _idx.toString();
-			apg_profile.enable = apg_info[prefix + _idx + "_enable"];
-			apg_profile.ssid = decodeURIComponent(apg_info[prefix + _idx + "_ssid"]);
-			apg_profile.hide_ssid = apg_info[prefix + _idx + "_hide_ssid"];
-			apg_profile.security = decodeURIComponent(apg_info[prefix + _idx + "_security"]);
-			apg_profile.bw_limit = decodeURIComponent(apg_info[prefix + _idx + "_bw_limit"]);
-			apg_profile.timesched = apg_info[prefix + _idx + "_timesched"];
-			apg_profile.sched = decodeURIComponent(apg_info[prefix + _idx + "_sched"]);
-			apg_profile.expiretime = decodeURIComponent(apg_info[prefix + _idx + "_expiretime"]);
-			apg_profile.ap_isolate = apg_info[prefix + _idx + "_ap_isolate"];
-			apg_profile.macmode = decodeURIComponent(apg_info[prefix + _idx + "_macmode"]);
-			apg_profile.mlo = apg_info[prefix + _idx + "_mlo"];
-			apg_profile.maclist = decodeURIComponent(apg_info[prefix + _idx + "_maclist"]);
-			apg_profile.iot_max_cmpt = apg_info[prefix + _idx + "_iot_max_cmpt"];
-			apg_profile.dut_list = decodeURIComponent(apg_info[prefix + _idx + "_dut_list"]);
-			apg_profile.apg_11be = decodeURIComponent(apg_info[prefix + _idx + "_11be"]);
-			apg_profile.disabled = decodeURIComponent(apg_info[prefix + _idx + "_disabled"]);
+	function get_apg_rl_list(_apg_idx){
+		var apg_rl_list = [];
+		if(parseInt(_apg_idx) > 0){
+			var apg_profile = new apg_rl_attr();
+			let apg_info = httpApi.nvramCharToAscii(["apg" + _apg_idx + "_enable", "apg" + _apg_idx + "_ssid", "apg" + _apg_idx + "_hide_ssid", "apg" + _apg_idx + "_security",
+				"apg" + _apg_idx + "_bw_limit", "apg" + _apg_idx + "_timesched", "apg" + _apg_idx + "_sched", "apg" + _apg_idx + "_expiretime","apg" + _apg_idx + "_ap_isolate",
+				"apg" + _apg_idx + "_macmode", "apg" + _apg_idx + "_mlo", "apg" + _apg_idx + "_maclist", "apg" + _apg_idx + "_iot_max_cmpt", "apg" + _apg_idx + "_dut_list"], true);
+			apg_profile.apg_idx = _apg_idx.toString();
+			apg_profile.enable = apg_info["apg" + _apg_idx + "_enable"];
+			apg_profile.ssid = decodeURIComponent(apg_info["apg" + _apg_idx + "_ssid"]);
+			apg_profile.hide_ssid = apg_info["apg" + _apg_idx + "_hide_ssid"];
+			apg_profile.security = decodeURIComponent(apg_info["apg" + _apg_idx + "_security"]);
+			apg_profile.bw_limit = decodeURIComponent(apg_info["apg" + _apg_idx + "_bw_limit"]);
+			apg_profile.timesched = apg_info["apg" + _apg_idx + "_timesched"];
+			apg_profile.sched = decodeURIComponent(apg_info["apg" + _apg_idx + "_sched"]);
+			apg_profile.expiretime = decodeURIComponent(apg_info["apg" + _apg_idx + "_expiretime"]);
+			apg_profile.ap_isolate = apg_info["apg" + _apg_idx + "_ap_isolate"];
+			apg_profile.macmode = decodeURIComponent(apg_info["apg" + _apg_idx + "_macmode"]);
+			apg_profile.mlo = apg_info["apg" + _apg_idx + "_mlo"];
+			apg_profile.maclist = decodeURIComponent(apg_info["apg" + _apg_idx + "_maclist"]);
+			apg_profile.iot_max_cmpt = apg_info["apg" + _apg_idx + "_iot_max_cmpt"];
+			apg_profile.dut_list = decodeURIComponent(apg_info["apg" + _apg_idx + "_dut_list"]);
 			apg_rl_list.push(JSON.parse(JSON.stringify(apg_profile)));
 		}
 		return apg_rl_list;
@@ -10877,12 +9974,11 @@ function init_sdn_all_list(){
 	}
 }
 var vlan_vid_add = "";
-function get_new_sdn_profile(_parm){
-	const ap_prefix = (_parm && (_parm.ap_prefix === "apg" || _parm.ap_prefix === "apm")) ? _parm.ap_prefix : "apg";
+function get_new_sdn_profile(){
 	var sdn_rl_profile = get_new_sdn_rl();
 	var vlan_rl_profile = get_new_vlan_rl();
 	var subnet_rl_profile = get_new_subnet_rl(sdn_rl_profile);
-	var apg_rl_profile = get_new_apg_rl(ap_prefix);
+	var apg_rl_profile = get_new_apg_rl();
 	sdn_rl_profile.vlan_idx = vlan_rl_profile.vlan_idx;
 	sdn_rl_profile.subnet_idx = subnet_rl_profile.subnet_idx;
 	sdn_rl_profile.apg_idx = apg_rl_profile.apg_idx;
@@ -10961,8 +10057,7 @@ function get_new_sdn_profile(_parm){
 		var subnet_idx = 1;
 		subnet_idx = get_rl_new_idx(subnet_idx, "subnet");
 		const dhcp_info = httpApi.nvramDefaultGet(["lan_ipaddr", "lan_netmask", "dhcp_enable_x", "dhcp_start", "dhcp_end", "dhcp_lease",
-			"lan_domain", "dhcp_dns1_x", "dhcp_dns2_x", "dhcp_wins_x", "dhcp_static_x",
-			"ipv6_service", "ipv6_autoconf_type", "ipv6_dns1", "ipv6_dns2", "ipv6_dns3", "dnspriv_enable", "dnspriv_profile"]);
+			"lan_domain", "dhcp_dns1_x", "dhcp_dns2_x", "dhcp_wins_x", "dhcp_static_x", "dnspriv_enable", "dnspriv_profile"]);
 		var ipaddr = get_subnet_rl_new_ipaddr();
 		var ipaddr_substr = ipaddr.substr(0,ipaddr.lastIndexOf("."));
 		var ipaddr_min = ipaddr_substr + "." + "2";
@@ -10982,12 +10077,12 @@ function get_new_sdn_profile(_parm){
 		subnet_profile.wins = dhcp_info.dhcp_wins_x;
 		subnet_profile.dhcp_static = dhcp_info.dhcp_static_x;
 		subnet_profile.dhcp_unit = "";
-		subnet_profile.ipv6_enable = dhcp_info.ipv6_service;
-		subnet_profile.autoconf = dhcp_info.ipv6_autoconf_type;
-		subnet_profile.addr6 = "1";
+		subnet_profile.ipv6_enable = "0";
+		subnet_profile.autoconf = "0";
+		subnet_profile.addr6 = sdn_profile.idx;
 		subnet_profile.dhcp6_start = "1000";
 		subnet_profile.dhcp6_end = "2000";
-		subnet_profile.dns6 = dhcp_info.ipv6_dns1 + "," + dhcp_info.ipv6_dns2 + "," + dhcp_info.ipv6_dns3;
+		subnet_profile.dns6 = ",,";
 		subnet_profile.dot_enable = dhcp_info.dnspriv_enable;
 		subnet_profile.dot_tls = dhcp_info.dnspriv_profile;
 		return (JSON.parse(JSON.stringify(subnet_profile)));
@@ -11017,9 +10112,10 @@ function get_new_sdn_profile(_parm){
 			}
 		}
 	}
-	function get_new_apg_rl(_ap_prefix){
-		const apg_idx = get_apg_rl_new_idx(_ap_prefix);
-		let apg_profile = new apg_rl_attr();
+	function get_new_apg_rl(){
+		var apg_idx = 1;
+		apg_idx = get_rl_new_idx(apg_idx, "apg");
+		var apg_profile = new apg_rl_attr();
 		apg_profile.apg_idx = apg_idx.toString();
 		apg_profile.enable = "1";
 		apg_profile.ssid = "ASUSTEST";
@@ -11035,7 +10131,6 @@ function get_new_sdn_profile(_parm){
 		apg_profile.maclist = "";
 		apg_profile.iot_max_cmpt = "";
 		apg_profile.dut_list = "";
-		apg_profile.disabled = "0";
 		return (JSON.parse(JSON.stringify(apg_profile)));
 	}
 	function get_rl_new_idx(start_idx, category){
@@ -11064,19 +10159,6 @@ function get_new_sdn_profile(_parm){
 			}
 		}
 		return new_idx;
-	}
-	function get_apg_rl_new_idx(_ap_prefix){
-		let apg_idx_arr = apm_idx_arr = Array.from({length: sdn_maximum}, (num, i) => (i+1));
-		sdn_all_rl_json.forEach((item)=>{
-			const sdn_name = item.sdn_rl.sdn_name;
-			const apg_idx = item.sdn_rl.apg_idx;
-			if(sdn_name == "MAINFH" || sdn_name == "MAINBH")
-				apm_idx_arr = apm_idx_arr.filter(e => e != apg_idx);
-			else
-				apg_idx_arr = apg_idx_arr.filter(e => e != apg_idx);
-		});
-		if(_ap_prefix == "apm") return apm_idx_arr[0];
-		else return apg_idx_arr[0];
 	}
 }
 function get_new_radius_rl(){
@@ -11218,54 +10300,6 @@ function get_mlo_dut_list(_mlo_band_num, _node_info, _ori_dut_list_json){
 
 	return dut_list;
 }
-function get_mainfh_dut_list(_bitwise, _flag){
-	const band_bitwise = parseInt(_bitwise) || 0;
-	const mlo_enable = (_flag === true) || false;
-	//2G: 1, 5G: 2, 5GL: 4, 5GH: 8, 6G: 16, 6GL: 32, 6GH: 64
-	let band = 0;
-	if(band_bitwise & 1) band += 1;//2
-	if(band_bitwise & 2) band += 2;//5
-	if(band_bitwise & 4) band += 4;//51
-	if(band_bitwise & 8) band += 8;//52
-	if(band_bitwise & 16) band += 16;//6
-	if(band_bitwise & 32) band += 32;//61
-	if(band_bitwise & 64) band += 64;//62
-
-	if((band_bitwise & 4) && !(band_bitwise & 2)) band += 2;//5g1 on, need also on 5g
-	if((band_bitwise & 64) && !(band_bitwise & 16)) band += 16;//6g2 on, need also on 6g
-
-	if(mlo_enable){
-		if((band_bitwise & 2) && !(band & 8)) band += 8;//5g on, need also on 5g2
-		if((band_bitwise & 16) && !(band & 32)) band += 32;//6g on, need also on 6g1
-
-		if((band_bitwise & 8) && !(band & 2)) band += 2;//5g2 on, need also on 5g
-		if((band_bitwise & 32) && !(band & 16)) band += 16;//6g1 on, need also on 6g
-	}
-	else{
-		if((band_bitwise & 2) && !(band & 4)) band += 4;//5g on, need also on 5g1
-		if((band_bitwise & 16) && !(band & 64)) band += 64;//6g on, need also on 6g2
-
-		if((band_bitwise & 8) && (band_bitwise > 8)){//5g2 on and band count > 2
-			if(!(band & 2)) band += 2;//need also on 5g
-		}
-		if((band_bitwise & 32) && (band_bitwise > 32)){//6g1 on and band count > 2
-			if(!(band & 16)) band += 16;//need also on 6g
-		}
-	}
-
-	return `<*>${band}>`;
-}
-function get_legacy_dut_list(_wifiband){
-	let band = 0;
-	if(_wifiband == "1") band = 1;//2.4G
-	else if(_wifiband == "2") band = (2+4);//5G
-	else if(_wifiband == "3") band = (1+2+4);//2.4G&5G
-	else if(_wifiband == "4") band = (16+64);//6G
-	else if(_wifiband == "5") band = (2+4+16+64);//5G&6G
-	else if(_wifiband == "6") band = (1+2+4+16+64);//2.4G&5G&6G
-	else if(_wifiband == "7") band = (1+16+64);//2.4G&6G
-	return `<*>${band}>`;
-}
 function get_Offline_dut_list(_obj, _wifiband, _ori_dut_list_json){
 	var dut_list = "";
 	var $node_list = $(_obj).find("[data-container=AiMesh_List] [data-node-status=offline]");
@@ -11389,7 +10423,7 @@ function get_dut_list_by_mac(_wifiband, _node_mac){
 	dut_list = "<" + wifi_band_set.mac + ">" + wifi_band_set.wifi_band + ">" + wifi_band_set.lanport;
 	return dut_list;
 }
-function check_dut_list_is_star(dut_list){
+function get_dut_list_is_star(dut_list){
 	let is_star = false;
 	const dut_list_arr = dut_list.split("<");
 	$.each(dut_list_arr, function(index, dut_info){
@@ -11405,7 +10439,7 @@ function check_dut_list_is_star(dut_list){
 }
 function check_is_mlo_bh(apg_rl){
 	const mlo_is_bh = (apg_rl.mlo == "1") ? true : false;
-	const dut_list_is_bh = check_dut_list_is_star(apg_rl.dut_list);
+	const dut_list_is_bh = get_dut_list_is_star(apg_rl.dut_list);
 	return (mlo_is_bh && dut_list_is_bh);
 }
 function get_cp_type_support(_type){
@@ -11813,16 +10847,13 @@ function parse_JSONToStr_del_sdn_all_rl(_json_data){
 	result.radius_list_x = radius_rl;
 	return result;
 }
-function parse_apg_rl_to_apgX_rl(_apg_rl, _prefix){
-	let prefix = (_prefix === "apg" || _prefix === "apm") ? _prefix : "apg";
+function parse_apg_rl_to_apgX_rl(_apg_rl){
 	var result = {};
 	if(!$.isEmptyObject(_apg_rl)){
 		var apg_idx = _apg_rl.apg_idx;
 		Object.keys(_apg_rl).forEach(function(key){
-			let nvram_key = key;
-			if(key == "apg_11be") nvram_key = "11be";
-			if(nvram_key != "apg_idx" && nvram_key != "disabled"){
-				result[prefix + apg_idx + "_" + nvram_key] = _apg_rl[key];
+			if(key != "apg_idx"){
+				result["apg" + apg_idx + "_" + key] = _apg_rl[key];
 			}
 		});
 	}
@@ -11931,10 +10962,6 @@ function update_aimesh_wifi_band_info(_except_sdn){
 		}
 		if(sdn_all_rl.apg_rl.dut_list != undefined){
 			var dut_list_arr = sdn_all_rl.apg_rl.dut_list.split("<");
-			const is_invalid_sdn = (sdn_all_rl.apg_rl.disabled == "1");
-			if(is_invalid_sdn){
-				return true;
-			}
 			$.each(dut_list_arr, function(index, dut_info){
 				if(dut_info != ""){
 					var dut_info_arr = dut_info.split(">");
@@ -11952,17 +10979,6 @@ function update_aimesh_wifi_band_info(_except_sdn){
 			});
 		}
 	});
-
-	if(_except_sdn == undefined || _except_sdn.sdn_rl.sdn_name != "LEGACY"){
-		const legacy_exist = sdn_all_rl_json.find(item => item.sdn_rl.sdn_name == "LEGACY");
-		if(legacy_exist != undefined){
-			Object.values(aimesh_wifi_band_info).forEach(dut => {
-				dut.forEach(wifi_band => {
-					wifi_band.used += 1;
-				});
-			});
-		}
-	}
 }
 let aimesh_wifi_band_full = {"all":{"band_2G": true, "band_5G": true, "band_6G": true}, "node":[]};
 function update_aimesh_wifi_band_full(){
@@ -12018,27 +11034,25 @@ function update_aimesh_wifi_band_full(){
 			aimesh_wifi_band_full.all.band_6G = false;
 	});
 }
-let aimesh_wifi_mlo_info = {"cap":{"all_band_num":0, "mlo_band_num":0, "map_band":0, "sdn_mlo_band_num":0},"node":[]};
+let aimesh_wifi_mlo_info = {"cap":{"all_band_num":0, "mlo_band_num":0},"node":[]};
 const mlo_band_num_mapping = (()=>{
 	//1:2.4G, 2:5G, 4:5GL, 8:5GH, 16:6G, 32:6GL, 64:6GH
 	if(isSupport("mlo")){
-		const mlo_bh_band = isSupport("mlo_bh_band") ? parseInt(decodeURIComponent(sdn_variable.mlo_bh_band)) || 0 : 0;
-		const is_RTBE95U = (decodeURIComponent(sdn_variable.productid) == "RT-BE95U");
 		const ui_options_256 = [wifi_band_options.find((el) => {return (el.value == "6");})];
 		const ui_options_56 = [wifi_band_options.find((el) => {return (el.value == "5");})];
 		const ui_options_25 = [wifi_band_options.find((el) => {return (el.value == "3");})];
 		return [
-			{"all_band":(1+4+8+16), "mlo_band":mlo_bh_band || (1+8+16), "map_band":16, "sdn_mlo_band":(1+8+16), "ui_option":ui_options_256},//2556, mlo:2/5-2/6
-			{"all_band":(1+2+32+64), "mlo_band":mlo_bh_band || (1+2+32), "map_band":32, "sdn_mlo_band":(1+2+32), "ui_option":ui_options_256},//2566, mlo:2/5/6-1
-			{"all_band":(1+2+16), "mlo_band":(1+2+16), "map_band":(is_RTBE95U ? 2 : 16), "sdn_mlo_band":(1+2+16), "ui_option":ui_options_256},//256, mlo:2/5/6
-			{"all_band":(1+4+8), "mlo_band":(1+4+8), "map_band":(isSupport("bcmwifi") ? 4 : 8), "sdn_mlo_band":(1+4+8), "ui_option":ui_options_25},//255
-			{"all_band":(1+2), "mlo_band":(1+2), "map_band":2, "sdn_mlo_band":(1+2), "ui_option":ui_options_25},//25
+			{"all_band":(1+4+8+16), "mlo_band":(1+8+16), "ui_option":ui_options_256},//2556, mlo:2/5-2/6
+			{"all_band":(1+2+32+64), "mlo_band":(1+2+32), "ui_option":ui_options_256},//2566, mlo:2/5/6-1
+			{"all_band":(1+2+16), "mlo_band":(1+2+16), "ui_option":ui_options_256},//256, mlo:2/5/6
+			{"all_band":(1+4+8), "mlo_band":(1+4+8), "ui_option":ui_options_25},//255
+			{"all_band":(1+2), "mlo_band":(1+2), "ui_option":ui_options_25},//25
 		];
 	}
 	else return [];
 })();
 function init_aimesh_wifi_mlo_info(){
-	aimesh_wifi_mlo_info = {"cap":{"all_band_num":0, "mlo_band_num":0, "map_band":0, "sdn_mlo_band_num":0},"node":[]};
+	aimesh_wifi_mlo_info = {"cap":{"all_band_num":0, "mlo_band_num":0},"node":[]};
 	if(cfg_clientlist[0] != undefined){
 		if(!isSupport("mlo")) return;
 
@@ -12047,8 +11061,6 @@ function init_aimesh_wifi_mlo_info(){
 		aimesh_wifi_mlo_info.node.push(node_mlo_info);
 		aimesh_wifi_mlo_info.cap.all_band_num = node_mlo_info.all_band_num;
 		aimesh_wifi_mlo_info.cap.mlo_band_num = node_mlo_info.mlo_band_num;
-		aimesh_wifi_mlo_info.cap.map_band = node_mlo_info.map_band;
-		aimesh_wifi_mlo_info.cap.sdn_mlo_band_num = node_mlo_info.sdn_mlo_band_num;
 
 		$.each(cfg_clientlist, function(index, node_info){
 			if(index == 0) return;//filter cap
@@ -12062,7 +11074,7 @@ function init_aimesh_wifi_mlo_info(){
 		});
 	}
 	function get_node_mlo_info(node_info){
-		let obj_info = {"mac":"", "support":false, "all_band_num":0, "mlo_band_num":0, "map_band":0, "sdn_mlo_band_num":0};
+		let obj_info = {"mac":"", "support":false, "all_band_num":0, "mlo_band_num":0};
 		obj_info.mac = node_info.mac;
 		const wifi_band_info = httpApi.aimesh_get_node_wifi_band(node_info);
 		wifi_band_info.sort(function(a, b){
@@ -12081,8 +11093,6 @@ function init_aimesh_wifi_mlo_info(){
 		});
 		if(mlo_band_info != undefined){
 			obj_info.mlo_band_num = mlo_band_info.mlo_band;
-			obj_info.map_band = mlo_band_info.map_band;
-			obj_info.sdn_mlo_band_num = mlo_band_info.sdn_mlo_band;
 		}
 		return obj_info;
 	}
@@ -12104,18 +11114,28 @@ function Get_AiMesh_List_Container(){
 				resize_iframe_height();
 			}
 		}).appendTo($node_cntr);
-		var isReNode = ((index != 0) ? true : false);
-		var loc_info = get_location_info(node_info, isReNode);
-		var node_name_loc = get_model_name(node_info) + " (" + loc_info.loc_text + ")";
-		let sub_info_text = (node_info.online == "1") ? `<span>${node_info.ip}</span>` : `<span><#Clientlist_OffLine#> | ${node_info.mac}</span>`;
+		const isReNode = ((index != 0) ? true : false);
+		const loc_info = get_location_info(node_info, isReNode);
+		const sub_info_text = `
+			<div>
+				<span>${node_info.mac}</span>
+				<span>${(node_info.online === "1") ? node_info.ip : `<#Clientlist_OffLine#>`}</span>
+				<span>${loc_info.loc_text}</span>
+			</div>
+		`;
 		let $icon_cb = $("<div>").addClass("icon_checkbox").appendTo($node_content_cntr);
-		let $node_info = $("<div>").addClass("node_info").attr({"title":node_name_loc}).appendTo($node_content_cntr);
+		let $node_info = $("<div>").addClass("node_info").appendTo($node_content_cntr);
 		$("<div>").addClass("node_main_info").html($("<span>").html(htmlEnDeCode.htmlEncode(get_model_name(node_info)))).appendTo($node_info);
 		$("<div>").addClass("node_sub_info").html(sub_info_text).appendTo($node_info);
 		let wifi_band_info = httpApi.aimesh_get_node_wifi_band(node_info);
 		if(wifi_band_info.length == 0){
-			$("<div>").addClass("icon_location " + loc_info.loc_css + "").appendTo($node_content_cntr);
-			var hint = "* <#AiMesh_Modellist_Not_Support_Feature01#> <#AiMesh_Modellist_Not_Support_Feature03#>".replace("#MODELLIST", get_model_name(node_info));
+			let hint = ``;
+			if(node_info.band_num == "0"){
+				hint = `* Dose not support WiFi`;/* untranslated */
+			}
+			else{
+				hint = `* <#AiMesh_Modellist_Not_Support_Feature01#> <#AiMesh_Modellist_Not_Support_Feature03#>`.replace("#MODELLIST", get_model_name(node_info));
+			}
 			$("<div>").addClass("node_hint").html(hint).appendTo($node_cntr);
 			$icon_cb.addClass("closed");
 			$node_cntr.attr({"data-support-dutlist":"false"})
@@ -12288,6 +11308,7 @@ function Set_AiMesh_List_CB(_obj, _sel_wifi_bnad){
 		let support_WPA3E = aimesh_wifi_band_full.node[dut_mac].support_WPA3E;
 		let support_6G = aimesh_wifi_band_full.node[dut_mac].support_6G;
 		let support_wifi_band = aimesh_wifi_band_full.node[dut_mac].support_wifi_band;
+		let show_388_limit = false;
 		var $node_cntr = $(_obj).find("[data-node-mac='" + dut_mac + "']");
 		if(aimesh_wifi_band_info[dut_mac].length > 0){//node support capability wifi_band
 			$node_cntr.find(".node_hint").remove();
@@ -12296,6 +11317,9 @@ function Set_AiMesh_List_CB(_obj, _sel_wifi_bnad){
 			let select_band_is_support = {"status": true, "reason": ""};
 			if(_sel_wifi_bnad == "3"){
 				select_band_is_enough = (!band_2G_is_full && !band_5G_is_full) ? true : false;
+				if(select_band_is_enough && !support_wifi_band){
+					show_388_limit = true;
+				}
 			}
 			else if(_sel_wifi_bnad == "1"){
 				select_band_is_enough = (!band_2G_is_full) ? true : false;
@@ -12343,13 +11367,21 @@ function Set_AiMesh_List_CB(_obj, _sel_wifi_bnad){
 			if(select_band_is_support.status){
 				if(select_band_is_enough){
 					if(wifi_radius_is_WPA3E){
-						if(support_WPA3E)
+						if(support_WPA3E){
 							$node_cntr.find(".icon_checkbox").addClass("clicked");
+							if(show_388_limit){
+								show_388_limit_hint();
+							}
+						}
 						else
 							set_node_cb_closed_WPA3E();
 					}
-					else
+					else{
 						$node_cntr.find(".icon_checkbox").addClass("clicked");
+						if(show_388_limit){
+							show_388_limit_hint();
+						}
+					}
 				}
 				else{
 					set_node_cb_closed();
@@ -12388,6 +11420,11 @@ function Set_AiMesh_List_CB(_obj, _sel_wifi_bnad){
 			$node_cntr.find(".icon_checkbox").addClass("closed");
 			$("<div>").addClass("node_hint")
 				.html(htmlEnDeCode.htmlEncode(reason))
+				.appendTo($node_cntr);
+		}
+		function show_388_limit_hint(){
+			$("<div>").addClass("node_hint")
+				.html(htmlEnDeCode.htmlEncode(`* <#SDN_Sync_limitation_Hint#>`))
 				.appendTo($node_cntr);
 		}
 	});
@@ -12437,7 +11474,7 @@ function Set_AiMesh_List_CB_MLO(_obj){
 		}
 		return result;
 	})();
-	const cap_mlo_band = aimesh_wifi_mlo_info.cap.sdn_mlo_band_num;
+	const cap_mlo_band = aimesh_wifi_mlo_info.cap.mlo_band_num;
 	Object.keys(aimesh_wifi_band_info).forEach(function(dut_mac){
 		const $node_cntr = $(_obj).find("[data-node-mac='" + dut_mac + "']");
 		$node_cntr.find(".node_hint").remove();
@@ -12548,10 +11585,12 @@ function Get_Component_VPN_Profiles(){
 		e = e || event;
 		e.stopPropagation();
 		if(is_Web_iframe){
-			top.location.href = "/Advanced_OpenVPNClient_Content.asp";
-		}
-		else if(parent.webWrapper){
-			top.location.href = "/index.html?url=vpnc&current_theme=white";
+			if(parent.webWrapper){
+				top.pageRedirect("vpnc");
+			}
+			else{
+				top.location.href = "/Advanced_OpenVPNClient_Content.asp";
+			}
 		}
 		else{
 			top.location.href = "/VPN/vpnc.html" + ((typeof theme == "string" && theme != "") ? "?current_theme=" + theme + "" : "");
@@ -12571,10 +11610,12 @@ function Get_Component_VPN_Profiles(){
 			e = e || event;
 			e.stopPropagation();
 			if(is_Web_iframe){
-				top.location.href = "/Advanced_VPNServer_Content.asp";
-			}
-			else if(parent.webWrapper){
-				top.location.href = "/index.html?url=vpns&current_theme=white";
+				if(parent.webWrapper){
+					top.pageRedirect("vpns");
+				}
+				else{
+					top.location.href = "/Advanced_VPNServer_Content.asp";
+				}
 			}
 			else{
 				top.location.href = "/VPN/vpns.html" + ((typeof theme == "string" && theme != "") ? "?current_theme=" + theme + "" : "");
@@ -12970,37 +12011,31 @@ function trigger_keyup(inputObj){
 	$(inputObj).keyup();
 }
 function calculatorIPPoolRange(ipaddr, mask){
-	let ip_range = {"start": "", "end": ""};
-	if(ipaddr == "" || mask == "" || ipaddr == undefined || mask == undefined)
-		return ip_range;
-	let ipaddr_substr = ipaddr.substr(0, ipaddr.lastIndexOf("."));
-	ip_range.start = ipaddr_substr + "." + "2";
-	ip_range.end = ipaddr_substr + "." + "254";
+	let ip_range = {"start": "", "end": "", "network": "", "broadcast": ""};
 
-	let gatewayIPArray = ipaddr.split(".");
-	let netMaskArray = mask.split(".");
-	let ipPoolStartArray = [];
-	let ipPoolEndArray = [];
+	if (!ipaddr || !mask || valid_isLegalIP(ipaddr).isError || valid_isLegalMask(mask).isError) return ip_range;
 
-	ipPoolStartArray[0] = (gatewayIPArray[0] & 0xFF) & (netMaskArray[0] & 0xFF);
-	ipPoolStartArray[1] = (gatewayIPArray[1] & 0xFF) & (netMaskArray[1] & 0xFF);
-	ipPoolStartArray[2] = (gatewayIPArray[2] & 0xFF) & (netMaskArray[2] & 0xFF);
-	ipPoolStartArray[3] = (gatewayIPArray[3] & 0xFF) & (netMaskArray[3] & 0xFF);
-	ipPoolStartArray[3] += 1;
+	const ipNum = inet_network(ipaddr);
+	const maskNum = inet_network(mask);
+	const networkIpNum = ipNum & maskNum;
+	const broadcastIpNum = (networkIpNum | (~maskNum >>> 0)) >>> 0;
+	const startIpNum = networkIpNum + 1;
+	const endIpNum = broadcastIpNum - 1;
 
-	ipPoolEndArray[0] = (gatewayIPArray[0] & 0xFF) | (~netMaskArray[0] & 0xFF);
-	ipPoolEndArray[1] = (gatewayIPArray[1] & 0xFF) | (~netMaskArray[1] & 0xFF);
-	ipPoolEndArray[2] = (gatewayIPArray[2] & 0xFF) | (~netMaskArray[2] & 0xFF);
-	ipPoolEndArray[3] = (gatewayIPArray[3] & 0xFF) | (~netMaskArray[3] & 0xFF);
-	ipPoolEndArray[3] -= 1;
-
-	ip_range.start = ipPoolStartArray[0] + "." + ipPoolStartArray[1] + "." + ipPoolStartArray[2] + "." + ipPoolStartArray[3];
-	if(inet_network(ip_range.start) <= inet_network(ipaddr)) {
-		ip_range.start = ipPoolStartArray[0] + "." + ipPoolStartArray[1] + "." + ipPoolStartArray[2] + "." + (parseInt(ipPoolStartArray[3]) + 1);
-	}
-	ip_range.end = ipPoolEndArray[0] + "." + ipPoolEndArray[1] + "." + ipPoolEndArray[2] + "." + ipPoolEndArray[3];
-
+	ip_range.start = numToIp(startIpNum);
+	ip_range.end = numToIp(endIpNum);
+	ip_range.network = numToIp(networkIpNum);
+	ip_range.broadcast = numToIp(broadcastIpNum);
 	return ip_range;
+
+	function numToIp(long) {
+		return [
+			(long >>> 24) & 0xFF,
+			(long >>> 16) & 0xFF,
+			(long >>> 8) & 0xFF,
+			long & 0xFF
+		].join('.');
+	}
 }
 
 const game_vts_rulelist_attr = function(){
@@ -13240,7 +12275,7 @@ function Get_Component_Gaming_Profile_List(_profile_data){
 }
 function Get_Component_Gaming_Led_Help_Container(_sdn_type){
 	const led_type = (()=>{
-		if(_sdn_type == "Gaming") return `<#Adaptive_Game#> <#Network#>`;
+		if(_sdn_type == "Gaming") return `<#GuestNetwork_Gaming#>`;
 		else if(_sdn_type == "Kids") return `<#GuestNetwork_Kid#>`;
 		else if(_sdn_type == "VPN") return `<#GuestNetwork_VPN#>`;
 		else return ``;
@@ -13383,7 +12418,7 @@ if(is_Web_iframe && support_gaming){
 	}
 }
 
-function show_manual_dhcp_container(_profile_data, _callback){
+function show_manual_dhcp_container(_parmData, _callback){
 	$(".container").addClass("blur_effect");
 	if($(".popup_container.popup_element").css("display") == "flex"){
 		$(".popup_container.popup_element").addClass("blur_effect");
@@ -13398,14 +12433,14 @@ function show_manual_dhcp_container(_profile_data, _callback){
 			close_popup_container($container);
 		});
 	const $content_container = $("<div>").addClass("popup_content_container profile_setting").appendTo($container);
-	$content_container.attr({"sdn_idx":_profile_data.sdn_rl.idx});
+	$content_container.attr({"sdn_idx":_parmData.profile_data.sdn_rl.idx});
 	Get_Container_Manual_DHCP_List().appendTo($content_container);
 
 	adjust_popup_container_top($popup_second_cntr, 100);
 
 	function Get_Container_Manual_DHCP_List(){
-		let dhcpres_rl = JSON.parse(JSON.stringify(_profile_data.dhcpres_rl));
-		const sdn_ipaddr = _profile_data.subnet_rl.addr;
+		let dhcpres_rl = JSON.parse(JSON.stringify(_parmData.profile_data.dhcpres_rl));
+		const sdn_ipaddr = _parmData.profile_data.subnet_rl.addr;
 		const uploadIconMacList = getUploadIconList().replace(/\.log/g, "");
 		let $container = $("<div>").attr({"data-container":"manual_dhcp_setting_cntr"}).addClass("manual_dhcp_setting_cntr");
 		Get_Component_View_Cntr().appendTo($container);
@@ -13489,9 +12524,7 @@ function show_manual_dhcp_container(_profile_data, _callback){
 					const client_ip = (()=>{
 						let ip = "";
 						if(clientList[client_mac].ip != "offline"){
-							const client_ip_subnet = clientList[client_mac].ip.split('.').slice(0, 3).join('.');
-							const sdn_ipaddr_subnet = sdn_ipaddr.split('.').slice(0, 3).join('.');
-							if(client_ip_subnet == sdn_ipaddr_subnet){
+							if(_parmData.profile_data.sdn_rl.idx === clientList[client_mac].sdn_idx){
 								ip = clientList[client_mac].ip;
 							}
 						}
@@ -13512,7 +12545,11 @@ function show_manual_dhcp_container(_profile_data, _callback){
 					return validator.isIPAddr(this, event);
 				})
 				.end().appendTo($container);
-			$("<div>").addClass("item_hint").html(`<#vpn_openvpn_ClientPool#> : ${_profile_data.subnet_rl.dhcp_min} ~ ${_profile_data.subnet_rl.dhcp_max}`).appendTo($container);
+
+			const ip_range = calculatorIPPoolRange(_parmData.current_lan_ip, _parmData.current_mask);
+			const dhcp_min = (ip_range.start === '' || ip_range.end === '') ? _parmData.profile_data.subnet_rl.dhcp_min : ip_range.start;
+			const dhcp_max = (ip_range.start === '' || ip_range.end === '') ? _parmData.profile_data.subnet_rl.dhcp_max : ip_range.end;
+			$("<div>").addClass("item_hint").html(`<#vpn_openvpn_ClientPool#> : ${dhcp_min} ~ ${dhcp_max}`).appendTo($container);
 
 			const dhcpres_dns_parm = {"title":`<#LANHostConfig_x_LDNSServer1_itemname#> (<#feedback_optional#>)`, "type":"text", "id":"dhcpres_dns", "maxlength":15};
 			Get_Component_Input(dhcpres_dns_parm)
@@ -13602,22 +12639,26 @@ function show_manual_dhcp_container(_profile_data, _callback){
 					else
 						return testResultFail;
 				};
-				const valid_dhcp_range = function(ip, lan_ip){
+				const valid_dhcp_range = function(ip, current_lan_ip, current_mask){
 					let testResult = {
 						'isError': false,
 						'errReason': ''
 					};
-					const ip_subnet = ip.split('.').slice(0, 3).join('.');
-					const lan_ip_subnet = lan_ip.split('.').slice(0, 3).join('.');
-					if(ip_subnet !== lan_ip_subnet){
+					const ip_num = inet_network(ip);
+					const current_lan_ip_num = inet_network(current_lan_ip);
+					const current_mask_num = inet_network(current_mask);
+					const network_num = current_lan_ip_num & current_mask_num;
+					const broadcast_num = (network_num | (~current_mask_num >>> 0)) >>> 0;
+
+					if (ip_num === broadcast_num || ip_num === network_num) {
 						testResult.isError = true;
-						testResult.errReason = `${ip} <#JS_validip#> (<#Subnet#> : ${lan_ip_subnet})`;
+						testResult.errReason = `${ip} <#JS_validip#>`;
 					}
-					const last_addr = (()=>{
-						const arr = ip.split('.');
-						return parseInt(arr[arr.length - 1]);
-					})();
-					if(last_addr < 1 || last_addr > 255){
+					else if (ip_num === current_lan_ip_num) {
+						testResult.isError = true;
+						testResult.errReason = `<#JS_conflict_LANIP#> : ${ip}`;
+					}
+					else if (!((ip_num & current_mask_num) === (current_lan_ip_num & current_mask_num))) {
 						testResult.isError = true;
 						testResult.errReason = `${ip} <#JS_validip#>`;
 					}
@@ -13652,7 +12693,7 @@ function show_manual_dhcp_container(_profile_data, _callback){
 					$dhcpres_ip.focus();
 					return false;
 				}
-				isValid_dhcpres_ip = valid_dhcp_range(dhcpres_ip, sdn_ipaddr);
+				isValid_dhcpres_ip = valid_dhcp_range(dhcpres_ip, _parmData.current_lan_ip, _parmData.current_mask);
 				if(isValid_dhcpres_ip.isError){
 					$dhcpres_ip.show_validate_hint(isValid_dhcpres_ip.errReason);
 					$dhcpres_ip.focus();
@@ -13792,4 +12833,77 @@ function show_manual_dhcp_container(_profile_data, _callback){
 			return $container;
 		}
 	}
+}
+function isClassBMaskRange(mask) {
+	const octets = mask.split('.').map(Number);
+	if (octets.length !== 4 || octets.some(octet => octet < 0 || octet > 255)) {
+		return false;
+	}
+
+	let prefixLength = 0;
+	for (const octet of octets) {
+		for (let bit = 7; bit >= 0; bit--) {
+			if ((octet & (1 << bit)) !== 0) {
+				prefixLength++;
+			} else {
+				return prefixLength >= 16 && prefixLength <= 23;
+			}
+		}
+	}
+
+	return prefixLength >= 16 && prefixLength <= 23;
+}
+function get_classB_new_ipaddr(mask){
+	let parmMask = '';
+	if (mask && !valid_isLegalMask(mask).isError) parmMask = mask;
+
+	const ip_info = httpApi.nvramGet(["lan_ipaddr", "lan_netmask", "wan0_ipaddr", "wan0_netmask", "wan1_ipaddr", "wan1_netmask"]);
+	let exist_ipaddr_arr = [];
+	exist_ipaddr_arr.push({"ip": ip_info.lan_ipaddr, "mask": ip_info.lan_mask});
+	exist_ipaddr_arr.push({"ip": ip_info.wan0_ipaddr, "mask": ip_info.wan0_mask});
+	exist_ipaddr_arr.push({"ip": ip_info.wan1_ipaddr, "mask": ip_info.wan1_mask});
+	$.each(sdn_all_rl_json, function(index, sdn_all_rl){
+		if(!$.isEmptyObject(sdn_all_rl.subnet_rl)){
+			exist_ipaddr_arr.push({"ip": sdn_all_rl.subnet_rl.addr, "mask": sdn_all_rl.subnet_rl.netmask});
+		}
+	});
+	let init_subnet = 52;
+	let init_ipaddr = `10.${init_subnet}.1.1`;
+	const init_mask = parmMask || `255.255.240.0`;
+	let conflict_flag = false;
+	for(init_subnet; init_subnet < 255; init_subnet += 1){
+		init_ipaddr = `10.${init_subnet}.1.1`;
+		conflict_flag = false;
+		$.each(exist_ipaddr_arr, function(index, data){
+			if(checkSubnetConflict(init_ipaddr, init_mask, data.ip, data.mask)){
+				conflict_flag = true;
+				return;
+			}
+		});
+
+		if(!conflict_flag) break;
+	}
+	return init_ipaddr;
+}
+function checkSubnetConflict(ip1, mask1, ip2, mask2) {
+	if (!ip1 || !mask1 || !ip2 || !mask2 ||
+		valid_isLegalIP(ip1).isError || valid_isLegalMask(mask1).isError ||
+		valid_isLegalIP(ip2).isError || valid_isLegalMask(mask2).isError) {
+		return false;
+	}
+
+	const ip1Num = inet_network(ip1);
+	const mask1Num = inet_network(mask1);
+	const ip2Num = inet_network(ip2);
+	const mask2Num = inet_network(mask2);
+
+	if ([ip1Num, mask1Num, ip2Num, mask2Num].some(num => num === -1 || num === -2)) {
+		return false;
+	}
+
+	const networkAddress1 = (ip1Num & mask1Num) >>> 0;
+	const networkAddress2 = (ip2Num & mask2Num) >>> 0;
+
+	return (networkAddress1 & mask2Num) === (networkAddress2 & mask2Num) ||
+		(networkAddress2 & mask1Num) === (networkAddress1 & mask1Num);
 }

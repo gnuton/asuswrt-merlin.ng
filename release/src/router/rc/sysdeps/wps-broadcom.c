@@ -363,7 +363,7 @@ start_wps_method(void)
 	char ifname[NVRAM_MAX_PARAM_LEN];
 	char word[256], *next;
 	int unit;
-#if (defined(RTCONFIG_WIFI6E) || defined(RTCONFIG_WIFI7) && !defined(RTCONFIG_WIFI7_NO_6G))
+#if defined(RTCONFIG_WIFI6E) || defined(RTCONFIG_HAS_6G)
 	int band;
 #endif
 
@@ -388,12 +388,7 @@ start_wps_method(void)
 		dbg("wps_band(%d) for wps registrar\n", wps_band);
 	}
 #endif
-#if defined(RTCONFIG_MULTILAN_MWL)
-	if (nvram_get_int("w_Setting") && get_fh_if_prefix_by_unit(wps_band, prefix, sizeof(prefix))) {
-		trim_space(prefix);
-		strncat(prefix, "_", 1);
-	} else
-#elif defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
+#if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 	if (is_dpsr(wps_band)
 #ifdef RTCONFIG_DPSTA
 		|| is_dpsta(wps_band)
@@ -456,7 +451,7 @@ start_wps_method(void)
 				start_wps_pbcd();
 
 			foreach (word, nvram_safe_get("wl_ifnames"), next) {
-#if (defined(RTCONFIG_WIFI6E) || defined(RTCONFIG_WIFI7) && !defined(RTCONFIG_WIFI7_NO_6G))
+#if defined(RTCONFIG_WIFI6E) || defined(RTCONFIG_HAS_6G)
 				wl_ioctl(word, WLC_GET_BAND, &band, sizeof(band));
 				if (band == WLC_BAND_6G)
 					continue;
