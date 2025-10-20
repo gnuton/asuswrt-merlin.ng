@@ -221,8 +221,16 @@ var is_SG_sku = (function(){
 var isIE8 = navigator.userAgent.search("MSIE 8") > -1; 
 var isIE9 = navigator.userAgent.search("MSIE 9") > -1; 
 
+ var secure_default = (function(){
+    var rc_support = '<% nvram_get("rc_support"); %>';
+    return (rc_support.search("secure_default") == -1) ? false : true;
+})();
+
 function initial(){
-	if(is_KR_sku || is_SG_sku || is_AA_sku)
+	if(`<% nvram_get("force_chgpass"); %>` == 1)
+		document.getElementById("QIS_pass_desc1").innerHTML ="To enhance security, a new password policy has been implemented.";
+
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default)
 		document.getElementById("KRHint").style.display = "";
 
 	if(isIE8 || isIE9){
@@ -323,7 +331,7 @@ function validForm(){
 			return false;                   
 	}
 
-	if(is_KR_sku || is_SG_sku || is_AA_sku){		/* MODELDEP by Territory Code */
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default){		/* MODELDEP by Territory Code */
 		if(!validator.chkLoginPw_KR(document.form.http_passwd_x)){
 			return false;
 		}
@@ -541,7 +549,7 @@ function showError(str){
 		</div>
 		<div class="login-title-desc">
 			<div class="desc"><#Web_Title2#> is currently not protected and uses an unsafe default username and password.</div>
-			<div class="desc"><#QIS_pass_desc1#></div>
+			<div class="desc" id="QIS_pass_desc1"><#QIS_pass_desc1#></div>
 			<div id="KRHint" class="desc" style="display: none;"><#JS_validLoginPWD#></div>
 		</div>
 		<div>
@@ -590,7 +598,7 @@ function showError(str){
 
 						$("[name='http_passwd_2_x']")
 							.prop('disabled', false)
-							.css({opacity: "1"})
+							.css({opacity: "1"})						
 					}
 				})
 

@@ -12,16 +12,17 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link rel="stylesheet" type="text/css" href="device-map/device-map.css">
+<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
-<script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="/js/httpApi.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/md5.js"></script>
 <style>
 *{
 	box-sizing: content-box;
@@ -135,6 +136,12 @@ var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 var outfox_code = httpApi.nvramGet(["outfox_code"], true).outfox_code;
 var outfox_site = 'https://getoutfox.com/asus?code='+ outfox_code +'&utm_source=asus&utm_medium=affiliate&utm_campaign=' + support_site_modelid + '&utm_content=router_cta';
 
+var label_mac = <% get_label_mac(); %>.toLowerCase();
+var salt = "hb7pNSB6FTB72n6S1EqwM9fjYDiHuNhK";
+var ts = Date.now();
+var token = hexMD5(salt+label_mac+ts).toLowerCase();
+var gu_url = "https://router.booster.gearupportal.com/h5/acce?gwSn="+label_mac+"&type=asuswrt&ts="+ts+"&token="+token;
+
 function initial(){
 	show_menu();
 
@@ -161,26 +168,36 @@ function initial(){
 		$('#android_cn_link').show();
 	}
 
+	if(gameMode_support){
+		$("#FormTitle").find(".gearaccel").show();
+		$("#FormTitle").find(".mgamemode").show();
+		$("#FormTitle").find(".opennat").show();
+	}
+
 	if(wtfast_support || wtfast_v2_support){
-		$('#wtfast_1').show();
-		$('#wtfast_2').show();
-		$('#wtfast_3').show();
+		$("#FormTitle").find(".wtfast").show();
 	}
 
 	if(tencent_qmacc_support){
-		$('#qmacc_1').show();
-		$('#qmacc_2').show();
-		$('#qmacc_3').show();
+		$("#FormTitle").find(".qmacc").show();
 	}
 
 	if(outfox_support){
-		$('#outfox_1').show();
-		$('#outfox_2').show();
-		$('#outfox_3').show();
+		$("#FormTitle").find(".outfox").show();
 	}
 
-	if(!ASUS_EULA.status("tm"))
-		ASUS_EULA.config(eula_confirm, cancel);
+	if(isSupport("gu_accel")){
+		var orig_gearup_enable = httpApi.nvramGet(["gearup_enable"]).gearup_enable;
+		$("#FormTitle").find(".gearup").show();
+		if(orig_gearup_enable == '1'){
+			$("#gearup_enable").prop('checked', true);
+			$("#gearup_go_mask").hide();
+		}
+		else{
+			$("#gearup_enable").prop('checked', false);
+			$("#gearup_go_mask").show();
+		}
+	}
 
 	setTimeout("showDropdownClientList('setClientIP', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');", 500);
 	genGameList();
@@ -368,9 +385,15 @@ function hideGameListField(){
 function enableGamePriority(){
 	if(adaptiveqos_support){
 		if(document.form.qos_enable.value == "0" && document.form.TM_EULA.value == "0"){
-			ASUS_EULA
-				.config(eula_confirm, cancel)
-				.show("tm");
+			if(policy_status.TM == 0 || policy_status.TM_time == ''){
+                const policyModal = new PolicyModalComponent({
+                    policy: "TM",
+                    agreeCallback: eula_confirm,
+                });
+                policyModal.show();
+            }else{
+                eula_confirm();
+            }
 		}
 		else{
 			if(document.getElementById("game_priority_enable").checked){
@@ -499,7 +522,8 @@ var siteInfo = [faq_fref,
 				'Advanced_WTFast_Content.asp',
 				'QoS_EZQoS.asp',
 				outfox_site,
-				wtfast_v2_go];
+				wtfast_v2_go,
+				gu_url];
 
 function redirectSite(url){
 	if(url == "wtfast"){
@@ -508,8 +532,43 @@ function redirectSite(url){
 		else if(wtfast_support)
 			url = siteInfo[1];
 	}
+	else if(url == "gearup")
+		url = siteInfo[5];
 
 	window.open(url, '_blank');
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const thirdpartyPolicy = 'WTFast'
+    document.getElementById("thirdparty_pp").innerHTML=`<#Thirdparty_PP_Desc1#>`.replace("%1$@", thirdpartyPolicy).replace("[aa]%2$@[/aa]", `<a onclick="showThirdPartyPolicy('${thirdpartyPolicy}')" style="text-decoration: underline;cursor: pointer;">AAA Internet Publishing Inc. PRIVACY POLICY</a>`);
+})
+
+function showThirdPartyPolicy(party){
+    const thirdPartyPolicyModal = new ThirdPartyPolicyModalComponent({
+        policy: 'THIRDPARTY_PP',
+        party: party
+    });
+    thirdPartyPolicyModal.show();
+}
+
+function enableGearUp(){
+	if($("#gearup_enable").is(":checked")){
+		$('<input>').attr({
+			type: 'hidden',
+			name: "gearup_enable",
+			value: "1"
+		}).appendTo('form');
+	}
+	else{
+		$('<input>').attr({
+			type: 'hidden',
+			name: "gearup_enable",
+			value: "0"
+		}).appendTo('form');
+	}
+
+	document.form.action_script.value = "restart_gu_service";
+	document.form.submit();
 }
 </script>
 </head>
@@ -586,7 +645,7 @@ function redirectSite(url){
 									<table style="border-collapse:collapse;width:100%">
 										<tbody>
 											<!-- Gear Accelerator -->
-											<tr>
+											<tr style="display:none;" class="gearaccel">
 												<td style="width:200px">
 													<div style="padding: 5px 0;font-size:20px;"><#Gear_Accelerator#></div>
 												</td>
@@ -594,12 +653,12 @@ function redirectSite(url){
 													<div style="padding: 5px 10px;font-size:20px;color:rgb(5,252,238)"><#Gear_Accelerator_desc#></div>
 												</td>
 											</tr>
-											<tr>
+											<tr style="display:none;" class="gearaccel">
 												<td colspan="3">
 													<div style="width:100%;height:1px;background-color:rgb(228,144,30)"></div>
 												</td>
 											</tr>
-											<tr>
+											<tr style="display:none;" class="gearaccel">
 												<td align="center">
 													<div style="width:85px;height: 85px;background-image: url('images/New_ui/GameBoost_gamePriority.svg');background-size: 100%;"></div>													
 												</td>
@@ -621,9 +680,10 @@ function redirectSite(url){
 													</div>
 												</td>
 											</tr>
+											<tr style="height:50px; display:none;" class="gearaccel"></tr>
+
 											<!-- Mobile Game Mode -->
-											<tr style="height:50px;"></tr>
-											<tr>
+											<tr style="display:none;" class="mgamemode">
 												<td style="width:200px">
 													<div style="padding: 5px 0;font-size:20px;"><#GB_mobile#></div>
 												</td>
@@ -631,12 +691,12 @@ function redirectSite(url){
 													<div style="padding: 5px 10px;font-size:20px;color:rgb(5,252,238)"><#GB_mobile_desc#></div>
 												</td>
 											</tr>
-											<tr>
+											<tr style="display:none;" class="mgamemode">
 												<td colspan="3">
 													<div style="width:100%;height:1px;background-color:rgb(228,144,30)"></div>
 												</td>
 											</tr>
-											<tr>
+											<tr style="display:none;" class="mgamemode">
 												<td align="center">
 													<div style="width:85px;height: 85px;background-image: url('images/New_ui/GameBoost_mobileGame.svg');background-size: 100%;"></div>
 													<!-- <img style="padding-right:10px;;" src="/images/New_ui/GameBoost_WTFast.png" > -->
@@ -645,7 +705,7 @@ function redirectSite(url){
 													<div style="font-size:16px;color:#949393;padding-left:10px;"><#GB_mobile_desc1#></div>
 												</td>
 												<td>
-													<div style="display:flex;align-items: center;">
+													<div style="width: 296px; display:flex;align-items: center;">
 														<div style="margin: 0 12px">
 															<div id="android_qr" class="qr_code qr_android"></div>	
 															<a id="android_link" href="https://play.google.com/store/apps/details?id=com.asus.aihome" target="_blank">
@@ -665,11 +725,10 @@ function redirectSite(url){
 													</div>
 												</td>
 											</tr>
-											
+											<tr style="height:50px; display:none;" class="mgamemode"></tr>
 
 											<!-- OPEN NAT -->
-											<tr style="height:50px;"></tr>
-											<tr>
+											<tr style="display:none;" class="opennat">
 												<td style="width:200px">
 													<div style="padding: 5px 0;font-size:20px;">Open NAT</div>
 												</td>
@@ -677,12 +736,12 @@ function redirectSite(url){
 													<div style="padding: 5px 10px;font-size:20px;color:rgb(5,252,238)"><#GB_OpenNAT_desc#></div>
 												</td>
 											</tr>
-											<tr>
+											<tr style="display:none;" class="opennat">
 												<td colspan="3">
 													<div style="width:100%;height:1px;background-color:rgb(228,144,30)"></div>
 												</td>
 											</tr>
-											<tr>
+											<tr style="display:none;" class="opennat">
 												<td align="center">
 													<div style="width:85px;height: 85px;background-image: url('images/New_ui/GameBoost_openNAT.svg');background-size: 100%;"></div>
 												</td>
@@ -693,10 +752,10 @@ function redirectSite(url){
 													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="location.href='GameProfile.asp';"><#btn_go#></div>
 												</td>
 											</tr>
+											<tr style="height:50px; display:none;" class="opennat"></tr>
 
 											<!-- WTFast -->
-											<tr style="height:50px;"></tr>
-											<tr id='wtfast_1' style="display:none">
+											<tr style="display:none;" class="wtfast">
 												<td style="width:200px">
 													<div style="padding: 5px 0;font-size:20px;"><#Game_Boost_internet#></div>
 												</td>
@@ -704,25 +763,27 @@ function redirectSite(url){
 													<div style="padding: 5px 10px;font-size:20px;color:rgb(5,252,238)">WTFast GPN</div>
 												</td>
 											</tr>
-											<tr id='wtfast_2' style="display:none">
+											<tr style="display:none;" class="wtfast">
 												<td colspan="3">
 													<div style="width:100%;height:1px;background-color:rgb(228,144,30)"></div>
 												</td>
 											</tr>
-											<tr id='wtfast_3' style="display:none">
+											<tr style="display:none;" class="wtfast">
 												<td align="center" style="width:85px">
 													<img style="padding-right:10px;;" src="/images/New_ui/triLv3_wtfast.png" >
 												</td>
 												<td style="width:400px;height:120px;">
 													<div style="font-size:16px;color:#949393;padding-left:10px; margin-top: 10px;"><#Game_WTFast_desc#></div>
-													<div style="font-size:16px;color:#949393;padding-left:10px; margin-top: 15px; margin-bottom: 10px;">*Please be aware this is a third-party service provided by WTFast®, and WTFast® is fully responsible for warranties and liabilities of this game server acceleration service.</div><!--untranslated-->
+													<div id="thirdparty_pp" style="font-size:16px;color:#949393;padding-left:10px; margin-top: 15px; margin-bottom: 10px;"></div>
 												</td>
 												<td>
 													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="redirectSite('wtfast');"><#btn_go#></div>
 												</td>
 											</tr>
+											<tr style="height:50px; display:none;" class="wtfast"></tr>
+
 											<!-- Tencent -->
-											<tr id="qmacc_1" style="margin-top: 50px; display: none;">
+											<tr style="display: none;" class="qmacc">
 												<td style="width:200px">
 													<div style="padding: 5px 0;font-size:20px;"><#Game_Boost_internet#></div>
 												</td>
@@ -730,12 +791,12 @@ function redirectSite(url){
 													<div style="padding: 5px 10px;font-size:20px;color:rgb(5,252,238)">腾讯网游加速器</div>
 												</td>
 											</tr>
-											<tr id="qmacc_2" style="display: none;">
+											<tr style="display: none;" class="qmacc">
 												<td colspan="3">
 													<div style="width:100%;height:1px;background-color:rgb(228,144,30)"></div>
 												</td>
 											</tr>
-											<tr id="qmacc_3" style="display: none;">
+											<tr style="display: none;" class="qmacc">
 												<td align="center">
 													<div style="height: 85px;background-image: url('images/tencent/logo_tencent-2_line.png');background-size: 90%;background-repeat: no-repeat; background-position: center;"></div>
 												</td>
@@ -746,8 +807,10 @@ function redirectSite(url){
 													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="location.href='GameBoost_Tencent.asp';"><#btn_go#></div>
 												</td>
 											</tr>
+											<tr style="height:50px; display:none;" class="qmacc"></tr>
+
 											<!-- Outfox -->
-											<tr id="outfox_1" style="margin-top: 50px; display: none;">
+											<tr style="display: none;" class="outfox">
 												<td style="width:200px">
 													<div style="padding: 5px 0;font-size:20px;"><#Game_Boost_internet#></div>
 												</td>
@@ -755,12 +818,12 @@ function redirectSite(url){
 													<div style="padding: 5px 10px;font-size:20px;color:rgb(5,252,238)">Outfox</div>
 												</td>
 											</tr>
-											<tr id="outfox_2" style="display: none;">
+											<tr style="display: none;" class="outfox">
 												<td colspan="3">
 													<div style="width:100%;height:1px;background-color:rgb(228,144,30)"></div>
 												</td>
 											</tr>
-											<tr id="outfox_3" style="display: none;">
+											<tr style="display: none;" class="outfox">
 												<td align="center">
 													<div style="height: 85px;background-image: url('images/outfox_dark.png');background-size: 90%;background-repeat: no-repeat; background-position: center;"></div>
 												</td>
@@ -769,6 +832,52 @@ function redirectSite(url){
 												</td>
 												<td>
 													<div class="btn" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="redirectSite(outfox_site)"><#btn_go#></div>
+												</td>
+											</tr>
+											<tr style="height:50px; display:none;" class="outfox"></tr>
+
+											<!-- GearUp Accerlation-->
+											<tr style="display: none;" class="gearup">
+												<td style="width:200px">
+													<div style="padding: 5px 0;font-size:20px; text-transform:uppercase;"><#Game_Boost_internet#></div>
+												</td>
+												<td colspan="2">
+													<div style="padding: 5px 10px;font-size:20px;color:#FFCC66; text-transform:uppercase;"><#GearUP_Console_Booster#></div>
+												</td>
+											</tr>
+											<tr style="display: none;" class="gearup">
+												<td colspan="3">
+													<div style="width:100%;height:1px;background-color:#D30606"></div>
+												</td>
+											</tr>
+											<tr style="display: none;" class="gearup">
+												<td align="center">
+													<div style="width:158px;height: 78px;background-image: url('images/logo_GearUp_console@1x.png');background-size: 100%;"></div>
+												</td>
+												<td style="width:400px;height:120px;">
+													<div style="font-size:16px;color:#949393;padding-left:10px; margin: 15px 0;"><#GearUP_Desc#></div>
+												</td>
+												<td>
+													<div class="switch" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px">
+														<input id="gearup_enable" type="checkbox" onclick="enableGearUp();">
+														<div class="container_gb" style="display:table;border-radius:5px;">
+															<div style="display:table-cell;width:50%;">
+																<div>ON</div>
+															</div>
+															<div style="display:table-cell">
+																<div>OFF</div>
+															</div>
+														</div>
+													</div>
+													<div style="width: 296px;">
+														<div class="btn" style="margin:10px auto auto auto; width:100px;height:40px;text-align:center;line-height:40px;font-size:18px;cursor:pointer;border-radius:5px;" onclick="redirectSite('gearup');"><#btn_go#></div>
+														<div id="gearup_go_mask" style="background-color: #000000; opacity: 0.5; position: relative; z-index: 999; width: 100px; height: 40px; border-radius: 5px; left: 98px; top: -40px;"></div>
+													</div>
+												</td>
+											</tr>
+											<tr style="display: none;" class="gearup">
+												<td colspan="3">
+													<div><#GearUP_PP_Hint#></div>
 												</td>
 											</tr>
 										</tbody>
