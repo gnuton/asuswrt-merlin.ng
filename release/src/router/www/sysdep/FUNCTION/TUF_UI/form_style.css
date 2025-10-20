@@ -857,9 +857,9 @@ form{
 }
 /* CSS Document */
 @font-face{
-	font-family: rog;
-	src: url(/fonts/ROG_Fonts-Regular.woff) format("woff"),
-	     url(./fonts/ROG_Fonts-Regular.otf) format("opentype");
+	font-family: Xolonium;
+    	src: url(/fonts/xolonium.regular.woff) format("woff"),
+             url(/fonts/xolonium.regular.otf) format("opentype");
 }
 body{
 	color:#FFFFFF;
@@ -1334,13 +1334,10 @@ padding-top:1px;
 	cursor: pointer;
 }
 .notificationon{
-	position: absolute;
-	display:inline;
+	display:inline-block;
 	background-image:url(images/New_ui/notification.png);
 	background-repeat:no-repeat;
 	background-position:2px 2px;
-	margin-top:-5px;
-	margin-top:3px \9;	/*IE*/
 	height:30px;
 	width:30px;
 	cursor: pointer;
@@ -2058,7 +2055,7 @@ padding-top:1px;
 }
 .analysis_bg, .web_frame{
 	/* background: rgba(17, 17, 17, .5); */
-	background: rgba(45, 45, 45, .5);
+	background: rgba(45, 45, 45, .95);
 	border: 1px solid #92650F;
 }
 .tm_title_bg{
@@ -2119,19 +2116,6 @@ padding-top:1px;
 	width: 3px; 
 	height: 102px;
 	background: #354248;
-}
-.oauth_google_btn{
-	float: left;
-	background: transparent url(images/New_ui/btn_google_signin_dark_normal_web.png) no-repeat scroll center top;
-	width: 133px;
-	height: 26px;
-	cursor: pointer;
-}
-.oauth_google_status{
-	float: left;
-	margin-top: 3px;
-	margin-left: 5px;
-	display: none;
 }
 .quotabar{
 	background: #8DB6D8;
