@@ -14,8 +14,6 @@
   <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt"><strong>Explore Asus Merlin docs»</strong></a>
   <br>
   <br>
-  <a href="https://github.com/gnuton/asuswrt-merlin.ng/releases/latest">Download latest firmware</a>
-  ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=enhancement&template=feature_request.md">Request feature</a>
   ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=bug&template=bug_report.md">Report bug</a>
