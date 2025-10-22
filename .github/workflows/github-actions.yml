@@ -1,6 +1,6 @@
 name: Images 
 run-name: "Building images 🚀"
-on: [push]
+on: [push, pull_request]
 jobs:          
     build-job:
       name: Build
@@ -20,8 +20,6 @@ jobs:
             - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
             - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
             - { model: "rt-ax58u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
