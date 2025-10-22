@@ -87,7 +87,7 @@ $(document).ready(function(){
 		$("#yadns_field").hide()
 	}
 
-	if(isSupport("sdn_mainfh")){
+	if(isSupport("sdn_mainfh") || isSwMode("MB")){
 		$("#wireless_tab").hide();
 	}
 
@@ -172,20 +172,53 @@ function genElement(){
 		"wl2_hwaddr",
 		"wl3_hwaddr",
 		"wl4_hwaddr"
-	])
+	]);
+	const cap_info = isSupport("sdn_mainfh") ? (httpApi.hookGet("get_cfg_clientlist")[0] || {}) : {};
+	const bandToApMapping = {
+		'2G': 'ap2g',
+		'5G1': 'ap5g',
+		'5G2': 'ap5g1',
+		'6G1': 'ap6g',
+		'6G2': 'ap6g1'
+	};
 
-	for(var i = 0; i < bandName.length; i++){
-		if(get_wl_unit_by_band(bandName[i]) !== ""){
-			code += `
-				<div class="info-block">
-					<div class="info-title">${wl_nband_title[get_wl_unit_by_band(bandName[i])]} <#MAC_Address#></div>
-					<div class="info-content">${router_mac["wl" + get_wl_unit_by_band(bandName[i]) + "_hwaddr"]}</div>
-				</div>
-			`;
+	for (let i = 0; i < bandName.length; i++) {
+		const unit = get_wl_unit_by_band(bandName[i]);
+		if (!unit) continue;
+
+		const title = wl_nband_title[unit];
+		let mac = '';
+
+		if (isSupport("sdn_mainfh")) {
+			mac = getMainFHMac(bandName[i], cap_info, bandToApMapping);
+		} else {
+			mac = router_mac["wl" + unit + "_hwaddr"];
+		}
+
+		if (mac) {
+			code += genMacInfoBlock(title, mac);
 		}
 	}
 
 	$('#hw_information_field').html(code);
+
+	function getMainFHMac(bandName, cap_info, bandToApMapping) {
+		const apKey = bandToApMapping[bandName];
+		if (!apKey) return '';
+		const ap_ssid = cap_info[`${apKey}_ssid_fh`];
+		if (ap_ssid && ap_ssid !== '') {
+			return cap_info[`${apKey}_fh`] || '';
+		}
+		return '';
+	}
+	function genMacInfoBlock(title, mac) {
+		return `
+			<div class="info-block">
+				<div class="info-title">${title} <#MAC_Address#></div>
+				<div class="info-content">${mac}</div>
+			</div>
+		`;
+	}
 
 	//YADEX DNS
 /*	if(system.yadnsSupport &&　parent.sw_mode == 1){
@@ -604,6 +637,18 @@ function get_ethernet_ports() {
 				var error_port_list = [];
 				$.each(port_info, function(label, label_array){
 					$.each(port_info[label], function(index, port_item){
+						const { cap_support } = port_item;
+						if (cap_support.INTRAMODULE) return true;
+
+						let allCapFalse = true;
+						$.each(cap_support, function(key, value) {
+							if (value) {
+								allCapFalse = false;
+								return false;
+							}
+						});
+						if (allCapFalse) return true;
+
 						var $port_bg = $("<div>").attr({"title":port_item.link_rate_text});
 						if(label == "WAN")
 							$port_bg.appendTo($label_W_bg);
@@ -619,7 +664,7 @@ function get_ethernet_ports() {
 								$port_icon.addClass("warn");
 						}
 						else if(port_item.is_on == "0"){
-							if(port_item.cap_support.USB){
+							if(cap_support.USB){
 								if(port_item.hasOwnProperty("devices")){
 									$port_icon.addClass("conn");
 								}
@@ -630,7 +675,7 @@ function get_ethernet_ports() {
 								$port_icon.addClass("unplug");
 						}
 
-						if(port_item.cap_support.WAN || port_item.cap_support.WANAUTO){
+						if(cap_support.WAN || cap_support.WANAUTO){
 							$("<div>").addClass("wan_icon").appendTo($port_icon);
 							let port_text = "";
 							if(port_item.ui_display != undefined && port_item.ui_display != ""){
@@ -644,7 +689,7 @@ function get_ethernet_ports() {
 							if(port_text != "")
 								$("<span>").addClass("port_text").html(htmlEnDeCode.htmlEncode(port_text)).appendTo($port_bg);
 						}
-						else if(port_item.cap_support.LAN){
+						else if(cap_support.LAN){
 							let port_text = "";
 							let port_idx = "";
 							if(port_item.ui_display != undefined && port_item.ui_display != ""){
@@ -661,7 +706,7 @@ function get_ethernet_ports() {
 							if(port_idx != "")
 								$("<div>").addClass("lan_idx").html(htmlEnDeCode.htmlEncode(port_idx)).appendTo($port_icon);
 						}
-						else if(port_item.cap_support.USB){
+						else if(cap_support.USB){
 							$port_icon.addClass("USB");
 							let port_text = "";
 							if(port_item.ui_display != undefined && port_item.ui_display != ""){
@@ -675,10 +720,15 @@ function get_ethernet_ports() {
 							if(port_text != "")
 								$("<span>").addClass("port_text").html(htmlEnDeCode.htmlEncode(port_text)).appendTo($port_bg);
 						}
-						else if(port_item.cap_support.MOCA){
+						else if(cap_support.MOCA){
 							$port_icon.addClass("MoCa");
 							if(port_item.special_port_name != "")
 								$("<span>").addClass("port_text").html(htmlEnDeCode.htmlEncode(port_item.special_port_name)).appendTo($port_bg);
+						}
+						else {
+							let port_text = port_item.ui_display || "";
+							if(port_text)
+								$("<span>").addClass("port_text").html(htmlEnDeCode.htmlEncode(port_text)).appendTo($port_bg);
 						}
 
 						if(port_item.link_rate_status != "1"){

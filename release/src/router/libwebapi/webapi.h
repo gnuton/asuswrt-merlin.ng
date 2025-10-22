@@ -1,6 +1,7 @@
 #ifndef __WEBAPI_H__
 #define __WEBAPI_H__
 
+#include <json.h>
 #ifdef RTCONFIG_CFGSYNC
 #include <cfg_capability.h>
 #endif
@@ -25,13 +26,16 @@ enum {
 	HTTP_INVALID_IPADDR,
 	HTTP_INVALID_TS,
 	HTTP_INVALID_FILE,
-	HTTP_INVALID_SUPPORT,
+	HTTP_INVALID_SUPPORT = 4010,
 	HTTP_REMOTE_CTRL_DISABLE,
 	HTTP_NO_CHANGE,
 	ASUSAPI_NOT_SUPPORT,
+	HTTP_OAUTH_FAIL,
+	HTTP_AUTH_DATA_FAIL,
 	HTTP_SHMGET_FAIL = 5000,
 	HTTP_FB_SVR_FAIL,
-	HTTP_DM_SVR_FAIL
+	HTTP_DM_SVR_FAIL,
+	HTTPD_STATUS_END
 };
 
 #ifndef RTCONFIG_BWDPI
@@ -169,4 +173,8 @@ extern int do_upload_config(void);
 extern int set_security_update(char *security_update);
 extern int get_security_update(void);
 #endif
+extern int check_cmd_injection_blacklist(char *para);
+extern int check_xss_blacklist(char* para, int check_www);
+extern int validate_apply_input_value(char *name, char *value);
+extern int detect_vul_scan(void);
 #endif /* !__WEBAPI_H__ */

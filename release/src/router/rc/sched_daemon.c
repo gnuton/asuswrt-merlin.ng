@@ -20,6 +20,9 @@
 #ifdef RTCONFIG_MULTIWAN_PROFILE
 #include "multi_wan.h"
 #endif
+#ifdef RTCONFIG_CFGSYNC
+#include <cfg_event.h>
+#endif
 
 #define USE_TIMERUTIL 1
 #ifdef USE_TIMERUTIL
@@ -31,13 +34,15 @@
 #define PERIOD_NORMAL			5*TIMER_HZ      /* minisecond */
 #define PERIOD_10_SEC			10*TIMER_HZ
 #define PERIOD_30_SEC			30*TIMER_HZ
+#define PERIOD_120_SEC			120*TIMER_HZ
+#define PERIOD_600_SEC			600*TIMER_HZ
 #define PERIOD_86400_SEC		86400*TIMER_HZ
 
 #define SCHED_DAEMON_DEBUG		"/tmp/SCHED_DAEMON_DEBUG"
 
+extern char *__progname;
 #ifdef RTCONFIG_LIBASUSLOG
 #define SCHED_DAEMON_DBG_LOG	"sched_daemon.log"
-extern char *__progname;
 #define SCHED_DAEMON_DBG_SYSLOG(fmt,args...) \
 	if (nvram_get_int("sched_daemon_syslog")) { \
 		asusdebuglog(LOG_INFO, SCHED_DAEMON_DBG_LOG, LOG_CUSTOM, LOG_SHOWTIME, 0, "[%s][%d]][%s:(%d)] "fmt, __progname, getpid(), __FUNCTION__, __LINE__, ##args); \
@@ -48,7 +53,7 @@ extern char *__progname;
 
 #define SCHED_DAEMON_DBG(fmt,args...) do { \
 	if(f_exists(SCHED_DAEMON_DEBUG) > 0) { \
-		_dprintf("[SCHED_DAEMON][%s:(%d)]"fmt"\n", __FUNCTION__, __LINE__, ##args); \
+		_dprintf("[%s][%d][%s:(%d)]"fmt"\n", __progname, getpid(), __FUNCTION__, __LINE__, ##args); \
 	} \
 	SCHED_DAEMON_DBG_SYSLOG(fmt,##args) \
 } while(0)
@@ -77,6 +82,19 @@ static void task_mtwan_schedule(struct timer_entry *timer, void *data);
 #ifndef RTCONFIG_AVOID_TZ_ENV
 static void task_timezone_checking(struct timer_entry *timer, void *data);
 #endif
+#ifdef RTCONFIG_REBOOT_SCHEDULE
+static void task_reboot_schedule(struct timer_entry *timer, void *data);
+#endif
+#ifdef RTCONFIG_HNS
+static void task_hns_history(struct timer_entry *timer, void *data);
+static void task_hns_protection(struct timer_entry *timer, void *data);
+static void task_hns_signature(struct timer_entry *timer, void *data);
+static void task_hns_event_cc(struct timer_entry *timer, void *data);
+static void task_hns_alive(struct timer_entry *timer, void *data);
+#endif
+#if defined(RTCONFIG_BCM_AFC) && defined(RTCONFIG_AFC_POSITIONING)
+static void task_afc_pos_retry(struct timer_entry *timer, void *data);
+#endif
 ///////////////////////////////////// task prototype /////////////////////////////////////
 
 ///////////////////////////////////// signal handler prototype /////////////////////////////////////
@@ -101,7 +119,22 @@ static struct task_table sd_task_t[] =
 #ifdef RTCONFIG_MULTIWAN_PROFILE
         {SIGALRM, 0, task_mtwan_schedule, 0, PERIOD_30_SEC},
 #endif
+#ifndef RTCONFIG_AVOID_TZ_ENV
         {SIGALRM, 0, task_timezone_checking, 0, PERIOD_10_SEC},
+#endif
+#ifdef RTCONFIG_REBOOT_SCHEDULE
+		{SIGALRM, 0, task_reboot_schedule, 0, PERIOD_30_SEC},
+#endif
+#ifdef RTCONFIG_HNS
+        {SIGALRM, 0, task_hns_history, 0, PERIOD_120_SEC},
+        {SIGALRM, 0, task_hns_protection, 0, PERIOD_120_SEC},
+        {SIGALRM, 0, task_hns_signature, 0, PERIOD_86400_SEC},
+        {SIGALRM, 0, task_hns_event_cc, 0, PERIOD_10_SEC},
+        {SIGALRM, 0, task_hns_alive, 0, PERIOD_30_SEC},
+#endif
+#if defined(RTCONFIG_BCM_AFC) && defined(RTCONFIG_AFC_POSITIONING)
+        {SIGALRM, 0, task_afc_pos_retry, 0, PERIOD_600_SEC},
+#endif
         {SIGUSR1, 0, sched_daemon_sigusr1, 0, 0},
         {SIGUSR2, 0, sched_daemon_sigusr2, 0, 0},
         {SIGTERM, 0, sched_daemon_exit, 0, 0},
@@ -120,6 +153,8 @@ static struct itimerval itv;
 static int period_time_quota_sec = 0;
 #endif
 static int period_30_sec = 0;
+static int period_120_sec = 0;
+static int period_600_sec = 0;
 static int period_3600_sec = 0;
 static int period_86400_sec = 0;
 ///////////////////////////////////// task prototype /////////////////////////////////////
@@ -139,6 +174,16 @@ static void task_mtwan_schedule(void);
 #endif
 #ifndef RTCONFIG_AVOID_TZ_ENV
 static void task_timezone_checking(void);
+#endif
+#ifdef RTCONFIG_REBOOT_SCHEDULE
+static void task_reboot_schedule(void);
+#endif
+#ifdef RTCONFIG_HNS
+static void task_hns_history(void);
+static void task_hns_protection(void);
+static void task_hns_signature(void);
+static void task_hns_event_cc(void);
+static void task_hns_alive(void);
 #endif
 ///////////////////////////////////// task prototype /////////////////////////////////////
 
@@ -239,6 +284,8 @@ static void sched_daemon(int sig)
 	//SCHED_DAEMON_DBG("sig=(%d)", sig);
 	period_10_sec = (period_10_sec + 1) % 10;
 	period_30_sec = (period_30_sec + 1) % 30;
+	period_120_sec = (period_120_sec + 1) % 120;
+	period_600_sec = (period_600_sec + 1) % 600;
 	period_3600_sec = (period_3600_sec + 1) % 3600;
 	period_86400_sec = (period_86400_sec + 1) % 86400;
 
@@ -258,6 +305,13 @@ static void sched_daemon(int sig)
 #ifndef RTCONFIG_AVOID_TZ_ENV
 	task_timezone_checking();
 #endif
+#ifdef RTCONFIG_HNS
+	task_hns_event_cc();
+#endif
+
+#ifndef RTCONFIG_REBOOT_SCHEDULE
+	task_reboot_schedule();
+#endif
 
 /*======== The following is for period 30 seconds ========*/
 	if (period_30_sec)
@@ -266,6 +320,26 @@ static void sched_daemon(int sig)
 	task_wireless_schedule();
 #ifdef RTCONFIG_MULTIWAN_PROFILE
 	task_mtwan_schedule();
+#endif
+#ifdef RTCONFIG_HNS
+	task_hns_alive();
+#endif
+
+/*======== The following is for period 120 seconds ========*/
+	if (period_120_sec)
+		return;
+
+#ifdef RTCONFIG_HNS
+	task_hns_history();
+	task_hns_protection();
+#endif
+
+/*======== The following is for period 600 seconds ========*/
+	if (period_600_sec)
+		return;
+
+#if defined(RTCONFIG_BCM_AFC) && defined(RTCONFIG_AFC_POSITIONING)
+	task_afc_pos_retry();
 #endif
 
 /*======== The following is for period 1 hour ========*/
@@ -282,6 +356,9 @@ static void sched_daemon(int sig)
 #endif
 #ifdef RTCONFIG_PC_REWARD
 	task_pc_reward_cleaner();
+#endif
+#ifdef RTCONFIG_HNS
+	task_hns_signature();
 #endif
 }
 #endif
@@ -399,11 +476,11 @@ void wl_sched_v1(void)
 #endif
 
 			if (activeNow == 0) {
-				set_wlan_service_status(atoi(tmp), -1, 0);
+				set_wlan_service_status(safe_atoi(tmp), -1, 0);
 				SCHED_DAEMON_DBG(" Turn radio [band_index=%s] off", tmp);
 				logmessage("wifi scheduler", "Turn radio [band_index=%s] off.", tmp);
 			} else {
-				set_wlan_service_status(atoi(tmp), -1, 1);
+				set_wlan_service_status(safe_atoi(tmp), -1, 1);
 				SCHED_DAEMON_DBG(" Turn radio [band_index=%s] on", tmp);
 				logmessage("wifi scheduler", "Turn radio [band_index=%s] on.", tmp);
 			}
@@ -448,6 +525,7 @@ void wl_sched_v2(void)
 	int wlX_activeNow = -1;
 #endif
 	int bss_status;
+	int radio_status;
 
 	// Check whether conversion needed.
 	convert_wl_sched_v1_to_sched_v2();
@@ -571,9 +649,9 @@ void wl_sched_v2(void)
 #endif
 
 				if (activeNow2 == 0) {
-					bss_status = get_wlan_service_status(atoi(tmp), atoi(tmp2));
+					bss_status = get_wlan_service_status(safe_atoi(tmp), safe_atoi(tmp2));
 					if (bss_status == 1) { // radio is on
-						set_wlan_service_status(atoi(tmp), atoi(tmp2), 0);
+						set_wlan_service_status(safe_atoi(tmp), safe_atoi(tmp2), 0);
 						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s, subunit=%s] off\n", tmp, tmp2);
 						logmessage("wifi scheduler", "Turn radio [band_index=%s, subunit=%s] off.", tmp, tmp2);
 					} else {
@@ -584,9 +662,18 @@ void wl_sched_v2(void)
 							SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s, subunit=%s] off. Error occur(%d).\n", tmp, tmp2, bss_status);
 					}
 				} else {
-					bss_status = get_wlan_service_status(atoi(tmp), atoi(tmp2));
+					// We must check if radio is on, otherwsie the set set_wlan_service_status will failed.
+					if (wlX_activeNow == 1) {
+						radio_status = get_radio(safe_atoi(tmp), -1);
+						if (radio_status == 0) {
+							set_radio(1, safe_atoi(tmp), -1);
+							SCHED_DAEMON_DBG(" Turn radio [band_index=%s] on", tmp);
+							logmessage("wifi scheduler", "Turn radio [band_index=%s] on.", tmp);
+						}
+					}
+					bss_status = get_wlan_service_status(safe_atoi(tmp), safe_atoi(tmp2));
 					if (bss_status == 0) { // radio is off
-						set_wlan_service_status(atoi(tmp), atoi(tmp2), 1);
+						set_wlan_service_status(safe_atoi(tmp), safe_atoi(tmp2), 1);
 						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s, subunit=%s] on\n", tmp, tmp2);
 						logmessage("wifi scheduler", "Turn radio [band_index=%s, subunit=%s] on.", tmp, tmp2);
 					} else {
@@ -655,30 +742,36 @@ void wl_sched_v2(void)
 #endif
 
 			if (activeNow == 0) {
-				bss_status = get_wlan_service_status(atoi(tmp), -1);
-				if (bss_status == 1) { // radio is on
-					set_wlan_service_status(atoi(tmp), -1, 0);
+				radio_status = get_radio(safe_atoi(tmp), -1);
+				if (radio_status == 1) { // radio is on
+					set_radio(0, safe_atoi(tmp), -1);
 					SCHED_DAEMON_DBG(" Turn radio [band_index=%s] off", tmp);
 					logmessage("wifi scheduler", "Turn radio [band_index=%s] off.", tmp);
+#ifdef RTCONFIG_ENERGY_SAVE
+					esr_set_wlunit(safe_atoi(tmp), ES_STS_OFF, "WL_SCHED");
+#endif
 				} else {
-					if (bss_status == 0) {
+					if (radio_status == 0) {
 						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s] off. Already off, no need to set it again.\n", tmp);
 						//logmessage("wifi scheduler", "Turn radio [band_index=%s, subunit=%s] off. Already off, no need to set it again.\n", tmp, tmp2);
 					} else
-						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s] off. Error occur(%d).\n", tmp, bss_status);
+						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s] off. Error occur(%d).\n", tmp, radio_status);
 				}
 			} else {
-				bss_status = get_wlan_service_status(atoi(tmp), -1);
-				if (bss_status == 0) { // radio is off
-					set_wlan_service_status(atoi(tmp), -1, 1);
+				radio_status = get_radio(safe_atoi(tmp), -1);
+				if (radio_status == 0) { // radio is off
+					set_radio(1, safe_atoi(tmp), -1);
 					SCHED_DAEMON_DBG(" Turn radio [band_index=%s] on", tmp);
 					logmessage("wifi scheduler", "Turn radio [band_index=%s] on.", tmp);
+#ifdef RTCONFIG_ENERGY_SAVE
+					esr_set_wlunit(safe_atoi(tmp), ES_STS_ON, "WL_SCHED");
+#endif
 				} else {
-					if (bss_status == 1) {
+					if (radio_status == 1) {
 						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s] on. Already on, no need to set it again.\n", tmp);
 						//logmessage("wifi scheduler", "Turn radio [band_index=%s, subunit=%s] on. Already on, no need to set it again.\n", tmp, tmp2);
 					} else
-						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s] on. Error occur(%d).\n", tmp, bss_status);
+						SCHED_DAEMON_DBG("[wifi-scheduler] Turn radio [band_index=%s] on. Error occur(%d).\n", tmp, radio_status);
 				}
 			}
 		}
@@ -949,6 +1042,178 @@ static void task_timezone_checking(void)
 #endif
 }
 #endif	/* RTCONFIG_AVOID_TZ_ENV */
+
+#ifdef RTCONFIG_REBOOT_SCHEDULE
+extern int timecheck_reboot(int sched_type, char *activeSchedule);
+#ifdef USE_TIMERUTIL
+static void task_reboot_schedule(struct timer_entry *timer, void *data)
+#else
+static void task_reboot_schedule(void)
+#endif
+{
+	/* Reboot Schedule */
+	char reboot_schedule[PATH_MAX];
+	int reboot_schedule_type = 0;
+	SCHED_DAEMON_DBG("[reboot-scheduler] checking...\n");
+	// don't need to check reboot schedule when the system is booting up.
+	if (uptime() > 300 && nvram_match("reboot_schedule_enable", "1"))
+	{
+		if (nvram_match("ntp_ready", "1"))
+		{
+			//SMTWTFSHHMM
+			//XXXXXXXXXXX
+#ifdef RTCONFIG_REBOOT_SCHEDULE_V2
+			reboot_schedule_type = nvram_get_int("reboot_schedule_type");
+#endif
+			if (reboot_schedule_type == REBOOT_SCHED_TYPE_WEEKLY)
+				snprintf(reboot_schedule, sizeof(reboot_schedule), "%s", nvram_safe_get("reboot_schedule"));
+#ifdef RTCONFIG_REBOOT_SCHEDULE_V2
+			else if (reboot_schedule_type == REBOOT_SCHED_TYPE_MONTHLY)
+				snprintf(reboot_schedule, sizeof(reboot_schedule), "%s", nvram_safe_get("reboot_schedule_month"));
+#endif
+			SCHED_DAEMON_DBG("[reboot-scheduler] reboot_schedule_type=%d, reboot_schedule=%s\n", reboot_schedule_type, reboot_schedule);
+			if (strlen(reboot_schedule) == 11 
+#ifdef RTCONFIG_REBOOT_SCHEDULE_V2
+					|| reboot_schedule_type == REBOOT_SCHED_TYPE_MONTHLY
+#endif
+				)
+			{
+				if (timecheck_reboot(reboot_schedule_type, reboot_schedule))
+				{
+					char reboot[sizeof("255")];
+					char upgrade[sizeof("255")];
+
+					memset(reboot, 0, sizeof("255"));
+					memset(upgrade, 0, sizeof("255"));
+					f_read_string("/tmp/reboot", reboot, sizeof(reboot));
+					f_read_string("/tmp/upgrade", upgrade, sizeof(upgrade));
+
+					if (atoi(reboot) || atoi(upgrade))
+						return;
+
+					nvram_set("sys_reboot_reason", "rbt_scheduler");
+					logmessage("reboot scheduler", "[%s] The system is going down for reboot\n", __FUNCTION__);
+					kill(1, SIGTERM);
+				}
+			}
+		}
+		else
+			logmessage("reboot scheduler", "[%s] NTP sync error\n", __FUNCTION__);
+	}
+
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_30_SEC);
+#endif
+}
+#endif // #ifdef RTCONFIG_REBOOT_SCHEDULE
+
+#ifdef RTCONFIG_HNS
+#ifdef USE_TIMERUTIL
+static void task_hns_history(struct timer_entry *timer, void *data)
+#else
+static void task_hns_history(void)
+#endif
+{
+	exe_hns_history();
+
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_120_SEC);
+#endif
+}
+
+#ifdef USE_TIMERUTIL
+static void task_hns_protection(struct timer_entry *timer, void *data)
+#else
+static void task_hns_protection(void)
+#endif
+{
+	exe_hns_protection();
+
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_120_SEC);
+#endif
+}
+
+#ifdef USE_TIMERUTIL
+static void task_hns_signature(struct timer_entry *timer, void *data)
+#else
+static void task_hns_signature(void)
+#endif
+{
+	hns_sig_update_flow();
+
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_86400_SEC);
+#endif
+}
+
+#ifdef USE_TIMERUTIL
+static void task_hns_event_cc(struct timer_entry *timer, void *data)
+#else
+static void task_hns_event_cc(void)
+#endif
+{
+#ifdef RTCONFIG_NOTIFICATION_CENTER
+	hns_protect_event_cc();
+#endif
+
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_10_SEC);
+#endif
+}
+
+#ifdef USE_TIMERUTIL
+static void task_hns_alive(struct timer_entry *timer, void *data)
+#else
+static void task_hns_alive(void)
+#endif
+{
+	check_hns_alive_service();
+
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_30_SEC);
+#endif
+}
+#endif
+
+#if defined(RTCONFIG_BCM_AFC) && defined(RTCONFIG_AFC_POSITIONING)
+#ifdef USE_TIMERUTIL
+static void task_afc_pos_retry(struct timer_entry *timer, void *data)
+#else
+static void task_afc_pos_retry(void)
+#endif
+{
+	if (IS_AFC_EXCL_MODEL())
+		goto AFC_POS_RETRY_END;
+
+	if (!IS_AFC_ENABLED())
+		goto AFC_POS_RETRY_END;
+
+	if (!IS_AFC_PP())
+		goto AFC_POS_RETRY_END;
+
+	if (!IS_ICP_MODELS())
+		goto AFC_POS_RETRY_END;
+
+	if (!IS_AFC_ALLOW_SWMODE())
+		goto AFC_POS_RETRY_END;
+
+	if (!IS_AFC_SKU())
+		goto AFC_POS_RETRY_END;
+
+	// RE node and backhaul is disconnected, skip afc positioning.
+	if (nvram_get_int("re_mode") == 1 && nvram_get_int("cfg_alive") == 0)
+		goto AFC_POS_RETRY_END;
+
+	if (!check_afc_nvram())
+		trigger_afc_positioning("silent");
+
+AFC_POS_RETRY_END:
+#ifdef USE_TIMERUTIL
+	mod_timer(timer, PERIOD_600_SEC);
+#endif
+}
+#endif // #if defined(RTCONFIG_BCM_AFC) && defined(RTCONFIG_AFC_POSITIONING)
 
 #ifdef USE_TIMERUTIL
 static void sched_daemon_sigusr1(struct timer_entry *timer, void *data)

@@ -42,6 +42,10 @@ var theme = getUrlParameter("current_theme").toLocaleUpperCase();
 if(theme == "WHITE"){
 	$('link').filter("[href*='/aimesh/aimesh_topology.css']").after('<link rel="stylesheet" type="text/css" href="/aimesh/aimesh_topology_' + theme + '.css">');
 }
+
+if(isSupport("TS_UI"))
+	$('link').last().after('<link rel="stylesheet" type="text/css" href="css/difference.css">');
+
 function initial(){
 	show_menu();
 	$("#AiMesh_Topology").load("/aimesh/aimesh_topology.html", function(){
@@ -65,7 +69,10 @@ function change_tab(_index){
 	$(".aimesh_tab span").removeClass("clicked");
 	$(".aimesh_tab span").eq(_index - 1).addClass("clicked");
 	$(".aimesh_tab_content").hide();
-	$(".aimesh_tab_content.idx" + _index + "").show();
+	$(".aimesh_tab_content.idx" + _index + "").css("display", "block");
+	if(_index.toString() === "2"){
+		initial_system_settings();
+	}
 }
 </script>
 </head>

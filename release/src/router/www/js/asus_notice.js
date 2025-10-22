@@ -639,7 +639,7 @@ class NoticePopupModalComponent {
                             </div>
                             <div class="modal-footer">
                                 <div class="d-flex flex-column gap-1 w-100">
-                                    ${(readCheck.show) ? `<div class="checkbox-wrapper-40 m-2 w-100"><label><input id="readCheckbox" type="checkbox"/><span class="checkbox">I have read it, do not show it again</span></label></div>` : ``}
+                                    ${(readCheck.show) ? `<div class="checkbox-wrapper-40 m-2 w-100"><label><input id="readCheckbox" type="checkbox"/><span class="checkbox"><#Notice_Message_3#></span></label></div>` : ``}
                                     ${(applyBtn?.show) ? `<button type="button" class="btn btn-primary" data-dismiss="modal">${applyBtn.text}</button>` : ``}
                                 </div>
                             </div>
@@ -676,7 +676,7 @@ class NoticePopupModalComponent {
             return "ROG";
         } else if (isSupport("tuf")) {
             return "TUF";
-        } else if (isSupport("BUSINESS")) {
+        } else if (isSupport("UI4")) {
             return "";
         } else {
             return theme;
@@ -753,7 +753,6 @@ const showAsusNotice = () => {
     const checkNvramList = [];
     const noticeContents = [];
     const apgInfo = [];
-    const macInfo = [];
 
     const apg_arr = [];
     const apm_arr = [];
@@ -777,10 +776,6 @@ const showAsusNotice = () => {
 
     for (const i of apg_arr) {
         checkNvramList.push(`apg${i}_disabled`);
-    }
-
-    for (let i = 0; i < 4; i++) {
-        checkNvramList.push(`wl${i}_macmode`);
     }
 
     const checkNvramListResult = httpApi.nvramGet(checkNvramList, false);
@@ -809,23 +804,11 @@ const showAsusNotice = () => {
                 }
             }
         }
-        const match = key.match(/wl(\d+)_macmode/);
-        if (match) {
-            const index = parseInt(match[1]);
-            if (checkNvramListResult[key] !== "disabled" && checkNvramListResult[key] !== "") {
-                macInfo.push({index: index, key: key, value: checkNvramListResult[key]});
-            }
-        }
     }
 
     if (apgInfo.length > 0) {
-        const noticeTemplate = `Due to system optimization, the %@ network(s) have to be reconfigured. You can create new ones on Network settings.`;
+        const noticeTemplate = `<#Notice_Message_1#>`;
         const noticeText = noticeTemplate.replace("%@", `<b>${apgInfo.join(', ')}</b>`);
-        noticeContents.push(noticeText);
-    }
-
-    if (macInfo.length > 0) {
-        const noticeText = `Due to system optimization, please help to add existing MAC filter again on Network settings.`;
         noticeContents.push(noticeText);
     }
 
@@ -842,13 +825,6 @@ const showAsusNotice = () => {
                 if (noticeModal.getReadCheck()) {
                     noticeModal.setRead();
                 }
-                const postData = {};
-                for (const macmode of macInfo) {
-                    postData[macmode.key] = "disabled";
-                    postData[`wl${macmode.index}_maclist_x`] = "";
-                }
-                postData.action_mode = "apply";
-                httpApi.nvramSet(postData);
             }
         },
         // theme: "", // RT, ROG, TUF

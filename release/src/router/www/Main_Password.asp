@@ -207,11 +207,15 @@ function isSupport(_ptn){
 }
 
 var gobi_support = isSupport("gobi");
+var secure_default = isSupport("secure_default");
 
 function initial(){
 	top.name = "";/* reset cache of state.js win.name */
 
-	if(isSupport("BUSINESS")){
+	if(`<% nvram_get("force_chgpass"); %>` == 1)
+		document.getElementById("QIS_pass_desc1").innerHTML ="To enhance security, a new password policy has been implemented.";
+
+	if(isSupport("UI4")){
 		$(".title_name").css({"color": "#000"})
 		$(".sub_title_name").css({"color": "#000"})
 		$(".form_input").css({
@@ -221,7 +225,7 @@ function initial(){
 		$(".businessStyle").css({"color": "#000"})
 	}
 
-	if(is_KR_sku || is_SG_sku || is_AA_sku)
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default)
 		$("#KRHint").show();
 
 	if(isIE8 || isIE9){
@@ -347,7 +351,15 @@ function validForm(){
 			return false;                   
 	}
 
-	if(is_KR_sku || is_SG_sku || is_AA_sku){		/* MODELDEP by Territory Code */
+	if(document.form.http_passwd_x.value == document.form.http_username_x.value){
+			showError(`<#JS_validLoginPWD_same#>`);
+			document.form.http_passwd_x.value = "";
+			document.form.http_passwd_x.focus();
+			document.form.http_passwd_x.select();
+			return false;                   
+	}
+
+	if(is_KR_sku || is_SG_sku || is_AA_sku || secure_default){		/* MODELDEP by Territory Code */
 		if(!validator.chkLoginPw_KR(document.form.http_passwd_x)){
 			return false;
 		}
@@ -475,15 +487,15 @@ var validator = {
 		
 		if(obj.value.length > 0 && obj.value.length < 5){
 			showError("<#JS_short_password#> <#JS_password_length#>");
-			obj.value = "";
 			obj.focus();
 			obj.select();
 			return false;
 		}
 		
 		if(obj.value.length > 32){
-            showError("<#JS_max_password#>");
-            obj.value = "";
+			var str_valid_max_password = `<#JS_max_password_var#>`;
+			str_valid_max_password = str_valid_max_password.replace("%1$@", "5");
+            showError(str_valid_max_password);
             obj.focus();
             obj.select();
             return false;
@@ -491,18 +503,16 @@ var validator = {
 
 		if(obj.value.charAt(0) == '"'){
 			showError('<#JS_validstr1#> ["]');
-			obj.value = "";
-                        obj.focus();
-                        obj.select();
-                        return false;
-                }
-                else if(obj.value.charAt(obj.value.length - 1) == '"'){
-                        showError('<#JS_validstr3#> ["]');
-			obj.value = "";
 			obj.focus();
 			obj.select();
-                        return false;
-                }
+			return false;
+		}
+		else if(obj.value.charAt(obj.value.length - 1) == '"'){
+			showError('<#JS_validstr3#> ["]');
+			obj.focus();
+			obj.select();
+			return false;
+		}
 		else{
 			var invalid_char = ""; 
 			for(var i = 0; i < obj.value.length; ++i){
@@ -513,7 +523,6 @@ var validator = {
 
 			if(invalid_char != ""){
 				showError("<#JS_validstr2#> '"+invalid_char+"' !");
-				obj.value = "";
 				obj.focus();
 				obj.select();
 				return false;
@@ -534,15 +543,15 @@ var validator = {
 		){
 				
 			showError("<#JS_validLoginPWD#>");
-			obj.value = "";
 			obj.focus();
 			obj.select();
 			return false;	
 		}
 		
 		if(obj.value.length > 32){
-			showError("<#JS_max_password#>");
-			obj.value = "";
+			var str_valid_max_password = `<#JS_max_password_var#>`;
+			str_valid_max_password = str_valid_max_password.replace("%1$@", "10");
+			showError(str_valid_max_password);
 			obj.focus();
 			obj.select();
 			return false;
@@ -550,14 +559,12 @@ var validator = {
 
 		if(obj.value.charAt(0) == '"'){
 			showError('<#JS_validstr1#> ["]');
-			obj.value = "";
 			obj.focus();
 			obj.select();
 			return false;
 		}
 		else if(obj.value.charAt(obj.value.length - 1) == '"'){
 			showError('<#JS_validstr3#> ["]');
-			obj.value = "";
 			obj.focus();
 			obj.select();
 			return false;
@@ -572,7 +579,6 @@ var validator = {
 
 		if(invalid_char != ""){
 			showError("<#JS_validstr2#> '"+invalid_char+"' !");
-			obj.value = "";
 			obj.focus();
 			obj.select();
 			return false;
@@ -610,7 +616,7 @@ function showError(str){
 			<div class="main_content">
 				<div class="title_name"><#PASS_changepasswd#></div>
 				<div class="sub_title_name">
-					<div>
+					<div id="QIS_pass_desc1">
 						<#QIS_pass_desc1#>
 					</div>
 					<div id="KRHint" style="display:none">

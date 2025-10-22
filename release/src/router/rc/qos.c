@@ -30,6 +30,7 @@
 #ifdef RTCONFIG_BWDPI
 #include <bwdpi.h>
 #endif
+#include <webapi.h>
 
 /*
 	DEBUG DEFINE
@@ -110,6 +111,7 @@ static void add_iptables_AMAS_WGN(FILE *fn, const char *action)
 			if(nvram_get_int(strcat_r(wlv, "_bss_enabled", tmp)) && 
 			   nvram_get_int(strcat_r(wlv, "_bw_enabled" , tmp))) {
 				wl_vif_to_subnet(wlv, net, sizeof(net)); // shared/misc.c
+				g_mark = guest_mark_calc(guest_mark);
 				snprintf(mssid_mark, sizeof(mssid_mark), "%d", g_mark);
 				if (!strcmp(net, "")) continue;
 				fprintf(fn, "-A PREROUTING -s %s -j %s %s\n", net, action, mssid_mark);
@@ -367,8 +369,8 @@ static unsigned calc(unsigned bw, unsigned pct)
 void del_EbtablesRules(void)
 {
 	/* Flush all rules in nat table of ebtable*/
-	if (module_loaded("ebtable_nat"))
-		eval("ebtables", "-t", "nat", "-F");
+	eval("ebtables", "-t", "nat", "-F");
+
 	etable_flag = 0;
 }
 
@@ -479,6 +481,7 @@ void add_EbtablesRules_BW()
 			   nvram_get_int(strcat_r(wlv, "_bw_enabled" , tmp))) {
 				WGN_ifname(i, j, wl_if);
 				if (!strcmp(wl_if, "")) continue;
+				g_mark = guest_mark_calc(guest_mark);
 				snprintf(mssid_mark, sizeof(mssid_mark), "%d", g_mark);
 				eval("ebtables", "-t", "nat", "-D", "PREROUTING",  "-i", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
 				eval("ebtables", "-t", "nat", "-D", "POSTROUTING", "-o", wl_if, "-j", "mark", "--set-mark", mssid_mark, "--mark-target", "ACCEPT");
@@ -1479,6 +1482,10 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 	}
 
 	g = buf = strdup(nvram_safe_get("qos_bw_rulelist"));
+
+	if(!validate_apply_input_value(g, "qos_bw_rulelist"))
+		goto QOS_BW_END;
+
 	while (g) {
 		if ((p = strsep(&g, "<")) == NULL) break;
 		if ((vstrsep(p, ">", &enable, &addr, &dlc, &upc, &prio)) != 5) continue;
@@ -1535,6 +1542,7 @@ static int add_bandwidth_limiter_rules(char *pcWANIF)
 			}
 		}
 	}
+QOS_BW_END:
 	free(buf);
 
 	// AMAS non-RE mode
@@ -1607,11 +1615,13 @@ static int start_bandwidth_limiter(void)
 		"\n"
 		"\t$TCA parent 1:1 classid 1:9 htb rate 10240000kbit ceil 10240000kbit prio 1\n"
 		"\t$TQA parent 1:9 handle 9: $SCH\n"
-		"\t$TFA parent 1: prio 1 protocol ip handle 9 fw flowid 1:9\n"
+		"\t$TFA parent 1: prio 1 protocol ip handle 9/0x%x fw flowid 1:9\n"
 		"\n"
 		"\t$TCAU parent 2:1 classid 2:9 htb rate 10240000kbit ceil 10240000kbit prio 1\n"
 		"\t$TQAU parent 2:9 handle 9: $SCH\n"
-		"\t$TFAU parent 2: prio 1 protocol ip handle 9 fw flowid 2:9\n"
+		"\t$TFAU parent 2: prio 1 protocol ip handle 9/0x%x fw flowid 2:9\n",
+		LIMITER_MASK,
+		LIMITER_MASK
 	);
 
 	/* ASUSWRT
@@ -1625,6 +1635,9 @@ static int start_bandwidth_limiter(void)
 	*/
 
 	g = buf = strdup(nvram_safe_get("qos_bw_rulelist"));
+
+	if(!validate_apply_input_value(g, "qos_bw_rulelist"))
+		goto QOS_BW_END;
 
 	while (g) {
 		if ((p = strsep(&g, "<")) == NULL) break;
@@ -1648,13 +1661,13 @@ static int start_bandwidth_limiter(void)
 				"\n"
 				"\t$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
 				"\t$TQAU parent 2:%d handle %d: $SCH\n"
-				"\t$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
+				"\t$TFAU parent 2: prio %d protocol ip handle %d/0x%x fw flowid 2:%d\n"
 				, class, dlc, dlc, class
 				, class, class
 				, class, s[2], s[3], s[4], s[5], s[0], s[1], class
 				, class, upc, upc, class
 				, class, class
-				, class, class, class
+				, class, class, LIMITER_MASK, class
 			);
 		}
 		else if (addr_type == TYPE_IP || addr_type == TYPE_IPRANGE)
@@ -1663,21 +1676,21 @@ static int start_bandwidth_limiter(void)
 				"\n"
 				"\t$TCA parent 1:1 classid 1:%d htb rate %skbit ceil %skbit prio %d\n"
 				"\t$TQA parent 1:%d handle %d: $SCH\n"
-				"\t$TFA parent 1: prio %d protocol ip handle %d fw flowid 1:%d\n"
+				"\t$TFA parent 1: prio %d protocol ip handle %d/0x%x fw flowid 1:%d\n"
 				"\n"
 				"\t$TCAU parent 2:1 classid 2:%d htb rate %skbit ceil %skbit prio %d\n"
 				"\t$TQAU parent 2:%d handle %d: $SCH\n"
-				"\t$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n"
+				"\t$TFAU parent 2: prio %d protocol ip handle %d/0x%x fw flowid 2:%d\n"
 				, class, dlc, dlc, class
 				, class, class
-				, class, class, class
+				, class, class, LIMITER_MASK, class
 				, class, upc, upc, class
 				, class, class
-				, class, class, class
+				, class, class, LIMITER_MASK, class
 			);
 		}
 	}
-
+QOS_BW_END:
 	if (buf) free(buf);
 
 	// init guest 3: ~ 14: (12 guestnetwork), start number = 3
@@ -1708,6 +1721,7 @@ static int start_bandwidth_limiter(void)
 
 				QOSDBG("[BWLIT_GUEST] Processor [%s] Interface \n", wl_if);
 
+				g_mark = guest_mark_calc(guest_mark);
 				fprintf(f,
 					"\n"
 					"\ttc qdisc del dev %s root 2>/dev/null\n"
@@ -1721,11 +1735,11 @@ static int start_bandwidth_limiter(void)
 					"\n"
 					"\t$TCA%d%d parent %d:1 classid %d:%d htb rate 1kbit ceil %skbit prio %d\n"
 					"\t$TQA%d%d parent %d:%d handle %d: $SCH\n"
-					"\t$TFA%d%d parent %d: prio %d protocol ip handle %d fw flowid %d:%d\n" // 10
+					"\t$TFA%d%d parent %d: prio %d protocol ip handle %d/0x%x fw flowid %d:%d\n" // 10
 					"\n"
 					"\t$TCAU parent 2:1 classid 2:%d htb rate 1kbit ceil %skbit prio %d\n"
 					"\t$TQAU parent 2:%d handle %d: $SCH\n"
-					"\t$TFAU parent 2: prio %d protocol ip handle %d fw flowid 2:%d\n" // 13
+					"\t$TFAU parent 2: prio %d protocol ip handle %d/0x%x fw flowid 2:%d\n" // 13
 					, wl_if
 					, i, j, wl_if
 					, i, j, i, j
@@ -1735,10 +1749,10 @@ static int start_bandwidth_limiter(void)
 					, i, j, guest, guest, nvram_safe_get(strcat_r(wlv, "_bw_dl", tmp)) //7
 					, i, j, guest, guest, g_mark, nvram_safe_get(strcat_r(wlv, "_bw_dl", tmp)), g_mark
 					, i, j, guest, g_mark, g_mark
-					, i, j, guest, g_mark, g_mark, guest, g_mark // 10
+					, i, j, guest, g_mark, g_mark, LIMITER_MASK, guest, g_mark // 10
 					, g_mark, nvram_safe_get(strcat_r(wlv, "_bw_ul", tmp)), g_mark
 					, g_mark, g_mark
-					, g_mark, g_mark, g_mark //13
+					, g_mark, g_mark, LIMITER_MASK, g_mark //13
 				);
 				QOSDBG("[BWLIT_GUEST] create %s bandwidth limiter, qdisc=%d, class=%d\n", wl_if, guest, g_mark);
 				guest++; // add guest 3: ~ 14: (12 guestnetwork)
@@ -1857,6 +1871,7 @@ static int start_bandwidth_limiter_AMAS_WGN(void)
 			QOSDBG("[BWLIT_GUEST] Processor [%s] Interface \n", wl_if);
 			if (!strcmp(wl_if, "")) continue;
 
+			g_mark = guest_mark_calc(guest_mark);
 			fprintf(f, "\n"
 				   "\ttc qdisc del dev %s root 2>/dev/null\n", wl_if);
 			fprintf(f, "\tGUEST%d%d=%s\n", i, j, wl_if);
@@ -1869,7 +1884,7 @@ static int start_bandwidth_limiter_AMAS_WGN(void)
 			fprintf(f, "\n"
 				   "\t$TCA%d%d parent %d:1 classid %d:%d htb rate 1kbit ceil %skbit prio %d\n", i, j, guest, guest, g_mark, nvram_pf_safe_get(wlv, "_bw_dl"), g_mark);
 			fprintf(f, "\t$TQA%d%d parent %d:%d handle %d: $SFQ\n", i, j, guest, g_mark, g_mark);
-			fprintf(f, "\t$TFA%d%d parent %d: prio %d protocol ip u32 match mark %d 0x%x flowid %d:%d\n", i, j, guest, g_mark, g_mark, QOS_MASK, guest, g_mark); // 10
+			fprintf(f, "\t$TFA%d%d parent %d: prio %d protocol ip u32 match mark %d 0x%x flowid %d:%d\n", i, j, guest, g_mark, g_mark, LIMITER_MASK, guest, g_mark); // 10
 			QOSDBG("[BWLIT_GUEST] create %s bandwidth limiter, qdisc=%d, class=%d\n", wl_if, guest, g_mark);
 
 			guest++; // add guest 3: ~ 14: (12 guestnetwork)

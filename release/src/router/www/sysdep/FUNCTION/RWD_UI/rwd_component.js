@@ -14,6 +14,11 @@
 		} ).observe(this);
 	};
 }
+if(typeof stringSafeGet != "function"){
+	function stringSafeGet(str){
+		return str.replace(new RegExp("&#39;", 'g'), "'");
+	}
+}
 var ip_RegExp = {
 	"IPv4" : "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$",
 	"IPv4_CIDR" : "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$",
@@ -1072,10 +1077,16 @@ function resize_iframe_height(_preheight){
 	}
 }
 function showLoading_RWD(seconds, flag){
-	$("#Loading").css({"width":"", "height":""});
-	progress = 100/seconds;
-	y = 0;
-	LoadingTime(seconds, flag);
+	if (isSupport("UI4") && businessLoader) {
+		businessLoader.setSeconds(seconds);
+		businessLoader.show();
+	}
+	else {
+		$("#Loading").css({"width":"", "height":""});
+		progress = 100/seconds;
+		y = 0;
+		LoadingTime(seconds, flag);
+	}
 }
 function show_customize_alert(_text){
 	$(".popup_customize_alert").css("display", "flex");

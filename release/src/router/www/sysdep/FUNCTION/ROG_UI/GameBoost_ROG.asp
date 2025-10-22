@@ -23,7 +23,7 @@
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js?v=4"></script>
 <style type="text/css">
 .appIcons{
 	width:36px;
@@ -159,6 +159,12 @@ function register_event(){
 				this.style.fontWeight = "bolder";
 			},
 			drop: function(event,ui){
+				// first is empty, the maximun  rule limit is 32
+				if(qos_rulelist.split("<").length > 33){
+					alert('<#List_limit#>: 32')
+					return false;
+				}
+
 				this.style.color = "";
 				this.style.backgroundColor = "";
 				this.style.fontWeight = "";

@@ -407,6 +407,39 @@ void Debug2String(int level, char *path, int conlog, int showtime, unsigned file
 		p_message += str_end;
 	}
 }
+
+void security2log(int level, char *path, int conlog, int showtime, unsigned filesize, const char *fmt, ...)
+{
+	int max_log = 5;
+	int len = 0, str_end = 0;
+	char *p_message = NULL, *log_message = NULL;
+	char message[2048] = {0}, tmp1[768] = {0}, tmp2[1024] = {0};
+	va_list args;
+
+	va_start(args, fmt);
+	len = vsnprintf(message, sizeof(message), fmt, args);
+	va_end(args);
+
+	p_message = message;
+
+	while(len > 0 && max_log > 0){
+
+		strlcpy(tmp1, p_message, sizeof(tmp1));
+		log_message = tmp1;
+		str_end	 = strlen(tmp1);
+
+		if(tmp1[str_end-1] != '\n'){
+			snprintf(tmp2, sizeof(tmp2), "%s\n", tmp1);
+			log_message = tmp2;
+		}
+
+		asusdebuglog(level, path, conlog, showtime, filesize, "%s", log_message);
+
+		len = len - str_end;
+		max_log--;
+		p_message += str_end;
+	}
+}
 #endif
 
 void sethost(const char *host)
@@ -1090,6 +1123,7 @@ struct etag_filter_table etag_filter_table[] = {
     {"client.ovpn",0},
     {"chanspec.js",0},
     {"client_function.js",0},
+    {"asus_policy.js",2},
     {"disk.js",0},
     {"form.js",0},
     {"general.js",0},
@@ -1127,6 +1161,51 @@ int getEtagHeaderFlag(const char *key)
         }
     }
     return 1;
+}
+
+int append_etag_header(char *file, char *extra_header, char *if_none_match, char *title, int title_len, char *final_header, int final_header_len)
+{
+	int ret = 0, status = 200;
+	int etag_header_flag = 0, safariAgent = 0;
+	time_t now = time(NULL);
+	char md5String[35] = {0}, timebuf[100] = {0}, etag_header[512] = {0};
+
+	strlcpy(title, "OK", title_len);
+
+	etag_header_flag = getEtagHeaderFlag(file);
+
+	if(!strstr(user_agent, "Chrome") && strstr(user_agent, "Safari"))
+		safariAgent = 1;
+
+	if(!safariAgent && etag_header_flag > 0) {
+		if ((ret = get_file_md5(file, md5String, sizeof(md5String))) == 0) {
+
+			strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
+
+			if(strstr(file, ".js"))
+				sprintf(md5String, "%s%s", md5String, nvram_get("preferred_lang"));
+
+			if(etag_header_flag==2 && extra_header){
+				strlcpy(final_header, extra_header, final_header_len);
+				strlcat(final_header, "\r\n", final_header_len);
+			}
+			strlcat(final_header, "ETag: ", final_header_len);
+			strlcat(final_header, md5String, final_header_len);
+			strlcat(final_header, "\r\n", final_header_len);
+			strlcat(final_header, "Last-Modified: ", final_header_len);
+			strlcat(final_header, timebuf, final_header_len);
+
+			if (if_none_match && strstr(if_none_match, md5String)){
+				status = 304;
+				strlcpy(title, "Not Modified", title_len);
+			}
+		}
+	}
+
+	if(*final_header == '\0' && extra_header)
+		strlcpy(final_header, extra_header, final_header_len);
+
+	return status;
 }
 
 static void
@@ -1544,8 +1623,11 @@ handle_request(void)
 			}
 			if (handler->auth) {
 				url_do_auth = 1;
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX11000_PRO) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000_AI) || defined(GSBE18000)
-				switch_ledg(LEDG_QIS_FINISH);
+#if defined(RTCONFIG_AURALED) \
+	|| defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX6000) || defined(GTAXE16000) \
+	|| defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX11000_PRO) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(TUFAX6000) || defined(GTBE96) \
+	|| defined(GTBE19000) || defined(GTBE19000AI) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GTBE96_AI)
+				httpd_switch_ledg(LEDG_QIS_FINISH);
 #endif
 				if ((mime_exception&MIME_EXCEPTION_NOAUTH_FIRST)&&!x_Setting) {
 					//skip_auth=1;
@@ -1664,6 +1746,7 @@ handle_request(void)
 					&& !strstr(file, "asustitle.png")
 #endif
 					&& !strstr(file,"cert.crt")
+					&& !strstr(file,"cacert_key.tar")
 					&& !strstr(file,"cert_key.tar")
 					&& !strstr(file,"cert.tar")
 #ifdef RTCONFIG_OPENVPN
@@ -1692,56 +1775,22 @@ handle_request(void)
 						))
 #endif
 					){
-				send_error( 404, "Not Found", (char*) 0, "File not found." );
-				return;
-			}
+              send_error( 404, "Not Found", (char*) 0, "File not found." );
+              return;
+           }
 
-
-            char md5String[35] = {0};
-            char etag_header[256] = {0};
-            int ret = 0;
-
-
-            int etag_header_flag = getEtagHeaderFlag(file);
-            if(etag_header_flag > 0) {
-                if ((ret = get_file_md5(file, md5String, sizeof(md5String))) == 0) {
-                    if(strstr(file, ".js")){
-                        sprintf(md5String, "%s%s", md5String, nvram_get("preferred_lang"));
-                    }
-                    if(etag_header_flag==2){
-                        strlcpy(etag_header, handler->extra_header,sizeof(etag_header));
-                        strlcat(etag_header, "\r\n",sizeof(etag_header));
-                        strlcat(etag_header, "Etag: ",sizeof(etag_header));
-                        strlcat(etag_header, md5String,sizeof(etag_header));
-                    }else{
-                        strlcpy(etag_header, "Etag: ",sizeof(etag_header));
-                        strlcat(etag_header, md5String,sizeof(etag_header));
-                    }
-                }
-            }
-
-            char final_header[256] = {0};
             int status = 200;
-            char *title = "OK";
-            if (strlen(etag_header) == 0) {
-                if(handler->extra_header)
-                    strlcpy(final_header, handler->extra_header,sizeof(final_header));
-            } else {
-                strlcpy(final_header, etag_header,sizeof(final_header));
-                if (if_none_match && strstr(if_none_match, md5String)){
-                    status = 304;
-                    title = "Not Modified";
-                }
-            }
+            char final_header[512] = {0}, title[64] = {0};
 
-            if (nvram_match("x_Setting", "0") &&
-                (strcmp(url, "QIS_default.cgi") == 0 || strcmp(url, "page_default.cgi") == 0 ||
-                 !strcmp(websGetVar(file, "x_Setting", ""), "1"))) {
-                if (!fromapp) set_referer_host();
-                send_token_headers(status, title, final_header, handler->mime_type, fromapp);
+            status = append_etag_header(file, handler->extra_header, if_none_match, title, sizeof(title), final_header, sizeof(final_header));
 
-			}else if(strcmp(file, "login.cgi") && strcmp(file, "login_v2.cgi")){
-				send_headers( 200, "OK", handler->extra_header, handler->mime_type, fromapp);
+			if (nvram_match("x_Setting", "0") &&
+				(strcmp(url, "QIS_default.cgi") == 0 || strcmp(url, "page_default.cgi") == 0 ||
+				!strcmp(websGetVar(file, "x_Setting", ""), "1"))) {
+				if (!fromapp) set_referer_host();
+				send_token_headers(status, title, final_header, handler->mime_type, fromapp);
+			}else if (strncmp(url, "login.cgi", strlen(url)) != 0 && strcmp(file, "login_v2.cgi")) {
+				send_headers(status, title, final_header, handler->mime_type, fromapp);
 			}
 			if (strcasecmp(method, "head") != 0 && handler->output) {
 				handler->output(file, conn_fp);
@@ -2905,6 +2954,7 @@ void start_ssl(int http_port)
 			if (save)
 				save_cert();
 
+			prn_cert_info(HTTPD_CERT);
 			/* Unset reload flag if set */
 #if defined(RTCONFIG_IPV6)
 			if (!http_ipv6_only && nvram_get("httpds_reload_cert"))

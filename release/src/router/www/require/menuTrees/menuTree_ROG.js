@@ -146,9 +146,6 @@ define(function(){
 					{url: "Main_TrafficMonitor_last24.asp", tabName: "__INHERIT__"},
 					{url: "Main_TrafficMonitor_daily.asp", tabName: "__INHERIT__"},
 					{url: "Main_TrafficMonitor_monthly.asp", tabName: "__INHERIT__"},
-					{url: "Main_TrafficMonitor_devrealtime.asp", tabName: "__INHERIT__"},
-					{url: "Main_TrafficMonitor_devdaily.asp", tabName: "__INHERIT__"},
-					{url: "Main_TrafficMonitor_devmonthly.asp", tabName: "__INHERIT__"},
 					{url: "TrafficAnalyzer_Statistic.asp", tabName: "<#Statistic#>"},
 					{url: "AdaptiveQoS_TrafficLimiter.asp", tabName: "Traffic Limiter"},
 					{url: "AdaptiveQoS_WebHistory.asp", tabName: "<#Adaptive_History#>"},
@@ -316,6 +313,7 @@ define(function(){
 					{url: "Advanced_TR069_Content.asp", tabName: "TR-069"},
 					{url: "Advanced_Notification_Content.asp", tabName: "Notification"},
 					{url: "Advanced_Privacy.asp", tabName: "<#menu_privacy#>"},
+					{url: "Advanced_MultiFuncBtn.asp", tabName: "Multi-Function Button"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			},
@@ -331,6 +329,7 @@ define(function(){
 					{url: "Main_IPTStatus_Content.asp", tabName: "<#menu5_7_5#>"},
 					{url: "Main_AdslStatus_Content.asp", tabName: "<#menu_dsl_log#>"},
 					{url: "Main_ConnStatus_Content.asp", tabName: "<#Connections#>"},
+					{url: "Main_Security_Change_Notification.asp", tabName: "Security Update Notification"},
 					/* {url: "###Main_ConnStatus_Content.asp", tabName: "Captive Portal Connection Log"}, */
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
@@ -426,7 +425,7 @@ define(function(){
 					retArray.push("menu_AiMesh");
 				else{
 					if(ameshRouter_support){
-						if(!isSwMode("rt") && !isSwMode("ap"))
+						if((!isSwMode("RT") && !isSwMode("WISP")) && !isSwMode("ap"))
 							retArray.push("menu_AiMesh");
 					}
 					else if(ameshNode_support)
@@ -434,7 +433,7 @@ define(function(){
 				}
 
 				/* Operation Mode */
-				if(isSwMode("re")){
+				if(isSwMode("RP")){
 					retArray.push("menu_GameBoost");
 					retArray.push("menu_GuestNetwork");
 					retArray.push("menu_AccessControl");
@@ -745,7 +744,7 @@ define(function(){
 				else
 					retArray.push("Advanced_DHCP_Content.asp");
 
-				if(!wifiproxy_support || !concurrep_support || !isSwMode("re")){
+				if(!wifiproxy_support || !concurrep_support || !isSwMode("RP")){
 					retArray.push("Advanced_WProxy_Content.asp");
 				}
 				
@@ -771,7 +770,7 @@ define(function(){
 					retArray.push("Advanced_Roaming_Block_Content.asp");
 				else{
 					if(ameshRouter_support){
-						if(!isSwMode("rt") && !isSwMode("ap"))
+						if((!isSwMode("RT") && !isSwMode("WISP")) && !isSwMode("ap"))
 							retArray.push("Advanced_Roaming_Block_Content.asp");
 					}
 					else if(ameshNode_support)
@@ -796,6 +795,7 @@ define(function(){
 				
 				if(isSupport("sdn_mainfh")){
 					retArray.push("Advanced_ACL_Content.asp");
+					retArray.push("Advanced_WSecurity_Content.asp");
 				}
 
 				if(isSupport("BUSINESS")){
@@ -807,13 +807,17 @@ define(function(){
 					retArray.push("fileflex.asp");
 				}
 
+				if(!isSupport("sw_btn")){
+					retArray.push("Advanced_MultiFuncBtn.asp");
+				}
+
 				if(isSupport("wifi7")){
 					retArray.push("cloud_sync.asp");
 					retArray.push("cloud_router_sync.asp");
 				}
 
 				/* Operation Mode */
-				if(isSwMode("re")){
+				if(isSwMode("RP")){
 					retArray.push("GameBoost_ROG.asp");
 					retArray.push("TrafficAnalyzer_Statistic.asp");
 					retArray.push("Advanced_DHCP_Content.asp");

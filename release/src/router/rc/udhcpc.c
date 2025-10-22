@@ -306,6 +306,8 @@ deconfig(int zcip)
 	if (!(unit < 0))
 		update_wan_state(prefix, WAN_STATE_STOPPED, end_wan_sbstate);
 
+	logmessage(zcip ? "zcip client" : "dhcp client", "deconfig");
+
 	_dprintf("udhcpc:: %s done\n", __FUNCTION__);
 	return 0;
 }
@@ -379,7 +381,7 @@ _dprintf("%s(%d): ifunit=%d, if=%s.\n", __func__, getpid(), ifunit, wan_ifname);
 			memset(gateway_mac, 0, sizeof(gateway_mac));
 			get_mac_from_ip(gateway, gateway_mac, sizeof(gateway_mac));
 			if(!gateway_mac[0]){
-				_dprintf("%s(%lu): auto_wanport: Fail to get gateway_mac & restore the LAN IP of router.\n", __func__, getpid());
+				_dprintf("%s(%lu): auto_wanport: Fail to get gateway_mac.\n", __func__, getpid());
 				ifconfig(lan_ifname, IFUP, "0.0.0.0", NULL);
 				ifconfig(lan_ifname, IFUP, lan_ip, lan_net);
 
@@ -391,7 +393,7 @@ _dprintf("%s(%d): ifunit=%d, if=%s.\n", __func__, getpid(), ifunit, wan_ifname);
 
 			br_no = get_br_port_no_from_mac(gateway_mac);
 			if(br_no < 0){
-				_dprintf("%s(%lu): auto_wanport: Canot get gateway's br_no.\n", __func__, getpid());
+				_dprintf("%s(%lu): auto_wanport: Cannot get gateway's br_no.\n", __func__, getpid());
 				ifconfig(lan_ifname, IFUP, "0.0.0.0", NULL);
 				ifconfig(lan_ifname, IFUP, lan_ip, lan_net);
 
@@ -399,10 +401,22 @@ _dprintf("%s(%d): ifunit=%d, if=%s.\n", __func__, getpid(), ifunit, wan_ifname);
 
 				return -1;
 			}
-
 			_dprintf("%s(%lu): auto_wanport: Got gateway's br_no %d.\n", __func__, getpid(), br_no);
-			get_if_from_br_port_no(br_no, if_name, sizeof(if_name));
+
+			if(get_autoif_from_br_port_no(br_no, if_name, sizeof(if_name)) < 0){
+				ifconfig(lan_ifname, IFUP, "0.0.0.0", NULL);
+				ifconfig(lan_ifname, IFUP, lan_ip, lan_net);
+
+				add_lan_routes(lan_ifname);
+
+				if(get_if_from_br_port_no(br_no, if_name, sizeof(if_name)) == NULL)
+					return -1;
+				_dprintf("%s(%lu): auto_wanport: The port(%s) of the DHCP source isn't AUTO_WANPORT...\n", __func__, getpid(), if_name);
+
+				return -1;
+			}
 			_dprintf("%s(%lu): auto_wanport: Got gateway's if %s.\n", __func__, getpid(), if_name);
+
 			wan_ifname = if_name;
 
 			_dprintf("%s(%lu): auto_wanport: restore the LAN IP of router.\n", __func__, getpid());
@@ -414,7 +428,7 @@ _dprintf("%s(%d): ifunit=%d, if=%s.\n", __func__, getpid(), ifunit, wan_ifname);
 			_dprintf("%s(%lu): auto_wanport: Choose the WAN interface %s because of DHCP.\n", __func__, getpid(), wan_ifname);
 			set_auto_wanport(wan_ifname, 1);
 
-			return -1;
+			return 0;
 		}
 
 		ifunit = nvram_get_int("autowan_live_wanunit");
@@ -1173,11 +1187,11 @@ expires_lan(char *lan_ifname, unsigned int in)
 	return 0;
 }
 
-#ifdef RTCONFIG_AMAS_WGN
+#if defined(RTCONFIG_AMAS_WGN) || defined(RTCONFIG_MULTILAN_CFG)
 static void restart_re_qos()
 {
-       // AMAS RE mode
-       if (nvram_get_int("re_mode") == 1) start_iQos();
+	// AMAS RE mode
+	if (nvram_get_int("re_mode") == 1) start_iQos();
 }
 #endif
 
@@ -1299,7 +1313,7 @@ bound_lan(void)
 
 _dprintf("%s: IFUP.\n", __FUNCTION__);
 
-#ifdef RTCONFIG_AMAS_WGN
+#if defined(RTCONFIG_AMAS_WGN) || defined(RTCONFIG_MULTILAN_CFG)
 	/* move qos restart here to trigger early */
 	restart_re_qos();
 #endif
@@ -2028,7 +2042,7 @@ skip:
 		update_wgs_client_ep();
 #endif
 #if defined(RTCONFIG_SAMBASRV) || defined(RTCONFIG_TUXERA_SMBD)
-		notify_rc("restart_samba");
+		notify_rc_and_wait_2min("restart_samba");
 #endif
 	}
 
@@ -2279,7 +2293,7 @@ start_dhcp6c(void)
 
 #ifndef RT4GAC68U
 	if (getpid() != 1) {
-		notify_rc_and_wait_1min("start_dhcp6c");
+		notify_rc_and_wait_2min("start_dhcp6c");
 		return 0;
 	}
 #endif
@@ -2475,7 +2489,7 @@ int start_mtwan_dhcp6c(int unit)
 	struct duid duid;
 	char duid_arg[sizeof(duid)*2+1];
 	char prefix_arg[sizeof("128:xxxxxxxx")];
-	int service;
+	int service, i;
 #ifdef RTCONFIG_SOFTWIRE46
 	int wan_proto;
 #endif
@@ -2512,7 +2526,10 @@ int start_mtwan_dhcp6c(int unit)
 			((unsigned long)(duid.ea[3] & 0x0f) << 16) |
 			((unsigned long)(duid.ea[4]) << 8) |
 			((unsigned long)(duid.ea[5])) : 1;
-		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", 0, iaid);
+		i = (nvram_get_int(ipv6_nvname("ipv6_prefix_len_wan")) ? : 0);
+		if ((i < 48) || (i > 64))
+			i = 0;
+		snprintf(prefix_arg, sizeof(prefix_arg), "%d:%lx", i, iaid);
 		dhcp6c_argv[index++] = "-P";
 		dhcp6c_argv[index++] = prefix_arg;
 	}

@@ -14,6 +14,10 @@ export CFLAGS += -DBCM_KF_NETFILTER
 endif
 endif
 
+ifeq ($(HND_ROUTER_AX), y)
+CFLAGS  += -I$(SRCBASE)/../components/math/include -I$(SRCBASE)/../components/proto/include -I$(SRCBASE)/../components/wlioctl/include
+endif
+
 OBJS = webapi.o
 
 #OBJS += $(if $(wildcard priv_webapi.c), priv_webapi.o, prebuild/priv_webapi.o)
@@ -53,7 +57,9 @@ endif
 ifeq ($(RTCONFIG_CFGSYNC),y)
 CFLAGS += -I$(TOP)/shared/sysdeps/amas
 CFLAGS += -I$(TOP)/cfg_mnt
+CFLAGS += -I$(TOP)/networkmap/api
 LIBS += -L$(TOP)/cfg_mnt -lcfgmnt
+LIBS += -L$(TOP)/networkmap/api/ -lnmpapi
 endif
 
 ifeq ($(RTCONFIG_TRUSTZONE), y)
@@ -84,6 +90,19 @@ endif
 ifeq ($(BRCM_CHIP),6813)
 CFLAGS += -DCHIP_BCM4916
 endif
+ifeq ($(BRCM_CHIP),6764)
+CFLAGS += -DCHIP_BCM6764
+endif
+
+# BUILD_NAME
+ifneq ($(findstring 4G-,$(BUILD_NAME)),)
+TARGET_MODEL = RT$(subst -,,$(BUILD_NAME))
+else ifneq ($(findstring DSL,$(BUILD_NAME)),)
+TARGET_MODEL = $(subst -,_,$(BUILD_NAME))
+else
+TARGET_MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
+endif
+CFLAGS  += -D$(TARGET_MODEL)
 
 all: clean libwebapi.so
 

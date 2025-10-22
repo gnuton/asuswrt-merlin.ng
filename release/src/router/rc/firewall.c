@@ -1950,7 +1950,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	write_port_forwarding(fp, "game_vts_rulelist", "GAME_VSERVER", lan_ip, lan_if);
 #endif
 
-	if (is_nat_enabled() && nvram_get_int("upnp_enable"))
+	if (is_nat_enabled() && nvram_get_int("upnp_enable") && *wan_if)
 	{
 		/* call UPNP chain */
 		fprintf(fp, "-A VSERVER -j VUPNP\n");
@@ -1958,7 +1958,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	}
 
 	/* Trigger port setting */
-	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1"))
+	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1") && *wan_if)
 		write_porttrigger(fp, wan_if, 1);
 
 #if 0
@@ -2475,7 +2475,8 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 				continue;
 
 			wan_if = get_wan_ifname(unit);
-			fprintf(fp, "-A POSTROUTING -o %s -j PUPNP\n", wan_if);
+			if (*wan_if)
+				fprintf(fp, "-A POSTROUTING -o %s -j PUPNP\n", wan_if);
 		}
 	}
 
@@ -4496,6 +4497,9 @@ filter_setting(int wan_unit, char *lan_if, char *lan_ip, char *logaccept, char *
 #ifdef RTCONFIG_GN_WBL
 	add_GN_WBL_ChainRule(fp);
 #endif
+#ifdef RTCONFIG_HNS
+	fprintf(fp, ":%s - [0:0]\n", HNS_UFWD_CHAIN);
+#endif
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled()) {
@@ -4554,7 +4558,17 @@ filter_setting(int wan_unit, char *lan_if, char *lan_ip, char *logaccept, char *
 			URL_FILTER_INPUT_CHAIN, URL_FILTER_FORWARD_CHAIN);
 		fprintf(fp_ipv6, ":%s - [0:0]\n", NW_SERVICE_FILTER_FORWARD_CHAIN);
 #endif
+#ifdef RTCONFIG_HNS
+		fprintf(fp_ipv6, ":%s - [0:0]\n", HNS_UFWD_CHAIN);
+#endif
 	}
+#endif
+
+#ifdef RTCONFIG_HNS
+	add_hns_ufwd_rules(fp);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled()) add_hns_ufwd_rules(fp_ipv6);
+#endif
 #endif
 
 #ifdef RTCONFIG_IPSEC
@@ -4857,6 +4871,10 @@ TRACE_PT("writing Parental Control\n");
 
 #ifdef RTCONFIG_VPN_FUSION
         write_vpn_fusion_filter(fp, lan_ip);
+#endif
+
+#ifdef RTCONFIG_AI_SERVICE
+	fprintf(fp, "-I INPUT -i eth.ai-10 -j ACCEPT\n");
 #endif
 
 #ifdef RTCONFIG_MULTILAN_CFG
@@ -5248,7 +5266,22 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp_ipv6, "-A INPUT -j %s\n", SDN_FILTER_INPUT_CHAIN);
 #endif
 #endif
+#ifdef RTCONFIG_HNS
+		add_hns_ufwd_input_rules(fp);
+#ifdef RTCONFIG_IPV6
+		if (ipv6_enabled()) add_hns_ufwd_input_rules(fp_ipv6);
+#endif
+#endif
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
+	}
+	else {
+		/* when firewall is disabled */
+#ifdef RTCONFIG_HNS
+		add_hns_ufwd_input_rules(fp);
+#ifdef RTCONFIG_IPV6
+		if (ipv6_enabled()) add_hns_ufwd_input_rules(fp_ipv6);
+#endif
+#endif
 	}
 
 /* apps_dm DHT patch */
@@ -5294,6 +5327,20 @@ TRACE_PT("writing Parental Control\n");
 	    || nvram_get_int("wan_mtu")
 	    ) {
 		fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+
+		/*
+		  To fix the parantal control online mode issue that the client is in the period which can access internet cannot reach some web site.
+		  We insert the rule of TCPMSS to top of chain PControls if need.
+		*/
+#ifdef RTCONFIG_PARENTALCTRL
+		if (pc_count > 0 || 
+#ifdef RTCONFIG_PC_REWARD
+			pc_reward_count > 0
+#endif
+		) {
+			fprintf(fp, "-I PControls -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+		}
+#endif // RTCONFIG_PARENTALCTRL
 	}
 #ifdef RTCONFIG_IPV6
 	switch (get_ipv6_service()) {
@@ -5314,8 +5361,30 @@ TRACE_PT("writing Parental Control\n");
 	case IPV6_6TO4:
 	case IPV6_6RD:
 		fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+
+		/*
+		  To fix the parantal control online mode issue that the client is in the period which can access internet cannot reach some web site.
+		  We insert the rule of TCPMSS to top of chain PControls if need.
+		*/
+#ifdef RTCONFIG_PARENTALCTRL
+		if (pc_count > 0 || 
+#ifdef RTCONFIG_PC_REWARD
+			pc_reward_count > 0
+#endif
+		) {
+			fprintf(fp_ipv6, "-I PControls -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+		}
+#endif // RTCONFIG_PARENTALCTRL
 		break;
 	}
+#endif
+
+#ifdef RTCONFIG_HNS
+	/* move hns forward rules after TCPMSS rule, if not, will effect some connections in pppoe */
+	add_hns_ufwd_forward_rules(fp);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled()) add_hns_ufwd_forward_rules(fp_ipv6);
+#endif
 #endif
 
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
@@ -6186,6 +6255,9 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #ifdef RTCONFIG_GN_WBL
 	add_GN_WBL_ChainRule(fp);
 #endif
+#ifdef RTCONFIG_HNS
+	fprintf(fp, ":%s - [0:0]\n", HNS_UFWD_CHAIN);
+#endif
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled()) {
@@ -6243,7 +6315,17 @@ filter_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 			URL_FILTER_INPUT_CHAIN, URL_FILTER_FORWARD_CHAIN);
 		fprintf(fp_ipv6, ":%s - [0:0]\n", NW_SERVICE_FILTER_FORWARD_CHAIN);
 #endif
+#ifdef RTCONFIG_HNS
+		fprintf(fp_ipv6, ":%s - [0:0]\n", HNS_UFWD_CHAIN);
+#endif
 	}
+#endif
+
+#ifdef RTCONFIG_HNS
+	add_hns_ufwd_rules(fp);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled()) add_hns_ufwd_rules(fp_ipv6);
+#endif
 #endif
 
 #ifdef RTCONFIG_IPSEC
@@ -6530,6 +6612,8 @@ TRACE_PT("writing Parental Control\n");
 #endif
 					continue;
 				wan_if = get_wan_ifname(unit);
+				/* fix multiwan wan_if is empty issue */
+				if (!strcmp(wan_if, "") || wan_if == NULL) continue;
 				fprintf(fp, "-A %s -i %s -p icmp -j %s\n", "INPUT_PING", wan_if, logdrop);
 			}
 		}
@@ -6569,6 +6653,10 @@ TRACE_PT("writing Parental Control\n");
 
 #ifdef RTCONFIG_VPN_FUSION
         write_vpn_fusion_filter(fp, lan_ip);
+#endif
+
+#ifdef RTCONFIG_AI_SERVICE
+	fprintf(fp, "-I INPUT -i eth.ai-10 -j ACCEPT\n");
 #endif
 
 #ifdef RTCONFIG_MULTILAN_CFG
@@ -6966,7 +7054,22 @@ TRACE_PT("writing Parental Control\n");
 			fprintf(fp_ipv6, "-A INPUT -j %s\n", SDN_FILTER_INPUT_CHAIN);
 #endif
 #endif
+#ifdef RTCONFIG_HNS
+		add_hns_ufwd_input_rules(fp);
+#ifdef RTCONFIG_IPV6
+		if (ipv6_enabled()) add_hns_ufwd_input_rules(fp_ipv6);
+#endif
+#endif
 		fprintf(fp, "-A INPUT -j %s\n", logdrop);
+	}
+	else {
+		/* when firewall is disabled */
+#ifdef RTCONFIG_HNS
+		add_hns_ufwd_input_rules(fp);
+#ifdef RTCONFIG_IPV6
+		if (ipv6_enabled()) add_hns_ufwd_input_rules(fp_ipv6);
+#endif
+#endif
 	}
 
 /* apps_dm DHT patch */
@@ -7026,6 +7129,20 @@ TRACE_PT("writing Parental Control\n");
 		    ) {
 		clamp_mss:
 			fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+
+			/*
+			  To fix the parantal control online mode issue that the client is in the period which can access internet cannot reach some web site.
+			  We insert the rule of TCPMSS to top of chain PControls if need.
+			*/
+#ifdef RTCONFIG_PARENTALCTRL
+			if (pc_count > 0 || 
+#ifdef RTCONFIG_PC_REWARD
+				pc_reward_count > 0
+#endif
+			) {
+				fprintf(fp, "-I PControls -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+			}
+#endif // RTCONFIG_PARENTALCTRL
 			break; // set one time
 		}
 	}
@@ -7049,8 +7166,30 @@ TRACE_PT("writing Parental Control\n");
 	case IPV6_6TO4:
 	case IPV6_6RD:
 		fprintf(fp_ipv6, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+
+		/*
+		  To fix the parantal control online mode issue that the client is in the period which can access internet cannot reach some web site.
+		  We insert the rule of TCPMSS to top of chain PControls if need.
+		*/
+#ifdef RTCONFIG_PARENTALCTRL
+		if (pc_count > 0 || 
+#ifdef RTCONFIG_PC_REWARD
+			pc_reward_count > 0
+#endif
+		) {
+			fprintf(fp_ipv6, "-I PControls -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+		}
+#endif // RTCONFIG_PARENTALCTRL
 		break;
 	}
+#endif
+
+#ifdef RTCONFIG_HNS
+	/* move hns forward rules after TCPMSS rule, if not, will effect some connections in pppoe */
+	add_hns_ufwd_forward_rules(fp);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled()) add_hns_ufwd_forward_rules(fp_ipv6);
+#endif
 #endif
 
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
@@ -7938,6 +8077,10 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
 #endif
 
+#if defined(RTCONFIG_HND_ROUTER_BE_4916)
+	char wan_ifname[32] = {0};
+#endif
+
 	if(IS_NON_AQOS() || IS_ROG_QOS()){
 			add_iQosRules(wan_if);
 	}
@@ -7954,9 +8097,9 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
             if(aimesh_re_node() == 0)
 #endif
 #ifdef RTCONFIG_HNS
-		eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357");
+		eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357", "--queue-bypass");
 #else
-		eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "QUEUE");
+		eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "0", "--queue-bypass");
 #endif
         }
 #endif
@@ -7977,9 +8120,9 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	if(aimesh_re_node() == 0)
 #endif
 #ifdef RTCONFIG_HNS
-		eval("ip6tables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357");
+                eval("ip6tables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357", "--queue-bypass");
 #else
-		eval("ip6tables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "QUEUE");
+                eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "0", "--queue-bypass");
 #endif
 	}
 #endif //RTCONFIG_DNSQUERY_INTERCEPT
@@ -8210,6 +8353,31 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #ifdef RTCONFIG_IPTABLES1810
 	system("iptables -w -t mangle -N tcp-pureack-eth0; sleep 1; iptables -w -t mangle -A POSTROUTING -o eth0 -p tcp --tcp-pureack -j tcp-pureack-eth0");
 #endif
+#if defined(RTCONFIG_HND_ROUTER_BE_4916)
+	strlcpy(wan_ifname, get_wan_ifname(wan_primary_ifunit()), sizeof(wan_ifname));
+	eval("iptables", "-t", "mangle", "-I", "PREROUTING", "-i", "br0", "-p", "tcp", "--dport", "80", "-j", "SKIPLOG");
+	if(nvram_get_int("http_enable"))
+		eval("iptables", "-t", "mangle", "-I", "PREROUTING", "-i", "br0", "-p", "tcp", "--dport", nvram_safe_get("https_lanport"), "-j", "SKIPLOG");
+	if(nvram_get_int("misc_http_x"))
+		eval("iptables", "-t", "mangle", "-I", "PREROUTING", "-i", wan_ifname, "-p", "tcp", "--dport", nvram_safe_get("misc_httpsport_x"), "-j", "SKIPLOG");
+	if (nvram_get_int("webdav_aidisk"))
+		eval("iptables", "-t", "mangle", "-I", "PREROUTING", "-i", wan_ifname, "-p", "tcp", "--dport", nvram_safe_get("webdav_https_port"), "-j", "SKIPLOG");
+#endif
+
+#if defined(RTCONFIG_HND_ROUTER_BE_4916) || defined(RTCONFIG_MT798X) || defined(RTCONFIG_MT799X)
+#if defined(RTCONFIG_BWDPI) && defined(RTCONFIG_IPSEC)
+	if ( check_bwdpi_nvram_setting() &&
+		(nvram_get_int("ipsec_server_enable") || nvram_get_int("ipsec_client_enable")
+#ifdef RTCONFIG_INSTANT_GUARD
+		 || nvram_get_int("ipsec_ig_enable")
+#endif
+		)
+	) {
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", wan_if, "-p", "udp", "--dport", "53", "!", "-d", lan_ip, "-j", "DROP");
+	}
+#endif
+#endif
+
 }
 
 #if defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_MULTICAST_IPTV) // RTCONFIG_DUALWAN || RTCONFIG_MULTICAST_IPTV
@@ -8263,9 +8431,9 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
             if(aimesh_re_node() == 0)
 #endif
 #ifdef RTCONFIG_HNS
-		eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357");
+                eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357", "--queue-bypass");
 #else
-		eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "QUEUE");
+                eval("iptables", "-t", "mangle", "-A", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "0", "--queue-bypass");
 #endif
         }
 #endif
@@ -8320,9 +8488,9 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
             if(aimesh_re_node() == 0)
 #endif
 #ifdef RTCONFIG_HNS
-		eval("ip6tables", "-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357"); /*first rule*/
+                eval("ip6tables", "-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "2357", "--queue-bypass"); /*first rule*/
 #else
-		eval("ip6tables", "-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "QUEUE"); /*first rule*/
+                eval("ip6tables", "-t", "mangle", "-I", "POSTROUTING", "-p", "udp", "--sport", "53", "-j", "NFQUEUE", "--queue-num", "0", "--queue-bypass"); /*first rule*/
 #endif
 	}
 #endif //RTCONFIG_DNSQUERY_INTERCEPT

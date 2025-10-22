@@ -1699,13 +1699,6 @@ var validator = {
 			return false;
 		}
 
-		if(!this.string_KR(psk_obj)){
-			alert("<#JS_PSK64Hex#>");
-			psk_obj.focus();
-			psk_obj.select();
-			return false;
-		}
-
 		var invalid_char = "";
 		for(var i = 0; i < psk_length; ++i){
 			if(psk_obj.value.charAt(i) <= ' ' || psk_obj.value.charAt(i) > '~'){
@@ -1757,6 +1750,12 @@ var validator = {
 	},
 
 	range_s46_ports: function(obj, port) {
+		const wan0_proto = httpApi.nvramGet(["wan0_proto"]).wan0_proto;
+		const get_ipv6_s46_ports = (isSupport("s46") && (wan0_proto == "v6plus" || wan0_proto == "ocnvc" || wan0_proto == "v6opt")) ? httpApi.nvramGet(["ipv6_s46_ports"]).ipv6_s46_ports : '0';
+		let array_ipv6_s46_ports = new Array("");
+		if (get_ipv6_s46_ports != "0" && get_ipv6_s46_ports != "") {
+			array_ipv6_s46_ports = get_ipv6_s46_ports.split(" ");
+		}
 		//e.g. ipv6_s46_ports="6448-6463 10544-10559 14640-14655 18736-18751 22832-22847 26928-26943 31024-31039 35120-35135 39216-39231 43312-43327 47408-47423 51504-51519 55600-55615 59696-59711 63792-63807"
 		var inAvailable=false;
 		var array_each_s46_ports = new Array("");
@@ -1854,7 +1853,6 @@ var validator = {
 			if(flag != "noalert")
 				alert('<#JS_validstr1#> ["]');
 
-			string_obj.value = "";
 			string_obj.focus();
 
 			return false;
@@ -1864,7 +1862,6 @@ var validator = {
 				alert('<#JS_validstr3#> ["]');
 			}
 			
-			string_obj.value = "";
 			string_obj.focus();
 
 			return false;
@@ -1881,7 +1878,6 @@ var validator = {
 				if(flag != "noalert")
 					alert("<#JS_validstr2#> '"+invalid_char+"' !");
 
-				string_obj.value = "";
 				string_obj.focus();
 
 				return false;
@@ -1901,7 +1897,6 @@ var validator = {
 		){
 				
 				alert("<#JS_validLoginPWD#>");
-				string_obj.value = "";
 				string_obj.focus();
 				return false;
 		}
@@ -1910,7 +1905,6 @@ var validator = {
 			if(flag != "noalert")
 				alert('<#JS_validstr1#> ["]');
 
-			string_obj.value = "";
 			string_obj.focus();
 
 			return false;
@@ -1920,7 +1914,6 @@ var validator = {
 				alert('<#JS_validstr3#> ["]');
 			}
 
-			string_obj.value = "";
 			string_obj.focus();
 
 			return false;
@@ -1938,7 +1931,6 @@ var validator = {
 				alert("<#JS_validstr2#> '"+invalid_char+"' !");
 			}
 
-			string_obj.value = "";
 			string_obj.focus();
 			return false;
 		}

@@ -47,7 +47,11 @@ int SendCommand(int cmdID, int devAddr, int zone, int island, uint32_t word2,
 #elif IS_BCMCHIP(63146)
 #include "pmc_firmware_63146.h"
 #elif IS_BCMCHIP(6765)
+#if defined(RTBE58U) || defined(TUFBE3600)
+#include "pmc_firmware_6764l.h"
+#else
 #include "pmc_firmware_6765.h"
+#endif
 #elif IS_BCMCHIP(6766)
 #include "pmc_firmware_6766.h"
 #elif IS_BCMCHIP(6764)
