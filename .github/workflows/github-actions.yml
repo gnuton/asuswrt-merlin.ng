@@ -1,6 +1,6 @@
 name: Images 
 run-name: "Building images 🚀"
-on: [push]
+on: [push, pull_request]
 jobs:          
     build-job:
       name: Build
@@ -11,7 +11,6 @@ jobs:
           cfg:
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: false }
-      if: "!contains(github.event.commits[0].message, '[SKIP_CI]')"
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
