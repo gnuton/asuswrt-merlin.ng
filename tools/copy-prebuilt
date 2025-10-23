@@ -321,10 +321,12 @@ fi
 if [ "$BUILD_NAME" == "RT-AC88U" ]
 then
 	cp release/src/router/rtl_bin/prebuilt/* $REPO/release/src/router/rtl_bin/prebuilt/
-fi
-if [ "$BUILD_NAME" == "GT-AC2900" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "GT-AXE11000" ] || [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ]
+elif [ "$BUILD_NAME" == "GT-AC2900" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "GT-AXE11000" ] || [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ]
 then
-        cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
+    cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
+elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ]
+then
+	cp release/src/router/nmp-api/networkmap/prebuild/* $REPO/release/src/router/nmp-api/networkmap/prebuild/$BUILD_NAME/
 fi
 
 # Anything newer than SDK6
