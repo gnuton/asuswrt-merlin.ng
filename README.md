@@ -11,9 +11,10 @@
   A powerful third-party firmware designed for Asus routers.
     
   <br>
-  <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt"><strong>Explore Asus Merlin docs»</strong></a>
-  <br>
-  <br>
+  <a href="https://github.com/gnuton/asuswrt-merlin.ng?tab=readme-ov-file#%EF%B8%8F-firmware-downloads">Downloads</a>
+  ·
+  <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt">Documentation</a>
+  ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=enhancement&template=feature_request.md">Request feature</a>
   ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=bug&template=bug_report.md">Report bug</a>
@@ -24,8 +25,6 @@
   <a href="https://retro.pizza/@gnuton">@Mastodon</a>
   ·  
   <a href="https://discord.gg/pm7q6KFSzp">Chat</a>  
-  ·  
-  <a href="https://gitter.im/asuswrt/merlin-dsl">Old Chat</a>
 </p>
 
 ---------------------
@@ -41,10 +40,10 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 ---------------------
 
 ### ⬇️ Firmware downloads
-3006.102.x firmware downloads: latest [testing](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/3006.102.3_1-gnuton0_beta1)
+3006.102.x firmware downloads: [latest](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3006&expanded=false)
 * [GT-BE98/GT-BE25000](https://rog.asus.com/networking/rog-rapture-gt-be98-model)
   
-3004.388.x firmware downloads: [stable](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest)
+3004.388.x firmware downloads: [latest](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3004&expanded=false)
 * [DSL-AX82U/DSL-AX5400](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/DSL-AX82U/)
 * [RT-AX82U v1](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
 * [RT-AX82U v2](https://www.asus.com/Networking-IoT-Servers/WiFi-6/All-series/RT-AX82U/)
@@ -97,8 +96,8 @@ Latest Merlin firmware version: ![GitHub release](https://img.shields.io/github/
 ### Thanks to
 - Asus for the GPLs and HW samples.
 - Upstream Asus Merlin [devs](https://github.com/RMerl/asuswrt-merlin.ng/graphs/contributors)
-- GitHub for providing the runners to build new images.
-- [CircleCI](https://circleci.com/) for having provided a powerful CI infra for building the images on the cloud. 
+- GitHub for now providing the infra powering the CI for this project.
+- [CircleCI](https://circleci.com/) for having provided a powerful CI infra.
 
 ---------------------
 ### How can I help?
