@@ -11,20 +11,22 @@
   A powerful third-party firmware designed for Asus routers.
     
   <br>
-  <a href="https://github.com/gnuton/asuswrt-merlin.ng?tab=readme-ov-file#%EF%B8%8F-firmware-downloads">Downloads</a>
   ·
   <a href="https://github.com/RMerl/asuswrt-merlin.ng/wiki/About-Asuswrt">Documentation</a>
   ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=enhancement&template=feature_request.md">Request feature</a>
   ·
   <a href="https://github.com/gnuton/asuswrt-merlin.ng/issues/new?assignees=&labels=bug&template=bug_report.md">Report bug</a>
+  ·
 </p>
 <p align="center">
+  ·
   <a href="https://www.snbforums.com/threads/gnutons-merlin-builds-for-dsl-router-386-1_2-released.70980/">Support forum</a>
   ·
   <a href="https://retro.pizza/@gnuton">@Mastodon</a>
   ·  
   <a href="https://discord.gg/pm7q6KFSzp">Chat</a>  
+  ·
 </p>
 
 
