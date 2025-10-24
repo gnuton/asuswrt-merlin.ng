@@ -54,7 +54,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
     ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg?filter=3006*)
     ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg?filter=3006*)
     ](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=3006*)
-    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=3006*)
+    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3006*+prerelease%3Afalse)
 * **Latest Pre-Release:**
     * For advanced users and testing new features 
     * **Stats:**
@@ -63,7 +63,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng?filter=3006*)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total?filter=3006*)
 ](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=3006*)
-    * Link  [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=3006*)
+    * Link  [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3006*+prerelease%3Atrue)
 
 ## Downloads for Wifi 6 (Version 3004)
 #### Supported models:
@@ -89,7 +89,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
     ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg?filter=3004*)
     ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg?filter=3004*)
     ](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=3004*)
-    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=3004*)
+    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3004*+prerelease%3Afalse)
 * **Latest Pre-Release:**
     * For advanced users and testing new features
     * **Stats:**
@@ -98,7 +98,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng?filter=3004*)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total?filter=3004*)
 ](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=3004*)
-    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=3004*)
+    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3004*+prerelease%3Atrue)
 
 ## Downloads for DSL-AC68U (Version 386)
 #### Supported models:
@@ -114,7 +114,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
     ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg?filter=386*)
     ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg?filter=386*)
     ](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=386*)
-    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=386*)
+    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=386+prerelease%3Afalse)
 * **Latest Pre-Release:**
     * For advanced users and testing new features
     * **Stats:**
@@ -123,7 +123,7 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng?filter=386*)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total?filter=386*)
 ](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=386*)
-    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=386*)
+    * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=386+prerelease%3Atrue)
 
 #### Experimental builds:
   * [Repeater Mode](https://github.com/gnuton/asuswrt-merlin.ng/releases/tag/gnuton-snapshot-feature-repeater) Unleash  Repeater along with all other [operational modes](https://www.asus.com/support/FAQ/1015007/). Please note that AiMesh is supported by standard images and it's much performant than repeater but it works only with other Asus routers.
