@@ -49,20 +49,16 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 * **Latest Stable Release:**
     * Recommended for everyday use 
     * **Stats:**
-    [
     ![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg?filter=3006*)
     ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg?filter=3006*)
     ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg?filter=3006*)
-    ](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=3006*)
     * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3006*+prerelease%3Afalse)
 * **Latest Pre-Release:**
     * For advanced users and testing new features 
     * **Stats:**
-    [
 ![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/release/gnuton/asuswrt-merlin.ng?include_prereleases&label=pre-release&filter=3006*)
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng?filter=3006*)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total?filter=3006*)
-](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=3006*)
     * Link  [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3006*+prerelease%3Atrue)
 
 ## Downloads for Wifi 6 (Version 3004)
@@ -84,20 +80,16 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 * **Latest Stable Release:**
     * Recommended for everyday use
     * **Stats:**
-    [
     ![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg?filter=3004*)
     ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg?filter=3004*)
     ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg?filter=3004*)
-    ](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=3004*)
     * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3004*+prerelease%3Afalse)
 * **Latest Pre-Release:**
     * For advanced users and testing new features
     * **Stats:**
-    [
 ![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/release/gnuton/asuswrt-merlin.ng?include_prereleases&label=pre-release&filter=3004*)
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng?filter=3004*)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total?filter=3004*)
-](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=3004*)
     * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=3004*+prerelease%3Atrue)
 
 ## Downloads for DSL-AC68U (Version 386)
@@ -109,20 +101,16 @@ If you enjoy this project feel free to scroll all the way down and check on how 
 * **Latest Stable Release:**
     * Recommended for everyday use
     * **Stats:**
-    [
     ![GitHub release](https://img.shields.io/github/release/gnuton/asuswrt-merlin.ng.svg?filter=386*)
     ![GitHub Release Date](https://img.shields.io/github/release-date/gnuton/asuswrt-merlin.ng.svg?filter=386*)
     ![GitHub Releases](https://img.shields.io/github/downloads/gnuton/asuswrt-merlin.ng/latest/total.svg?filter=386*)
-    ](https://github.com/gnuton/asuswrt-merlin.ng/releases/latest?filter=386*)
     * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=386+prerelease%3Afalse)
 * **Latest Pre-Release:**
     * For advanced users and testing new features
     * **Stats:**
-    [
 ![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/release/gnuton/asuswrt-merlin.ng?include_prereleases&label=pre-release&filter=386*)
 ![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/gnuton/asuswrt-merlin.ng?filter=386*)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/downloads-pre/gnuton/asuswrt-merlin.ng/latest/total?filter=386*)
-](https://github.com/gnuton/asuswrt-merlin.ng/releases/?filter=386*)
     * Link [⬇️ Download](https://github.com/gnuton/asuswrt-merlin.ng/releases?q=386+prerelease%3Atrue)
 
 #### Experimental builds:
