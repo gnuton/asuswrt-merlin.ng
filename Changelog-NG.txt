@@ -1,8 +1,15 @@
 Asuswrt-Merlin GNUton's builds Changelog
 ========================
 
-3004.388.10_1-gnuton1 (XX-XXX-20XX)
-  - FUPDATED: Upstream code to 3004.388.10
+3004.388.10_2-gnuton1 (XX-XXX-20XX)
+  - UPDATED: Upstream code to 3004.388.10_2
+  - UPDATED: Merged GPL 388_25523.
+  - UPDATED: Added TUF UI has been added back to TUF models
+
+3004.388.10_2 (31-Oct-2025)
+  - UPDATED: OpenVPN to 2.6.15.
+  - FIXED: Web server crashing when connecting using the App API,
+           used by the mobile app and also Home Assistant (Asus).
 
 3004.388.10 (4-Oct-2025)
   - NOTE: For developers, please note that the new default branch
