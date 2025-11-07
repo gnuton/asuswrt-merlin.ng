@@ -421,18 +421,8 @@ function initial(){
 		document.getElementById("ntp_pull_arrow").style.display = "";
 	}
 
-	if(isSupport("is_ax5400_i1n") || tmo_support){
-		document.getElementById("telnetd_sshd_table").style.display = "none";
-		document.form.telnetd_enable[0].disabled = true;
-		document.form.telnetd_enable[1].disabled = true;
-		document.form.sshd_enable.disabled = true;
-	}
-	else{
-		document.getElementById("telnetd_sshd_table").style.display = "";
-//		document.form.telnetd_enable[0].disabled = false;
-//		document.form.telnetd_enable[1].disabled = false;
-		telnet_enable(httpApi.nvramGet(["telnetd_enable"]).telnetd_enable);
-	}
+	document.getElementById("telnetd_sshd_table").style.display = "";
+	telnet_enable(httpApi.nvramGet(["telnetd_enable"]).telnetd_enable);
 
 	document.getElementById("telnet_tr").style.display = "none";
 	document.form.telnetd_enable[0].disabled = true;
