@@ -171,9 +171,16 @@ define(function(){
 					{url: "cloud_settings.asp", tabName: "<#Settings#>"},
 					{url: "cloud_syslog.asp", tabName: "<#Log#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
+				]
+			},
+			{
+				menuName: "System Info",
+				index: "menu_Sysinfo",
+				tab: [
+					{url: "Tools_Sysinfo.asp", tabName: "Sysinfo"},
+					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
-
 			/* ============================================================================================================ */
 
 			{
