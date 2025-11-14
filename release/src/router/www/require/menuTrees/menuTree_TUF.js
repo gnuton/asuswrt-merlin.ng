@@ -205,7 +205,7 @@ define(function(){
 				tab: [
 					{url: "Advanced_LAN_Content.asp", tabName: "<#menu5_2_1#>"},
 					{url: "Advanced_DHCP_Content.asp", tabName: "<#menu5_2_2#>"},
-					//{url: "DNSFilter.asp", tabName: "DNSFilter"},
+					{url: "DNSDirector.asp", tabName: "DNS Director"},
 					{url: "Advanced_MultiSubnet_Content.asp", tabName: "<#menu5_2_2#>"},
 					{url: "Advanced_GWStaticRoute_Content.asp", tabName: "<#menu5_2_3#>"},
 					{url: "Advanced_IPTV_Content.asp", tabName: "IPTV"},
@@ -288,6 +288,7 @@ define(function(){
 					{url: "Advanced_TR069_Content.asp", tabName: "TR-069"},
 					{url: "Advanced_Notification_Content.asp", tabName: "Notification"},
 					{url: "Advanced_Privacy.asp", tabName: "<#menu_privacy#>"},
+					{url: "Tools_OtherSettings.asp", tabName: "Tweaks"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			},
@@ -325,7 +326,7 @@ define(function(){
 				var retArray = [];
 
 				if(!dnsfilter_support){
-					retArray.push("DNSFilter.asp");
+					retArray.push("DNSDirector.asp");
 				}
 
 				if(!wifiRadar_support){
@@ -683,7 +684,7 @@ define(function(){
 					retArray.push("Main_IPTStatus_Content.asp");
 					retArray.push("Main_ConnStatus_Content.asp");
 					retArray.push("Advanced_Smart_Connect.asp");
-					retArray.push("DNSFilter.asp");
+					retArray.push("DNSDirector.asp");
 
 					if(userRSSI_support){
 						retArray.push("Advanced_ACL_Content.asp");
@@ -714,7 +715,8 @@ define(function(){
 					retArray.push("Captive_Portal_Advanced.asp");
 					//short term solution for only router mode support Facebook Wi-Fi
 					retArray.push("Guest_network_fbwifi.asp");
-					retArray.push("DNSFilter.asp");
+					retArray.push("DNSDirector.asp");
+
 				}
 				else if(isSwMode("mb")){
 					retArray.push("GameBoost_ROG.asp");
@@ -729,7 +731,8 @@ define(function(){
 					retArray.push("Main_IPTStatus_Content.asp");
 					retArray.push("Main_ConnStatus_Content.asp");
 					retArray.push("Advanced_Smart_Connect.asp");
-					retArray.push("DNSFilter.asp");
+					retArray.push("DNSDirector.asp");
+
 				}
 
 				/* System Status Changed */
