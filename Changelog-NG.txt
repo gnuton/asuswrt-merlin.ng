@@ -1,10 +1,10 @@
 Asuswrt-Merlin GNUton's builds Changelog
 ========================
 
-3004.388.10_2-gnuton1 (XX-XXX-20XX)
+3004.388.10_2-gnuton1 (15-Nov-2025)
   - UPDATED: Upstream code to 3004.388.10_2
-  - UPDATED: Merged GPL 388_25523.
-  - UPDATED: Added TUF UI has been added back to TUF models
+  - UPDATED: Merged GPL 388_25523
+  - UPDATED: TUF UI has been added back for TUF models
 
 3004.388.10_2 (31-Oct-2025)
   - UPDATED: OpenVPN to 2.6.15.
