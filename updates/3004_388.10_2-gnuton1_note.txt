@@ -1,0 +1,10 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: November 15, 2025
+Release: 3004.388.10_2-gnuton1
+
+  - UPDATED: Upstream code to 3004.388.10_2
+  - UPDATED: Merged GPL 388_25523
+  - UPDATED: TUF UI has been added back for TUF models
+
+
