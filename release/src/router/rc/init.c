@@ -12308,9 +12308,6 @@ int init_nvram(void)
 #ifdef RTCONFIG_BRCM_HOSTAPD
 		add_rc_support("wpa3");
 #endif
-#if defined(TUFAX3000) || defined(TUFAX5400)
-		add_rc_support("tuf");
-#endif
 #ifdef RTAX58U
 		if (!strncmp(nvram_safe_get("territory_code"), "CX", 2)) {
 			add_rc_support("nz_isp");
@@ -13241,7 +13238,6 @@ int init_nvram(void)
 #ifdef RTCONFIG_BRCM_HOSTAPD
 		add_rc_support("wpa3");
 #endif
-		add_rc_support("tuf");
 		break;
 #endif
 
@@ -14187,7 +14183,6 @@ _dprintf("%s: set autowan_ifnames to be \"eth0 eth1\"\n", __func__);
 #ifdef RTCONFIG_BRCM_HOSTAPD
 		add_rc_support("wpa3");
 #endif
-		add_rc_support("tuf");
 
 		break;
 #endif
