@@ -5,7 +5,17 @@ Asuswrt-Merlin 3006.xxx Changelog
   - UPDATED: Merged GPL 39099 (RT-BE98)
 
 3006.102.6 (xx-xx-xxxx)
+  - NOTE: Asus has made some security related changes.  Password
+          requirements are stricter, and UPNP is no longer
+          enabled by default.  New password rules were
+          slightly loosened for Asuswrt-Merlin, repeating
+          characters are still allowed.
+  - NOTE: For developers, the Tomato legacy files (tm*.*)
+          are no longer included with the webui.  Please
+          update your addon pages accordingly.
+
   - NEW: Added support for the RT-BE58_Go.
+  - NEW: Added support for the GT-BE19000AI.
   - NEW: Redesigned Traffic Monitor pages.
          - Uses Chart.js for Realtime and Last24 pages
          - Removes legacy Tomato code
@@ -14,21 +24,27 @@ Asuswrt-Merlin 3006.xxx Changelog
          - Realtime and Last 24 now show as bits/s instead
            of bytes/s
          - Settings moved from the tab to the dropdown menu
-         - Number formatting is automatically localized
-           by the webui language
          - Removed NVRAM database location option and added
            JFFS.  Also removed rarely used start-of-month
            setting.
 
   - UPDATED: Merged GPL 38978 (RT-BE58_GO only)
+  - UPDATED: Merged GPL 40103 (GT-BE19000AI only)
   - UPDATED: Merged GPL 39099 (other Wifi 7 models)
+  - UPDATED: Merged GPL 37351 (Wifi 6 models)
   - UPDATED: OpenVPN to 2.6.15.
+  - UPDATED: libcap-ng to 0.8.4 (to be in sync with upstream)
+  - CHANGED: TrafficMonitor stats can now be saved to JFFS,
+             and removed support for saving to NVRAM.
+  - REMOVED: outdated setuprsa.sh script.
   - FIXED: IPv6 requests for prefix lengths other than 64 for
            routers with Multiwan support.
   - FIXED: CVE-2025-9230 in OpenSSL (backport by RSDNTWK).
   - FIXED: Client name would be missing on the Wireless Log
            page if the MAC was missing in the DHCP lease list
            (for static clients for example)
+  - FIXED: OpenSSL 1.1.1 would prioritize CHACHA20 over AES
+           on BCM4916 devices
 
 
 3006.102.5 (3-Aug-2025)
@@ -48,7 +64,7 @@ Asuswrt-Merlin 3006.xxx Changelog
            - Local hostnames will be resolved and shown
            - Routed IPv6 connections will be shown
 
-  - UPDATED: Merged GPL 3006.102_37957 for Wifi 6 devices.
+  - UPDATED: Merged GPL 3006.102_36957 for Wifi 6 devices.
   - UPDATED: Merged GPL 3006.102_38757 for WIfi 7 devices.
   - UPDATED: dropbear to 2025.88.
   - CHANGED: Replaced netstat-nat by a fork called netstat-nat-ng.

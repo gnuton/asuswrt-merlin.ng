@@ -39,6 +39,12 @@ p{
 overlib_str_tmp = "";
 overlib.isOut = true;
 
+if (isSupport("UI4")) {
+	var macFieldStyle = "";
+} else {
+	var macFieldStyle = "color: white;";
+}
+
 function initial() {
 	show_menu();
 	show_leases();
@@ -66,7 +72,12 @@ function show_leases() {
 			leasearray[i][0] = pad(Days,2) + "d " + pad(Hours,2) + "h " + pad(Minutes,2) + "m "+ pad(Seconds,2) + "s";
 
 			overlib_str = "<p><#MAC_Address#>:</p>" + line[1];
-			leasearray[i][1] = '<span class="ClientName" onclick="oui_query_full_vendor(\'' + line[1].toUpperCase() +'\');;overlib_str_tmp=\''+ overlib_str +'\';return overlib(\''+ overlib_str +'\');" onmouseout="nd();" style="cursor:pointer; text-decoration:underline;">'+ line[1].toUpperCase() +'</span>';
+			if (isSupport("UI4"))
+				var popupHandler = `onclick="oui_query_full_vendor('${line[1].toUpperCase()}');overlib_str_tmp='${overlib_str}';return overlib('${overlib_str}', STICKY,  CAPTION, ' ');"`;
+			else
+				var popupHandler = `onclick="oui_query_full_vendor('${line[1].toUpperCase()}');overlib_str_tmp='${overlib_str}';return overlib('${overlib_str}');" onmouseout="nd();"`;
+
+			leasearray[i][1] = `<span ${popupHandler} style="cursor:pointer; text-decoration:underline; ${macFieldStyle}">${line[1].toUpperCase()}</span>`;
 		}
 
 		var headerarray = [{
@@ -161,10 +172,11 @@ function show_leases() {
 										<div>&nbsp;</div>
 										<div class="formfonttitle"><#System_Log#> - <#menu5_7_3#></div>
 										<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
-										<div class="formfontdesc"><#DHCPlease_title#></div>
-										<div class="formfontdesc">Click on a column header to sort by that field.</div>
+										<div class="formfontdesc"><#DHCPlease_title#><br>
+											Click on a column header to sort by that field.
+										</div>
 
-                                                                                <div style="margin-top:8px">
+										<div style="margin-top:8px">
 											<div id="leaseblock"></div>
 										</div>
 										<br>
