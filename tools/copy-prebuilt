@@ -155,7 +155,7 @@ then
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/pktrunner/impl2/pktrunner.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 
-elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "GT-BE19000AI" ] || [ "$BUILD_NAME" == "GT-BE98" ]
+elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "GT-BE19000AI" ] || [ "$BUILD_NAME" == "GT-BE98" ] || [ "$BUILD_NAME" == "RT-BE82U" ] 
 then
         SDK="_4916hnd"
         ARCH="_arm"
@@ -362,7 +362,7 @@ then
 elif [ "$BUILD_NAME" == "GT-AC2900" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "GT-AXE11000" ] || [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ]
 then
     cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
-elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ]
+elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "RT-BE82U" ]
 then
 	cp release/src/router/nmp-api/networkmap/prebuild/* $REPO/release/src/router/nmp-api/networkmap/prebuild/$BUILD_NAME/
 fi
