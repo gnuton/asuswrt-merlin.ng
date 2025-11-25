@@ -220,7 +220,7 @@ then
 		cp release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtl8372/rtl8372.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	fi
 
-	if [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ]
+	if [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE82U" ]
 	then
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/ubus/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/ubus/
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/rng/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/rng/
