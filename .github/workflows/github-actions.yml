@@ -9,7 +9,7 @@ jobs:
         fail-fast: false
         matrix:
           cfg:
-            - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: true }
+            - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: true }
             - { model: "rt-be82u",         sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
       container:
