@@ -225,7 +225,7 @@ then
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/ubus/*.o  $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/ubus/
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/rng/*.o   $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/rng/
         cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/rtl8372/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/drivers/net/bcmbca/rtl8372/
-		echo "XXXXXXXXXXXXXXXXXXX"
+
 		rsync -a --del release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1/ $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1
 		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/cmdlist/impl1/cmdlist.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/vlan/impl1/bcmvlan.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
