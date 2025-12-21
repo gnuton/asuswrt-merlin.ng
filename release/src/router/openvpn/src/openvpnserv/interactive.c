@@ -215,6 +215,7 @@ ResetOverlapped(LPOVERLAPPED overlapped)
 
 typedef enum {
     peek,
+    peek_timed,
     read,
     write
 } async_op_t;
@@ -268,7 +269,7 @@ AsyncPipeOp(async_op_t op, HANDLE pipe, LPVOID buffer, DWORD size, DWORD count, 
         goto out;
     }
 
-    if (op == peek)
+    if (op == peek || op == peek_timed)
     {
         PeekNamedPipe(pipe, NULL, 0, NULL, &bytes, NULL);
     }
@@ -287,6 +288,12 @@ static DWORD
 PeekNamedPipeAsync(HANDLE pipe, DWORD count, LPHANDLE events)
 {
     return AsyncPipeOp(peek, pipe, NULL, 0, count, events);
+}
+
+static DWORD
+PeekNamedPipeAsyncTimed(HANDLE pipe, DWORD count, LPHANDLE events)
+{
+    return AsyncPipeOp(peek_timed, pipe, NULL, 0, count, events);
 }
 
 static DWORD
@@ -454,11 +461,11 @@ GetStartupData(HANDLE pipe, STARTUP_DATA *sud)
     WCHAR *data = NULL;
     DWORD bytes, read;
 
-    bytes = PeekNamedPipeAsync(pipe, 1, &exit_event);
+    bytes = PeekNamedPipeAsyncTimed(pipe, 1, &exit_event);
     if (bytes == 0)
     {
-        MsgToEventLog(M_SYSERR, TEXT("PeekNamedPipeAsync failed"));
-        ReturnLastError(pipe, L"PeekNamedPipeAsync");
+        MsgToEventLog(M_ERR, TEXT("Timeout waiting for startup data"));
+        ReturnError(pipe, ERROR_STARTUP_DATA, L"GetStartupData (timeout)", 1, &exit_event);
         goto err;
     }
 
@@ -1035,16 +1042,16 @@ HandleRegisterDNSMessage(void)
 }
 
 /**
- * Run the command: netsh interface $proto $action dns $if_name $addr [validate=no]
+ * Run the command: netsh interface $proto $action dns $if_index $addr [validate=no]
  * @param  action      "delete" or "add"
  * @param  proto       "ipv6" or "ip"
- * @param  if_name     "name_of_interface"
+ * @param  if_index     index of the interface to modify DNS for
  * @param  addr         IPv4 (for proto = ip) or IPv6 address as a string
  *
  * If addr is null and action = "delete" all addresses are deleted.
  */
 static DWORD
-netsh_dns_cmd(const wchar_t *action, const wchar_t *proto, const wchar_t *if_name, const wchar_t *addr)
+netsh_dns_cmd(const wchar_t *action, const wchar_t *proto, int if_index, const wchar_t *addr)
 {
     DWORD err = 0;
     int timeout = 30000; /* in msec */
@@ -1069,10 +1076,10 @@ netsh_dns_cmd(const wchar_t *action, const wchar_t *proto, const wchar_t *if_nam
     /* cmd template:
      * netsh interface $proto $action dns $if_name $addr [validate=no]
      */
-    const wchar_t *fmt = L"netsh interface %ls %ls dns \"%ls\" %ls";
+    const wchar_t *fmt = L"netsh interface %ls %ls dns %d %ls";
 
     /* max cmdline length in wchars -- include room for worst case and some */
-    size_t ncmdline = wcslen(fmt) + wcslen(if_name) + wcslen(addr) + 32 + 1;
+    size_t ncmdline = wcslen(fmt) + 11 /*if_index*/ + wcslen(addr) + 32 + 1;
     cmdline = malloc(ncmdline*sizeof(wchar_t));
     if (!cmdline)
     {
@@ -1080,7 +1087,7 @@ netsh_dns_cmd(const wchar_t *action, const wchar_t *proto, const wchar_t *if_nam
         goto out;
     }
 
-    openvpn_swprintf(cmdline, ncmdline, fmt, proto, action, if_name, addr);
+    openvpn_swprintf(cmdline, ncmdline, fmt, proto, action, if_index, addr);
 
     if (IsWindows7OrGreater())
     {
@@ -1094,16 +1101,16 @@ out:
 }
 
 /**
- * Run the command: netsh interface ip $action wins $if_name [static] $addr
+ * Run the command: netsh interface ip $action wins $if_index [static] $addr
  * @param  action      "delete", "add" or "set"
- * @param  if_name     "name_of_interface"
+ * @param  if_index    index of the interface to modify WINS for
  * @param  addr        IPv4 address as a string
  *
  * If addr is null and action = "delete" all addresses are deleted.
  * if action = "set" then "static" is added before $addr
  */
 static DWORD
-netsh_wins_cmd(const wchar_t *action, const wchar_t *if_name, const wchar_t *addr)
+netsh_wins_cmd(const wchar_t *action, int if_index, const wchar_t *addr)
 {
     DWORD err = 0;
     int timeout = 30000; /* in msec */
@@ -1129,11 +1136,11 @@ netsh_wins_cmd(const wchar_t *action, const wchar_t *if_name, const wchar_t *add
     /* cmd template:
      * netsh interface ip $action wins $if_name $static $addr
      */
-    const wchar_t *fmt = L"netsh interface ip %ls wins \"%ls\" %ls %ls";
+    const wchar_t *fmt = L"netsh interface ip %ls wins %d %ls %ls";
 
     /* max cmdline length in wchars -- include room for worst case and some */
-    size_t ncmdline = wcslen(fmt) + wcslen(if_name) + wcslen(action) + wcslen(addr)
-                      +wcslen(addr_static) + 32 + 1;
+    size_t ncmdline = wcslen(fmt) + 11 /*if_index*/ + wcslen(action) + wcslen(addr)
+                      + wcslen(addr_static) + 32 + 1;
     cmdline = malloc(ncmdline * sizeof(wchar_t));
     if (!cmdline)
     {
@@ -1141,7 +1148,7 @@ netsh_wins_cmd(const wchar_t *action, const wchar_t *if_name, const wchar_t *add
         goto out;
     }
 
-    openvpn_swprintf(cmdline, ncmdline, fmt, action, if_name, addr_static, addr);
+    openvpn_swprintf(cmdline, ncmdline, fmt, action, if_index, addr_static, addr);
 
     err = ExecCommand(argv0, cmdline, timeout);
 
@@ -1184,18 +1191,18 @@ pwsh_setdns_cmd(const NET_IFINDEX if_index, const wchar_t *data)
 
 /* Delete all IPv4 or IPv6 dns servers for an interface */
 static DWORD
-DeleteDNS(short family, wchar_t *if_name)
+DeleteDNS(short family, int if_index)
 {
     wchar_t *proto = (family == AF_INET6) ? L"ipv6" : L"ip";
-    return netsh_dns_cmd(L"delete", proto, if_name, NULL);
+    return netsh_dns_cmd(L"delete", proto, if_index, NULL);
 }
 
 /* Add an IPv4 or IPv6 dns server to an interface */
 static DWORD
-AddDNS(short family, wchar_t *if_name, wchar_t *addr)
+AddDNS(short family, int if_index, wchar_t *addr)
 {
     wchar_t *proto = (family == AF_INET6) ? L"ipv6" : L"ip";
-    return netsh_dns_cmd(L"add", proto, if_name, addr);
+    return netsh_dns_cmd(L"add", proto, if_index, addr);
 }
 
 static BOOL
@@ -1263,7 +1270,7 @@ HandleDNSConfigMessage(const dns_cfg_message_t *msg, undo_lists_t *lists)
 {
     DWORD err = 0;
     wchar_t addr[46]; /* large enough to hold string representation of an ipv4 / ipv6 address */
-    undo_type_t undo_type = (msg->family == AF_INET6) ? undo_dns4 : undo_dns6;
+    undo_type_t undo_type = (msg->family == AF_INET6) ? undo_dns6 : undo_dns4;
     int addr_len = msg->addr_len;
 
     /* sanity check */
@@ -1295,12 +1302,12 @@ HandleDNSConfigMessage(const dns_cfg_message_t *msg, undo_lists_t *lists)
      */
     if (addr_len > 0 || msg->header.type == msg_del_dns_cfg)
     {
-        err = DeleteDNS(msg->family, wide_name);
+        err = DeleteDNS(msg->family, msg->iface.index);
         if (err)
         {
             goto out;
         }
-        free(RemoveListItem(&(*lists)[undo_type], CmpWString, wide_name));
+        free(RemoveListItem(&(*lists)[undo_type], CmpAny, NULL));
     }
 
     if (msg->header.type == msg_del_dns_cfg)
@@ -1323,7 +1330,7 @@ HandleDNSConfigMessage(const dns_cfg_message_t *msg, undo_lists_t *lists)
         {
             RtlIpv4AddressToStringW(&msg->addr[i].ipv4, addr);
         }
-        err = AddDNS(msg->family, wide_name, addr);
+        err = AddDNS(msg->family, msg->iface.index, addr);
         if (i == 0 && err)
         {
             goto out;
@@ -1337,11 +1344,15 @@ HandleDNSConfigMessage(const dns_cfg_message_t *msg, undo_lists_t *lists)
 
     if (msg->addr_len > 0)
     {
-        wchar_t *tmp_name = _wcsdup(wide_name);
-        if (!tmp_name || AddListItem(&(*lists)[undo_type], tmp_name))
+        int *tmp_index = malloc(sizeof(msg->iface.index));
+        if (tmp_index)
         {
-            free(tmp_name);
-            DeleteDNS(msg->family, wide_name);
+            *tmp_index = msg->iface.index;
+        }
+        if (!tmp_index || AddListItem(&(*lists)[undo_type], tmp_index))
+        {
+            free(tmp_index);
+            DeleteDNS(msg->family, msg->iface.index);
             err = ERROR_OUTOFMEMORY;
             goto out;
         }
@@ -1360,7 +1371,7 @@ out:
 static DWORD
 HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
 {
-    DWORD err = 0;
+    DWORD err = NO_ERROR;
     wchar_t addr[16]; /* large enough to hold string representation of an ipv4 */
     int addr_len = msg->addr_len;
 
@@ -1370,21 +1381,9 @@ HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
         addr_len = _countof(msg->addr);
     }
 
-    if (!msg->iface.name[0]) /* interface name is required */
+    if (!msg->iface.index) /* interface index is required */
     {
         return ERROR_MESSAGE_DATA;
-    }
-
-    /* use a non-const reference with limited scope to enforce null-termination of strings from client */
-    {
-        wins_cfg_message_t *msgptr = (wins_cfg_message_t *)msg;
-        msgptr->iface.name[_countof(msg->iface.name) - 1] = '\0';
-    }
-
-    wchar_t *wide_name = utf8to16(msg->iface.name); /* utf8 to wide-char */
-    if (!wide_name)
-    {
-        return ERROR_OUTOFMEMORY;
     }
 
     /* We delete all current addresses before adding any
@@ -1392,15 +1391,15 @@ HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
      */
     if (addr_len > 0 || msg->header.type == msg_del_wins_cfg)
     {
-        err = netsh_wins_cmd(L"delete", wide_name, NULL);
+        err = netsh_wins_cmd(L"delete", msg->iface.index, NULL);
         if (err)
         {
             goto out;
         }
-        free(RemoveListItem(&(*lists)[undo_wins], CmpWString, wide_name));
+        free(RemoveListItem(&(*lists)[undo_wins], CmpAny, NULL));
     }
 
-    if (msg->header.type == msg_del_wins_cfg)
+    if (addr_len == 0 || msg->header.type == msg_del_wins_cfg)
     {
         goto out;  /* job done */
     }
@@ -1408,7 +1407,7 @@ HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
     for (int i = 0; i < addr_len; ++i)
     {
         RtlIpv4AddressToStringW(&msg->addr[i].ipv4, addr);
-        err = netsh_wins_cmd(i == 0 ? L"set" : L"add", wide_name, addr);
+        err = netsh_wins_cmd(i == 0 ? L"set" : L"add", msg->iface.index, addr);
         if (i == 0 && err)
         {
             goto out;
@@ -1418,22 +1417,23 @@ HandleWINSConfigMessage(const wins_cfg_message_t *msg, undo_lists_t *lists)
          */
     }
 
-    err = 0;
-
-    if (addr_len > 0)
+    int *if_index = malloc(sizeof(msg->iface.index));
+    if (if_index)
     {
-        wchar_t *tmp_name = _wcsdup(wide_name);
-        if (!tmp_name || AddListItem(&(*lists)[undo_wins], tmp_name))
-        {
-            free(tmp_name);
-            netsh_wins_cmd(L"delete", wide_name, NULL);
-            err = ERROR_OUTOFMEMORY;
-            goto out;
-        }
+        *if_index = msg->iface.index;
     }
 
+    if (!if_index || AddListItem(&(*lists)[undo_wins], if_index))
+    {
+        free(if_index);
+        netsh_wins_cmd(L"delete", msg->iface.index, NULL);
+        err = ERROR_OUTOFMEMORY;
+        goto out;
+    }
+
+    err = 0;
+
 out:
-    free(wide_name);
     return err;
 }
 
@@ -1734,15 +1734,15 @@ Undo(undo_lists_t *lists)
                     break;
 
                 case undo_dns4:
-                    DeleteDNS(AF_INET, item->data);
+                    DeleteDNS(AF_INET, *(int *)item->data);
                     break;
 
                 case undo_dns6:
-                    DeleteDNS(AF_INET6, item->data);
+                    DeleteDNS(AF_INET6, *(int *)item->data);
                     break;
 
                 case undo_wins:
-                    netsh_wins_cmd(L"delete", item->data, NULL);
+                    netsh_wins_cmd(L"delete", *(int *)item->data, NULL);
                     break;
 
                 case undo_domain:
@@ -1801,6 +1801,7 @@ RunOpenvpn(LPVOID p)
     size_t cmdline_size;
     undo_lists_t undo_lists;
     WCHAR errmsg[512] = L"";
+    BOOL flush_pipe = TRUE;
 
     SECURITY_ATTRIBUTES inheritable = {
         .nLength = sizeof(inheritable),
@@ -1824,6 +1825,7 @@ RunOpenvpn(LPVOID p)
 
     if (!GetStartupData(pipe, &sud))
     {
+        flush_pipe = FALSE; /* client did not provide startup data */
         goto out;
     }
 
@@ -1962,11 +1964,46 @@ RunOpenvpn(LPVOID p)
         goto out;
     }
 
+    UUID pipe_uuid;
+    RPC_STATUS rpc_stat = UuidCreate(&pipe_uuid);
+    if (rpc_stat != RPC_S_OK)
+    {
+        ReturnError(pipe, rpc_stat, L"UuidCreate", 1, &exit_event);
+        goto out;
+    }
+
+    RPC_WSTR pipe_uuid_str = NULL;
+    rpc_stat = UuidToStringW(&pipe_uuid, &pipe_uuid_str);
+    if (rpc_stat != RPC_S_OK)
+    {
+        ReturnError(pipe, rpc_stat, L"UuidToString", 1, &exit_event);
+        goto out;
+    }
     openvpn_swprintf(ovpn_pipe_name, _countof(ovpn_pipe_name),
-                     TEXT("\\\\.\\pipe\\" PACKAGE "%ls\\service_%lu"), service_instance, GetCurrentThreadId());
+                     TEXT("\\\\.\\pipe\\" PACKAGE "%ls\\service_%lu_%ls"), service_instance,
+                     GetCurrentThreadId(), pipe_uuid_str);
+    RpcStringFree(&pipe_uuid_str);
+
+    /* make a security descriptor for the named pipe with access
+     * restricted to the user and SYSTEM
+     */
+    SECURITY_ATTRIBUTES sa;
+    PSECURITY_DESCRIPTOR pSD = NULL;
+    LPCWSTR szSDDL = L"D:(A;;GA;;;SY)(A;;GA;;;OW)";
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            szSDDL, SDDL_REVISION_1, &pSD, NULL))
+    {
+        ReturnLastError(pipe, L"ConvertSDDL");
+        goto out;
+    }
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = pSD;
+    sa.bInheritHandle = FALSE;
     ovpn_pipe = CreateNamedPipe(ovpn_pipe_name,
                                 PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE | FILE_FLAG_OVERLAPPED,
-                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 1, 128, 128, 0, NULL);
+                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+                                1, 128, 128, 0, &sa);
+
     if (ovpn_pipe == INVALID_HANDLE_VALUE)
     {
         ReturnLastError(pipe, L"CreateNamedPipe");
@@ -2078,7 +2115,10 @@ RunOpenvpn(LPVOID p)
     Undo(&undo_lists);
 
 out:
-    FlushFileBuffers(pipe);
+    if (flush_pipe)
+    {
+        FlushFileBuffers(pipe);
+    }
     DisconnectNamedPipe(pipe);
 
     free(ovpn_user);
@@ -2310,12 +2350,30 @@ ServiceStartInteractive(DWORD dwArgc, LPTSTR *lpszArgv)
 
     while (TRUE)
     {
-        if (ConnectNamedPipe(pipe, &overlapped) == FALSE
-            && GetLastError() != ERROR_PIPE_CONNECTED
-            && GetLastError() != ERROR_IO_PENDING)
+        if (!ConnectNamedPipe(pipe, &overlapped))
         {
-            MsgToEventLog(M_SYSERR, TEXT("Could not connect pipe"));
-            break;
+            DWORD connect_error = GetLastError();
+            if (connect_error == ERROR_NO_DATA)
+            {
+                /*
+                 * Client connected and disconnected before we could process it.
+                 * Disconnect and retry instead of aborting the service.
+                 */
+                MsgToEventLog(M_ERR, TEXT("ConnectNamedPipe returned ERROR_NO_DATA (client dropped)"));
+                DisconnectNamedPipe(pipe);
+                ResetOverlapped(&overlapped);
+                continue;
+            }
+            else if (connect_error == ERROR_PIPE_CONNECTED)
+            {
+                /* No async I/O pending in this case; signal manually. */
+                SetEvent(overlapped.hEvent);
+            }
+            else if (connect_error != ERROR_IO_PENDING)
+            {
+                MsgToEventLog(M_SYSERR, TEXT("Could not connect pipe"));
+                break;
+            }
         }
 
         error = WaitForMultipleObjects(handle_count, handles, FALSE, INFINITE);
@@ -2323,6 +2381,17 @@ ServiceStartInteractive(DWORD dwArgc, LPTSTR *lpszArgv)
         {
             /* Client connected, spawn a worker thread for it */
             HANDLE next_pipe = CreateClientPipeInstance();
+
+            /* Avoid exceeding WaitForMultipleObjects MAXIMUM_WAIT_OBJECTS */
+            if (handle_count + 1 > MAXIMUM_WAIT_OBJECTS)
+            {
+                ReturnError(pipe, ERROR_CANT_WAIT, L"Too many concurrent clients", 1, &exit_event);
+                CloseHandleEx(&pipe);
+                pipe = next_pipe;
+                ResetOverlapped(&overlapped);
+                continue;
+            }
+
             HANDLE thread = CreateThread(NULL, 0, RunOpenvpn, pipe, CREATE_SUSPENDED, NULL);
             if (thread)
             {
