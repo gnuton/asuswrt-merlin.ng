@@ -4,6 +4,8 @@ Asuswrt-Merlin GNUton's builds Changelog
 3004.388.11_1-gnuton1 (15-Nov-2025)
   - UPDATED: Upstream code to 3004.388.11
   - UPDATED: Merged GPL 388_25575
+  - REMOVED: AiCloud support, due to security reasons.
+  
 
 3004.388.11 (xx-xxx-2025)
   - NOTE: AiCloud has been removed from Asuswrt-Merlin due
