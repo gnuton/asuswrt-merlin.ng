@@ -1,0 +1,8 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: December 26, 2025
+Release: 3006.102.6_1-gnuton1
+
+  - UPDATED: Merged GPL 39099 (RT-BE98)
+
+
