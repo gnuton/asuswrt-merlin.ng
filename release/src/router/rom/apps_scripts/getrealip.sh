@@ -33,8 +33,9 @@ if [ "$(nvram get wans_mode)" = "lb" ] ; then
 			result=
 		done
 		[ -z "$result" ] && state=1 || state=2
-		nvram set ${prefix}realip_state=$state
+		# Publish the IP before marking the lookup complete.
 		nvram set ${prefix}realip_ip=$result
+		nvram set ${prefix}realip_state=$state
 
 		wan=`echo $prefix|sed -e "s,_,,"`
 		[ -z "$result" ] && echo "$wan failed." || echo "$wan external IP is $result"
@@ -62,8 +63,9 @@ else
 		result=
 	done
 	[ -z "$result" ] && state=1 || state=2
-	nvram set ${prefix}realip_state=$state
+	# Publish the IP before marking the lookup complete.
 	nvram set ${prefix}realip_ip=$result
+	nvram set ${prefix}realip_state=$state
 
 	[ -z "$result" ] && echo "Failed." || echo "External IP is $result"
 fi
