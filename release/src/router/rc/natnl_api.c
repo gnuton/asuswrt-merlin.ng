@@ -20,7 +20,7 @@ static int is_mesh_re_mode()
 
 void start_aae()
 {
-	if (is_mesh_re_mode())
+	if (is_mesh_re_mode() || access_point_mode())
 		return;
 
 	if(nvram_get_int("aae_disable_force"))
@@ -138,7 +138,7 @@ void start_mastiff()
 		return;
 #endif
 
-	if (is_mesh_re_mode())
+	if (is_mesh_re_mode() || access_point_mode())
 		return;
 
 	if(nvram_get_int("aae_disable_force"))
