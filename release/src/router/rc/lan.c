@@ -1618,9 +1618,7 @@ void start_lan(void)
 #else
 		if (is_routing_enabled()
 #if defined(HND_ROUTER) && defined(RTCONFIG_NEW_PHYMAP)
-#if !defined(RTAX82U) && !defined(RTAX82U_V2) && !defined(DSL_AX82U)
-			&& ext_switch_exist()
-#endif
+			/* #947: Always honor lan_stp for NEW_PHYMAP models (e.g. RT-AX82U, TUF-AX3000_V2) */
 #endif
 		)
 			eval("brctl", "stp", lan_ifname, nvram_safe_get("lan_stp"));
@@ -4554,9 +4552,7 @@ wait_lan_port_to_forward_state(void)
 
 		if (!is_routing_enabled()
 #ifdef RTCONFIG_NEW_PHYMAP
-#if !defined(RTAX82U) && !defined(RTAX82U_V2) && !defined(DSL_AX82U)
-			|| !ext_switch_exist()
-#endif
+			/* #947: Always honor lan_stp for NEW_PHYMAP models (e.g. RT-AX82U, TUF-AX3000_V2) */
 #endif
 		)
 			continue;
