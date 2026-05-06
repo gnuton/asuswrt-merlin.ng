@@ -18114,10 +18114,6 @@ retry_wps_enr:
 	{
 		setup_conntrack();
 		setup_udp_timeout(TRUE);
-#ifdef RTCONFIG_TUNNEL
-		if (nvram_get_int("aae_disable_force"))
-			stop_mastiff();
-#endif
 //            start_firewall(wan_primary_ifunit(), 0);
 	}
 	else if (strcmp(script, "leds") == 0) {
