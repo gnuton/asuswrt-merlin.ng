@@ -1854,8 +1854,6 @@ obj-$(RTCONFIG_TELENET) += lanauth
 #endif
 obj-y += haveged
 
-#obj-$(RTCONFIG_BWDPI) += faketc
-
 ifeq ($(RTCONFIG_BCMARM),y)
 obj-y += libnfnetlink-1.0.1
 obj-y += libmnl-1.0.4
@@ -6203,9 +6201,7 @@ iproute2:
 
 iproute2-install: iproute2
 	install -D iproute2/tc/tc $(INSTALLDIR)/iproute2/usr/sbin/tc
-#	install -D iproute2/tc/tc $(INSTALLDIR)/iproute2/usr/sbin/realtc
 	$(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/tc
-#	$(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/realtc
 	install -D iproute2/ip/ip $(INSTALLDIR)/iproute2/usr/sbin/ip
 	$(STRIP) $(INSTALLDIR)/iproute2/usr/sbin/ip
 
@@ -6215,7 +6211,6 @@ iproute2-3.x: kernel_header iptables-1.4.x
 
 iproute2-3.x-install: iproute2-3.x
 	install -D iproute2-3.x/tc/tc $(INSTALLDIR)/iproute2-3.x/usr/sbin/tc
-#	install -D iproute2-3.x/tc/tc $(INSTALLDIR)/iproute2-3.x/usr/sbin/realtc
 	install -D iproute2-3.x/ip/ip $(INSTALLDIR)/iproute2-3.x/usr/sbin/ip
 	$(STRIP) $(INSTALLDIR)/iproute2-3.x/usr/sbin/*
 	@if [ -e iproute2-3.x/tc/m_xt.so ] ; then \
@@ -6263,7 +6258,6 @@ iproute2-4.3-install:
 iproute2-4.3-clean:
 	-@$(MAKE) -C iproute2-4.3 clean
 	-rm -f $(INSTALL_DIR)/usr/sbin/tc
-#	-rm -f $(INSTALL_DIR)/usr/sbin/realtc
 	-rm -f $(INSTALL_DIR)/usr/sbin/ip
 	-rm -f iproute2-4.3/iproute2/Config
 
@@ -8170,6 +8164,7 @@ curl/Makefile: curl/configure
 		--disable-manual --disable-libcurl-option $(if $(RTCONFIG_IPV6),--enable-ipv6,--disable-ipv6) \
 		--disable-threaded-resolver --disable-ntlm-wb \
 		--disable-doh --disable-netrc --disable-dnsshuffle \
+		--without-libpsl \
 		$(if $(RTCONFIG_TR069),--with-libssh2=$(STAGEDIR)/usr,--without-zlib) \
 		$(if $(RTCONFIG_OPENSSL11)$(RTCONFIG_OPENSSL10),--with-ssl=$(TOP)/openssl --with-ca-fallback,--without-ssl) \
 		$(if $(RTCONFIG_MBEDTLS),--with-mbedtls=$(STAGEDIR)/usr,--without-mbedtls) \
@@ -8918,8 +8913,15 @@ GeoIP-1.6.2-clean:
 	-@[ ! -f GeoIP-1.6.2/Makefile ] || $(MAKE) -C GeoIP-1.6.2 distclean
 	@rm -f GeoIP-1.6.2/stamp-h1
 
+AUTOMAKE_117 := $(shell automake --version 2>/dev/null | head -n1 | grep -q '1\.17' && echo yes)
+
 wget/Makefile.in: wget/Makefile.am
+ifeq ($(AUTOMAKE_117),yes)
+	@echo "==> automake 1.17 detected, running autoreconf"
 	cd wget && autoreconf -fi
+else
+	@echo "==> automake 1.17 NOT found, skip autoreconf"
+endif
 
 wget/Makefile: wget/Makefile.in
 	cd wget && $(CONFIGURE) \

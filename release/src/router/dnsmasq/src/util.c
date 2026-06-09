@@ -34,6 +34,10 @@
 #include <sys/utsname.h>
 #endif
 
+#ifdef HAVE_BSD_NETWORK
+#include <libgen.h>
+#endif
+
 /* SURF random number generator */
 
 static u32 seed[32];
@@ -374,26 +378,6 @@ void safe_pipe(int *fd, int read_noblock)
     die(_("cannot create pipe: %s"), NULL, EC_MISC);
 }
 
-void *whine_malloc(size_t size)
-{
-  void *ret = calloc(1, size);
-
-  if (!ret)
-    my_syslog(LOG_ERR, _("failed to allocate %d bytes"), (int) size);
-  
-  return ret;
-}
-
-void *whine_realloc(void *ptr, size_t size)
-{
-  void *ret = realloc(ptr, size);
-
-  if (!ret)
-    my_syslog(LOG_ERR, _("failed to reallocate %d bytes"), (int) size);
-
-  return ret;
-}
-
 int sockaddr_isequal(const union mysockaddr *s1, const union mysockaddr *s2)
 {
   if (s1->sa.sa_family == s2->sa.sa_family)
@@ -463,7 +447,7 @@ int hostname_order(const char *a, const char *b)
 
 int hostname_isequal(const char *a, const char *b)
 {
-  return hostname_order(a, b) == 0;
+  return strlen(a) == strlen(b) && hostname_order(a, b) == 0;
 }
 
 /* is b equal to or a subdomain of a return 2 for equal, 1 for subdomain */
@@ -476,8 +460,8 @@ int hostname_issubdomain(char *a, char *b)
   for (ap = a; *ap; ap++); 
   for (bp = b; *bp; bp++);
 
-  /* a shorter than b or a empty. */
-  if ((bp - b) < (ap - a) || ap == a)
+  /* a shorter than b */
+  if ((ap - a) < (bp - b))
     return 0;
 
   do
@@ -492,12 +476,12 @@ int hostname_issubdomain(char *a, char *b)
 
        if (c1 != c2)
 	 return 0;
-    } while (ap != a);
+    } while (bp != b);
 
-  if (bp == b)
+  if (ap == a)
     return 2;
 
-  if (*(--bp) == '.')
+  if (*(--ap) == '.')
     return 1;
 
   return 0;
@@ -810,41 +794,58 @@ int retry_send(ssize_t rc)
    "once" fails on EAGAIN, as this a timeout.
    This indicates a timeout of a TCP socket.
 */
-int read_write(int fd, unsigned char *packet, int size, int rw)
+int read_writev(int fd, struct iovec *iov, int iovcnt, int rw)
 {
-  ssize_t n, done;
-  
-  for (done = 0; done < size; done += n)
-    {
-      if (rw & 1)
-	n = read(fd, &packet[done], (size_t)(size - done));
-      else
-	n = write(fd, &packet[done], (size_t)(size - done));
-      
-      if (n == 0)
-	return 0;
+  int cur = 0;
+  ssize_t n, done = 0;
 
+  while (cur < iovcnt)
+    {
+      iov[cur].iov_len -= done;
+      iov[cur].iov_base =  ((char *)iov[cur].iov_base) + done;
+
+      if (rw & 1)
+	n = readv(fd, &iov[cur], iovcnt - cur);
+      else
+	n = writev(fd, &iov[cur], iovcnt - cur);
+
+      iov[cur].iov_len += done;
+      iov[cur].iov_base = ((char *)iov[cur].iov_base) - done;
+      
       if (n == -1)
 	{
-	  n = 0; /* don't mess with counter when we loop. */
-
 	  if (errno == EINTR || errno == ENOMEM || errno == ENOBUFS)
 	    continue;
-
-	  if (errno == EAGAIN || errno == EWOULDBLOCK)
-	    {
-	      /* "once" variant */
-	      if (rw & 2)
-		return 0;
-
-	      continue;
-	    }
+	  
+	  if (!(rw & 2) && (errno == EAGAIN || errno == EWOULDBLOCK))
+	    continue;
 
 	  return 0;
 	}
+      
+      if (n == 0 && (rw & 1))
+	return 0;
+      
+      done += n;
+      while ((size_t)done >= iov[cur].iov_len)
+	done -= iov[cur++].iov_len;
     }
           
   return 1;
+}
+
+int read_write(int fd, unsigned char *packet, int size, int rw)
+{
+  struct iovec iov;
+
+  /* size == 0 is not an error, just a NOOP. */
+  if (size == 0)
+    return 1;
+  
+  iov.iov_len = (size_t)size;
+  iov.iov_base = packet;
+
+  return read_writev(fd, &iov, 1, rw);
 }
 
 /* close all fds except STDIN, STDOUT and STDERR, spare1, spare2 and spare3 */
@@ -868,9 +869,34 @@ void close_fds(long max_fd, int spare1, int spare2, int spare3)
 #endif
 
 #ifdef FDESCFS
-  DIR *d;
+  DIR *d = NULL;
   
-  if ((d = opendir(FDESCFS)))
+#  ifdef HAVE_BSD_NETWORK
+  dev_t dirdev = 0;
+  char fdescfs[] = FDESCFS; /* string must be writable */
+  struct stat statbuf;
+
+  /* On BSD, fdescfs is normally mounted at /dev/fd. However
+     if it is NOT mounted, devfs creates a directory at /dev/fd
+     which contains (only) the file descriptors 0,1 and 2.
+
+     Under these conditions, opendir() will succeed, and
+     if we proceed we will fail to close extant
+     file descriptors which should be closed.
+     
+     Check that there is a filesystem mounted at /dev/fd
+     by checking that the device changes between /dev/fd
+     and /dev. If if doesn't, fall back to the dumb path. */
+  
+  if (stat(fdescfs, &statbuf) != -1)
+    dirdev = statbuf.st_dev;
+
+  if (stat(dirname(fdescfs), &statbuf) != -1 &&
+      dirdev != statbuf.st_dev)
+#  endif
+    d = opendir(FDESCFS);
+      
+  if (d)
     {
       struct dirent *de;
 
@@ -892,9 +918,9 @@ void close_fds(long max_fd, int spare1, int spare2, int spare3)
       
       closedir(d);
       return;
-  }
+    }
 #endif
-
+  
   /* fallback, dumb code. */
   for (max_fd--; max_fd >= 0; max_fd--)
     if (max_fd != STDOUT_FILENO && max_fd != STDERR_FILENO && max_fd != STDIN_FILENO &&
@@ -957,3 +983,42 @@ int kernel_version(void)
   return version * 256 + (split ? atoi(split) : 0);
 }
 #endif
+
+#define hash_ptr(x) (((unsigned int)(((char *)(x)) - ((char *)NULL))) & 0xffffff)
+
+void *whine_malloc_real(const char *func, unsigned int line, size_t size)
+{
+  void *ret = calloc(1, size);
+  
+  if (!ret)
+    my_syslog(LOG_ERR, _("failed to allocate %d bytes"), (int) size);
+  else if (daemon->log_malloc)
+    my_syslog(LOG_INFO, _("malloc: %s:%u %zu bytes at %x"), func, line, size, hash_ptr(ret));
+
+  return ret;
+}
+
+void *whine_realloc_real(const char *func, unsigned int line, void *ptr, size_t size)
+{
+  unsigned int old = hash_ptr(ptr);
+  void *ret = realloc(ptr, size);
+  
+  if (!ret)
+    my_syslog(LOG_ERR, _("failed to reallocate %d bytes"), (int) size);
+  else if (daemon->log_malloc)
+    my_syslog(LOG_INFO, _("realloc: %s:%u %zu bytes from %x to %x"), func, line, size, old, hash_ptr(ret));
+  
+  return ret;
+}
+
+#undef free
+void free_real(const char *func, unsigned int line, void *ptr)
+{
+  if (ptr)
+    {
+      if (daemon->log_malloc)
+	my_syslog(LOG_INFO, _("free: %s:%u block at %x"), func, line, hash_ptr(ptr));
+  
+      free(ptr);
+    }
+}

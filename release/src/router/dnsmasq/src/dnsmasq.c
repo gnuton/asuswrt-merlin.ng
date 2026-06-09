@@ -30,7 +30,9 @@ static volatile pid_t pid = 0;
 static volatile int pipewrite;
 
 static void set_dns_listeners(void);
+#ifdef HAVE_TFTP
 static void set_tftp_listeners(void);
+#endif
 static void check_dns_listeners(time_t now);
 static void do_tcp_connection(struct listener *listener, time_t now, int slot);
 static void sig_handler(int sig);
@@ -38,7 +40,6 @@ static void async_event(int pipe, time_t now);
 static void fatal_event(struct event_desc *ev, char *msg);
 static int read_event(int fd, struct event_desc *evp, char **msg);
 static void poll_resolv(int force, int do_reload, time_t now);
-static void tcp_init(void);
 
 int main (int argc, char **argv)
 {
@@ -63,14 +64,16 @@ int main (int argc, char **argv)
   int need_cap_net_raw = 0;
   int need_cap_net_bind_service = 0;
   int have_cap_chown = 0;
+#  ifdef HAVE_DHCP
   char *bound_device = NULL;
   int did_bind = 0;
+#  endif
   struct server *serv;
   char *netlink_warn;
 #else
   int bind_fallback = 0;
 #endif 
-#if defined(HAVE_DHCP) || defined(HAVE_DHCP6)
+#if defined(HAVE_DHCP)
   struct dhcp_context *context;
   struct dhcp_relay *relay;
 #endif
@@ -78,6 +81,10 @@ int main (int argc, char **argv)
   int tftp_prefix_missing = 0;
 #endif
 
+#ifdef HAVE_LINUX_NETWORK
+  (void)netlink_warn;
+#endif
+  
 #if defined(HAVE_IDN) || defined(HAVE_LIBIDN2) || defined(LOCALEDIR)
   setlocale(LC_ALL, "");
 #endif
@@ -120,6 +127,7 @@ int main (int argc, char **argv)
      This might be increased is EDNS packet size if greater than the minimum. */ 
   daemon->packet_buff_sz = daemon->edns_pktsz + MAXDNAME + RRFIXEDSZ;
   daemon->packet = safe_malloc(daemon->packet_buff_sz);
+  daemon->pipe_to_parent = -1;
   
   if (option_bool(OPT_EXTRALOG))
     daemon->addrbuff2 = safe_malloc(ADDRSTRLEN);
@@ -133,6 +141,7 @@ int main (int argc, char **argv)
 	 '.' or NAME_ESCAPE then all would have to be escaped, so the 
 	 presentation format would be twice as long as the spec. */
       daemon->keyname = safe_malloc((MAXDNAME * 2) + 1);
+      daemon->cname = safe_malloc((MAXDNAME * 2) + 1);
       /* one char flag per possible RR in answer section (may get extended). */
       daemon->rr_status_sz = 64;
       daemon->rr_status = safe_malloc(sizeof(*daemon->rr_status) * daemon->rr_status_sz);
@@ -421,7 +430,11 @@ int main (int argc, char **argv)
       /* safe_malloc returns zero'd memory */
       daemon->randomsocks = safe_malloc(daemon->numrrand * sizeof(struct randfd));
 
-      tcp_init();
+      daemon->tcp_pids = safe_malloc(daemon->max_procs*sizeof(pid_t));
+      daemon->tcp_pipes = safe_malloc(daemon->max_procs*sizeof(int));
+
+      for (i = 0; i < daemon->max_procs; i++)
+	daemon->tcp_pipes[i] = -1;
     }
 
 #ifdef HAVE_INOTIFY
@@ -851,6 +864,9 @@ int main (int argc, char **argv)
     }
 #endif
 
+   /* Don't start logging malloc before logging is set up. */
+  daemon->log_malloc = option_bool(OPT_LOG_MALLOC);
+  
   if (daemon->port == 0)
     my_syslog(LOG_INFO, _("started, version %s DNS disabled"), VERSION);
   else 
@@ -930,7 +946,8 @@ int main (int argc, char **argv)
 	my_syslog(LOG_INFO, _("DNSSEC signature timestamps not checked until system time valid"));
 
       for (ds = daemon->ds; ds; ds = ds->next)
-	my_syslog(LOG_INFO, _("configured with trust anchor for %s keytag %u"),
+	my_syslog(LOG_INFO,
+		  ds->digestlen == 0 ? _("configured with negative trust anchor for %s") : _("configured with trust anchor for %s keytag %u"),
 		  ds->name[0] == 0 ? "<root>" : ds->name, ds->keytag);
     }
 #endif
@@ -1067,12 +1084,6 @@ int main (int argc, char **argv)
   
   pid = getpid();
 
-  daemon->pipe_to_parent = -1;
-
-  if (daemon->port != 0)
-    for (i = 0; i < daemon->max_procs; i++)
-      daemon->tcp_pipes[i] = -1;
-  
 #ifdef HAVE_INOTIFY
   /* Using inotify, have to select a resolv file at startup */
   poll_resolv(1, 0, now);
@@ -1327,11 +1338,42 @@ static void sig_handler(int sig)
       if (sig == SIGTERM || sig == SIGINT)
 	exit(EC_MISC);
     }
-  else if (pid != getpid())
+  else if (daemon->pipe_to_parent != -1)
     {
       /* alarm is used to kill TCP children after a fixed time. */
       if (sig == SIGALRM)
-	_exit(0);
+	{
+#ifdef HAVE_DNSSEC
+	  if (!daemon->forward_to_tcp)
+#endif
+	    _exit(0); /* Normal TCP child */
+#ifdef HAVE_DNSSEC
+	  else
+	    {
+	      /* udp_to_tcp transfer.
+		 If daemon->header_to_tcp is NULL the waiting is over and
+		 we can let things take their course, otherwise, send a failure
+		 return down the pipe to unblock the UDP transaction and kill
+		 the process. */
+	      if (daemon->header_to_tcp)
+		{
+		  unsigned char op = PIPE_OP_KILLED;
+		  int status = STAT_ABANDONED;
+		  
+		  read_write(daemon->pipe_to_parent, &op, sizeof(op), RW_WRITE);
+		  read_write(daemon->pipe_to_parent, (unsigned char *)&status, sizeof(status), RW_WRITE);
+		  read_write(daemon->pipe_to_parent, (unsigned char *)(&daemon->plen_to_tcp), sizeof(daemon->plen_to_tcp), RW_WRITE);
+		  read_write(daemon->pipe_to_parent, (unsigned char *)(daemon->header_to_tcp), daemon->plen_to_tcp, RW_WRITE);
+		  read_write(daemon->pipe_to_parent, (unsigned char *)(&daemon->forward_to_tcp), sizeof(daemon->forward_to_tcp), RW_WRITE);
+		  read_write(daemon->pipe_to_parent, (unsigned char *)(&daemon->forward_to_tcp->uid), sizeof(daemon->forward_to_tcp->uid), RW_WRITE);
+
+		  my_syslog(LOG_INFO, _("TCP process for DNSSEC validation timed out"));
+
+		  _exit(0);
+		}
+	    }
+#endif
+	}
     }
   else
     {
@@ -1776,9 +1818,9 @@ void clear_cache_and_reload(time_t now)
 #ifdef HAVE_DHCP
   if (daemon->dhcp || daemon->doing_dhcp6)
     {
+      reread_dhcp();
       if (option_bool(OPT_ETHERS))
 	dhcp_read_ethers();
-      reread_dhcp();
       dhcp_update_configs(daemon->dhcp_conf);
       lease_update_from_configs(); 
       lease_update_file(now); 
@@ -1941,17 +1983,21 @@ static void check_dns_listeners(time_t now)
 
 static void do_tcp_connection(struct listener *listener, time_t now, int slot)
 {
-  int confd, client_ok = 1;
+  int confd;
   struct irec *iface = NULL;
   pid_t p;
   union mysockaddr tcp_addr;
   socklen_t tcp_len = sizeof(union mysockaddr);
-  unsigned char a = 0, *buff;
   struct server *s; 
-  int flags, auth_dns;
+  int flags, auth_dns = 0;
   struct in_addr netmask;
   int pipefd[2];
-
+  struct iovec tcpbuff;
+#ifdef HAVE_LINUX_NETWORK
+  unsigned char a = 0;
+#endif
+  netmask.s_addr = 0;
+  
   while ((confd = accept(listener->tcpfd, NULL, NULL)) == -1 && errno == EINTR);
   
   if (confd == -1)
@@ -1978,60 +2024,80 @@ static void do_tcp_connection(struct listener *listener, time_t now, int slot)
   
   enumerate_interfaces(0);
   
-  if (option_bool(OPT_NOWILD))
-    iface = listener->iface; /* May be NULL */
+  if (option_bool(OPT_NOWILD) || option_bool(OPT_CLEVERBIND))
+    {
+      if ((iface = listener->iface)) 
+	{
+	  netmask = iface->netmask;
+	  auth_dns = iface->dns_auth;
+	}
+    }
   else 
     {
-      int if_index;
+      int if_index, got_index = 0;
       char intr_name[IF_NAMESIZE];
       
-      /* if we can find the arrival interface, check it's one that's allowed */
+      /* if we can find the arrival interface, check it's one that's allowed
+	 tcp_interface() is not implemented on non-Linux platforms */
       if ((if_index = tcp_interface(confd, tcp_addr.sa.sa_family)) != 0 &&
 	  indextoname(listener->tcpfd, if_index, intr_name))
 	{
 	  union all_addr addr;
+
+	  got_index = 1;
 	  
 	  if (tcp_addr.sa.sa_family == AF_INET6)
 	    addr.addr6 = tcp_addr.in6.sin6_addr;
 	  else
 	    addr.addr4 = tcp_addr.in.sin_addr;
 	  
-	  for (iface = daemon->interfaces; iface; iface = iface->next)
-	    if (iface->index == if_index &&
-		iface->addr.sa.sa_family == tcp_addr.sa.sa_family)
-	      break;
-	  
-	  if (!iface && !loopback_exception(listener->tcpfd, tcp_addr.sa.sa_family, &addr, intr_name))
-	    client_ok = 0;
+	  if (!iface_check(tcp_addr.sa.sa_family, &addr, intr_name, &auth_dns) &&
+	      !loopback_exception(listener->tcpfd, tcp_addr.sa.sa_family, &addr, intr_name))
+	    goto closeconandreturn;
 	}
       
-      if (option_bool(OPT_CLEVERBIND))
-	iface = listener->iface; /* May be NULL */
-      else
+      /* When binding the wildcard address, try and get the
+	 netmask of the interface for localisation. */
+      for (iface = daemon->interfaces; iface; iface = iface->next)
+	if (sockaddr_isequal(&iface->addr, &tcp_addr))
+	  {
+	    netmask = iface->netmask;
+	    break;
+	  }
+
+      /* On platforms where tcp_interface() doesn't work, we rely
+	 of the presence of the local address of the connection in the
+	 interface list to check if we're accepting this connection and
+	 for its auth status. */
+      if (!got_index)
 	{
-	  /* Check for allowed interfaces when binding the wildcard address:
-	     we do this by looking for an interface with the same address as 
-	     the local address of the TCP connection, then looking to see if that's
-	     an allowed interface. As a side effect, we get the netmask of the
-	     interface too, for localisation. */
-	  
-	  for (iface = daemon->interfaces; iface; iface = iface->next)
-	    if (sockaddr_isequal(&iface->addr, &tcp_addr))
-	      break;
-	  
 	  if (!iface)
-	    client_ok = 0;
+	    goto closeconandreturn;
+
+	  auth_dns = iface->dns_auth;
 	}
     }
   
-  if (!client_ok)
-    goto closeconandreturn;
-  
   if (!option_bool(OPT_DEBUG))
     {
+      /* The code in edns0.c that decorates queries with the source MAC address depends
+	 on the code in arp.c, which populates a cache with the contents of the ARP table
+	 using netlink. Since the child process can't use netlink, we pre-populate
+	 the cache with the ARP table entry for our source here, including a negative entry
+	 if there is nothing for our address in the ARP table.
+	 
+	 When the edns0 code calls find_mac() in the child process, it will
+	 get the correct answer from the cache inherited from the parent
+	 without having to use netlink to consult the kernel ARP table.
+
+	 edns0_needs_mac() simply calls find_mac if any EDNS0 options
+	 which need a MAC address are enabled. */
+      
+      edns0_needs_mac(&tcp_addr, now);
+
       if (pipe(pipefd) == -1)
 	goto closeconandreturn; /* pipe failed */
-            
+
       if ((p = fork()) == -1)
 	{
 	  /* fork failed */
@@ -2059,7 +2125,7 @@ static void do_tcp_connection(struct listener *listener, time_t now, int slot)
 	     single byte comes back up the pipe, which
 	     is sent by the child after it has closed the
 	     netlink socket. */
-	  
+
 	  read_write(pipefd[0], &a, 1, RW_READ);
 #endif
 	  
@@ -2082,23 +2148,9 @@ static void do_tcp_connection(struct listener *listener, time_t now, int slot)
 	  
 	  return;
 	}
-    }
-         
-  if (iface)
-    {
-      netmask = iface->netmask;
-      auth_dns = iface->dns_auth;
-    }
-  else
-    {
-      netmask.s_addr = 0;
-      auth_dns = 0;
-    }
-  
-  /* Arrange for SIGALRM after CHILD_LIFETIME seconds to
-     terminate the process. */
-  if (!option_bool(OPT_DEBUG))
-    {
+      
+      /* Arrange for SIGALRM after CHILD_LIFETIME seconds to
+	 terminate the process. */
 #ifdef HAVE_LINUX_NETWORK
       /* See comment above re: netlink socket. */
       close(daemon->netlinkfd);
@@ -2115,10 +2167,8 @@ static void do_tcp_connection(struct listener *listener, time_t now, int slot)
   if ((flags = fcntl(confd, F_GETFL, 0)) != -1)
     while(retry_send(fcntl(confd, F_SETFL, flags & ~O_NONBLOCK)));
 
-  buff = tcp_request(confd, now, &tcp_addr, netmask, auth_dns);
-	      
-  if (buff)
-    free(buff);
+  tcp_request(confd, now, &tcpbuff, &tcp_addr, netmask, auth_dns);
+  free(tcpbuff.iov_base);
   
   for (s = daemon->servers; s; s = s->next)
     if (s->tcpfd != -1)
@@ -2130,6 +2180,10 @@ static void do_tcp_connection(struct listener *listener, time_t now, int slot)
   
   if (!option_bool(OPT_DEBUG))
     {
+#ifdef HAVE_DNSSEC
+       cache_update_hwm(); /* Sneak out possibly updated crypto HWM values. */
+#endif
+
       close(daemon->pipe_to_parent);
       flush_log();
       _exit(0);
@@ -2148,7 +2202,7 @@ static void do_tcp_connection(struct listener *listener, time_t now, int slot)
    cache_recv_insert() calls pop_and_retry_query() after the result 
    arrives via the pipe to the parent. */
 int swap_to_tcp(struct frec *forward, time_t now, int status, struct dns_header *header,
-		ssize_t *plen, int class, struct server *server, int *keycount, int *validatecount)
+		ssize_t *plen, char *name, int class, struct server *server, int *keycount, int *validatecount)
 {
   struct server *s;
 
@@ -2217,13 +2271,16 @@ int swap_to_tcp(struct frec *forward, time_t now, int status, struct dns_header 
 	  close(daemon->netlinkfd);
 	  read_write(pipefd[1], &a, 1, RW_WRITE);
 #endif		  
+	  alarm(CHILD_LIFETIME);
 	  close(pipefd[0]); /* close read end in child. */
-	  daemon->pipe_to_parent = pipefd[1];	  
+	  daemon->pipe_to_parent = pipefd[1];
+	  daemon->forward_to_tcp = forward;
+	  daemon->header_to_tcp = header;
+	  daemon->plen_to_tcp = *plen;
 	}
     }
   
-  status = tcp_from_udp(now, status, header, plen, class, daemon->namebuff, daemon->keyname, 
-			server, keycount, validatecount);
+  status = tcp_from_udp(now, status, header, plen, class, name, server, keycount, validatecount);
   
   /* close upstream connections. */
   for (s = daemon->servers; s; s = s->next)
@@ -2236,10 +2293,10 @@ int swap_to_tcp(struct frec *forward, time_t now, int status, struct dns_header 
   
    if (!option_bool(OPT_DEBUG))
      {
-       ssize_t m = -2;
+       unsigned char op = PIPE_OP_RESULT;
 
        /* tell our parent we're done, and what the result was then exit. */
-       read_write(daemon->pipe_to_parent, (unsigned char *)&m, sizeof(m), RW_WRITE);
+       read_write(daemon->pipe_to_parent, &op, sizeof(op), RW_WRITE);
        read_write(daemon->pipe_to_parent, (unsigned char *)&status, sizeof(status), RW_WRITE);
        read_write(daemon->pipe_to_parent, (unsigned char *)plen, sizeof(*plen), RW_WRITE);
        read_write(daemon->pipe_to_parent, (unsigned char *)header, *plen, RW_WRITE);
@@ -2249,6 +2306,9 @@ int swap_to_tcp(struct frec *forward, time_t now, int status, struct dns_header 
        read_write(daemon->pipe_to_parent, (unsigned char *)&keycount, sizeof(keycount), RW_WRITE);
        read_write(daemon->pipe_to_parent, (unsigned char *)validatecount, sizeof(*validatecount), RW_WRITE);
        read_write(daemon->pipe_to_parent, (unsigned char *)&validatecount, sizeof(validatecount), RW_WRITE);
+      
+       cache_update_hwm(); /* Sneak out possibly updated crypto HWM values. */
+              
        close(daemon->pipe_to_parent);
        
        flush_log();
@@ -2419,8 +2479,4 @@ int delay_dhcp(time_t start, int sec, int fd, uint32_t addr, unsigned short id)
 }
 #endif /* HAVE_DHCP */
 
-void tcp_init(void)
-{
-  daemon->tcp_pids = safe_malloc(daemon->max_procs*sizeof(pid_t));
-  daemon->tcp_pipes = safe_malloc(daemon->max_procs*sizeof(int));
-}
+
