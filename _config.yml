@@ -1,1 +1,6 @@
 theme: jekyll-theme-minimal
+exclude:
+  - release/**
+  - scripts/**
+  - tools/**
+  - updates/**
