@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:          
     build-job:
       name: Build
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       strategy:
         fail-fast: false
         matrix:
@@ -188,7 +188,7 @@ jobs:
     release-job:
       name: Publish
       needs: build-job
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       if: startsWith(github.event.ref, 'refs/tags/')
       steps:
         - name: Download packages
@@ -212,7 +212,7 @@ jobs:
     manifest-job:
       name: Publish Manifest
       needs: build-job
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
       steps:
         - uses: actions/checkout@v4
