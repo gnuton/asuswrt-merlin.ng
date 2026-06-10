@@ -8922,7 +8922,7 @@ wget/Makefile.in: wget/Makefile.am
 	cd wget && autoreconf -fi
 
 wget/Makefile: wget/Makefile.in
-	cd wget && $(CONFIGURE) \
+	cd wget && touch aclocal.m4 && touch configure src/config.h.in && find . -name Makefile.in -exec touch {} + && $(CONFIGURE) \
 		--with-ssl=openssl --prefix=/usr --sysconfdir=/etc \
 		--disable-opie --disable-ntlm --disable-debug --disable-nls --disable-rpath \
 		$(if $(RTCONFIG_IPV6),,--disable-ipv6) --disable-iri --without-included-regex  \
