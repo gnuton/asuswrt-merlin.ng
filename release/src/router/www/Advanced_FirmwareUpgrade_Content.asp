@@ -156,6 +156,7 @@ afwupg_support=false;
 betaupg_support=false;
 revertfw_support=false;
 rbkfw_support=false;
+no_fw_manual_support = false;
 
 if(pipefw_support || urlfw_support){
 	var hndwr_status = '<% nvram_get("hndwr"); %>';
@@ -513,7 +514,7 @@ function initial(){
 							$("#amas_" + mac_id + "").children().find(".aimesh_fw_revert_node").remove();
 					}
 
-					if(capability_value & 4096){     //no_fw_manual_support
+					if(false && (capability_value & 4096)){     //no_fw_manual_support
 						$("#amas_" + mac_id + "").children("#manual_firmware_update").empty();
 					}
 					if(capability_value & 8192){     //live_update_support
@@ -660,12 +661,12 @@ function initial(){
 		$(".aimesh_manual_fw_update_hint").css("display", "none");
 	}
 
-	if(is_ISP_incompatible)
+	if(false && is_ISP_incompatible)
 	{
 		$("#fw_note2").show();
 		$("#fw_note2").html("The firmware of ISP (Internet Service Provider) project is not compatible with the ASUS retail models, and also it’s unavailable for firmware manual update.");	//Untranslated
 	}
-	if(isSupport("is_ax5400_i1"))
+	if(false && isSupport("is_ax5400_i1"))
 	{
 		$("#fw_note3").show();
 		$("#fw_note3").html("Firmware upgrade is only accessible through Optus server.");	//Untranslated
@@ -1791,7 +1792,7 @@ function update_AiMesh_fw() {
 						$("#amas_" + mac_id + "").children("#manual_firmware_update").empty();
 						$("#amas_" + mac_id + "").children("#manual_firmware_update").append(gen_AiMesh_fw_status(support_manual_fw, get_cfg_clientlist[idx]));
 					}
-					if(capability_value & 4096){     //no_fw_manual_support
+					if(false && (capability_value & 4096)){     //no_fw_manual_support
 						$("#amas_" + mac_id + "").children("#manual_firmware_update").empty();
 					}
 
