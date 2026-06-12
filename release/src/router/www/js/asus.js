@@ -224,7 +224,7 @@ system.aMesh = (() => {
             return "0";
         }
                 
-        return nBandArray[dwb_band] ? dwb_mode : "0";
+        return nBandArray[dwb_band] && dwb_mode === "1" ? "1" : "0";
     })();
     object.dwbBand = nBandArray[dwb_band];    
     object.nodeList = (() => {
@@ -246,7 +246,7 @@ system.aMesh = (() => {
 
     object.channel = (() => {
         let _channel = {};
-        if (dwb_mode === "1") {
+        if (object.dwbMode === "1") {
             nBandArray.forEach((element) => {
                 let postfixIndex = wlPostfixIndexTransform[element];
                 let dwbChannel = (() => httpApi.hookGet(`get_wl_channel_list_${postfixIndex}`) || {})();
@@ -320,7 +320,7 @@ system.smartConnect = (() => {
 // Wireless
 system.wlBandSeq = (() => {
     let wlObj = {};
-    let { wlnband_list, dwb_mode } = nvram;
+    let { wlnband_list } = nvram;
     let nBandArray = wlnband_list.split("&#60");
     let curCtrlChannelArray = httpApi.hookGet("wl_control_channel");
     let {
@@ -452,7 +452,7 @@ system.wlBandSeq = (() => {
 
             // BRCM platform, it is to check the validation of return value of get_wl_channel_list_xx()
             // MTK, QCA needs to refine get_wl_channel_list_xx()
-            if (dwb_mode === "1" && channel[wlIfIndex]?.chan_20m?.chanlist?.length > 1) {
+            if (aMesh.dwbMode === "1" && channel[wlIfIndex]?.chan_20m?.chanlist?.length > 1) {
                 _channel = (() => {
                     let chanlist = (() => (channel[wlIfIndex].chan_20m ? channel[wlIfIndex].chan_20m.chanlist : []))();
                     if (chanlist[0] === "0") {
@@ -508,27 +508,25 @@ system.wlBandSeq = (() => {
         wlObj[wlIfIndex].wepPassPhraseValue = _nvram[`${wlIfIndex}_phrase_x`];
         if (isBRCMplatform) {
             wlObj[wlIfIndex].chanspecs = (() => {
-                if (dwb_mode === "1") {
+                if (aMesh.dwbMode === "1") {
                     let channel = [];
-                    let dwbChannel = objectDeepCopy(aMesh.channel[wlIfIndex]);
+                    let dwbChannel = objectDeepCopy(aMesh.channel[wlIfIndex] || {});
                     if (dwbChannel.auto) {
                         delete dwbChannel["auto"];
                     }
 
                     for (let { chanspec } of Object.values(dwbChannel)) {
-                        if (chanspec) {
-                            if (chanspec[0] === "0") {
-                                chanspec.shift();
-                            }
-
-                            channel = channel.concat(chanspec);
+                        if (Array.isArray(chanspec)) {
+                            channel = channel.concat(chanspec.filter((element) => element !== "0"));
                         }
                     }
 
-                    return channel;
+                    if (channel.length !== 0) {
+                        return channel;
+                    }
                 }
 
-                return httpApi.hookGet(`chanspecs_${postfixIndex}`);
+                return httpApi.hookGet(`chanspecs_${postfixIndex}`) || [];
             })();
             wlObj[wlIfIndex].chanspecs.forEach((element) => {
                 let _ch = element.split("u")[0].split("l")[0].split("/")[0];
