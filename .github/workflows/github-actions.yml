@@ -57,12 +57,21 @@ jobs:
               echo "Skipping build!"
               exit 0
             fi
-            if [[ $GITHUB_REF_TYPE == "tag" ]]; then
+            
+            # For PRs from forks, use the fork repository; otherwise use the main repo
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+              export GIT_REPO="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/}.git"
+              export BRANCH="${GITHUB_HEAD_REF}"
+              echo "PR detected - using fork repository: $GIT_REPO"
+              echo "Fetching code from branch $BRANCH"
+            else
+              if [[ $GITHUB_REF_TYPE == "tag" ]]; then
                 export TAG="${GITHUB_REF#refs/tags/}"
                 echo "Fetching code from tag $TAG"
-            else
-                export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+              else
+                export BRANCH="${GITHUB_REF#refs/heads/}"
                 echo "Fetching code from branch $BRANCH"
+              fi
             fi
 
             if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
