@@ -954,6 +954,10 @@
                                 }
                             }
                         } else {
+                            if (!ch20MHz[element]) {
+                                continue;
+                            }
+
                             chValue = ch20MHz[element][0];
                             chNumber = channelValue;
                         }
@@ -1024,6 +1028,10 @@
                         }
                     } else if ((isBRCMplatform && bandwidthValue === "1") || (!isBRCMplatform && bandwidthValue === "0")) {
                         // 20 MHz
+                        if (!ch20MHz[element]) {
+                            continue;
+                        }
+
                         chValue = ch20MHz[element][0];
                         chNumber = channelValue;
                     }
@@ -1889,6 +1897,10 @@
                                 }
                             }
                         } else {
+                            if (!ch20MHz[element]) {
+                                continue;
+                            }
+
                             chValue = ch20MHz[element][0];
                             chNumber = channelValue;
                         }
@@ -1957,6 +1969,10 @@
                         }
                     } else if (bandwidthValue === "1") {
                         // 20 MHz
+                        if (!ch20MHz[element]) {
+                            continue;
+                        }
+
                         chValue = ch20MHz[element][0];
                         chNumber = channelValue;
                     }
