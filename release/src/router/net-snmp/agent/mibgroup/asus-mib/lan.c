@@ -14,7 +14,7 @@
 #define MAX_CLIENT_LIST	255
 #define MACSTRNUM	18
 #define STATICROUTESTRNUM	80
-#define MAXSTATICROUTE	32
+#define MAXSTATICROUTE	64
 static unsigned char tmpstr[SPRINT_MAX_LEN];
 static long tmpval = 0;
 static unsigned long tmpval_u = 0;
