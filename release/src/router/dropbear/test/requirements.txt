@@ -6,4 +6,4 @@ psutil==6.0.0
 pyparsing==2.4.7
 pytest==9.0.3
 toml==0.10.2
-asyncssh==2.17.0
+asyncssh==2.23.1
