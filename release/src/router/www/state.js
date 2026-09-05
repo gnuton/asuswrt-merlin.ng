@@ -864,6 +864,10 @@ var le_restart_httpd_chk = "";
 
 var wifison_ready = '<% nvram_get("wifison_ready"); %>';
 var ui_lang = '<% nvram_get("preferred_lang"); %>';
+var ui_theme = '<% nvram_get("ui_theme"); %>';
+if(ui_theme == "1"){
+	addNewCSS("/css/theme_blue.css");
+}
 
 if(lyra_hide_support){
 	var Android_app_link = "https://play.google.com/store/apps/details?id=com.asus.hive";
