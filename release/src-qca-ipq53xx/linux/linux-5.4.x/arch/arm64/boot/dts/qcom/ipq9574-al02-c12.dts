@@ -1,0 +1,89 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C12 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c6.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C12";
+	compatible = "qcom,ipq9574-ap-al02-c12", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+	soc {
+		pcie1_x1: pci@10000000 {
+			perst-gpio = <&tlmm 26 1>;
+			max-payload-size = <1>; // 1-256 TLP bytes for WKK
+			status = "ok";
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@1 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x31>;
+					memory-region = <0>,<&mhi_region1>;
+#endif
+				};
+			};
+		};
+
+		pcie1_phy: phy@fc000 {
+			status = "ok";
+		};
+	};
+};
+
+&mhi_region1 {
+	status = "ok";
+};
+
+&qcn9224_pcie1 {
+        status = "ok";
+};
+
+&mlo_global_mem0 {
+	size = <0x0 0x1200000>;
+	status = "ok";
+};
+
+&wifi0 {
+	/* Enable IPQ9574 integratd 2G Radio */
+	led-gpio = <&tlmm 64 1>;
+	qcom,board_id = <0x20>;
+	status = "ok";
+};
+
+&wifi5 {
+	hremote_node = <&qcn9224_pcie1>;
+	board_id = <0x11>;
+	hw_link_id = <0 0>;
+	status = "ok";
+};
+
+&wifi6 {
+	hremote_node = <&qcn9224_pcie2>;
+	board_id = <0x04>;
+	hw_link_id = <1 0>;
+	status = "ok";
+};
+
+&wifi7 {
+	hremote_node = <&qcn9224_pcie3>;
+	board_id = <0x12>;
+	hw_link_id = <2 0>;
+	status = "ok";
+};

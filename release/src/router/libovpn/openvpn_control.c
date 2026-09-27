@@ -309,6 +309,11 @@ void ovpn_client_up_handler(int unit)
 
 			if (fp_route) {
 				while (fgets(buffer2, sizeof(buffer2), fp_route) != NULL) {
+#ifdef RTCONFIG_SOC_IPQ53XX
+					/* Never retain the WAN default if no tunnel gateway is available. */
+					if (!strncmp(buffer2, "default ", 8))
+						continue;
+#endif
 					if (buffer2[strlen(buffer2)-1] == '\n')
 						buffer2[strlen(buffer2)-1] = '\0';
 					snprintf(buffer3, sizeof (buffer3), "/usr/sbin/ip route add %s table ovpnc%d", buffer2, unit);
@@ -473,6 +478,34 @@ exit:
 }
 
 
+#ifdef RTCONFIG_SOC_IPQ53XX
+void _ovpn_run_event_script(void)
+{
+	char *script = "/jffs/scripts/openvpn-event";
+	char *dev = safe_getenv("dev");
+	char *mtu;
+	struct stat st;
+
+	if (!nvram_match("jffs2_scripts", "1") || stat(script, &st) != 0)
+		return;
+	if (!(st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))) {
+		logmessage("custom_script", "openvpn-event is not executable");
+		return;
+	}
+	if (!strncmp(dev, "tun", 3))
+		mtu = safe_getenv("tun_mtu");
+	else if (!strncmp(dev, "tap", 3))
+		mtu = safe_getenv("tap_mtu");
+	else
+		return;
+
+	logmessage("custom_script", "Running openvpn-event");
+	eval(script, dev, mtu, safe_getenv("link_mtu"),
+		safe_getenv("ifconfig_local"), safe_getenv("ifconfig_remote"),
+		safe_getenv("script_context"));
+}
+
+#else
 void _ovpn_run_event_script() {
 	ovpn_if_t type;
 
@@ -494,6 +527,7 @@ void _ovpn_run_event_script() {
 	}
 }
 
+#endif
 void ovpn_start_client(int unit) {
 	char buffer[64], buffer2[64];
 	ovpn_cconf_t *cconf;

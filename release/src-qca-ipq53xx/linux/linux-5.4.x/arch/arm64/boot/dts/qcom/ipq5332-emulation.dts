@@ -1,0 +1,613 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 Emulation board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq5332.dtsi"
+#include "ipq5332-default-memory.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5332/EMULATION";
+	compatible = "qcom,ipq5332-ap-emulation", "qcom,ipq5332";
+	interrupt-parent = <&intc>;
+
+	clocks {
+		sleep_clk: sleep-clk {
+			clock-frequency = <320>;
+		};
+
+		xo: xo {
+			clock-frequency = <240000>;
+		};
+	};
+
+	aliases {
+		serial0 = &blsp1_uart0;
+		serial1 = &blsp1_uart1;
+		ethernet0 = "/soc/dp1";
+		ethernet1 = "/soc/dp2";
+	};
+
+	chosen {
+		linux,initrd-end = <0x57000000>;
+		linux,initrd-start = <0x55000000>;
+		bootargs = "root=/dev/ram0 rw init=/init";
+		stdout-path = "serial0";
+	};
+
+	cpus: cpus {
+		CPU0: cpu@0 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc0>;
+		};
+
+		CPU1: cpu@1 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc1>;
+		};
+
+		CPU2: cpu@2 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc2>;
+		};
+
+		CPU3: cpu@3 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc3>;
+		};
+	};
+
+	firmware {
+		qfprom {
+			status = "disabled";
+		};
+	};
+
+	soc {
+		pinctrl@1000000 {
+			emmc_pins: emmc_pins {
+				emmc_clk {
+					pins = "gpio13";
+					function = "sdc_clk";
+					drive-strength = <8>;
+					bias-disable;
+				};
+				emmc_cmd {
+					pins = "gpio12";
+					function = "sdc_cmd";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				emmc_data {
+					pins = "gpio8", "gpio9", "gpio10",
+						"gpio11";
+					function = "sdc_data";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			spi_0_pins: spi0-pinmux {
+				pins = "gpio14", "gpio15", "gpio16", "gpio17";
+				function = "blsp0_spi";
+				drive-strength = <2>;
+				bias-disable;
+			};
+
+			serial_0_pins: serial0-pinmux {
+				pins = "gpio18", "gpio19";
+				function = "blsp0_uart0";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			serial_1_pins: serial1-pinmux {
+				pins = "gpio25", "gpio26", "gpio27", "gpio28";
+				function = "blsp1_uart1";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			i2c_1_pins: i2c-1-pinmux {
+				pins = "gpio29", "gpio30";
+				function = "blsp1_i2c0";
+				drive-strength = <8>;
+				bias-disable;
+			};
+		};
+
+		gcc: gcc@1800000 {
+			gcc-use-dummy;
+		};
+
+		nsscc: nsscc@39b00000 {
+			nsscc-use-dummy;
+		};
+
+		dp1 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <1>;
+			reg = <0x3a001000 0x200>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <0>;
+			phy-mode = "sgmii";
+			/* TODO: support link polling */
+		};
+
+		dp2 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <2>;
+			reg = <0x3a001200 0x200>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <0>;
+			phy-mode = "sgmii";
+			/* TODO: support link polling */
+		};
+
+		ess-instance {
+			num_devices = <0x1>;
+			ess-switch@3a000000 {
+				qcom,emulation; /* RUMI ENV */
+				switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+				switch_lan_bmp = <0x4>; /* lan port bitmap */
+				switch_wan_bmp = <0x2>; /* wan port bitmap */
+				switch_mac_mode = <0xd>; /* mac mode for uniphy instance0*/
+				switch_mac_mode1 = <0xd>; /* mac mode for uniphy instance1*/
+				switch_mac_mode2 = <0xff>; /* mac mode for uniphy instance2*/
+				bm_tick_mode = <0>; /* bm tick mode */
+				tm_tick_mode = <0>; /* tm tick mode */
+
+				qcom,port_phyinfo {
+					port@0 {
+						port_id = <1>;
+						forced-speed = <5000>;
+						forced-duplex = <1>;
+					};
+					port@1 {
+						port_id = <2>;
+						forced-speed = <5000>;
+						forced-duplex = <1>;
+					};
+				};
+				port_scheduler_resource {
+					port@0 {
+						port_id = <0>;
+						ucast_queue = <0 43>;
+						mcast_queue = <256 262>;
+						l0sp = <0 6>;
+						l0cdrr = <0 27>;
+						l0edrr = <0 27>;
+						l1cdrr = <0 0>;
+						l1edrr = <0 0>;
+					};
+					port@1 {
+						port_id = <1>;
+						ucast_queue = <204 211>;
+						mcast_queue = <272 275>;
+						l0sp = <51 52>;
+						l0cdrr = <108 115>;
+						l0edrr = <108 115>;
+						l1cdrr = <23 24>;
+						l1edrr = <23 24>;
+					};
+					port@2 {
+						port_id = <2>;
+						ucast_queue = <212 219>;
+						mcast_queue = <276 279>;
+						l0sp = <53 54>;
+						l0cdrr = <116 123>;
+						l0edrr = <116 123>;
+						l1cdrr = <25 26>;
+						l1edrr = <25 26>;
+					};
+					reserved {
+						ucast_queue = <44 203>;
+						mcast_queue = <263 271>;
+						l0sp = <7 50>;
+						l0cdrr = <28 107>;
+						l0edrr = <28 107>;
+						l1cdrr = <1 22>;
+						l1edrr = <1 22>;
+					};
+				};
+				port_scheduler_config {
+					port@0 {
+						port_id = <0>;
+						l1scheduler {
+							group@0 {
+								/* L0 SP */
+								sp = <0 1 2 3 4 5 6>;
+								/* cpri cdrr epri edrr */
+								cfg = <0 0 0 0>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								/* unicast queue */
+								ucast_queue = <0>;
+								ucast_loop_pri = <4>;
+								/* multicast queue */
+								mcast_queue = <256>;
+								/* sp cpri cdrr epri edrr */
+								cfg = <0 0 0 0 0>;
+							};
+							group@1 {
+								ucast_queue = <4>;
+								ucast_loop_pri = <4>;
+								cfg = <0 0 0 0 0>;
+							};
+							group@2 {
+								ucast_queue = <8>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <257>;
+								cfg = <1 0 4 0 4>;
+							};
+							group@3 {
+								ucast_queue = <12>;
+								ucast_loop_pri = <4>;
+								cfg = <1 0 4 0 4>;
+							};
+							group@4 {
+								ucast_queue = <16>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <258>;
+								cfg = <2 0 8 0 8>;
+							};
+							group@5 {
+								ucast_queue = <20>;
+								ucast_loop_pri = <4>;
+								cfg = <2 0 8 0 8>;
+							};
+							group@6 {
+								ucast_queue = <24>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <259>;
+								cfg = <3 0 12 0 12>;
+							};
+							group@7 {
+								ucast_queue = <28>;
+								ucast_loop_pri = <4>;
+								cfg = <3 0 12 0 12>;
+							};
+							group@8 {
+								ucast_queue = <32>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <260>;
+								cfg = <4 0 16 0 16>;
+							};
+							group@9 {
+								ucast_queue = <36>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <261>;
+								cfg = <5 0 20 0 20>;
+							};
+							group@10 {
+								ucast_queue = <40>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <262>;
+								cfg = <6 0 24 0 24>;
+							};
+						};
+					};
+					port@1 {
+						port_id = <1>;
+						l1scheduler {
+							group@0 {
+								sp = <51>;
+								cfg = <0 23 0 23>;
+							};
+							group@1 {
+								sp = <52>;
+								cfg = <1 24 1 24>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <204>;
+								ucast_loop_pri = <8>;
+								/* max priority per SP */
+								ucast_max_pri = <4>;
+								mcast_queue = <272>;
+								mcast_loop_pri = <4>;
+								cfg = <51 0 108 0 108>;
+							};
+						};
+					};
+					port@2 {
+						port_id = <2>;
+						l1scheduler {
+							group@0 {
+								sp = <53>;
+								cfg = <0 25 0 25>;
+							};
+							group@1 {
+								sp = <54>;
+								cfg = <1 26 1 26>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <212>;
+								ucast_loop_pri = <8>;
+								ucast_max_pri = <4>;
+								mcast_queue = <276>;
+								mcast_loop_pri = <4>;
+								cfg = <53 0 116 0 116>;
+							};
+						};
+					};
+				};
+			};
+		};
+
+		nss-ppe {
+			compatible = "qcom,nss-ppe";
+		};
+
+		edma@3ab00000 {
+			compatible = "qcom,edma";
+			reg = <0x3ab00000 0xed000>;
+			reg-names = "edma-reg-base";
+			reset-names = "edma_rst";
+			clocks = <&nsscc NSS_CC_NSS_CSR_CLK>,
+				 <&nsscc NSS_CC_NSSNOC_NSS_CSR_CLK>,
+				 <&nsscc NSS_CC_CE_APB_CLK>,
+				 <&nsscc NSS_CC_CE_AXI_CLK>,
+				 <&nsscc NSS_CC_NSSNOC_CE_APB_CLK>,
+				 <&nsscc NSS_CC_NSSNOC_CE_AXI_CLK>,
+				 <&gcc GCC_NSS_TS_CLK>,
+				 <&gcc GCC_NSSCC_CLK>,
+				 <&gcc GCC_NSSCFG_CLK>,
+				 <&gcc GCC_NSSNOC_ATB_CLK>,
+				 <&gcc GCC_NSSNOC_NSSCC_CLK>,
+				 <&gcc GCC_NSSNOC_PCNOC_1_CLK>,
+				 <&gcc GCC_NSSNOC_QOSGEN_REF_CLK>,
+				 <&gcc GCC_NSSNOC_SNOC_1_CLK>,
+				 <&gcc GCC_NSSNOC_SNOC_CLK>,
+				 <&gcc GCC_NSSNOC_TIMEOUT_REF_CLK>,
+				 <&gcc GCC_NSSNOC_XO_DCD_CLK>,
+				 <&gcc GCC_SNOC_NSSNOC_CLK>,
+				 <&gcc GCC_SNOC_NSSNOC_1_CLK>;
+			clock-names = "nss-csr-clk", "nss-nssnoc-csr-clk", "nss-ce-ahb-clk",
+				      "nss-ce-axi-clk", "nss-nssnoc-ce-ahb-clk", "nss-nssnoc-ce-axi-clk",
+				      "nss-ts-clk", "nss-nsscc-clk", "nss-nsscfg-clk", "nss-nsscnoc-atb-clk",
+				      "nss-nssnoc-nsscc-clk", "nss-nssnoc-pcnoc-1-clk", "nss-nssnoc-qosgen-ref-clk",
+				      "nss-nssnoc-snoc-1-clk", "nss-nssnoc-snoc-clk", "nss-nssnoc-timeout-ref-clk",
+				      "nss-nssnoc-xo-dcd-clk", "nss-snoc-nssnoc-clk", "nss-snoc-nssnoc-1-clk";
+			qcom,txdesc-ring-start = <4>;		/* Tx desc ring start ID */
+			qcom,txdesc-rings = <12>;		/* Total number of Tx desc rings to be provisioned */
+			qcom,txcmpl-ring-start = <4>;		/* Tx complete ring start ID */
+			qcom,txcmpl-rings = <12>;		/* Total number of Tx complete rings to be provisioned */
+			qcom,rxfill-ring-start = <4>;		/* Rx fill ring start ID */
+			qcom,rxfill-rings = <4>;		/* Total number of Rx fill rings to be provisioned */
+			qcom,rxdesc-ring-start = <12>;		/* Rx desc ring start ID */
+			qcom,rxdesc-rings = <4>;		/* Total number of Rx desc rings to be provisioned */
+			qcom,rx-page-mode = <0>;		/* Rx fill ring page mode */
+			qcom,tx-map-priority-level = <1>;	/* Tx priority level per port */
+			qcom,rx-map-priority-level = <1>;	/* Rx priority level per core */
+			qcom,ppeds-num = <2>;			/* Number of PPEDS nodes */
+			/* PPE-DS node format: <Rx-fill Tx-cmpl Rx Tx Queue-base Queue-count> */
+			qcom,ppeds-map = <1 1 1 1 32 8>,	/* PPEDS Node #1 ring and queue map */
+					<2 2 2 2 40 8>;		/* PPEDS Node #2 ring and queue map */
+			qcom,txdesc-map = <8 9 10 11>,		/* Port0 per-core Tx ring map */
+					  <12 13 14 15>,	/* Port1 per-core Tx ring map */
+					  <4 5 6 7>;		/* used only for packets from  vp*/
+			qcom,txdesc-fc-grp-map = <1 2>;		/* Per GMAC flow control group map */
+			qcom,rxfill-map = <4 5 6 7>;		/* Per-core Rx fill ring map */
+			qcom,rxdesc-map = <12 13 14 15>;	/* Per-core Rx desc ring map */
+			qcom,rx-queue-start = <0>;		/* Rx queue start */
+			qcom,rx-ring-queue-map = <0 8 16 24>,	/* Priority 0 queues per-core Rx ring map */
+						<1 9 17 25>,	/* Priority 1 queues per-core Rx ring map */
+						<2 10 18 26>,	/* Priority 2 queues per-core Rx ring map */
+						<3 11 19 27>,	/* Priority 3 queues per-core Rx ring map */
+						<4 12 20 28>,	/* Priority 4 queues per-core Rx ring map */
+						<5 13 21 29>,	/* Priority 5 queues per-core Rx ring map */
+						<6 14 22 30>,	/* Priority 6 queues per-core Rx ring map */
+						<7 15 23 31>;	/* Priority 7 queues per-core Rx ring map */
+			interrupts = <0 163 4>,			/* Tx complete ring id #4 IRQ info */
+				   <0 164 4>,			/* Tx complete ring id #5 IRQ info */
+				   <0 165 4>,			/* Tx complete ring id #6 IRQ info */
+				   <0 166 4>,			/* Tx complete ring id #7 IRQ info */
+				   <0 167 4>,			/* Tx complete ring id #8 IRQ info */
+				   <0 168 4>,			/* Tx complete ring id #9 IRQ info */
+				   <0 169 4>,			/* Tx complete ring id #10 IRQ info */
+				   <0 170 4>,			/* Tx complete ring id #11 IRQ info */
+				   <0 171 4>,			/* Tx complete ring id #12 IRQ info */
+				   <0 172 4>,			/* Tx complete ring id #13 IRQ info */
+				   <0 173 4>,			/* Tx complete ring id #14 IRQ info */
+				   <0 174 4>,			/* Tx complete ring id #15 IRQ info */
+				   <0 139 4>,			/* Rx desc ring id #12 IRQ info */
+				   <0 140 4>,			/* Rx desc ring id #13 IRQ info */
+				   <0 141 4>,			/* Rx desc ring id #14 IRQ info */
+				   <0 142 4>,			/* Rx desc ring id #15 IRQ info */
+				   <0 191 4>,			/* Misc error IRQ info */
+				<0 160 4>,			/* PPEDS Node #1(TxComp ring id #1) TxComplete IRQ info */
+				<0 128 4>,			/* PPEDS Node #1(Rx Desc ring id #1) Rx Desc IRQ info */
+				<0 152 4>,			/* PPEDS Node #1(RxFill Desc ring id #1) Rx Fill IRQ info */
+				<0 161 4>,			/* PPEDS Node #2(TxComp ring id #2) TxComplete IRQ info */
+				<0 129 4>,			/* PPEDS Node #2(Rx Desc ring id #2) Rx Desc IRQ info */
+				<0 153 4>;			/* PPEDS Node #2(RxFill Desc ring id #2) Rx Fill IRQ info */
+		};
+
+		serial@78af000 {
+			pinctrl-0 = <&serial_0_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		serial@78b0000 {
+			pinctrl-0 = <&serial_1_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		spi@78b5000 {
+			pinctrl-0 = <&spi_0_pins>;
+			pinctrl-names = "default";
+			cs-select = <0>;
+			status = "ok";
+
+			m25p80@0 {
+				compatible = "n25q128a11";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0>;
+				spi-max-frequency = <50000000>;
+			};
+		};
+
+		i2c_1: i2c@78b6000 {
+			pinctrl-0 = <&i2c_1_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		dma@7984000 {
+			status = "ok";
+		};
+
+		nand: nand@79b0000 {
+			status = "ok";
+		};
+
+		acc0: clock-controller@b188000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b188000 0x1000>;
+		};
+
+		acc1: clock-controller@b198000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b198000 0x1000>;
+		};
+
+		acc2:clock-controller@b1a8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1a8000 0x1000>;
+		};
+
+		acc3:clock-controller@b1b8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1b8000 0x1000>;
+		};
+
+		/*Timer freq for rumi = timer freq / 100*/
+		timer {
+			clock-frequency = <240000>;
+		};
+
+		timer@b120000 {
+			clock-frequency = <240000>;
+		};
+
+		scm {
+			status = "disabled";
+		};
+
+		usb3@8A00000 {
+			status = "ok";
+
+			dwc3@8A00000 {
+				usb-phy = <>;
+				phys = <>;
+				phy-names = "";
+			};
+		};
+
+		pcie2: pcie@10000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 40 GPIO_ACTIVE_LOW>;
+			phys = <>;
+			phy-names = "";
+			status = "disabled";
+
+			pcie2_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@0 {
+					reg = <0 0 0 0 0>;
+				};
+			};
+		};
+
+		pcie1: pcie@18000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 41 GPIO_ACTIVE_LOW>;
+			phys = <>;
+			phy-names = "";
+			status = "disabled";
+
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@1 {
+					reg = <0 0 0 0 0>;
+				};
+			};
+		};
+
+		pcie0: pcie@20000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 42 GPIO_ACTIVE_LOW>;
+			phys = <>;
+			phy-names = "";
+			status = "disabled";
+
+			pcie0_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@2 {
+					reg = <0 0 0 0 0>;
+				};
+			};
+		};
+	};
+
+	psci {
+		status = "disabled";
+	};
+
+	qti,tzlog {
+		status = "disabled";
+	};
+
+	qti,scm_restart_reason {
+		status = "disabled";
+	};
+
+	ctx-save {
+		status = "disabled";
+	};
+
+};
+
+&sdhc_1 {
+	/* over-ride the frequency to 48Mhz for emulation platform */
+	max-frequency = <48000000>;
+	/* Force 3.3V, because only that will support on emulation platform */
+	mmc-ddr-3_3v;
+	qcom,emulation;
+        status = "ok";
+};
+
+&q6v5_wcss {
+	qcom,emulation;
+	qcom,nosecure;
+	bootaddr = <0x4A900000>;
+	q6_wcss_pd1: remoteproc_pd1 {
+		qcom,emulation;
+		qcom,nosecure;
+		bootaddr = <0x4A900000>;
+		qcom,fw_shared;
+	};
+};

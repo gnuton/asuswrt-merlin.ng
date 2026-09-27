@@ -1,0 +1,557 @@
+{
+  "source_commit": "8abdf06c9776458cf809e5f8333306a3a41933ca",
+  "fixture_commit": "8abdf06c9776458cf809e5f8333306a3a41933ca",
+  "base_commit": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+  "image": {
+    "bytes": 59052505,
+    "sha256": "50de8dd430642972ba99e8be2682a51bbb3beb0a573b9570a48537b389b95296",
+    "model": "TUF-BE9400",
+    "timestamp": 1790503041,
+    "header_crc32": "valid",
+    "payload_crc32": "valid",
+    "flash_compatibility": "not established",
+    "squashfs_offset": 4322736,
+    "path": "release/src-qca-ipq53xx/image/TUF-BE9400_3.0.0.6_102_58138-rtbe90u-dev21-vpn.trx"
+  },
+  "build": {
+    "exit": 0,
+    "mode": "incremental native build after preserving dev20",
+    "completed_image_verified": true,
+    "builder": "rt-be90u-ci-build:3006",
+    "log": "logs/dev21-native-build.log",
+    "sha256": "ed4640c6eb19382bdc6821477711ab61e7fb486abf0a6951083366052b2811c2",
+    "network": "none"
+  },
+  "source_validation": {
+    "verified_repository_inputs": 150611,
+    "materialized": 150611,
+    "changes_from_dev20": [
+      "release/src/router/libovpn/amvpn_routing.c",
+      "release/src/router/extendno.conf",
+      "release/src/router/rc/sdn.c"
+    ]
+  },
+  "git_input_validation": {
+    "verified_inputs_in_git_index": 150603,
+    "explicit_manifest_aliases": 8,
+    "all_input_content_matches_build_record": true
+  },
+  "input_changes_from_dev20": [
+    {
+      "file": "release/src/router/extendno.conf",
+      "dev20": {
+        "mode": 493,
+        "sha256": "7fc511f8c51663887a23aa7f7f105a078257a082d688ce4b511ed70c551f3bb5",
+        "source": "release/src-qca-ipq53xx/source-overlay/release/src/router/extendno.conf"
+      },
+      "dev21": {
+        "mode": 493,
+        "sha256": "ea956b08545b0c93a0ef4fdd93e7a70fec5887af1ecfbe5ce2c90e46f085fe28",
+        "source": "release/src-qca-ipq53xx/source-overlay/release/src/router/extendno.conf"
+      }
+    },
+    {
+      "file": "release/src/router/libovpn/amvpn_routing.c",
+      "dev20": {
+        "mode": 420,
+        "sha256": "5ed20f51c5a73029ce9b3bf46ef3b4873a37d51d5e2f48e78e285d71bbc7c0f7",
+        "source": "release/src/router/libovpn/amvpn_routing.c"
+      },
+      "dev21": {
+        "mode": 420,
+        "sha256": "e2b32ee28ae62c40f08ae1423102b2519d0a2be9a22a88d3e32aab6ee1f378f0",
+        "source": "release/src/router/libovpn/amvpn_routing.c"
+      }
+    },
+    {
+      "file": "release/src/router/rc/sdn.c",
+      "dev20": {
+        "mode": 420,
+        "sha256": "b7db4feb73400eae42f5e9966da9ab8e1a48a443a81a9b1a44cc65584e71ca91",
+        "source": "release/src-qca-ipq53xx/source-overlay/release/src/router/rc/sdn.c"
+      },
+      "dev21": {
+        "mode": 420,
+        "sha256": "335da5cb714a7b818c5bc48cb68943b999d4820f7ea4567b09fad540a41dfffd",
+        "source": "release/src-qca-ipq53xx/source-overlay/release/src/router/rc/sdn.c"
+      }
+    }
+  ],
+  "common_source_validation": {
+    "base": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+    "qca_base": "2db9b885dec71cb4971b54edf7ad31d00063d842",
+    "files": [
+      {
+        "file": "release/src/router/libovpn/amvpn_routing.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "7fbe55406429fb6c8b97693017ce8aa8b8ad8f8db292b6e4d17dcdccd6ba5122",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": [
+          "Committed migration policy fallback until a complete atomic JFFS save",
+          "Assigned SDN guards use their own priority, preserving Director/global guard ownership"
+        ]
+      },
+      {
+        "file": "release/src/router/libovpn/amvpn_routing.h",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "9d65b164b1e61bc5e7f24215813a6c0dc19a7682fdd5b1a1994304545a274356",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_config.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "c9ec2b6c6618f072283460d31b7d28aca17495cf40e7483f1b7a037611c66e24",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_config.h",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "c2ee71fcafca1118659b6e4474c8b9cc05900b60452e7ad4d1eeadf4f648a164",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_control.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "ca14e81efda9d21d9ae08e63ce423e6573439ae80a22b280a08d4f88126d7332",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_control.h",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "23af539dc6407e92d2c0e64a7d5ccdc650aa909eb9d7c9311046d5f0321cbe04",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_options.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "54bf367278bef74537b0a76869d1aa538a2a26b02dc608959335ca6b32c29bc4",
+        "upstream_adjustments": [
+          "Correct the residual-state diagnostic format/argument mismatch"
+        ],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_setup.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "212d95ca826634bb3c55c296b8f947f83f8d0ddf4bb060f31938f6e02eee6562",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/shared/scripts.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "386d4582e1d84725cd4c6ef003d5c2a07bee13f624aacac3bc5c7264c6160403",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/rc/openvpn.c",
+        "profiles_checked": 480,
+        "invalid_profiles_rejected": 32,
+        "upstream_sha256": "2c69e88f25b7b5a4ed16e40fb0152321c8eb253d5cbcaae9030ff539128f29ed",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      },
+      {
+        "file": "release/src/router/rc/wireguard.c",
+        "profiles_checked": 512,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "2241959aa6f52b4b0e1191f6e3331e2b320ad6d6a46390f9428012f47eaf5baf",
+        "upstream_adjustments": [],
+        "ipq53xx_adjustments": []
+      }
+    ],
+    "comparisons_passed": 2144,
+    "invalid_profiles_rejected": 32,
+    "scope": "C tokens with includes removed; not a full other-model compile"
+  },
+  "helper_tests": {
+    "passed": 25,
+    "exit": 0
+  },
+  "runtime_suites": [
+    {
+      "test": "config",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/config.log",
+      "sha256": "b4a8d2a1692380be08073698967cb5cf69d0e964cc2b57a667112b7e73678101"
+    },
+    {
+      "test": "vpn-reset",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/vpn-reset.log",
+      "sha256": "35d761411d13aa760c5d080d330a25a07915b68b40c5da617c479fd2a50c2da7"
+    },
+    {
+      "test": "vpn-migration",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/vpn-migration.log",
+      "sha256": "e4c5e0de2c6e849938d6c87a54db92640e23655f62458dc7589d55f5b0116e9f"
+    },
+    {
+      "test": "httpd-policy",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/httpd-policy.log",
+      "sha256": "acbc599d11c979629a57a9c6b77c611ba5f3bc26e0a84af1456fb44b7267552a"
+    },
+    {
+      "test": "ovpn-wrappers",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/ovpn-wrappers.log",
+      "sha256": "4f171fa97df55e6410f803aa36cf2db597616d0e33737e0e1eae4534a868fe7e"
+    },
+    {
+      "test": "wg-import",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/wg-import.log",
+      "sha256": "53b4b22164bd8412092f86687df00542e8e6a03fc2fd2aa578dad973be87a649"
+    },
+    {
+      "test": "network",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/network.log",
+      "sha256": "2bb924aca26f20436cf3267044ff1b957c347365da5a14fbb95091a0d62aa70f"
+    },
+    {
+      "test": "sdn-refresh",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/sdn-refresh.log",
+      "sha256": "11000396d8863c57c207c9728745e8e057cf42381a1393b9d7af5394d1f9d6a1"
+    },
+    {
+      "test": "wg-export",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/wg-export.log",
+      "sha256": "82e388cd5a65959b0a6aa6129811c34ee27de08c7984bb74ca479194038de49a"
+    },
+    {
+      "test": "wg-tunnel",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/wg-tunnel.log",
+      "sha256": "7eb0168d6e143c0d5243ca42fe4189a180790639dc25c65a1f25455b63c38e54"
+    },
+    {
+      "test": "tunnel-static",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/tunnel-static.log",
+      "sha256": "85071f487c99b7a48f0e8fc72efac5bb8914f6e875c6ad44ca38feb9d0d7f897"
+    },
+    {
+      "test": "tunnel-tls",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/tunnel-tls.log",
+      "sha256": "963ab088795d80bf94327f25024a5eb6af4f5ffaf700051323872971d59f4e1c"
+    },
+    {
+      "test": "tunnel-tls-crypt",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/tunnel-tls-crypt.log",
+      "sha256": "4c5e4b1d7b5c0f827348affa8a6cb784ae2047eae9da517e9e2c459184def193"
+    },
+    {
+      "test": "tunnel-tls-crypt-v2",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/tunnel-tls-crypt-v2.log",
+      "sha256": "bb4a80ca550ccdd99fd5c55a2203996e2e9761d52dcf8d22245f22e391428c7f"
+    },
+    {
+      "test": "ipv6",
+      "exit": 0,
+      "log": "logs/dev21-vpn-validation/ipv6.log",
+      "sha256": "f951e1f5ae2ca57959458779cfc97634688a16ed09e131348f1fea3694f03b32"
+    }
+  ],
+  "migration_regression": {
+    "arm_process_invocations_passed": 133,
+    "invalid_conflicting_inputs": 38,
+    "compiled_objects": [
+      "init.o",
+      "format.o",
+      "vpn_migrate.o"
+    ],
+    "packaged_libraries_and_defaults": true,
+    "fresh_process_reload": true,
+    "repeat_and_reset_then_migrate": true,
+    "write_commit_backup_faults": true,
+    "interruption_before_commit_retry": true,
+    "atomic_policy_write_faults": true,
+    "dev19_direct_write_masking_observed": true,
+    "unrelated_compatibility_helpers": "observed substitutes",
+    "nvram": "disposable file-backed substitute"
+  },
+  "reset_regression": {
+    "cases_passed": 42,
+    "valid_requests_repeated": 15
+  },
+  "http_policy_regression": {
+    "scenarios_passed": 5,
+    "actual_packaged_httpd": true,
+    "authenticated_apply_and_asp_reader": true,
+    "fresh_process_reload": true,
+    "nvram_and_process_calls": "disposable substitutes; exact external nvram commit dispatch persists the synthetic state",
+    "dev19_expected_failure_observed": true
+  },
+  "sdn_refresh_regression": {
+    "entry_point": "update_sdn_by_vpnc -> _handle_sdn_wan (active QCA IPv4 branch)",
+    "compiled_sdn_object_sha256": "755c59e59e70a4709517cf8eb9391c8de84ea2add9db702ec29f5c06594d90ed",
+    "packaged_libovpn_sha256": "cb37075f939273c12efad9a03c1099242248d0031f2ab03a4a7365d30bddbf1b",
+    "packet_checks_passed": 772,
+    "routing_command_boundaries_observed": 78,
+    "successful_rule_mutations": 74,
+    "injected_command_failures": 4,
+    "clients": [
+      "OVPN1/index6",
+      "WG1/index1"
+    ],
+    "guard_seeding": [
+      "explicit SDN",
+      "inferred SDN"
+    ],
+    "repeated_refresh_and_enforcement_client_toggles": true,
+    "guard_add_and_lookup_add_failures_and_retry": true,
+    "unrelated_director_guards_and_interface_rules_preserved": true,
+    "packet_controls": [
+      "SDN protection with empty tunnel table",
+      "Director protection",
+      "explicit WAN exception with empty VPN table",
+      "unprotected LAN",
+      "custom SDN lookup",
+      "unrelated interface lookup",
+      "router-origin endpoint",
+      "TCP SDN protection after refresh",
+      "restored tunnel forwarding"
+    ],
+    "observations": "real packet forwarding at each intercepted ip rule command boundary, including deliberately failed commands; successful commands mutate real routing in an isolated container network namespace",
+    "faults": "guard-add and lookup-add failures injected for both protocols by the command wrapper; real commands execute otherwise",
+    "substitutes": "synthetic NVRAM and independent firewall-generation helpers; unexpected IPv6 Fusion lookup aborts",
+    "dev20_negative": {
+      "log": "logs/dev20-sdn-regression-boundaries-2.log",
+      "sha256": "e474452bfd7d11a7b779721357c7e2634042ab6e39e92a8d5cbc7b15c2a6f549",
+      "failed_packet_checks": 126,
+      "packet_checks": 866,
+      "routing_command_boundaries_observed": 98,
+      "wg_wan_escape_observed": true,
+      "initial_after_refresh_reproduction": {
+        "log": "logs/dev20-sdn-regression-1.log",
+        "sha256": "b7ae5e8247df69e913bf3f4d1b32d97f569cd3e9c72216648cd41f2596935b97"
+      }
+    }
+  },
+  "script_hook_fixture_exit": 0,
+  "build_equivalence": [
+    {
+      "file": "release/src-qca-ipq53xx/linux/linux-5.4.x/.config",
+      "sha256": "4b46c9f640842497ff599c144c57af5e8edacc02a8081c4773508a0a931e2b93",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/httpd/web.o",
+      "sha256": "b8ef2c8cfccf8a01810818e3394d700d763823bbec01eb913f4a6aa1f1e87113",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/libovpn/amvpn_routing.o",
+      "sha256": "a1f77cf2a99c774330bfe218c3998ba6232a977b35d5b3314036366914c20234",
+      "matches_dev20": false
+    },
+    {
+      "file": "release/src/router/libovpn/libovpn.so",
+      "sha256": "0f86ffbfe5ba287057626f0ac0ba977ae98f9e06349427980b7ace5fa50e2173",
+      "matches_dev20": false
+    },
+    {
+      "file": "release/src/router/rc/format.o",
+      "sha256": "5433a0c861cda88a86760781db89e205cebb7e437728b0cb81120ca01cb61476",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/rc/init.o",
+      "sha256": "7466dda8e52fb82bdee73b24066018fa41fe75c8c40db1fbccc6ad204ede1a54",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/rc/openvpn.o",
+      "sha256": "8fc14ccfe60c0513e192feb078cb3c3dad3ac1ebe286c4aeba7e1776a5c2b6ed",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/rc/sdn.o",
+      "sha256": "755c59e59e70a4709517cf8eb9391c8de84ea2add9db702ec29f5c06594d90ed",
+      "matches_dev20": false
+    },
+    {
+      "file": "release/src/router/rc/services.o",
+      "sha256": "7c2daf7438c426b00b1ac437b74a6215647aafe8b2d2123bb1e5475496c5db06",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/rc/vpn_migrate.o",
+      "sha256": "b4403cf214b88a2f0fbff39a7da497c75662aecb108dc3b8af7a7739b1a4326c",
+      "matches_dev20": true
+    },
+    {
+      "file": "release/src/router/rc/wireguard.o",
+      "sha256": "8c198c3e757922c175b2befe72525647ec1c3b0d28e20a3a2398143a8cfecfd0",
+      "matches_dev20": true
+    }
+  ],
+  "packaged_libovpn_matches_dev20": false,
+  "linkage_programs": [
+    "/sbin/rc",
+    "/usr/sbin/httpd",
+    "/usr/sbin/openvpn"
+  ],
+  "linkage_passed": true,
+  "content_audit": {
+    "packaging_issues": [],
+    "elf_architecture_counts": {
+      "183": 792,
+      "3": 4,
+      "40": 2,
+      "164": 5
+    },
+    "unchanged_coprocessor_firmware": [
+      "lib/firmware/IPQ5332/iu_fw.b00",
+      "lib/firmware/IPQ5332/iu_fw.b02",
+      "lib/firmware/IPQ5332/iu_fw.mdt",
+      "lib/firmware/IPQ5332/q6_fw0.b00",
+      "lib/firmware/IPQ5332/q6_fw0.mdt",
+      "lib/firmware/IPQ5332/q6_fw1.b00",
+      "lib/firmware/IPQ5332/q6_fw1.b02",
+      "lib/firmware/IPQ5332/q6_fw1.mdt",
+      "lib/firmware/qcn9224/amss.bin",
+      "lib/firmware/qcn9224/amss_dualmac.bin",
+      "lib/firmware/qcn9224/m3.bin"
+    ],
+    "verified_prebuild_source_files": 600,
+    "autotools_regenerated_files": [
+      "release/src/router/openvpn/doc/doxygen/Makefile.in",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile.in",
+      "release/src/router/openvpn/src/openvpnmsica/Makefile.in",
+      "release/src/router/openvpn/src/tapctl/Makefile.in"
+    ],
+    "required_flags_enabled": [
+      "RTCONFIG_SOC_IPQ53XX",
+      "RTCONFIG_OPENVPN",
+      "RTCONFIG_WIREGUARD",
+      "RTCONFIG_VPN_FUSION",
+      "RTCONFIG_VPN_FUSION_MERLIN",
+      "RTCONFIG_MULTILAN_CFG"
+    ],
+    "vpndirector_icons_match_source": true,
+    "http_fixture_absent": true
+  },
+  "clean_hosted_ci": {
+    "run_id": 36311168298,
+    "url": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36311168298",
+    "source_commit": "8abdf06c9776458cf809e5f8333306a3a41933ca",
+    "conclusion": "success",
+    "image": {
+      "bytes": 59052433,
+      "sha256": "153292894bbb593bc8ac1e192d99402ea4fe0e0bc8464d03267a048f715543f5",
+      "model": "TUF-BE9400",
+      "timestamp": 1790505792,
+      "header_crc32": "valid",
+      "payload_crc32": "valid",
+      "flash_compatibility": "not established",
+      "squashfs_offset": 4322772
+    },
+    "verified_input_records": 150611,
+    "input_records_match_local_dev21": true,
+    "downloaded_firmware_checksum_verified": true,
+    "common_source_comparisons": 2144,
+    "invalid_profile_rejections": 32,
+    "helper_tests_passed": 25,
+    "packaged_linkage_passed": true,
+    "script_config_event_fixture_passed": true,
+    "basic_arm_suites": [
+      {
+        "test": "config",
+        "exit": 0
+      },
+      {
+        "test": "vpn-reset",
+        "exit": 0
+      },
+      {
+        "test": "vpn-migration",
+        "exit": 0
+      },
+      {
+        "test": "httpd-policy",
+        "exit": 0
+      },
+      {
+        "test": "ovpn-wrappers",
+        "exit": 0
+      },
+      {
+        "test": "wg-import",
+        "exit": 0
+      }
+    ],
+    "reset_cases_passed": 42,
+    "migration_arm_invocations": 133,
+    "http_policy_scenarios": 5,
+    "scope": "Clean build, source/image/linkage/script checks and six basic ARM suites; SDN packet, tunnel and network suites remain local",
+    "status": "completed"
+  },
+  "existing_model_ci": {
+    "run_id": 36311168331,
+    "url": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36311168331",
+    "source_commit": "8abdf06c9776458cf809e5f8333306a3a41933ca",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Build (gt-be98, src-rt-5.04behnd.4916, default, false)",
+        "job_id": 108597242842,
+        "conclusion": "success",
+        "artifact_upload": "success"
+      },
+      {
+        "name": "Build (gt-be98, src-rt-5.04behnd.4916, rog, false)",
+        "job_id": 108597242969,
+        "conclusion": "success",
+        "artifact_upload": "success"
+      }
+    ]
+  },
+  "hardware_tested": false,
+  "limitations": [
+    "QEMU fixtures use synthetic NVRAM and the host kernel, not whole-router boot or physical flash persistence.",
+    "The SDN fixture covers update_sdn_by_vpnc for assigned OVPN1/WG1 IPv4 interfaces; other SDN feature/removal paths and whole-service orchestration remain unvalidated.",
+    "Packet probes observe completed routing-command boundaries, not every kernel scheduling instant or concurrent service transition.",
+    "The SDN fixture substitutes independent firewall generation and does not validate IPv6 refresh or actual WAN/DNS transitions.",
+    "Legacy unit-priority interface guards are preserved because ownership cannot be distinguished safely from unrelated guards; exhaustive live-configuration cleanup is not established.",
+    "NVRAM durability is emulated; actual flash power-loss recovery is not established.",
+    "Directory-sync failure after rename can leave the complete new policy visible while the fallback remains committed; pre-publication failures preserve the prior policy.",
+    "Unsupported or conflicting migration input is preserved; safe routing and recovery of deferred configurations remain unvalidated.",
+    "Migration covers ordinary OpenVPN/WireGuard profiles and IPv4 policies without interface selectors; other formats need further work.",
+    "Reset dispatch coverage substitutes service stop/DPI/hook calls.",
+    "Whole-interface IPv6 blocking does not provide VPN IPv6 routing or per-device IPv6 policy protection.",
+    "Stock image validator and Entware baseline remain dev16; browser baseline remains dev12.",
+    "Certificates, add-on lifecycle, recovery, remaining WAN/DNS/firewall/SDN transitions and hardware validation remain incomplete."
+  ],
+  "independent_review": {
+    "firmware": "No remaining concrete blocker found in ownership, ordering, failure handling or audited lock call paths.",
+    "fixture": "Native routing commands and real packet forwarding verified; injected failures and deterministic command-boundary barriers reviewed.",
+    "evidence": "Observed 772 passing packet checks at 78 command boundaries; 74 successful mutations and four injected failures.",
+    "scope": "Assigned unit1 clients on br1; default-LAN/unassigned SDNs, multiple SDNs, concurrency and broader orchestration remain unvalidated."
+  }
+}

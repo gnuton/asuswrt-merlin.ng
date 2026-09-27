@@ -20,6 +20,10 @@
 
 #include "rc.h"
 
+#if defined(RTCONFIG_SOC_IPQ53XX) && !defined(RTCONFIG_VPN_FUSION_MERLIN)
+#error "RT-BE90U VPN variant requires RTCONFIG_VPN_FUSION_MERLIN"
+#endif
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -145,33 +149,42 @@ int ovpn_route_pre_down_main(int argc, char **argv) {
 }
 
 
+/* IPQ53xx needs externally emitted wrappers with the toolchain's C99 inline rules. */
+#ifdef RTCONFIG_SOC_IPQ53XX
+#define OVPN_RC_INLINE
+#else
+#define OVPN_RC_INLINE inline
+#endif
+
 /* Wrappers for library functions */
-void inline start_ovpn_eas() {
+void OVPN_RC_INLINE start_ovpn_eas() {
 	ovpn_process_eas(1);
 }
 
-void inline stop_ovpn_eas() {
+void OVPN_RC_INLINE stop_ovpn_eas() {
 	ovpn_process_eas(0);
 }
 
-void inline stop_ovpn_client(int unit) {
+void OVPN_RC_INLINE stop_ovpn_client(int unit) {
 	ovpn_stop_client(unit);
 #ifdef RTCONFIG_MULTILAN_CFG
 	_vpnc_ipset_destroy( get_vpnc_idx_by_proto_unit(VPN_PROTO_OVPN, unit) );
 #endif
 }
 
-void inline start_ovpn_client(int unit) {
+void OVPN_RC_INLINE start_ovpn_client(int unit) {
 #ifdef RTCONFIG_MULTILAN_CFG
 	_vpnc_ipset_create( get_vpnc_idx_by_proto_unit(VPN_PROTO_OVPN, unit) );
 #endif
 	ovpn_start_client(unit);
 }
 
-void inline stop_ovpn_server(int unit) {
+void OVPN_RC_INLINE stop_ovpn_server(int unit) {
 	ovpn_stop_server(unit);
 }
 
-void inline start_ovpn_server(int unit) {
+void OVPN_RC_INLINE start_ovpn_server(int unit) {
 	ovpn_start_server(unit);
 }
+
+#undef OVPN_RC_INLINE

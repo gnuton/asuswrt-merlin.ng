@@ -1,0 +1,146 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/pinctrl/qcom,ipq9574-pinctrl.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: IPQ9574 TLMM block
+
+maintainers:
+  - Anusha <quic_anusha@quicinc.com>
+
+description: |
+  This binding describes the Top Level Mode Multiplexer block found in the
+  IPQ9574 platform.
+
+properties:
+  compatible:
+    const: qcom,ipq9574-pinctrl
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    description: Specifies the TLMM summary IRQ
+    maxItems: 1
+
+  interrupt-controller: true
+
+  '#interrupt-cells':
+    description:
+      Specifies the PIN numbers and Flags, as defined in defined in
+      include/dt-bindings/interrupt-controller/irq.h
+    const: 2
+
+  gpio-controller: true
+
+  '#gpio-cells':
+    description: Specifying the pin number and flags, as defined in
+      include/dt-bindings/gpio/gpio.h
+    const: 2
+
+  gpio-ranges:
+    maxItems: 1
+
+#PIN CONFIGURATION NODES
+patternProperties:
+  '-pinmux$':
+    type: object
+    description:
+      Pinctrl node's client devices use subnodes for desired pin configuration.
+      Client device subnodes use below standard properties.
+    $ref: "/schemas/pinctrl/pincfg-node.yaml"
+
+    properties:
+      pins:
+        description:
+          List of gpio pins affected by the properties specified in this
+          subnode.
+        items:
+          oneOf:
+            - pattern: "^gpio([1-9]|[1-7][0-9]|65)$"
+            - enum: [ sdc1_clk, sdc1_cmd, sdc1_data, sdc2_clk, sdc2_cmd,
+              sdc2_data, qdsd_cmd, qdsd_data0, qdsd_data1, qdsd_data2,
+              qdsd_data3 ]
+        minItems: 1
+        maxItems: 4
+
+      function:
+        description:
+          Specify the alternative function to be configured for the specified
+          pins.
+
+        enum: [ atest_char, atest_char0, atest_char1, atest_char2, atest_char3,
+		audio_pdm1, audio_pri, audio_sec, blsp0_spi, blsp0_uart,
+		blsp1_i2c, blsp1_spi, blsp1_uart, blsp2_i2c, blsp2_spi,
+		blsp2_uart, blsp3_i2c, blsp3_spi, blsp3_uart, blsp4_i2c,
+		blsp4_spi, blsp4_uart, blsp5_i2c, blsp5_uart, cri_trng0,
+		cri_trng1, cri_trng3, cxc0, cxc1, dbg_out, dwc_ddrphy,
+		gcc_plltest, gcc_tlmm, mac00, mac01, mac10, mac11, mdc,
+		mdio, pcie0_clk, pcie0_wake, pcie1_clk, pcie1_wake, pcie2_clk
+		pcie2_wake, pcie3_clk, pcie3_wake, prng_rosc0, prng_rosc1
+		prng_rosc2, prng_rosc3, pta1_0, pta1_1, pta1_2, pta20, pta21,
+		pwm00, pwm01, pwm02, pwm03, pwm04, pwm10, pwm11, pwm12, pwm13,
+		pwm14, pwm20, pwm21, pwm22, pwm23, pwm24, pwm30, pwm31, pwm32,
+		pwm33, qdss_cti_trig_in_a0, qdss_cti_trig_in_a1, qdss_cti_trig_in_b0,
+		qdss_cti_trig_in_b1, qdss_cti_trig_out_a0, qdss_cti_trig_out_a1,
+		qdss_cti_trig_out_b0, qdss_cti_trig_out_b1, qdss_traceclk_a,
+		qdss_traceclk_b, qdss_tracectl_a, qdss_tracectl_b, qdss_tracedata_a,
+		dss_tracedata_b, qdss_tracedata_b, qspi_clk, qspi_cs, qspi_data,
+		rx0, rx1, sdc_clk, sdc_cmd, sdc_data, sdc_rclk, tsens_max,
+		wci20, wci21, wsa_swrm, audio_pdm0 ]
+
+      drive-strength:
+        enum: [2, 4, 6, 8, 10, 12, 14, 16]
+        default: 2
+        description:
+          Selects the drive strength for the specified pins, in mA.
+
+      bias-pull-down: true
+
+      bias-pull-up: true
+
+      bias-disable: true
+
+      output-high: true
+
+      output-low: true
+
+    required:
+      - pins
+      - function
+
+    additionalProperties: false
+
+required:
+  - compatible
+  - reg
+  - interrupts
+  - interrupt-controller
+  - '#interrupt-cells'
+  - gpio-controller
+  - '#gpio-cells'
+  - gpio-ranges
+
+additionalProperties: false
+
+examples:
+  - |
+        #include <dt-bindings/interrupt-controller/arm-gic.h>
+        tlmm: pinctrl@1000000 {
+              compatible = "qcom,ipq9574-pinctrl";
+              reg = <0x01000000 0x300000>;
+              interrupts = <GIC_SPI 208 IRQ_TYPE_LEVEL_HIGH>;
+              interrupt-controller;
+              #interrupt-cells = <2>;
+              gpio-controller;
+              #gpio-cells = <2>;
+              gpio-ranges = <&tlmm 0 0 65>;
+
+              serial3-pinmux {
+                      pins = "gpio34", "gpio35";
+                      function = "blsp2_uart";
+                      drive-strength = <8>;
+                      bias-pull-down;
+              };
+        };

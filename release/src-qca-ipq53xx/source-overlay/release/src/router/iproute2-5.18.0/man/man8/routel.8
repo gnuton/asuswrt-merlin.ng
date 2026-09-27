@@ -1,0 +1,33 @@
+.TH ROUTEL 8 "1 Sept, 2021" "iproute2" "Linux"
+.SH "NAME"
+routel \- list routes with pretty output format
+.SH SYNOPSIS
+.B routel
+.RI "[ " OPTIONS " ]"
+.RI "[ " tablenr
+[ \fIip route options...\fR ] ]
+.P
+.ti 8
+.IR OPTIONS " := {"
+\fB-h\fR | \fB--help\fR |
+[{\fB-f\fR | \fB--family\fR }
+{\fBinet\fR | \fBinet6\fR } |
+\fB-4\fR | \fB-6\fR }
+
+.SH "DESCRIPTION"
+.LP
+The routel script will list routes in a format that some might consider
+easier to interpret then the
+.B ip
+route list equivalent.
+
+.SH "AUTHORS"
+.LP
+Rewritten by Stephen Hemminger <stephen@networkplumber.org>.
+.br
+Original script by Stephen R. van den Berg <srb@cuci.nl>.
+.br
+This manual page was written by Andreas Henriksson  <andreas@fatal.se>, for the Debian GNU/Linux system.
+.SH "SEE ALSO"
+.LP
+ip(8)

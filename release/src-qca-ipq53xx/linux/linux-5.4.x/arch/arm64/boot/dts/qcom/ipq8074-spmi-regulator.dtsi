@@ -1,0 +1,90 @@
+/*
+ * Copyright (c) 2016,2020. The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "ipq8074-regulator.dtsi"
+#include <dt-bindings/spmi/spmi.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/iio/qcom,spmi-vadc.h>
+
+&spmi_bus {
+	pmic@0 {
+		compatible ="qcom,spmi-pmic";
+		reg = <0x0 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pmp8074_vadc: vadc@3100 {
+			compatible = "qcom,pmp8074-spmi-vadc";
+			reg = <0x3100 0x100>;
+			interrupts = <0x0 0x31 0x0 IRQ_TYPE_EDGE_RISING>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#io-channel-cells = <1>;
+
+			pa_therm1 {
+				reg = <VADC_PMP8074_AMUX_THM1>;
+				qcom,vadc-thermal-node;
+			};
+			pa_therm2 {
+				reg = <VADC_PMP8074_AMUX_THM2>;
+				qcom,vadc-thermal-node;
+			};
+			pa_therm3 {
+				reg = <VADC_PMP8074_AMUX_THM3>;
+				qcom,vadc-thermal-node;
+			};
+			die_temp {
+				reg = <VADC_PMP8074_DIE_TEMP>;
+			};
+		};
+	};
+
+	pmic@1 {
+		compatible ="qcom,spmi-pmic";
+		reg = <0x1 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		regulators {
+			compatible = "qcom,pmd9655-regulators";
+			vdd_s3-supply = <&e_smps1_reg>;
+			vdd_s4-supply = <&e_smps1_reg>;
+			vdd_ldo11-supply = <&e_smps1_reg>;
+
+			s3: s3 {
+				regulator-name = "pmd9655_s3";
+				regulator-min-microvolt = <592000>;
+				regulator-max-microvolt = <1064000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			s4: s4 {
+				regulator-name = "pmd9655_s4";
+				regulator-min-microvolt = <712000>;
+				regulator-max-microvolt = <992000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			ldo11: ldo11 {
+				regulator-name = "pmd9655_ldo11";
+				regulator-min-microvolt = <1104000>;
+				regulator-max-microvolt = <3300000>;
+			};
+		};
+	};
+};

@@ -1,0 +1,115 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C3 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c2.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C3";
+	compatible = "qcom,ipq9574-ap-al02-c3", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	soc {
+		pcie0_x1: pci@28000000 {
+			status = "ok";
+			pcie0_rp {
+				wifi@0 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x21>;
+#if defined(__CNSS2__)
+					memory-region = <0>,<&mhi_region1>;
+#endif
+					status = "ok";
+				};
+			};
+
+		};
+
+		pcie0_phy: phy@84000 {
+			status = "ok";
+		};
+
+		pcie3_x2: pci@18000000 {
+			perst-gpio = <&tlmm 32 1>;
+			pinctrl-0 = <&pcie3_wake_pins &pcie3_sdx_pins &pci3_pin>;
+			e911-gpio =  <&tlmm 43 GPIO_ACTIVE_HIGH>;
+
+			interrupts-extended = <&tlmm 33 IRQ_TYPE_LEVEL_HIGH>,
+			                      <&tlmm 43 IRQ_TYPE_LEVEL_HIGH>,
+					      <&intc GIC_SPI 188 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "wake_gpio", "mdm2ap_e911", "global_irq";
+
+			slot_id = <2>;
+			/* delete pcie3_rp node to remove QCN9000 related entries
+			 * and add it again only with reg as like other PCIE */
+			/delete-node/ pcie3_rp;
+			pcie3_rp: pcie3_rp  {
+				reg = <0 0 0 0 0>;
+			};
+		};
+	};
+};
+
+&pcie3_rp {
+	#address-cells = <5>;
+	#size-cells = <0>;
+
+	status = "ok";
+	aliases {
+		mhi_netdev2 = &mhi_netdev_2;
+	};
+
+	mhi_0: qcom,mhi@0 {
+		reg = <0 0 0 0 0 >;
+
+		// controller specific configuration
+		qcom,iommu-dma = "disabled";
+
+		// mhi bus specific settings
+		mhi,ssr-negotiate;
+
+		mhi_devices: mhi_devices {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mhi_netdev_0: mhi_rmnet@0 {
+				reg = <0x0>;
+				mhi,chan = "IP_HW0";
+				mhi,interface-name = "rmnet_mhi";
+				mhi,mru = <0x4000>;
+				mhi,chain-skb;
+			};
+
+			mhi_rmnet@1 {
+				reg = <0x1>;
+				mhi,chan = "IP_HW0_RSC";
+				mhi,mru = <0x8000>;
+				mhi,rsc-parent = <&mhi_netdev_0>;
+			};
+
+			mhi_netdev_2: mhi_rmnet@2 {
+				reg = <0x2>;
+				mhi,chan = "IP_SW0";
+				mhi,interface-name = "rmnet_mhi_sw";
+				mhi,mru = <0x4000>;
+				mhi,disable-chain-skb;
+			};
+
+			mhi_qrtr {
+				mhi,chan = "IPCR";
+				qom,net-id = <3>;
+			};
+		};
+	};
+};
+
+&license_manager {
+	status = "disabled";
+};

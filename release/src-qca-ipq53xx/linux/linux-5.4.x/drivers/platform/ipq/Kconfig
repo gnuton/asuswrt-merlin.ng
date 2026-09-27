@@ -1,0 +1,21 @@
+menu "IPQ specific device drivers"
+	depends on ARCH_QCOM
+
+config BOOTCONFIG_PARTITION
+	tristate "BOOTCONFIG Partition support"
+	help
+	  Say Y here if you would like to use hard disks under Linux which
+	  were partitioned using MTD/EFI.
+
+config NUM_ALT_PARTITION
+	int "Number of partitions used for failsafe boot during sysupgrade"
+	default 8
+	range 0 16
+	help
+	  This value defines the number of partitions used in bootconfig that
+	  is required for failsafe boot during sysupgrade.
+
+	  Leave the default value if unsure.
+
+endmenu
+

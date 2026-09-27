@@ -1,0 +1,292 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 AP-MI01.2-QCN9160-C1 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq5332-mi01.2.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5332/AP-MI01.2-QCN9160-C1";
+	compatible = "qcom,ipq5332-ap-mi01.2-qcn9160-c1", "qcom,ipq5332";
+	interrupt-parent = <&intc>;
+
+        /*                Layout for IPQ5332 + QCN9160
+         * +========+==============+=========================+
+         * |        |              |                         |
+         * | Region | Start Offset |          Size           |
+         * |        |              |                         |
+         * +--------+--------------+-------------------------+
+         * |        |              |                         |
+         * |        |              |                         |
+         * |        |              |                         |
+         * |        |              |                         |
+         * | Linux  |  0x40000000  |           161MB         |
+         * |        |              |                         |
+         * |        |              |                         |
+         * |        |              |                         |
+         * +--------+--------------+-------------------------+
+         * |        |              |                         |
+         * |        |              |                         |
+         * | TZ App |  0x49B00000  |           6MB           |
+         * |        |              |                         |
+         * |        |              |                         |
+         * +--------+--------------+-------------------------+
+         * |        |              |                         |
+         * | uboot  |  0x4A100000  |           4MB           |
+         * |        |              |                         |
+         * +--------+--------------+-------------------------+
+         * |  SBL   |  0x4A500000  |           1MB           |
+         * +--------+--------------+-------------------------+
+         * |        |              |                         |
+         * |  TZ    |  0x4A600000  |           2MB           |
+         * |        |              |                         |
+         * +--------+--------------+-------------------------+
+         * |  smem  |  0x4A800000  |           1MB           |
+         * +--------+--------------+-------------------------+
+         * | Q6 Code|              |                         |
+         * | /data  |  0x4A900000  |           21MB          |
+         * +--------+--------------+-------------------------+
+         * | IPQ5332|              |                         |
+         * | data   |  0x4BE00000  |           31MB          |
+         * +--------+--------------+-------------------------+
+         * | IPQ5332|              |                         |
+         * | M3 dump|  0x4DD00000  |           1MB           |
+         * +--------+--------------+-------------------------+
+         * | IPQ5332|              |                         |
+         * | QDSS   |  0x4DE00000  |           1MB           |
+         * +--------+--------------+-------------------------+
+         * | IPQ5332|              |                         |
+         * | caldb  |  0x4DF00000  |           5MB           |
+         * +--------+--------------+-------------------------+
+         * | QCN9160|              |                         |
+         * | data   |  0x4E400000  |           14MB          |
+         * +--------+--------------+-------------------------+
+         * | QCN9160|              |                         |
+         * | M3 data|  0x4F200000  |           1MB           |
+         * +--------+--------------+-------------------------+
+         * | QCN9160|              |                         |
+         * | QDSS   |  0x4F300000  |           1MB           |
+         * +--------+--------------+-------------------------+
+         * | QCN9160|              |                         |
+         * | caldb  |  0x4F400000  |           5MB           |
+         * +--------+--------------+-------------------------+
+         * |  MLO   |  0x4F900000  |          18MB           |
+         * +--------+--------------+-------------------------+
+         * |        |              |                         |
+         * |  Wkk0  |  0x50A00000  |          50MB           |
+         * |        |              |                         |
+         * +--------+--------------+-------------------------+
+         * |        |              |                         |
+         * |  MHI0  |    DYNAMIC   |          26MB           |
+         * |        |              |                         |
+         * +=================================================+
+         * |                                                 |
+         * |                                                 |
+         * |                                                 |
+         * |            Rest of memory for Linux             |
+         * |                                                 |
+         * |                                                 |
+         * |                                                 |
+         * +=================================================+
+         */
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x40000000 0x0 0x20000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		tzapp: tzapp@49B00000 {
+			no-map;
+			reg = <0x0 0x49B00000 0x0 0x00600000>;
+		};
+
+		uboot@4A100000 {
+			no-map;
+			reg = <0x0 0x4A100000 0x0 0x00400000>;
+		};
+
+		sbl@4A500000 {
+			no-map;
+			reg = <0x0 0x4A500000 0x0 0x00100000>;
+		};
+
+		tz@4A600000 {
+			no-map;
+			reg = <0x0 0x4A600000 0x0 0x00200000>;
+		};
+
+		smem_region: smem@4A800000 {
+			no-map;
+			reg = <0x0 0x4A800000 0x0 0x00100000>;
+		};
+
+		q6_mem_regions: q6_mem_regions@4a900000 {
+			no-map;
+			reg = <0x0 0x4a900000 0x0 0x5000000>;
+		};
+
+		q6_code_data: q6_code_data@4A900000 {
+			no-map;
+			reg = <0x0 0x4A900000 0x0 0x1500000>;
+		};
+
+		q6_qca5332_data: q6_qca5332_data@4be00000 {
+			no-map;
+			reg = <0x0 0x4be00000 0x0 0x1f00000>;
+		};
+
+		m3_dump: m3_dump@4dd00000 {
+			no-map;
+			reg = <0x0 0x4dd00000 0x0 0x00100000>;
+		};
+
+		q6_etr_region: q6_etr_dump@1 {
+			no-map;
+			reg = <0x0 0x4de00000 0x0 0x00100000>;
+		};
+
+		q6_qca5332_caldb: q6_qca5332_caldb@4df00000 {
+			no-map;
+			reg = <0x0 0x4df00000 0x0 0x00500000>;
+		};
+
+		q6_qcn9160_data_1: q6_qcn9160_data_1@4e400000 {
+			no-map;
+			reg = <0x0 0x4e400000 0x0 0xe00000>;
+		};
+
+		m3_dump_qcn9160_1: m3_dump_qcn9160_1@4f200000 {
+			no-map;
+			reg = <0x0 0x4f200000 0x0 0x100000>;
+		};
+
+		q6_qcn9160_etr_1: q6_qcn9160_etr_1@4f300000 {
+			no-map;
+			reg = <0x0 0x4f300000 0x0 0x100000>;
+		};
+
+		q6_qcn9160_caldb_1: q6_qcn9160_caldb_1@4f400000 {
+			no-map;
+			reg = <0x0 0x4f400000 0x0 0x500000>;
+		};
+
+		mlo_global_mem0: mlo_global_mem_0@4f900000 {
+			no-map;
+			reg = <0x0 0x4f900000 0x0 0x1200000>;
+		};
+
+		qcn9224_pcie1: qcn9224_pcie1@50b00000 {
+			no-map;
+			reg = <0x0 0x50B00000 0x0 0x03200000>;
+		};
+
+		mhi_region1: dma_pool1@1 {
+			compatible = "shared-dma-pool";
+			no-map;
+			size = <0x0 0x00900000>;
+                };
+
+		minidump_mem: minidump_mem@0 {
+			no-map;
+		};
+	};
+
+	soc {
+		pcie0_phy: phy@4b0000{
+			status = "disabled";
+		};
+
+		pcie0: pcie@20000000 {
+			status = "disabled";
+		};
+
+		q6v5_wcss: remoteproc@d100000 {
+			boot-args = <0x1 0x5 0x3 0x0 0x26 0x0 0x0>;
+			memory-region = <&q6_mem_regions>,
+					<&mlo_global_mem0>;
+			status = "ok";
+		q6_wcss_pd1: remoteproc_pd1 {
+			memory-region = <&q6_qca5332_data>, <&m3_dump>,
+					<&q6_etr_region>, <&q6_qca5332_caldb>,
+					<&mlo_global_mem0>;
+			status = "ok";
+			};
+		q6_wcss_pd2: remoteproc_pd2 {
+			m3_firmware = "qcn9160/m3_fw.mdt";
+			memory-region = <&q6_qcn9160_data_1>, <&m3_dump_qcn9160_1>,
+					<&q6_qcn9160_etr_1>, <&q6_qcn9160_caldb_1>,
+					<&mlo_global_mem0>;
+			status = "ok";
+			};
+		};
+	};
+};
+
+&wifi0 {
+	qcom,multipd_arch;
+	qcom,rproc = <&q6_wcss_pd1>;
+	qcom,rproc_rpd = <&q6v5_wcss>;
+	qcom,userpd-subsys-name = "q6v5_wcss_userpd1";
+	qcom,board_id = <0x12>;
+	qcom,bdf-addr = <0x4be00000 0x4be00000 0x4be00000 0x0 0x0 0x0>;
+	qcom,caldb-addr = <0x4df00000 0x4df00000 0x4df00000 0x0 0x0 0x0>;
+	qcom,caldb-size = <0x500000>;
+	mem-region = <&q6_qca5332_data>;
+	status = "ok";
+};
+
+&wifi2 {
+	/* qcn9224 tgt-mem-mode=0 layout - 50MB
+	 * +=========+==============+=========+
+	 * |  Region | Start Offset |   Size  |
+	 * +---------+--------------+---------+
+	 * | HREMOTE |  0x50A00000  |   28MB  |
+	 * +---------+--------------+---------+
+	 * | M3 Dump |  0x52600000  |   1MB   |
+	 * +---------+--------------+---------+
+	 * |   ETR   |  0x52700000  |   1MB   |
+	 * +---------+--------------+---------+
+	 * |  Caldb  |  0x52800000  |   8MB   |
+	 * +---------+--------------+---------+
+	 * |Pageable |  0x53000000  |  12MB   |
+	 * +==================================+
+	 */
+	hremote_node = <&qcn9224_pcie1>;
+	base-addr = <0x50A00000>;
+	m3-dump-addr = <0x52600000>;
+	etr-addr = <0x52700000>;
+	caldb-addr = <0x52800000>;
+	pageable-addr = <0x53000000>;
+	hremote-size = <0x1C00000>;
+	pageable-size = <0xC00000>;
+	board_id = <0x04>;
+	status = "ok";
+};
+
+&wifi3 {
+	qcom,multipd_arch;
+	qcom,userpd-subsys-name = "q6v5_wcss_userpd2";
+	qcom,rproc = <&q6_wcss_pd2>;
+	qcom,tgt-mem-mode = <0>;
+	qcom,board_id = <0x101>;
+	qcom,bdf-addr = <0x4e400000 0x4e400000 0x4e400000
+			 0x0 0x0 0x0>;
+	qcom,caldb-addr = <0x4f400000 0x4f400000 0x4f400000
+			   0x0 0x0 0x0>;
+	qcom,caldb-size = <0x500000>;
+	m3-dump-addr = <0x4f200000>;
+	mem-region = <&q6_qcn9160_data_1>;
+	status = "ok";
+};

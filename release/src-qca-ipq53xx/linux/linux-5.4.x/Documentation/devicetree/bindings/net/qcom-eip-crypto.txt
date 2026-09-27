@@ -1,0 +1,14 @@
+* Qualcomm Technologies Inc. EIP CRYPTO Driver.
+
+The driver is responsible for registering crypto algorithms to linux.
+Its responsible for punting the crypto requests to respective EIP DMA driver.
+
+Required properties:
+- compatible: "qcom,eip_crypto"
+- status: "ok"
+
+example:
+	eip_crypto: eip_crypto {
+			    compatible = "qcom,eip_crypto";
+			    status = "ok"
+		    };

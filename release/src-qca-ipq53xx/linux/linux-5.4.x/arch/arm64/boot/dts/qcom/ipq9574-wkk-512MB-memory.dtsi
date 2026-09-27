@@ -1,0 +1,238 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 Memory device tree source
+ *
+ * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/ {
+	MP_512;
+
+	/*		512M Profile for Waikiki
+	 * +========+==============+=========================+
+	 * |        |              |                         |
+	 * | Region | Start Offset |          Size           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | Linux  |  0x41000000  |         139MB           |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | TZ App |  0x49B00000  |           6MB           |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * | uboot  |  0x4A100000  |           4MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |  SBL   |  0x4A500000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * | TZ+HYP |  0x4A600000  |           4MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |  smem  |  0x4AA00000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | WLAN   |              |                         |
+	 * |   Q6   |  0x4AB00000  |          29MB           |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * | M3 Dump|  0x4C800000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * | WLAN   |              |                         |
+	 * | Q6 ETR |  0x4C900000  |           1MB           |
+	 * | Region |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * | caldb  |  0x4CA00000  |           5MB           |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  Wkk0  |  0x4CF00000  |          37MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  Wkk1  |  0x4F400000  |          37MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  WKK2  |  0x51900000  |          37MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  WKK3  |  0x53E00000  |          37MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  MHI0  |    DYNAMIC   |          9MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  MHI1  |    DYNAMIC   |          9MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  MHI2  |    DYNAMIC   |          9MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  MHI3  |    DYNAMIC   |          9MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  MLO   |    DYNAMIC   | Depending on the Config |
+	 * |        |              |                         |
+	 * +=================================================+
+	 * |                                                 |
+	 * |                                                 |
+	 * |                                                 |
+	 * |            Rest of memory for Linux             |
+	 * |                                                 |
+	 * |                                                 |
+	 * |                                                 |
+	 * +=================================================+
+	 */
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x40000000 0x0 0x40000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		nss@40000000 {
+			no-map;
+			reg = <0x0 0x40000000 0x0 0x01000000>;
+			status = "disabled";
+		};
+
+		tzapp:tzapp@49B00000 {  /* TZAPPS */
+			no-map;
+			reg = <0x0 0x49B00000 0x0 0x00600000>;
+		};
+
+		uboot@4A100000 {
+			no-map;
+			reg = <0x0 0x4A100000 0x0 0x00400000>;
+		};
+
+		sbl@4A500000 {
+			no-map;
+			reg = <0x0 0x4A500000 0x0 0x00100000>;
+		};
+
+		tz@4A600000 {
+			no-map;
+			reg = <0x0 0x4A600000 0x0 0x00400000>;
+		};
+
+		smem_region: smem@4AA00000 {
+			no-map;
+			reg = <0x0 0x4AA00000 0x0 0x00100000>;
+		};
+
+		q6_region: wcnss@4ab00000 {
+			no-map;
+			reg = <0x0 0x4ab00000 0x0 0x01d00000>;
+			status = "disabled";
+		};
+
+		m3_dump: m3_dump@4c800000 {
+			no-map;
+			reg = <0x0 0x4C800000 0x0 0x100000>;
+			status = "disabled";
+		};
+
+		q6_etr_region: q6_etr_dump@1 {
+			no-map;
+			reg = <0x0 0x4C900000 0x0 0x100000>;
+			status = "disabled";
+		};
+
+		q6_caldb_region:q6_caldb_region@4ca00000 {
+			no-map;
+			reg = <0x0 0x4CA00000 0x0 0x500000>;
+			status = "disabled";
+		};
+
+		qcn9224_pcie0: qcn9224_pcie0@4cf00000 {
+			no-map;
+			reg = <0x0 0x4CF00000 0x0 0x02500000>;
+			status = "disabled";
+		};
+
+		qcn9224_pcie1: qcn9224_pcie1@4f400000 {
+			no-map;
+			reg = <0x0 0x4F400000 0x0 0x02500000>;
+			status = "disabled";
+		};
+
+		qcn9224_pcie2: qcn9224_pcie2@51900000 {
+			no-map;
+			reg = <0x0 0x51900000 0x0 0x02500000>;
+			status = "disabled";
+		};
+
+		qcn9224_pcie3: qcn9224_pcie3@53e00000 {
+			no-map;
+			reg = <0x0 0x53E00000 0x0 0x02500000>;
+			status = "disabled";
+		};
+
+		mhi_region0: dma_pool0@0 {
+			compatible = "shared-dma-pool";
+			no-map;
+			size = <0x0 0x00900000>;
+			status = "disabled";
+		};
+
+		mhi_region1: dma_pool1@1 {
+			compatible = "shared-dma-pool";
+			no-map;
+			size = <0x0 0x00900000>;
+			status = "disabled";
+		};
+
+		mhi_region2: dma_pool2@2 {
+			compatible = "shared-dma-pool";
+			no-map;
+			size = <0x0 0x00900000>;
+			status = "disabled";
+		};
+
+		mhi_region3: dma_pool3@3 {
+			compatible = "shared-dma-pool";
+			no-map;
+			size = <0x0 0x00900000>;
+			status = "disabled";
+		};
+
+		mlo_global_mem0: mlo_global_mem_0@0 {
+			no-map;
+			size = <0x0 0x1200000>;
+			status = "disabled";
+		};
+
+		minidump_mem: minidump_mem@0 {
+			no-map;
+		};
+
+		rpm_msg_ram: rpm_msg_ram@0x60000 {
+			no-map;
+			reg = <0x0 0x60000 0x0 0x6000>;
+		};
+	};
+};

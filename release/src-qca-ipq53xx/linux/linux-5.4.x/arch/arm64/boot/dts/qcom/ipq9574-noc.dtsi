@@ -1,0 +1,140 @@
+/*
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+&soc {
+	noc-tprobe {
+		compatible = "qcom,noc-tprobe-driver";
+		reg = <0x402000 0x390>,
+		    <0x581800 0x390>,
+		    <0x583000 0x390>,
+		    <0x405000 0x584>,
+		    <0x582000 0x404>,
+		    <0x1d89000 0x1f0>,
+		    <0x400000 0x5500>,
+		    <0x580000 0x2500>,
+		    <0x1d89000 0x1f0>;
+		reg-names =  "memnoc_dbhn_tprobe_base",
+			"snoc_memnoc_tprobe_base_0",
+			"snoc_memnoc_tprobe_base_1",
+			"memnoc_ec_base",
+			"snoc_ec_base",
+			"nssnoc_ec_base",
+			"memnoc_phy_base",
+			"snoc_phy_base",
+			"nssnoc_phy_base";
+		memnoc_phy_addr_base = <0x400000>;
+		snoc_phy_addr_base = <0x580000>;
+		nssnoc_phy_addr_base = <0x1d89000>;
+		num_sys_bus = <2>;
+		status = "ok";
+	};
+
+app0_tprobe: app0 {
+		     compatible = "qcom,app0-tprobe-driver";
+		     reg = <0x400400 0x16c>;
+		     reg-names = "base-addr";
+		     subnoc-phy-base-addr = <0x400400>;
+		     hist_bin_width = <0x19>;
+		     config_tr_type = <0x1>;
+		     status = "ok";
+	     };
+
+sys0_tprobe: sys0 {
+		     compatible = "qcom,sys0-tprobe-driver";
+		     reg = <0x400600 0x16c>;
+		     reg-names = "base-addr";
+		     subnoc-phy-base-addr = <0x400600>;
+		     hist_bin_width = <0x1A>;
+		     config_tr_type = <0x1>;
+		     status = "ok";
+	     };
+
+sys1_tprobe: sys1 {
+		     compatible = "qcom,sys1-tprobe-driver";
+		     reg = <0x400a00 0x16c>;
+		     reg-names = "base-addr";
+		     subnoc-phy-base-addr = <0x400a00>;
+		     hist_bin_width = <0x1A>;
+		     config_tr_type = <0x1>;
+		     status = "ok";
+	     };
+
+wcss_q6_tprobe: wcss_q6 {
+			compatible = "qcom,wcss-q6-tprobe-driver";
+			reg = <0x400800 0x16c>;
+			reg-names = "base-addr";
+			subnoc-phy-base-addr = <0x400800>;
+			hist_bin_width = <0x64>;
+			config_tr_type = <0x1>;
+			status = "ok";
+		};
+
+nss_memnoc_tprobe: memnoc_nss {
+			compatible = "qcom,memnoc-nss-tprobe-driver";
+			reg = <0x400c00 0x16c>;
+			reg-names = "base-addr";
+			subnoc-phy-base-addr = <0x400c00>;
+			hist_bin_width = <0x20>;
+			config_tr_type = <0x1>;
+			status = "ok";
+		};
+
+pcie_G3X2_0_tprobe: pcie1 {
+			    compatible = "qcom,pcie-G3X2-0-tprobe-driver";
+			    reg = <0x601600 0x13c>;
+			    reg-names = "base-addr";
+			    subnoc-phy-base-addr = <0x601400>;
+			    hist_bin_width = <0x14>;
+			    status = "ok";
+		    };
+
+pcie_G3X1_1_tprobe: pcie2 {
+			    compatible = "qcom,pcie-G3X1-1-tprobe-driver";
+			    reg = <0x601800 0x13c>;
+			    reg-names = "base-addr";
+			    subnoc-phy-base-addr = <0x601800>;
+			    hist_bin_width = <0x14>;
+			    status = "ok";
+		    };
+
+pcie_G3X2_1_tprobe: pcie3 {
+			    compatible = "qcom,pcie-G3X2-1-tprobe-driver";
+			    reg = <0x601A00 0x13c>;
+			    reg-names = "base-addr";
+			    subnoc-phy-base-addr = <0x601A00>;
+			    hist_bin_width = <0x14>;
+			    status = "ok";
+		    };
+
+ppe_tprobe: nss_ppe {
+		    compatible = "qcom,ppe-tprobe-driver";
+		    reg = <0x1d84600 0x13c>;
+		    reg-names = "base-addr";
+		    subnoc-phy-base-addr = <0x1d84600>;
+		    hist_bin_width = <0x1A>;
+		    status = "ok";
+	    };
+
+nss_tprobe: nss {
+		    compatible = "qcom,nss-tprobe-driver";
+		    reg = <0x1d83800 0x13c>;
+		    reg-names = "base-addr";
+		    subnoc-phy-base-addr = <0x1d83800>;
+		    config_filter_status_low = <0x1>;
+		    hist_bin_width = <0x19>;
+		    status = "ok";
+	    };
+};

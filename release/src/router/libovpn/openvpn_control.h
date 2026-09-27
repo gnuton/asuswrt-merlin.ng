@@ -31,6 +31,12 @@ extern void start_ovpn_serverall();
 extern void stop_ovpn_serverall();
 
 #ifdef RTCONFIG_MULTILAN_CFG
+#ifdef RTCONFIG_SOC_IPQ53XX
+extern void update_ovpn_client_by_sdn(MTLAN_T *pmtl, size_t mtl_sz, int restart_all_sdn);
+extern void update_ovpn_server_by_sdn(MTLAN_T *pmtl, size_t mtl_sz, int restart_all_sdn);
+extern void update_ovpn_client_by_sdn_remove(MTLAN_T *pmtl, size_t mtl_sz);
+extern void update_ovpn_server_by_sdn_remove(MTLAN_T *pmtl, size_t mtl_sz);
+#endif
 extern void _update_ovpn_by_sdn(MTLAN_T *pmtl, size_t mtl_sz, int restart_all_sdn, wg_type_t client);
 extern void _update_ovpn_by_sdn_remove(MTLAN_T *pmtl, size_t mtl_sz, wg_type_t client);
 extern void _ovpn_client_nf_bind_sdn(FILE* fp, const char* ovpn_ifname, const char* sdn_ifname);

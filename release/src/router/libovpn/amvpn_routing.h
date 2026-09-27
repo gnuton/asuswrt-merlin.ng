@@ -35,5 +35,12 @@ extern void amvpn_set_wan_routing_rules();
 extern void amvpn_set_killswitch_rules(vpndir_proto_t proto, int unit, char *sdn_ifname);
 extern void amvpn_clear_killswitch_rules(vpndir_proto_t proto, int unit, char *sdn_ifname);
 extern void amvpn_set_kilswitch_rules_all();
+#ifdef RTCONFIG_SOC_IPQ53XX
+/* Caller must hold VPNROUTING_LOCK. Returns failure without clearing old guards. */
+extern int amvpn_refresh_policy_rules_locked(int unit);
 #endif
-
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_IPV6)
+extern void amvpn_write_ipv6_killswitch(FILE *fp);
+extern void amvpn_refresh_ipv6_killswitch(void);
+#endif
+#endif

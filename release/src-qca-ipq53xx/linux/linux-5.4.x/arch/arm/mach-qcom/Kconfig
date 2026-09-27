@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: GPL-2.0-only
+menuconfig ARCH_QCOM
+	bool "Qualcomm Support"
+	depends on ARCH_MULTI_V7
+	select ARCH_SUPPORTS_BIG_ENDIAN
+	select ARM_GIC
+	select ARM_AMBA if !IPQ_FLASH_16M_PROFILE
+	select PINCTRL
+	select QCOM_SCM if SMP
+	select ARM_GIC_V2M
+	select GENERIC_MSI_IRQ_DOMAIN
+	help
+	  Support for Qualcomm's devicetree based systems.
+
+if ARCH_QCOM
+
+config ARCH_IPQ5332
+	bool "Enable support for IPQ5332"
+	help
+	  This enables support for the IPQ5332 chipset. If you dont
+	  know what do here, say N
+
+config ARCH_IPQ6018
+	bool "Enable support for IPQ6018"
+	help
+	  This enables support for the IPQ6018 chipset. If you dont
+	  know what do here, say N
+
+config ARCH_IPQ9574
+	bool "Enable support for IPQ9574"
+	help
+	  This enables support for the IPQ9574 chipset. If you dont
+	  know what do here, say N
+
+config ARCH_MSM8X60
+	bool "Enable support for MSM8X60"
+	select CLKSRC_QCOM
+
+config ARCH_MSM8960
+	bool "Enable support for MSM8960"
+	select CLKSRC_QCOM
+
+config ARCH_MSM8974
+	bool "Enable support for MSM8974"
+	select HAVE_ARM_ARCH_TIMER
+
+config ARCH_MDM9615
+	bool "Enable support for MDM9615"
+	select CLKSRC_QCOM
+
+config IPQ_MEM_PROFILE
+	int "Select Memory Profile"
+	range 0 1024
+	default 0
+	---help---
+	This option select memory profile to be used, which defines
+	the reserved memory configuration used in device tree.
+
+	If unsure, say 0
+
+config SKB_FIXED_SIZE_2K
+	bool "SKB size fixed at 2K"
+	default n
+	help
+		This is a hint to the NSS driver that the ‘skbuff’ size might
+		need to be fixed at 2KB, to conserve memory.
+
+config ARCH_IPQ256M
+	bool "Enable 256M config"
+	default n
+	help
+	  This sets the text offset of 256M profile, which makes kernel aware of
+          first 16MB of DDR.
+
+config IPQ_FLASH_16M_PROFILE
+	bool "Enable 16M Flash Profile"
+	---help---
+	This option select flash profile to be used.
+
+	If unsure, say N.
+
+endif

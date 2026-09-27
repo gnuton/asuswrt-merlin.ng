@@ -1,0 +1,178 @@
+TARGET=aaews
+WSLIB=libws.so
+DOG=mastiff
+UAC=aaeuac
+
+include ../common.mak
+
+CURL_DIR=$(TOP)/curl-7.21.7
+XML2_DIR=$(TOP)/libxml2
+OPENSSL_DIR=$(TOP)/openssl
+NVRAM_DIR=$(TOP_PLATFORM)/nvram$(BCMEX)$(EX7)
+JSON_C_DIR=$(TOP)/json-c
+SHARED_DIR=$(TOP)/shared
+WB_DIR=$(TOP)/wb
+QCSAPI_DIR=$(TOP)/libqcsapi_client
+NT_CENTER_DIR=$(TOP)/nt_center
+ifeq ($(RTCONFIG_SW_HW_AUTH),y)
+SW_HW_AUTH_DIR=$(TOP)/sw-hw-auth
+endif
+SQLITE_DIR=$(TOP)/sqlite
+IPADDR_DIR=$(TOP)/ipaddr
+
+NATNL_DIR=$(TOP)/asusnatnl/natnl
+ASUSNATNL_CFLAGS=-I$(NATNL_DIR)
+ASUSNATNL_LDFLAGS=-L$(NATNL_DIR)
+ASUSNATNL_LIBS=-lasusnatnl
+
+LIBC_DIR=$(NATNL_DIR)/../
+WS_SRC=$(WB_DIR)/ws_src
+OUTPUT := $(WB_DIR)/output
+
+SRC=$(wildcard *.c)
+OBJS=$(patsubst %.c, %.o, $(SRC))
+OBJS_MAIN=$(filter-out $(DOG).o aae_ipc_handler.o aaeuac.o, $(OBJS))
+WSLIB_OBJS := $(WS_SOURCES:%.c=$(OUTPUT)/%.o)
+
+ifeq ($(wildcard $(TOP)/aaews/*.c),)
+all:
+	-cp -f $(TOP)/aaews/prebuild/aaews aaews
+	-cp -f $(TOP)/aaews/prebuild/mastiff mastiff
+	-cp -f $(TOP)/aaews/prebuild/aaeuac aaeuac
+else
+all: $(WSLIB) $(TARGET)
+endif
+
+
+ifeq ("$(MAKECMDGOALS)", $(filter "$(MAKECMDGOALS)", "router" "mastiff" "aaeuac"))
+ROUTER_CFLAGS=-DNVRAM=1 -DEMBEDDED -I$(SHARED_DIR) -I$(IPADDR_DIR)
+ROUTER_CFLAGS+=-DTNL_CALLBACK_ENABLE -DTNL_2_X -DUSE_IM_IPC
+ifeq ($(RTCONFIG_QTN),y)
+ROUTER_LIBS=-lnvram -lshared -lqcsapi_client
+ROUTER_LDFLAGS=-L$(NVRAM_DIR) -L$(SHARED_DIR) -L$(QCSAPI_DIR)
+else
+ROUTER_LIBS=-lnvram -lshared
+ROUTER_LDFLAGS=-L$(NVRAM_DIR) -L$(SHARED_DIR)
+ifeq ($(RTCONFIG_BCM_502L07P2),y)
+ROUTER_LIBS += -lethctl
+ROUTER_LDFLAGS += -L$(TOP_PLATFORM)/ethctl_lib
+endif #ifeq ($(RTCONFIG_BCM_502L07P2),y)
+endif #ifeq ($(RTCONFIG_QTN),y)
+ifeq ($(RTCONFIG_NOTIFICATION_CENTER),y)
+ROUTER_LIBS += -lsqlite3
+ROUTER_LDFLAGS += -L$(SQLITE_DIR)/.libs
+ROUTER_LIBS += -lnt
+ROUTER_LDFLAGS += -L$(NT_CENTER_DIR)/lib
+endif #ifeq ($(RTCONFIG_NOTIFICATION_CENTER),y)
+endif #ifeq ("$(MAKECMDGOALS)", $(filter "$(MAKECMDGOALS)", "router" "mastiff" "aaeuac"))
+
+CFLAGS += -g
+ifeq ($(RTCONFIG_NOTIFICATION_CENTER), y)
+CFLAGS += -DRTCONFIG_NOTIFICATION_CENTER=y
+endif
+ifeq ($(RTCONFIG_IFTTT), y)
+CFLAGS += -DRTCONFIG_IFTTT=y
+endif
+ifeq ($(RTCONFIG_ALEXA), y)
+CFLAGS += -DRTCONFIG_ALEXA=y
+endif
+CFLAGS += -I.
+CFLAGS += -I$(CURL_DIR)/include
+CFLAGS += -I$(OPENSSL_DIR)/include
+CFLAGS += -I$(XML2_DIR)/include
+CFLAGS += -I$(JSON_C_DIR)
+CFLAGS += -I$(WS_SRC)
+CFLAGS += -I$(NVRAM_DIR)
+CFLAGS += -I$(WB_DIR)
+CFLAGS += -I$(NT_CENTER_DIR)/lib
+CFLAGS += -I$(SRCBASE)/include
+CFLAGS += $(ASUSNATNL_CFLAGS)
+CFLAGS += $(AICAM_CFLAGS)
+CFLAGS += $(ROUTER_CFLAGS)
+CFLAGS += -DPTHREAD_STACK_SIZE=0xa240
+
+LIBS = -lcurl -lssl -lcrypto -lxml2 -ljson-c -ldl -pthread -lrt $(ROUTER_LIBS) -lws -lgcc_s
+LDFLAGS = -L$(OPENSSL_DIR) -L$(CURL_DIR)/lib/.libs -L$(XML2_DIR)/.libs -L$(JSON_C_DIR)/.libs -L. $(ROUTER_LDFLAGS) -L$(WS_SRC) -L$(WB_DIR) -L$(WB_DIR)/output
+
+ifeq ($(RTCONFIG_TR069),y)
+CFLAGS += -I$(TOP)/libssh2/include -I$(TOP)/zlib/include
+LDFLAGS += -L$(TOP)/libssh2/src/.libs -lssh2 -L$(TOP)/zlib -lz
+endif
+
+ifeq ($(RTCONFIG_QCA),y)
+LDFLAGS += -L$(LIBDIR) -lm
+endif
+
+
+ifeq ($(HND_ROUTER),y)
+LDFLAGS += -L$(TOP_PLATFORM)/wlcsm$(EXHND) -lwlcsm
+endif
+
+ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T
+endif
+
+ifeq ($(HND_ROUTER_BE_4916), y)
+CFLAGS+= -fcommon
+endif
+
+ifeq ($(RTCONFIG_SW_HW_AUTH),y)
+CFLAGS += -I$(SW_HW_AUTH_DIR) -DSW_HW_AUTH
+endif
+
+ifeq ($(RTCONFIG_LIBASUSLOG),y)
+CFLAGS += -I$(TOP)/libasuslog
+LDFLAGS += -L$(TOP)/libasuslog -lasuslog
+endif
+
+ifeq ($(RTCONFIG_TRUSTZONE),y)
+LDFLAGS += -L$(TOP)/ateed/ -latee
+endif
+
+ifeq ($(wildcard $(TOP)/aaews/*.c),)
+$(DOG):
+	-cp -f $(TOP)/aaews/prebuild/mastiff mastiff
+else
+$(DOG): $(DOG).o nat_nvram.o aae_ipc_handler.o ws_caller.o nw_util.o natapi.o $(WSLIB_OBJS) info_report.o
+	$(CC) -fPIC $(CFLAGS) $(LDFLAGS) $(LIBS) $(ROUTER_LDFLAGS) $(ROUTER_LIBS) -o $@ $^
+#	mipsel-uclibc-gcc -c $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^ 
+endif
+
+ifeq ($(RTCONFIG_UAC_TUNNEL),y)
+ifeq ($(wildcard $(TOP)/aaews/*.c),)
+$(UAC):
+	-cp -f $(TOP)/aaews/prebuild/aaeuac aaeuac
+else
+$(UAC): $(UAC).o nat_nvram.o natapi.o $(WSLIB_OBJS) queue_list.o queue_manager.o sync.o ws_caller.o nw_util.o info_report.o
+	$(CC) -fPIC $(CFLAGS) $(LDFLAGS) $(LIBS) -pthread $(ROUTER_LDFLAGS) $(ROUTER_LIBS) -o $@ $^
+endif
+endif
+aicam:$(TARGET)
+
+ifeq ($(wildcard $(TOP)/aaews/*.c),)
+router:
+	-cp -f $(TOP)/aaews/prebuild/aaews aaews
+else
+router: $(WSLIB) $(TARGET) $(DOG) $(if $($(RTCONFIG_UAC_TUNNEL)),  $(UAC))
+endif
+$(WSLIB):
+	cd $(WB_DIR) && \
+	CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) LD=$(LD) CFLAGS="$(if $(RTCONFIG_DEBUG),-g,-Os) -Wall $(EXTRACFLAGS)" \
+	make libws.so
+
+
+$(TARGET):  $(WSLIB_OBJS) $(OBJS_MAIN) 
+	$(CXX) -fPIC $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^ 
+
+%.o: %.c
+	$(CC) -c  -fPIC $(CFLAGS) $< -o $@ 
+
+#install: all
+#	$(STRIP) $(WSLIB)
+#	install -D $(WSLIB) $(INSTALLDIR)/lib/$(WSLIB)
+	
+clean:
+	echo $(WB_DIR)
+	echo $(TOP)
+	rm -f *.o  *.so *.dylib *.a aaews mastiff aaeuac -r output
+

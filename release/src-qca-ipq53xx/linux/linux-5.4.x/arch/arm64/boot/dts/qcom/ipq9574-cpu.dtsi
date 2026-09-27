@@ -1,0 +1,138 @@
+/*
+ * Copyright (c) 2016-2018,2020-2021 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+&soc {
+	dummy_reg: dummy-regulator@0 {
+		compatible = "regulator-fixed";
+		regulator-name = "dummy-reg";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	dummy_reg_cpu: dummy-regulator@1 {
+		compatible = "regulator-fixed";
+		regulator-name = "dummy-reg-cpu";
+		regulator-min-microvolt = <1075000>;
+		regulator-max-microvolt = <1075000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+};
+
+&CPU0 {
+	operating-points-v2 = <&cpu_opp_table>;
+	voltage-tolerance = <1>;
+	cpu0-supply = <&apc_vreg>;
+};
+
+&CPU1 {
+	operating-points-v2 = <&cpu_opp_table>;
+	voltage-tolerance = <1>;
+	cpu-supply = <&apc_vreg>;
+};
+
+&CPU2 {
+	operating-points-v2 = <&cpu_opp_table>;
+	voltage-tolerance = <1>;
+	cpu-supply = <&apc_vreg>;
+};
+
+&CPU3 {
+	operating-points-v2 = <&cpu_opp_table>;
+	voltage-tolerance = <1>;
+	cpu-supply = <&apc_vreg>;
+};
+
+&cpus {
+	cpu_opp_table: cpu_opp_table {
+		compatible = "operating-points-v2-kryo-cpu";
+		opp-shared;
+		nvmem-cells = <&cpu_speed_bin>;
+		nvmem-cell-names = "speed_bin";
+
+		/* Listed all supported CPU frequencies and opp-supported-hw
+		 * values to select CPU frequencies based on the limits fused.
+		 * ------------------------------------------------------------
+		 * Frequency     BIT3   BIT2   BIT1    BIT0    opp-supported-hw
+		 *              1.2GHz 1.5GHz 1.8GHz No Limit
+		 * ------------------------------------------------------------
+		 * 936000000      1      1      1       1            0xF
+		 * 1104000000     1      1      1       1            0xF
+		 * 1200000000     1      0      0       0            0x8
+		 * 1416000000     0      1      1       1            0x7
+		 * 1488000000     0      1      0       0            0x4
+		 * 1608000000     0      0      1       1            0x3
+		 * 1800000000     0      0      1       1            0x3
+		 * 2208000000     0      0      0       1            0x1
+		 * -----------------------------------------------------------*/
+		opp-0 {
+			opp-hz = /bits/ 64 <0>;
+			opp-microvolt = <0>;
+			opp-supported-hw = <0xF>;
+			clock-latency-ns = <200000>;
+		};
+		opp-936000000 {
+			opp-hz = /bits/ 64 <936000000>;
+			opp-microvolt = <1>;
+			opp-supported-hw = <0xF>;
+			clock-latency-ns = <200000>;
+		};
+		opp-1104000000 {
+			opp-hz = /bits/ 64 <1104000000>;
+			opp-microvolt = <2>;
+			opp-supported-hw = <0xF>;
+			clock-latency-ns = <200000>;
+		};
+		opp-1200000000 {
+			opp-hz = /bits/ 64 <1200000000>;
+			opp-microvolt = <3>;
+			opp-supported-hw = <0x8>;
+			clock-latency-ns = <200000>;
+		};
+		opp-1416000000 {
+			opp-hz = /bits/ 64 <1416000000>;
+			opp-microvolt = <3>;
+			opp-supported-hw = <0x7>;
+			clock-latency-ns = <200000>;
+		};
+		opp-1488000000 {
+			opp-hz = /bits/ 64 <1488000000>;
+			opp-microvolt = <4>;
+			opp-supported-hw = <0x7>;
+			clock-latency-ns = <200000>;
+		};
+		opp-1608000000 {
+			opp-hz = /bits/ 64 <1608000000>;
+			opp-microvolt = <4>;
+			opp-supported-hw = <0x0>;
+			clock-latency-ns = <200000>;
+		};
+		opp-1800000000 {
+			opp-hz = /bits/ 64 <1800000000>;
+			opp-microvolt = <5>;
+			opp-supported-hw = <0x3>;
+			clock-latency-ns = <200000>;
+		};
+		opp-2208000000 {
+			opp-hz = /bits/ 64 <2208000000>;
+			opp-microvolt = <6>;
+			opp-supported-hw = <0x1>;
+			clock-latency-ns = <200000>;
+		};
+	};
+};

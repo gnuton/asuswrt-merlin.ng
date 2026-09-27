@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 AP-MI01.9 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq5332-mi01.2.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5332/AP-MI01.9";
+	compatible = "qcom,ipq5332-ap-mi01.9", "qcom,ipq5332";
+	interrupt-parent = <&intc>;
+
+	soc {
+		pinctrl@1000000 {
+			/delete-node/ leds_pins;
+		};
+
+		/delete-node/ leds;
+	};
+};
+
+/* Internal 2G radio is disabled. */
+&wifi0 {
+	status = "disabled";
+};
+
+/* Disable IPQ5332 integrated radio's reserved memory */
+&q6_region {
+	status = "disabled";
+};
+
+&m3_dump {
+	status = "disabled";
+};
+
+&q6_etr_region {
+	status = "disabled";
+};
+
+&q6_caldb_region {
+	status = "disabled";
+};
+
+/* Memory regions for the PCI radios are already enabled in MI01.2 */
+
+/* Update the board ID used for QCN9224 2G radio */
+&wifi1 {
+       /* QCN9224 radio 2G */
+       hremote_node = <&qcn9224_pcie0>;
+       board_id = <0x1d>;
+       status = "ok";
+};
+
+/* QCN9224 5G is connected on PCI slot 1 */
+&wifi2 {
+       /* QCN9224 radio 5G */
+       hremote_node = <&qcn9224_pcie1>;
+       board_id = <0x15>;
+       status = "ok";
+};
+
+&q6v5_wcss {
+	status = "disabled";
+};

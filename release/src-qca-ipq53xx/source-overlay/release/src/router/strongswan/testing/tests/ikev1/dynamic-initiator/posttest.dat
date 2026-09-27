@@ -1,0 +1,5 @@
+carol::systemctl stop strongswan
+dave::systemctl stop strongswan
+moon::systemctl stop strongswan
+carol::iptables-restore < /etc/iptables.flush
+dave::cd /etc/swanctl; rm rsa/carolKey.pem x509/carolCert.pem

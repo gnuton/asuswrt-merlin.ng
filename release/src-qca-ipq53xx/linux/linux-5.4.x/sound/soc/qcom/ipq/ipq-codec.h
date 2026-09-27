@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
+#define AKD4613_00_PM1		0x00
+#define AKD4613_01_PM2		0x01
+#define AKD4613_02_PM3		0x02
+#define AKD4613_03_CTRL1	0x03
+#define AKD4613_04_CTRL2	0x04
+#define AKD4613_05_DE_EMP1	0x05
+#define AKD4613_06_DE_EMP2	0x06
+#define AKD4613_07_OVRFLW_DT	0x07
+#define AKD4613_08_ZERO_DT	0x08
+#define AKD4613_09_IP_CTRL	0x09
+#define AKD4613_0A_OP_CTRL	0x0A
+#define AKD4613_0B_LOUT1_CTRL	0x0B
+#define AKD4613_0C_ROUT1_CTRL	0x0C
+#define AKD4613_0D_LOUT2_CTRL	0x0D
+#define AKD4613_0E_ROUT2_CTRL	0x0E
+#define AKD4613_0F_LOUT3_CTRL	0x0F
+#define AKD4613_10_ROUT3_CTRL	0x10
+#define AKD4613_11_LOUT4_CTRL	0x11
+#define AKD4613_12_ROUT4_CTRL	0x12
+#define AKD4613_13_LOUT5_CTRL	0x13
+#define AKD4613_14_ROUT5_CTRL	0x14
+#define AKD4613_15_LOUT6_CTRL	0x15
+#define AKD4613_16_ROUT6_CTRL	0x16
+
+#define AK4613_MAX_REG		(AKD4613_16_ROUT6_CTRL + 1)
+
+/* AKD4613_03_CTRL1 */
+#define AKD4613_DIF_MASK		(7 << 3)
+#define AKD4613_DIF(x)			(x << 3)
+#define AKD4613_DIF_I2S_MODE		(4 << 3)
+#define AKD4613_TDM_MODE_MASK		(3 << 6)
+#define AKD4613_TDM_MODE(x)		(x << 6)
+
+/* AKD4613_04_CTRL2 */
+#define AKD4613_CKS_MASK		(0x3 << 4)
+#define AKD4613_CKS(x)			(x << 4)
+#define AKD4613_DFS_MASK		(0x3 << 2)
+#define AKD4613_DFS(x)			(x << 2)
+
+struct audio_hw_params {
+	uint8_t channels;
+	uint32_t freq;
+	uint8_t bit_width;
+};
+
+enum dfs {
+	NORMAL_SPEED,
+	DOUBLE_SPEED,
+	QUAD_SPEED,
+	NA
+};
+
+enum cks {
+	FS_128,
+	FS_256,
+	FS_384,
+	FS_512
+};
+
+enum tdm_mode {
+	STEREO,
+	TDM_512,
+	TDM_256,
+	TDM_128,
+	TDM_MAX
+};
+
+enum dif {
+	DIF_LR_MODE0,
+	DIF_LR_MODE1,
+	DIF_LR_MODE2,
+	DIF_LR_MODE3,
+	DIF_I2S_MODE
+};

@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2016,2017,2019-2023 Qualcomm Innovation Center, Inc. -->
+<!-- All Rights Reserved. -->
+<!-- Confidential and Proprietary – Qualcomm Innovation Center, Inc -->
+<!-- 2016 Qualcomm Atheros, Inc. -->
+<!-- All Rights Reserved. -->
+<!-- Qualcomm Atheros Confidential and Proprietary. -->
+<WCN_VenTool>
+  <VendorCmd name="dp_peer_stats" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="247"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+    <Attribute name="value1" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="fc_peer_stats" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="240"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+  </VendorCmd>
+  <VendorCmd name="atf_sched_dur" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="239"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="aggr_burst" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="238"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="set_ba_timeout" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="274"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_ba_timeout" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="275"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="set_pcp_tid_map" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="279"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_pcp_tid_map" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="279"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="get_pcp_tid_map" ID="75" ATTR_MAX="2">
+      <Attribute name="get_pcp_tid_map" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="set_tidmap_prec" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="280"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_tidmap_prec" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="280"/>
+    <VendorRsp name="get_tidmap_prec" ID="75" ATTR_MAX="2">
+      <Attribute name="get_tidmap_prec" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="set_sa_param" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="290"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+    <Attribute name="value2" ID="20" TYPE="u32"/>
+    <Attribute name="value3" ID="21" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_sa_param" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="290"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+    <Attribute name="value2" ID="20" TYPE="u32"/>
+    <VendorRsp name="get_sa_param" ID="75" ATTR_MAX="2">
+      <Attribute name="get_sa_param" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+<VendorCmd name="setHwaddr" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="237" />
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR" />
+  </VendorCmd>
+  <VendorCmd name="setCountry" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="236" />
+    <Attribute name="value0" ID="19" TYPE="STRING" />
+  </VendorCmd>
+  <VendorCmd name="getCountry" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="236" />
+    <VendorRsp name="getCountry" ID="75" ATTR_MAX="2">
+      <Attribute name="getCountry" ID="1" TYPE="STRING" />
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_bsscolor" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="333"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_bsscolor" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="333"/>
+    <VendorRsp name="get_he_bsscolor" ID="75" ATTR_MAX="2">
+      <Attribute name="get_he_bsscolor" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="enable_mesh_mode" ID="74" DEFAULTS="17,19">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="261"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32" DEFAULT="63"/>
+  </VendorCmd>
+  <VendorCmd name="get_enable_mesh_mode" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="261"/>
+    <VendorRsp name="get_enable_mesh_mode" ID="75" ATTR_MAX="2">
+      <Attribute name="get_enable_mesh_mode" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="btcoex_dc" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="291"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="set_mgmt_rssi_thr" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="244" />
+    <Attribute name="value0" ID="19" TYPE="u32" />
+  </VendorCmd>
+  <VendorCmd name="get_mgmt_rssi_thr" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="244" />
+    <VendorRsp name="get_mgmt_rssi_thr" ID="75" ATTR_MAX="2">
+      <Attribute name="get_mgmt_rssi_thr" ID="1" TYPE="u32" />
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_srp_psr_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="1"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_srp_psr_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="1"/>
+    <VendorRsp name="get_he_srp_psr_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="he_srp_psr_enable" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_srp_non_srg_obsspd_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+ </VendorCmd>
+  <VendorCmd name="get_he_srp_non_srg_obsspd_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <VendorRsp name="get_he_srp_non_srg_obsspd_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="he_srp_non_srg_obsspd_enable" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_srp_sr15_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="3"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_srp_sr15_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="3"/>
+    <VendorRsp name="get_he_srp_sr15_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="he_srp_sr15_enable" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="set_rxProtocolTag" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="288"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+    <Attribute name="value2" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="dump_rxProtocolTagStats" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="289"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="gpio_config" ID="125" DEFAULTS="1,3,7,8,9">
+    <Attribute name="dparam0" ID="1" TYPE="u32" DEFAULT="0"/>
+    <Attribute name="value0" ID="2" TYPE="u32"/>
+    <Attribute name="value1" ID="6" TYPE="u32"/>
+    <Attribute name="value2" ID="4" TYPE="u32"/>
+    <Attribute name="value3" ID="5" TYPE="u32"/>
+    <Attribute name="value4" ID="7" TYPE="u32" DEFAULT="0"/>
+    <Attribute name="value5" ID="8" TYPE="u32" DEFAULT="0"/>
+    <Attribute name="value6" ID="9" TYPE="u32" DEFAULT="0"/>
+    <Attribute name="value7" ID="3" TYPE="u32" DEFAULT="0"/>
+  </VendorCmd>
+  <VendorCmd name="gpio_output" ID="125" DEFAULTS="1">
+    <Attribute name="dparam0" ID="1" TYPE="u32" DEFAULT="1"/>
+    <Attribute name="value0" ID="2" TYPE="u32"/>
+    <Attribute name="value1" ID="3" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="set_fw_hang" ID="74" DEFAULTS="17,18,19">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="444"/>
+    <Attribute name="value0" ID="18" TYPE="u32" DEFAULT="0"/>
+    <Attribute name="value1" ID="19" TYPE="u32" DEFAULT="1"/>
+  </VendorCmd>
+  <VendorCmd name="nav_config" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="295"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_nav_config" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="295"/>
+    <VendorRsp name="get_nav_config" ID="75" ATTR_MAX="2">
+      <Attribute name="get_nav_config" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_srp_srg_obsspd_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="4"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+    <Attribute name="value2" ID="21" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_srp_srg_obsspd_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="293"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="4"/>
+    <VendorRsp name="get_he_srp_srg_obsspd_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="he_srp_srg_obsspd_enable" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_srp_srg_bss_color_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="296"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="1"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_srp_srg_bss_color_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="296"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="1"/>
+    <VendorRsp name="get_he_srp_srg_bss_color_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="he_srp_srg_bss_color_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="he_srp_srg_partial_bssid_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="296"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_srp_srg_partial_bssid_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="296"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <VendorRsp name="get_he_srp_srg_partial_bssid_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="he_srp_srg_partial_bssid_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_sr_enable_per_ac" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="5"/>
+    <Attribute name="value0" ID="19" TYPE="STRING"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_sr_enable_per_ac" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="5"/>
+    <VendorRsp name="get_self_sr_enable_per_ac" ID="75" ATTR_MAX="2">
+      <Attribute name="self_sr_enable_per_ac" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="set_peer_pkt_cap_enable" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="300"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+    <Attribute name="value1" ID="18" TYPE="u32"/>
+    <Attribute name="value2" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="he_muedca_mode" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="305"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_he_muedca_mode" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="305"/>
+    <VendorRsp name="get_he_muedca_mode" ID="75" ATTR_MAX="2">
+      <Attribute name="he_muedca_mode" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="non_ht_dup_en" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="306"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_non_ht_dup_en" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="306"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="get_non_ht_dup_en" ID="75" ATTR_MAX="2">
+      <Attribute name="non_ht_dup_en" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_obss_pd_tx_threshold_db" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="1"/>
+    <Attribute name="value0" ID="19" TYPE="STRING"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_obss_pd_tx_threshold_db" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="1"/>
+    <VendorRsp name="get_self_obss_pd_tx_threshold_db" ID="75" ATTR_MAX="2">
+      <Attribute name="self_obss_pd_tx_threshold_db" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_obss_pd_tx_threshold_dbm" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="13"/>
+    <Attribute name="value0" ID="19" TYPE="STRING"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_obss_pd_tx_threshold_dbm" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="13"/>
+    <VendorRsp name="get_self_obss_pd_tx_threshold_dbm" ID="75" ATTR_MAX="2">
+      <Attribute name="self_obss_pd_tx_threshold_dbm" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_obss_pd_tx_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="0"/>
+    <Attribute name="value0" ID="19" TYPE="STRING"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_obss_pd_tx_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="0"/>
+    <VendorRsp name="get_self_obss_pd_tx_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="self_obss_pd_tx_enable" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_srg_bss_color_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_srg_bss_color_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <VendorRsp name="get_self_srg_bss_color_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="self_srg_bss_color_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_srg_partial_bssid_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="3"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_srg_partial_bssid_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="3"/>
+    <VendorRsp name="get_self_srg_partial_bssid_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="self_srg_partial_bssid_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_hesiga_sr15_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="6"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_hesiga_sr15_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="6"/>
+    <VendorRsp name="get_self_hesiga_sr15_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="self_hesiga_sr15_enable" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_srg_obss_color_enable_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="7"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_srg_obss_color_enable_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="7"/>
+    <VendorRsp name="get_self_srg_obss_color_enable_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="self_srg_obss_color_enable_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_srg_obss_bssid_enable_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="8"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_srg_obss_bssid_enable_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="8"/>
+    <VendorRsp name="get_self_srg_obss_bssid_enable_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="self_srg_obss_bssid_enable_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_non_srg_obss_color_enable_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="9"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_non_srg_obss_color_enable_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="9"/>
+    <VendorRsp name="get_self_non_srg_obss_color_enable_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="self_non_srg_obss_color_enable_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_non_srg_obss_bssid_enable_bitmap" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="10"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_non_srg_obss_bssid_enable_bitmap" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="10"/>
+    <VendorRsp name="get_self_non_srg_obss_bssid_enable_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="self_non_srg_obss_bssid_enable_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="get_nominal_noisefloor" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="200"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="4454"/>
+    <VendorRsp name="get_nominal_noisefloor" ID="75" ATTR_MAX="2">
+      <Attribute name="get_nominal_noisefloor" ID="1" TYPE="s32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_psr_tx_enable" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="11"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_psr_tx_enable" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="11"/>
+    <VendorRsp name="get_self_psr_tx_enable" ID="75" ATTR_MAX="2">
+      <Attribute name="self_psr_tx_enable" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="psr_safety_margin_db" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="12"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_psr_safety_margin_db" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="12"/>
+    <VendorRsp name="get_psr_safety_margin_db" ID="75" ATTR_MAX="2">
+      <Attribute name="psr_safety_margin_db" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="rnr_6ghz_colocated" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="314"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="g_rnr_6ghz_colocated" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="314"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="g_rnr_6ghz_colocated" ID="75" ATTR_MAX="2">
+      <Attribute name="rnr_6ghz_colocated" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="upload_pktlog" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="328"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="g_upload_pktlog" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="328"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="g_upload_pktlog" ID="75" ATTR_MAX="2">
+      <Attribute name="upload_pktlog" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="g_mbssid_ntx_max_pfl_size" ID="75" DEFAULTS="17, 18, 19">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="317"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <Attribute name="value0" ID="19" TYPE="u32" DEFAULT="0"/>
+    <VendorRsp name="g_mbssid_ntx_pfl_size" ID="75" ATTR_MAX="2">
+      <Attribute name="mbssid_ntx_pfl_size" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="g_mbssid_max_pp" ID="75" DEFAULTS="17, 18, 19, 20">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="317"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="2"/>
+    <Attribute name="value0" ID="19" TYPE="u32" DEFAULT="1"/>
+    <Attribute name="value1" ID="20" TYPE="u32" DEFAULT="0"/>
+    <VendorRsp name="g_mbssid_max_pp" ID="75" ATTR_MAX="2">
+      <Attribute name="mbssid_max_pp" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="set_halphy_cal" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="336"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="g_oper_reg_info" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="337"/>
+    <VendorRsp name="g_oper_reg_info" ID="75" ATTR_MAX="2">
+      <Attribute name="g_oper_reg_info" ID="1" TYPE="STRING" />
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="get_partial_bssid_bitmap" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="338"/>
+    <VendorRsp name="get_partial_bssid_bitmap" ID="75" ATTR_MAX="2">
+      <Attribute name="partial_bssid_bitmap" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_sr_enable_truncation" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="14"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_sr_enable_truncation" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="14"/>
+    <VendorRsp name="get_self_sr_enable_truncation" ID="75" ATTR_MAX="2">
+      <Attribute name="self_sr_enable_truncation" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="rate_upper_cap" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="409"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="rate_retry_mcs_drop" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="410"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="mcs_probe_intvl" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="411"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="nss_probe_intvl" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="412"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="peer_svcid_map" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="413"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+    <Attribute name="value1" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="peer_svcid_unmap" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="414"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+    <Attribute name="value1" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="peer_svcid_map_report" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="415"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+  </VendorCmd>
+  <VendorCmd name="set_phyrx_error_mask" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="416"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <Attribute name="value1" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_phyrx_error_mask" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="417"/>
+    <VendorRsp name="get_phyrx_error_mask" ID="75" ATTR_MAX="2">
+      <Attribute name="get_phyrx_error_mask" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+    <VendorCmd name="self_sr_min_txop" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="15"/>
+    <Attribute name="value0" ID="19" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_sr_min_txop" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="15"/>
+    <VendorRsp name="get_self_sr_min_txop" ID="75" ATTR_MAX="2">
+      <Attribute name="self_sr_min_txop" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="self_obss_pd_threshold_ctrl_frame" ID="74" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="16"/>
+    <Attribute name="value0" ID="19" TYPE="STRING"/>
+    <Attribute name="value1" ID="20" TYPE="u32"/>
+    <Attribute name="value2" ID="21" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="get_self_obss_pd_threshold_ctrl_frame" ID="75" DEFAULTS="17,18">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="310"/>
+    <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="16"/>
+    <VendorRsp name="get_self_obss_pd_threshold_ctrl_frame" ID="75" ATTR_MAX="2">
+      <Attribute name="self_obss_pd_threshold_ctrl_frame" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="mgmt_rx_reo_simulation" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="421"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="g_mgmt_rx_reo_simulation" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="421"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="g_mgmt_rx_reo_simulation" ID="75" ATTR_MAX="2">
+      <Attribute name="mgmt_rx_reo_simulation" ID="1" TYPE="STRING"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="mgmt_rx_reo_ingress_stats" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="424"/>
+    <VendorRsp name="mgmt_rx_reo_ingress_stats" ID="75" ATTR_MAX="2">
+      <Attribute name="mgmt_rx_reo_ingress_stats_status" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="mgmt_rx_reo_ingress_per_frame_info" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="425"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="mgmt_rx_reo_ingress_per_frame_info" ID="75" ATTR_MAX="2">
+      <Attribute name="mgmt_rx_reo_ingress_per_frame_info_status" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="mgmt_rx_reo_egress_stats" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="426"/>
+    <VendorRsp name="mgmt_rx_reo_egress_stats" ID="75" ATTR_MAX="2">
+      <Attribute name="mgmt_rx_reo_egress_stats_status" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="mgmt_rx_reo_egress_per_frame_info" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="427"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="mgmt_rx_reo_egress_per_frame_info" ID="75" ATTR_MAX="2">
+      <Attribute name="mgmt_rx_reo_egress_per_frame_info_status" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="dump_mlo_global_h_shmem" ID="75" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="428"/>
+    <Attribute name="value0" ID="18" TYPE="u32"/>
+    <VendorRsp name="dump_mlo_global_h_shmem" ID="75" ATTR_MAX="2">
+      <Attribute name="dump_mlo_global_h_shmem_status" ID="1" TYPE="u32"/>
+    </VendorRsp>
+  </VendorCmd>
+  <VendorCmd name="get_peer_extd_rate_link_stats" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="432"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+  </VendorCmd>
+  <VendorCmd name="disable_sched_modes" ID="74" DEFAULTS="17">
+   <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="441"/>
+   <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="peer_msduq_map_report" ID="74" DEFAULTS="17">
+    <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="443"/>
+    <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+  </VendorCmd>
+  <VendorCmd name="umac_reset_debug" ID="74" DEFAULTS="17">
+   <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="442"/>
+   <Attribute name="value0" ID="18" TYPE="u32"/>
+   <Attribute name="value1" ID="20" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="g_umac_reset_debug" ID="75" DEFAULTS="17">
+   <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="442"/>
+   <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="disable_peer_sched_modes" ID="74" DEFAULTS="17">
+   <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="448"/>
+   <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+   <Attribute name="value1" ID="18" TYPE="u32"/>
+  </VendorCmd>
+  <VendorCmd name="eapol_over_nl" ID="74" DEFAULTS="17">
+   <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="473"/>
+   <Attribute name="value0" ID="18" TYPE="u32"/>
+  </VendorCmd>
+</WCN_VenTool>

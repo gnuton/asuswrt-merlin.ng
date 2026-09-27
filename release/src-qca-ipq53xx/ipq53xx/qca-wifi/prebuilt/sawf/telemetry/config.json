@@ -1,0 +1,6 @@
+{
+	"mavg_num_packet": 1000,
+	"mavg_num_window": 10,
+	"sla_num_packet": 10000,
+	"sla_time_secs": 10
+}

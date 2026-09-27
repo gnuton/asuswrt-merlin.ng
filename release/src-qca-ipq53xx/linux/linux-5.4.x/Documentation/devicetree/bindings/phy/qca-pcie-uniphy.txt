@@ -1,0 +1,71 @@
+* PCIe UNIPHY controller
+
+PCIe PHY nodes are defined to describe on-chip PCIe Physical layer controllers.
+Each PCIe PHY controller should have its own node.
+
+- compatible:
+	Usage: required
+	Value type: <stringlist>
+	Definition: Value should contain "qca,uni-pcie-phy" or
+			"qca,uni-pcie-phy-gen2" or "qca,uni-pcie-phy-gen3"
+
+- phy-type:
+	Usage: required
+	Value type: <stringlist>
+	Definition: Value should contain "gen1"/"gen2"/"gen3"
+
+- #phy-cells:
+	Usage: required
+	Value type: <u32>
+	Definition: Must be zero
+
+- clocks:
+	Usage: required
+	Value type: <prop-encoded-array>
+	Definition: A list of phandles and clock specifier pair, one
+		    for each entry in clock-names property
+
+- clock-names:
+	Usage: required
+	Value type: <stringlist>
+	Definition: Should contain "core" for PHY core clock
+
+- resets:
+	Usage: required
+	Value type: <phandle>
+	Definition: List of phandle and reset specifier pairs as listed
+		    in reset-names property
+
+- reset-names:
+	Usage: required
+	Value type: <stringlist>
+	Definition: Should contain "core" for PHY core reset
+
+- x2:
+	Usage: optional
+	Value type: <u32>
+	Definition: Indicates if PHY is dual lane capable
+
+- mode-fixed:
+	Usage: required
+	Value type: <u32>
+	Definition: Indicates the PHY operating mode. Should contain 1 for
+			fixed mode and 2 for SSC mode.
+
+
+* Example
+
+	pcie_phy0: phy@86000 {
+		compatible = "qca,uni-pcie-phy-gen3";
+		phy-type = "gen3"
+		#phy-cells = <0>;
+		clocks = <&gcc GCC_PCIE0_PIPE_CLK>;
+		clock-names = "pipe_clk";
+		resets = <&gcc GCC_PCIE0_PHY_BCR>,
+			<&gcc GCC_PCIE1PHY_PHY_BCR>;
+		reset-names = "phy"
+				"phy_phy";
+		x2 = <1>;
+		mode-fixed = <2>;
+	};
+

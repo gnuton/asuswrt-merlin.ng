@@ -1,0 +1,29 @@
+GCCVER		:= $(shell $(CROSS_COMPILE)gcc -dumpversion|cut -d '.' -f 1)
+GCC6ORABOVE	:= $(if $(GCCVER),$(shell [ $(GCCVER) -ge 6 ] && echo 1))
+
+iperf: iperf/Makefile
+	@$(SEP)
+	$(MAKE) -j8 -C $@
+
+iperf/Makefile: iperf/configure
+	# libstdc++.so.6 is required if you want to remove CFLAGS=-static below.
+	( cd iperf ; $(if $(QCA)$(LANTIQ)$(MT798X),,CFLAGS=-static) $(CONFIGURE) \
+		ac_cv_func_malloc_0_nonnull=yes \
+		$(if $(QCA),ac_cv_func_gettimeofday=yes ac_cv_func_inet_ntop=yes) \
+		$(if $(GCC6ORABOVE),ac_cv_sizeof_bool=1) \
+	)
+
+iperf/configure:
+	( cd iperf ; ./autogen.sh )
+
+iperf-install:
+	install -D iperf/src/iperf $(INSTALLDIR)/iperf/usr/bin/iperf
+ifeq ($(QCA),y)
+	install -D $(TOOLCHAIN)/lib/libstdc++.so.6 $(INSTALLDIR)/iperf/usr/lib/libstdc++.so.6
+endif
+	$(STRIP) $(INSTALLDIR)/iperf/usr/bin/iperf
+
+iperf-clean:
+	[ ! -f iperf/Makefile ] || $(MAKE) -C iperf distclean
+	@rm -f iperf/Makefile
+

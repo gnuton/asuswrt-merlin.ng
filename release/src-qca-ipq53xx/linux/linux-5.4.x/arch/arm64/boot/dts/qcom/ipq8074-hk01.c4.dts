@@ -1,0 +1,184 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/dts-v1/;
+/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ */
+#include "ipq8074-hk01.dtsi"
+
+/ {
+	model = "Qualcomm Technologies, Inc. IPQ8074/AP-HK01-C4";
+	compatible = "qcom,ipq8074-ap-hk01-c4", "qcom,ipq8074-ap-hk01", "qcom,ipq8074";
+
+	soc {
+
+		pinctrl@1000000 {
+			mdio_pins: mdio_pinmux {
+				mux_0 {
+					pins = "gpio68";
+					function = "mdc";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				mux_1 {
+					pins = "gpio69";
+					function = "mdio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+			uniphy_pins: uniphy_pinmux {
+				mux {
+					pins = "gpio60";
+					function = "rx2";
+					bias-disable;
+				};
+				sfp_tx {
+					pins = "gpio59";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+					output-low;
+				};
+			};
+		};
+		mdio@90000 {
+			pinctrl-0 = <&mdio_pins>;
+			pinctrl-names = "default";
+			phy-reset-gpio = <&tlmm 37 0>;
+			phy0: ethernet-phy@0 {
+				reg = <0>;
+			};
+			phy1: ethernet-phy@1 {
+				reg = <1>;
+			};
+			phy2: ethernet-phy@2 {
+				reg = <2>;
+			};
+			phy3: ethernet-phy@3 {
+				reg = <3>;
+			};
+			phy4: ethernet-phy@4 {
+				reg = <30>;
+			};
+			phy5: ethernet-phy@5 {
+				compatible ="ethernet-phy-ieee802.3-c45";
+				reg = <7>;
+			};
+		};
+
+		dp1 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <1>;
+			reg = <0x3a001000 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <0>;
+			phy-mode = "sgmii";
+		};
+
+		dp2 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <2>;
+			reg = <0x3a001200 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <1>;
+			phy-mode = "sgmii";
+		};
+
+		dp3 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <3>;
+			reg = <0x3a001400 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <2>;
+			phy-mode = "sgmii";
+		};
+
+		dp4 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <4>;
+			reg = <0x3a001600 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <3>;
+			phy-mode = "sgmii";
+		};
+
+		dp5 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <5>;
+			reg = <0x3a001800 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <30>;
+			phy-mode = "sgmii";
+		};
+
+		dp6 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <6>;
+			reg = <0x3a007000 0x3fff>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <7>;
+			phy-mode = "sgmii";
+		};
+
+		ess-switch@3a000000 {
+			pinctrl-0 = <&uniphy_pins>;
+			pinctrl-names = "default";
+			switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+			switch_lan_bmp = <0x3e>; /* lan port bitmap */
+			switch_wan_bmp = <0x40>; /* wan port bitmap */
+			switch_mac_mode = <0xb>; /* mac mode for uniphy instance0*/
+			switch_mac_mode1 = <0xf>; /* mac mode for uniphy instance1*/
+			switch_mac_mode2 = <0xd>; /* mac mode for uniphy instance2*/
+			bm_tick_mode = <0>; /* bm tick mode */
+			tm_tick_mode = <0>; /* tm tick mode */
+			qcom,port_phyinfo {
+				port@0 {
+					port_id = <1>;
+					phy_address = <0>;
+				};
+				port@1 {
+					port_id = <2>;
+					phy_address = <1>;
+				};
+				port@2 {
+					port_id = <3>;
+					phy_address = <2>;
+				};
+				port@3 {
+					port_id = <4>;
+					phy_address = <3>;
+				};
+				port@4 {
+					port_id = <5>;
+					phy_i2c_address = <0x7c>;
+					phy_address = <30>;
+					port_mac_sel = "QGMAC_PORT";
+					phy-i2c-mode; /*i2c access phy */
+				};
+				port@5 {
+					port_id = <6>;
+					phy_address = <7>;
+					ethernet-phy-ieee802.3-c45;
+				};
+			};
+		};
+	};
+
+};

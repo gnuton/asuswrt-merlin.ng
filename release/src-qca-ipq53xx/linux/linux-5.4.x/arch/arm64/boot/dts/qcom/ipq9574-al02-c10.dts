@@ -1,0 +1,161 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C10 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c4.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C10";
+	compatible = "qcom,ipq9574-ap-al02-c10", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	soc {
+		dp1 {
+			qcom,id = <5>;
+			reg = <0x3a510000 0x4000>;
+			qcom,mactype = <1>;
+			qcom,phy-mdio-addr = <8>;
+		};
+
+		dp2 {
+			qcom,id = <6>;
+			reg = <0x3a514000 0x4000>;
+			qcom,mactype = <1>;
+			qcom,phy-mdio-addr = <0>;
+		};
+
+		dp3 {
+			qcom,id = <1>;
+			reg = <0x3a001000 0x200>;
+			qcom,mactype = <0>;
+			/delete-property/qcom,link-poll;
+			/delete-property/qcom,phy-mdio-addr;
+		};
+
+		/delete-node/ dp4;
+		/delete-node/ dp5;
+		/delete-node/ dp6;
+
+		mdio0:mdio@90000 {
+			/*gpio60 for manhattan reset*/
+			phy-reset-gpio = <&tlmm 60 0>;
+			phyaddr_fixup = <0xC90F018>;
+			uniphyaddr_fixup = <0xC90F014>;
+			mdio_clk_fixup; /* MDIO clock sequence fix up flag */
+
+			phy0: ethernet-phy@0 {
+				reg = <1>;
+				fixup;
+			};
+			phy1: ethernet-phy@1 {
+				reg = <2>;
+				fixup;
+			};
+			phy2: ethernet-phy@2 {
+				reg = <3>;
+				fixup;
+			};
+			phy3: ethernet-phy@3 {
+				reg = <4>;
+				fixup;
+			};
+		};
+
+		ess-instance {
+			num_devices = <0x2>;
+			ess-switch@3a000000 {
+				switch_lan_bmp = <0x22>; /* lan port bitmap */
+				switch_mac_mode = <0xc>; /* mac mode for uniphy instance0*/
+				bm_tick_mode = <1>; /* bm tick mode */
+				tm_tick_mode = <1>; /* tm tick mode */
+				qcom,port_phyinfo {
+					port@0 {
+						port_id = <1>;
+						/delete-property/phy_address;
+						forced-speed = <1000>;
+						forced-duplex = <1>;
+						port_mac_sel = "QGMAC_PORT";
+					};
+					/delete-node/ port@1;
+					/delete-node/ port@2;
+					/delete-node/ port@3;
+				};
+
+			};
+
+			ess-switch1@0xc000000 {
+				compatible = "qcom,ess-switch-qca8386";
+				device_id = <1>;
+				switch_access_mode = "mdio";
+				mdio-bus = <&mdio0>;
+				switch_mac_mode = <0xc>; /* mac mode for uniphy instance0 */
+				switch_mac_mode1 = <0xff>; /* mac mode1 for uniphy instance1 */
+				switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+				switch_lan_bmp = <0x1e>; /* lan port bitmap */
+				switch_wan_bmp = <0x0>;  /* wan port bitmap */
+				link-polling-required = <0>;
+				link-intr-gpio = <&tlmm 0x2f 0>;
+				qcom,port_phyinfo {
+					port@0 {
+						port_id = <0>;
+						forced-speed = <2500>;
+						forced-duplex = <1>;
+					};
+					port@1 {
+						port_id = <1>;
+						phy_address = <1>;
+					};
+					port@2 {
+						port_id = <2>;
+						phy_address = <2>;
+					};
+					port@3 {
+						port_id = <3>;
+						phy_address = <3>;
+					};
+					port@4 {
+						port_id = <4>;
+						phy_address = <4>;
+					};
+				};
+
+				led_source@0 {
+					source = <0>;
+					mode = "normal";
+					speed = "all";
+					blink_en = "enable";
+					active = "high";
+				};
+				led_source@3 {
+					source = <3>;
+					mode = "normal";
+					speed = "all";
+					blink_en = "enable";
+					active = "high";
+				};
+				led_source@6 {
+					source = <6>;
+					mode = "normal";
+					speed = "all";
+					blink_en = "enable";
+					active = "high";
+				};
+				led_source@9 {
+					source = <9>;
+					mode = "normal";
+					speed = "all";
+					blink_en = "enable";
+					active = "high";
+				};
+			};
+		};
+	};
+};

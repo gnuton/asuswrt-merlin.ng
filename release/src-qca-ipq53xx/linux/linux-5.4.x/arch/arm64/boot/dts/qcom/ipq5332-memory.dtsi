@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 Memory device tree source
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/ {
+
+#if defined(__IPQ_MEM_PROFILE_512_MB__)
+	MP_512;
+#elif defined(__IPQ_MEM_PROFILE_256_MB__)
+	MP_256;
+#endif
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x40000000 0x0 0x20000000>;
+	};
+
+	/*		  Core Memory Profile
+	 * +=========+==============+========================+
+	 * |        |              |                         |
+	 * | Region | Start Offset |          Size           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | Linux  |  0x40000000  |           161MB         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * | TZ App is applicable only for 1GB profile.      |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | TZ App |  0x49B00000  |           6MB           |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * | The following conf is only for 256M profile.    |
+	 * | uboot  |  0x4A300000  |           2MB           |
+	 * |        |              |                         |
+	 * | The following conf is only for other profiles.  |
+	 * | uboot  |  0x4A100000  |           4MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |  SBL   |  0x4A500000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |  TZ    |  0x4A600000  |           2MB           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |  smem  |  0x4A800000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | WLAN   |              |                         |
+	 * |   Q6   |  0x4A900000  |          43MB           |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +=================================================+
+	 */
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		tzapp: tzapp@49B00000 {
+			no-map;
+		#if !defined(__IPQ_MEM_PROFILE_512_MB__) && !defined(__IPQ_MEM_PROFILE_256_MB__)
+			reg = <0x0 0x49B00000 0x0 0x00600000>;
+		#endif
+		};
+
+#if defined(__IPQ_MEM_PROFILE_256_MB__)
+		uboot@4A300000 {
+			no-map;
+			reg = <0x0 0x4A300000 0x0 0x00200000>;
+#else
+		uboot@4A100000 {
+			no-map;
+			reg = <0x0 0x4A100000 0x0 0x00400000>;
+#endif
+		};
+
+		sbl@4A500000 {
+			no-map;
+			reg = <0x0 0x4A500000 0x0 0x00100000>;
+		};
+
+		tz@4A600000 {
+			no-map;
+			reg = <0x0 0x4A600000 0x0 0x00200000>;
+		};
+
+		smem_region: smem@4A800000 {
+			no-map;
+			reg = <0x0 0x4A800000 0x0 0x00100000>;
+		};
+
+		/*
+		* q6_region has to be redefined in RDP specific
+		* dts file based on no of userpd's
+		*/
+		q6_region: wcnss@4a900000 {
+			no-map;
+			reg = <0x0 0x4a900000 0x0 0x02b00000>;
+		};
+
+		minidump_mem: minidump_mem@0 {
+			no-map;
+		};
+	};
+};

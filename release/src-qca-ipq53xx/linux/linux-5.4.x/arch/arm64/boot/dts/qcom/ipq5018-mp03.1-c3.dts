@@ -1,0 +1,59 @@
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "ipq5018-mp03.1.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5018/AP-MP03.1-C3";
+	compatible = "qcom,ipq5018-ap-mp03.1-c3", "qcom,ipq5018-mp03.1-c3", "qcom,ipq5018";
+	interrupt-parent = <&intc>;
+
+	soc {
+		mdio1: mdio@90000 {
+			ethernet-phy@0 {
+				reg = <28>;
+			};
+			/delete-node/ethernet-phy@1;
+			/delete-node/ethernet-phy@2;
+			/delete-node/ethernet-phy@3;
+			/delete-node/switch0@10;
+		};
+
+		ess-instance {
+			num_devices = <0x1>;
+			ess-switch@0x39c00000 {
+				qcom,port_phyinfo {
+					port@1 {
+						port_id = <2>;
+						phy_address = <0x1c>;
+						mdiobus = <&mdio1>;
+						port_mac_sel = "QGMAC_PORT";
+						/delete-property/forced-speed;
+						/delete-property/forced-duplex;
+					};
+				};
+			};
+		};
+
+		dp2 {
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <28>;
+			mdio-bus = <&mdio1>;
+		};
+	};
+};
+

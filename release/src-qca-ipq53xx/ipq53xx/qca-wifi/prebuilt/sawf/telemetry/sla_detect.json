@@ -1,0 +1,20 @@
+{
+	"x_packet": {
+		"delay":0,
+		"msdu_loss":0,
+		"ttl_drop":0
+	},
+	"1_second": {
+		"min_throutput": 1,
+		"max_throughput":1
+	},
+	"mov_average": {
+		"delay":0
+	},
+	"x_second":{
+		"service_interval":1,
+		"burst_size":1,
+		"msdu_loss":1,
+		"ttl_drop":1
+	}
+}

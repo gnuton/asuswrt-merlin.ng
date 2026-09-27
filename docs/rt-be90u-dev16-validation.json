@@ -1,0 +1,221 @@
+{
+  "source_commit": "d7d29c817d422bc86cd317fde3c1cd414c68df6e",
+  "fixture_commit": "3cd871e347cec1dae2844dee1522ab9400b901ea",
+  "base_commit": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+  "image": {
+    "bytes": 59049753,
+    "sha256": "c064768688b2b8f62b4ebccadf07d37d15d83b67e89dcaf09aa988b5859c2d02",
+    "model": "TUF-BE9400",
+    "timestamp": 1790436583,
+    "header_crc32": "valid",
+    "payload_crc32": "valid",
+    "flash_compatibility": "not established",
+    "squashfs_offset": 4322736,
+    "path": "release/src-qca-ipq53xx/image/TUF-BE9400_3.0.0.6_102_58138-rtbe90u-dev16-vpn.trx"
+  },
+  "build": {
+    "exit": 0,
+    "mode": "incremental native build after preserving dev15",
+    "network": "none",
+    "builder": "rt-be90u-build:3006"
+  },
+  "source_validation": {
+    "verified_repository_inputs": 150610,
+    "port_inputs": 599,
+    "changes_from_dev14": [
+      "release/src/router/extendno.conf",
+      "release/src/router/libovpn/amvpn_routing.c",
+      "release/src/router/libovpn/openvpn_config.c",
+      "release/src/router/libovpn/openvpn_config.h",
+      "release/src/router/libovpn/openvpn_control.c",
+      "release/src/router/libovpn/openvpn_control.h",
+      "release/src/router/libovpn/openvpn_setup.c"
+    ]
+  },
+  "git_input_validation": {
+    "verified_inputs_in_git_index": 150602,
+    "explicit_manifest_aliases": 8,
+    "all_input_content_matches_build_record": true
+  },
+  "common_source_validation": {
+    "base": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+    "qca_base": "2db9b885dec71cb4971b54edf7ad31d00063d842",
+    "files": [
+      {
+        "file": "release/src/router/libovpn/amvpn_routing.c",
+        "profiles_checked": 128,
+        "upstream_sha256": "7fbe55406429fb6c8b97693017ce8aa8b8ad8f8db292b6e4d17dcdccd6ba5122",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/amvpn_routing.h",
+        "profiles_checked": 128,
+        "upstream_sha256": "9d65b164b1e61bc5e7f24215813a6c0dc19a7682fdd5b1a1994304545a274356",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_config.c",
+        "profiles_checked": 128,
+        "upstream_sha256": "c9ec2b6c6618f072283460d31b7d28aca17495cf40e7483f1b7a037611c66e24",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_config.h",
+        "profiles_checked": 128,
+        "upstream_sha256": "c2ee71fcafca1118659b6e4474c8b9cc05900b60452e7ad4d1eeadf4f648a164",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_control.c",
+        "profiles_checked": 128,
+        "upstream_sha256": "ca14e81efda9d21d9ae08e63ce423e6573439ae80a22b280a08d4f88126d7332",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_control.h",
+        "profiles_checked": 128,
+        "upstream_sha256": "23af539dc6407e92d2c0e64a7d5ccdc650aa909eb9d7c9311046d5f0321cbe04",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_options.c",
+        "profiles_checked": 128,
+        "upstream_sha256": "54bf367278bef74537b0a76869d1aa538a2a26b02dc608959335ca6b32c29bc4",
+        "upstream_adjustments": [
+          "Correct the residual-state diagnostic format/argument mismatch"
+        ]
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_setup.c",
+        "profiles_checked": 128,
+        "upstream_sha256": "212d95ca826634bb3c55c296b8f947f83f8d0ddf4bb060f31938f6e02eee6562",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/shared/scripts.c",
+        "profiles_checked": 128,
+        "upstream_sha256": "386d4582e1d84725cd4c6ef003d5c2a07bee13f624aacac3bc5c7264c6160403",
+        "upstream_adjustments": []
+      }
+    ],
+    "comparisons_passed": 1152,
+    "scope": "C tokens with includes removed; not a full other-model compile"
+  },
+  "helper_tests": {
+    "passed": 25,
+    "exit": 0
+  },
+  "runtime_suites": {
+    "basic": [
+      {
+        "test": "config",
+        "exit": 0
+      },
+      {
+        "test": "wg-import",
+        "exit": 0
+      },
+      {
+        "test": "official-validator",
+        "exit": 0
+      }
+    ],
+    "network": [
+      {
+        "test": "network",
+        "exit": 0
+      },
+      {
+        "test": "wg-export",
+        "exit": 0
+      },
+      {
+        "test": "wg-tunnel",
+        "exit": 0
+      }
+    ],
+    "openvpn": [
+      {
+        "test": "tunnel-static",
+        "exit": 0
+      },
+      {
+        "test": "tunnel-tls",
+        "exit": 0
+      },
+      {
+        "test": "tunnel-tls-crypt",
+        "exit": 0
+      },
+      {
+        "test": "tunnel-tls-crypt-v2",
+        "exit": 0
+      }
+    ],
+    "ipv6": [
+      {
+        "test": "ipv6",
+        "exit": 0
+      }
+    ]
+  },
+  "script_hook_fixture_exit": 0,
+  "entware_install_and_packaged_hook_exit": 0,
+  "linkage_programs": [
+    "/sbin/rc",
+    "/usr/sbin/httpd",
+    "/usr/sbin/openvpn"
+  ],
+  "linkage_passed": true,
+  "kernel_config_matches_dev15": true,
+  "ecm_selector_matches_dev15": true,
+  "content_audit": {
+    "packaging_issues": [],
+    "elf_architecture_counts": {
+      "183": 792,
+      "3": 4,
+      "40": 2,
+      "164": 5
+    },
+    "unchanged_coprocessor_firmware": [
+      "lib/firmware/IPQ5332/iu_fw.b00",
+      "lib/firmware/IPQ5332/iu_fw.b02",
+      "lib/firmware/IPQ5332/iu_fw.mdt",
+      "lib/firmware/IPQ5332/q6_fw0.b00",
+      "lib/firmware/IPQ5332/q6_fw0.mdt",
+      "lib/firmware/IPQ5332/q6_fw1.b00",
+      "lib/firmware/IPQ5332/q6_fw1.b02",
+      "lib/firmware/IPQ5332/q6_fw1.mdt",
+      "lib/firmware/qcn9224/amss.bin",
+      "lib/firmware/qcn9224/amss_dualmac.bin",
+      "lib/firmware/qcn9224/m3.bin"
+    ],
+    "verified_prebuild_source_files": 599,
+    "autotools_regenerated_files": [
+      "release/src/router/openvpn/doc/doxygen/Makefile.in",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile.in",
+      "release/src/router/openvpn/src/openvpnmsica/Makefile.in",
+      "release/src/router/openvpn/src/tapctl/Makefile.in"
+    ],
+    "required_flags_enabled": [
+      "RTCONFIG_SOC_IPQ53XX",
+      "RTCONFIG_OPENVPN",
+      "RTCONFIG_WIREGUARD",
+      "RTCONFIG_VPN_FUSION",
+      "RTCONFIG_VPN_FUSION_MERLIN",
+      "RTCONFIG_MULTILAN_CFG"
+    ],
+    "vpndirector_icons_match_source": true,
+    "http_fixture_absent": true
+  },
+  "hardware_tested": false,
+  "limitations": [
+    "Stock userspace validator accepts the synthetic wrong-model probe; not a flash-safety test.",
+    "Runtime fixtures use synthetic NVRAM, QEMU and the host kernel, not router boot orchestration.",
+    "Common-source audit excludes includes and is not a complete other-model compile.",
+    "Initial tunnel fixture failed because it omitted target rtconfig.h; all four modes passed after fixing the fixture, without changing the image.",
+    "IPv6 whole-interface blocking does not provide dual-stack VPN routing or IPv6 device-policy protection.",
+    "Browser baseline remains dev12. Physical USB and Entware boot/hotplug ordering remain untested."
+  ]
+}

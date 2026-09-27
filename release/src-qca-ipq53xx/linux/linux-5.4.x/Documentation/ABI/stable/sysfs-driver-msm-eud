@@ -1,0 +1,5 @@
+What:           /sys/bus/platform/drivers/msm-eud/enable
+Date:           August 2021
+Contact:        Kavin A <kavia@codeaurora.org>
+Description:    Enable/Disable use of eud device.
+Users:          User space debug application which intend to use EUD h/w block.

@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C18 board device tree source
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+#include <arm64/qcom/ipq9574-al02-c18.dts>
+
+/ {
+        chosen {
+                stdout-path = "serial0";
+                bootargs-append = " vmalloc=1G";
+        };
+};

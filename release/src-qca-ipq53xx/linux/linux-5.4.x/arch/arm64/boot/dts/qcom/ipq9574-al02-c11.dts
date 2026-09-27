@@ -1,0 +1,545 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C11 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c6.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C11";
+	compatible = "qcom,ipq9574-ap-al02-c11", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	aliases {
+		serial0 = &blsp1_uart2;
+		serial1 = &blsp1_uart4;
+		serial2 = &blsp1_uart3;
+	};
+
+	chosen {
+		stdout-path = "serial0";
+	};
+
+	soc {
+		pinctrl@1000000 {
+			pci0_pin: pci0-pinmux {
+				pins = "gpio23";
+				function = "gpio";
+				drive-strength = <8>;
+				bias-pull-up;
+				output-low;
+			};
+
+			pci1_pin: pci1-pinmux {
+				pins = "gpio26";
+				function = "gpio";
+				drive-strength = <8>;
+				bias-pull-down;
+				output-low;
+			};
+
+			pci2_pin: pci2-pinmux {
+				pins = "gpio29";
+				function = "gpio";
+				drive-strength = <8>;
+				bias-pull-down;
+				output-low;
+			};
+
+			pci3_pin: pci3-pinmux {
+				pins = "gpio32";
+				function = "gpio";
+				drive-strength = <8>;
+				bias-pull-up;
+				output-low;
+			};
+
+			blsp1_uart2_pins: blsp1_uart2_pinmux {
+				pins = "gpio34", "gpio35";
+				function = "blsp2_uart";
+				drive-strength = <8>;
+				bias-disable;
+			};
+
+			gps_pins: gps_pins {
+				blsp3_uart_pinmux {
+					pins = "gpio17", "gpio18";
+					function = "blsp3_uart";
+					drive-strength = <8>;
+					bias-disable;
+				 };
+
+				gps_on_off {
+					pins = "gpio7";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+				 };
+			 };
+
+			leds_pins: leds_pinmux {
+				led0_2g {
+					pins = "gpio64";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			qspi_nand_pins: qspi_nand_pins {
+				qspi_clock {
+					pins = "gpio5";
+					function = "qspi_clk";
+					drive-strength = <8>;
+					bias-disable;
+				};
+
+				qspi_cs {
+					pins = "gpio4";
+					function = "qspi_cs";
+					drive-strength = <8>;
+					bias-disable;
+				};
+
+				qspi_data {
+					pins = "gpio0", "gpio1", "gpio2", "gpio3";
+					function = "qspi_data";
+					drive-strength = <8>;
+					bias-disable;
+				};
+			};
+
+			spi_0_pins: spi-0-pins {
+				pins = "gpio11", "gpio12", "gpio13", "gpio14";
+				function = "blsp0_spi";
+				drive-strength = <8>;
+				bias-disable;
+			};
+
+			i2c_3_pins: i2c-3-pins {
+				pins = "gpio15", "gpio16";
+				function = "blsp3_i2c";
+				drive-strength = <8>;
+				bias-disable;
+			};
+
+			mdio_pins: mdio_pinmux {
+				mux_0 {
+					pins = "gpio38";
+					function = "mdc";
+					drive-strength = <8>;
+					bias-disable;
+				};
+				mux_1 {
+					pins = "gpio39";
+					function = "mdio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			button_pins: button_pins {
+				wps_button {
+					pins = "gpio37";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			QCC710_pins: QCC710_pins {
+				blsp1_uart4_pinmux {
+					pins = "gpio50", "gpio51", "gpio52", "gpio53";
+					function = "blsp4_uart";
+					drive-strength = <8>;
+					bias-disable;
+				};
+				QCC710_reset {
+					pins = "gpio19";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+			};
+
+			pta_QCC710: pta_QCC710 {
+				pta1_0 {
+					pins = "gpio56";
+					function = "pta1_0";
+					drive-strength = <8>;
+					bias-disable;
+				};
+				pta1_1 {
+					pins = "gpio54";
+					function = "pta1_1";
+					drive-strength = <8>;
+					bias-disable;
+				};
+				pta1_2 {
+					pins = "gpio55";
+					function = "pta1_2";
+					drive-strength = <8>;
+					bias-disable;
+				};
+			};
+		};
+
+		blsp1_uart2: serial@78b1000 {
+			pinctrl-0 = <&blsp1_uart2_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		blsp1_uart3: serial@78b2000 {
+			pinctrl-0 = <&gps_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		 };
+
+		blsp1_uart4: serial@78b3000 {
+			pinctrl-0 = <&QCC710_pins &pta_QCC710>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		gpio_keys {
+			compatible = "gpio-keys";
+			pinctrl-0 = <&button_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+
+			button@1 {
+				label = "wps";
+				linux,code = <KEY_WPS_BUTTON>;
+				gpios = <&tlmm 37 GPIO_ACTIVE_LOW>;
+				linux,input-type = <1>;
+				debounce-interval = <60>;
+			};
+		};
+
+		qpic_bam: dma@7984000 {
+			status = "ok";
+		};
+
+		qpic_nand: nand@79b0000 {
+			status = "ok";
+			pinctrl-0 = <&qspi_nand_pins>;
+			pinctrl-names = "default";
+
+			nand@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				nand-ecc-strength = <4>;
+				nand-ecc-step-size = <512>;
+				nand-bus-width = <8>;
+			};
+		};
+
+		spi_0: spi@78b5000 { /* BLSP1 QUP0 */
+			status = "ok";
+			pinctrl-0 = <&spi_0_pins>;
+			pinctrl-names = "default";
+			cs-select = <0>;
+
+			m25p80@0 {
+				compatible = "n25q128a11";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0>;
+				spi-max-frequency = <50000000>;
+			};
+		};
+
+		eud: qcom,msm-eud {
+			status = "ok";
+		};
+
+		i2c_3: i2c@78b8000 {
+			status = "ok";
+			pinctrl-0 = <&i2c_3_pins>;
+			pinctrl-names = "default";
+
+			bmp390@77 {
+				compatible = "bosch,bmp390";
+				reg = <0x77>;
+			};
+		};
+
+		usb: usb3@8A00000 {
+			status = "ok";
+		};
+
+		qusb_phy_0: qusb@7B000 {
+			status = "ok";
+		};
+
+		ssphy_0: ssphy@7D000 {
+			status = "ok";
+		};
+
+		leds {
+			compatible = "gpio-leds";
+			pinctrl-0 = <&leds_pins>;
+			pinctrl-names = "default";
+			led@64 {
+				label = "led0_2g";
+				gpios = <&tlmm 64 GPIO_ACTIVE_LOW>;
+				linux,default-trigger = "led_2g";
+				default-state = "off";
+			};
+		};
+
+		pcie0_x1: pci@28000000 {
+			pinctrl-0 = <&pci0_pin>;
+			pinctrl-names = "default";
+			perst-gpio = <&tlmm 23 1>;
+			max-payload-size = <1>; // 1-256 TLP bytes for WKK
+			status = "disabled";
+			pcie0_rp {
+				reg = <0 0 0 0 0>;
+			};
+		};
+
+		pcie0_phy: phy@84000 {
+			status = "disabled";
+		};
+
+		pcie1_x1: pci@10000000 {
+			pinctrl-0 = <&pcie1_wake_pins &pci1_pin>;
+			pinctrl-names = "default";
+			interrupts-extended = <&tlmm 27 IRQ_TYPE_LEVEL_HIGH>,
+					      <&intc GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "wake_gpio", "global_irq";
+			perst-gpio = <&tlmm 26 1>;
+			max-payload-size = <1>; // 1-256 TLP bytes for WKK
+			status = "ok";
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@1 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x31>;
+					memory-region = <0>,<&mhi_region1>;
+#else
+				       /* qcn9224 tgt-mem-mode=0 layout - 46MB
+					* refer ipq9574-wkk-default-memory.dtsi
+					* +=========+==============+=========+
+					* |  Region | Start Offset |   Size  |
+					* +---------+--------------+---------+
+					* | HREMOTE |  0x52500000  |   36MB  |
+					* +---------+--------------+---------+
+					* | M3 Dump |  0x54900000  |   1MB   |
+					* +---------+--------------+---------+
+					* |   ETR   |  0x54A00000  |   1MB   |
+					* +---------+--------------+---------+
+					* |  Caldb  |  0x54B00000  |   8MB   |
+					* +==================================+
+					*/
+					memory-region = <&qcn9224_pcie1>;
+					qcom,board_id = <0x01>;
+#endif
+				};
+			};
+		};
+
+		pcie1_phy: phy@fc000 {
+			status = "ok";
+		};
+
+		pcie2_x2: pci@20000000 {
+			pinctrl-0 = <&pcie2_wake_pins &pci2_pin>;
+			pinctrl-names = "default";
+			interrupts-extended = <&tlmm 30 IRQ_TYPE_LEVEL_HIGH>,
+					      <&intc GIC_SPI 125 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "wake_gpio", "global_irq";
+			perst-gpio = <&tlmm 29 1>;
+			max-payload-size = <1>; // 1-256 TLP bytes for WKK
+			status = "ok";
+			pcie2_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@2 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x32>;
+					memory-region = <0>,<&mhi_region2>;
+#else
+					/* qcn9224 tgt-mem-mode=0 layout - 46MB
+					* refer ipq9574-wkk-default-memory.dtsi
+					* +=========+==============+=========+
+					* |  Region | Start Offset |   Size  |
+					* +---------+--------------+---------+
+					* | HREMOTE |  0x56D00000  |   36MB  |
+					* +---------+--------------+---------+
+					* | M3 Dump |  0x59100000  |   1MB   |
+					* +---------+--------------+---------+
+					* |   ETR   |  0x59200000  |   1MB   |
+					* +---------+--------------+---------+
+					* |  Caldb  |  0x59300000  |   8MB   |
+					* +==================================+
+					*/
+					memory-region = <&qcn9224_pcie2>;
+					qcom,board_id = <0x04>;
+#endif
+				};
+			};
+		};
+
+		pcie2_phy: phy@8c000 {
+			status = "ok";
+		};
+
+		pcie3_x2: pci@18000000 {
+			pinctrl-0 = <&pcie3_wake_pins &pci3_pin>;
+			pinctrl-names = "default";
+			interrupts-extended = <&tlmm 33 IRQ_TYPE_LEVEL_HIGH>,
+					      <&intc GIC_SPI 188 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "wake_gpio", "global_irq";
+			perst-gpio = <&tlmm 32 1>;
+			max-payload-size = <1>; // 1-256 TLP bytes for WKK
+			status = "ok";
+			pcie3_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@3 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x33>;
+					memory-region = <0>,<&mhi_region3>;
+#else
+					/* qcn9224 tgt-mem-mode=0 layout - 46MB
+					 * refer ipq9574-wkk-default-memory.dtsi
+					 * +=========+==============+=========+
+					 * |  Region | Start Offset |   Size  |
+					 * +---------+--------------+---------+
+					 * | HREMOTE |  0x5B500000  |   36MB  |
+					 * +---------+--------------+---------+
+					 * | M3 Dump |  0x5D900000  |   1MB   |
+					 * +---------+--------------+---------+
+					 * |   ETR   |  0x5DA00000  |   1MB   |
+					 * +---------+--------------+---------+
+					 * |  Caldb  |  0x5DB00000  |   8MB   |
+					 * +==================================+
+					 */
+					memory-region = <&qcn9224_pcie3>;
+					qcom,board_id = <0x02>;
+#endif
+				};
+			};
+		};
+
+		pcie3_phy: phy@f4000 {
+			status = "ok";
+		};
+
+		qcom,test@0 {
+			qcom,wlan-ramdump-dynamic = <0x600000>;
+		};
+	};
+};
+
+/* Enable IPQ9574 integrated radio's reserved memory */
+&q6_region {
+	status = "ok";
+};
+
+&m3_dump {
+	status = "ok";
+};
+
+&q6_etr_region {
+	status = "ok";
+};
+
+&q6_caldb_region {
+	status = "ok";
+};
+
+/* Enable the reserved memory regions of QCN9224 on PCIe1, PCIe2, PCIe3 */
+
+&qcn9224_pcie1 {
+	status = "ok";
+};
+
+&mhi_region1 {
+	status = "ok";
+};
+
+&qcn9224_pcie2 {
+	status = "ok";
+};
+
+&mhi_region2 {
+	status = "ok";
+};
+
+&qcn9224_pcie3 {
+	status = "ok";
+};
+
+&mhi_region3 {
+	status = "ok";
+};
+
+/* MLO GLOBAL MEM REGION size is 24MB for RDP with 4 QCN9224 radios */
+&mlo_global_mem0 {
+	size = <0x0 0x1800000>;
+	status = "ok";
+};
+
+&wifi0 {
+       led-gpio = <&tlmm 64 1>;
+       status = "ok";
+};
+
+&wifi5 {
+	hremote_node = <&qcn9224_pcie1>;
+	board_id = <0x01>;
+	hw_link_id = <0 0>;
+	status = "ok";
+};
+
+&wifi6 {
+	hremote_node = <&qcn9224_pcie2>;
+	board_id = <0x04>;
+	hw_link_id = <1 0>;
+	status = "ok";
+};
+
+&wifi7 {
+	hremote_node = <&qcn9224_pcie3>;
+	board_id = <0x02>;
+	hw_link_id = <2 0>;
+	status = "ok";
+};

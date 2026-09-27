@@ -1,0 +1,72 @@
+.TH IP\-IOAM 8 "05 Jul 2021" "iproute2" "Linux"
+.SH "NAME"
+ip-ioam \- IPv6 In-situ OAM (IOAM)
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B ip ioam
+.RI " { " COMMAND " | "
+.BR help " }"
+.sp
+.ti -8
+
+.ti -8
+.B ip ioam namespace show
+
+.ti -8
+.B ip ioam namespace add
+.I ID
+.BR " [ "
+.B data
+.I DATA32
+.BR "]"
+.BR " [ "
+.B wide
+.I DATA64
+.BR "]"
+
+.ti -8
+.B ip ioam namespace del
+.I ID
+
+.ti -8
+.B ip ioam schema show
+
+.ti -8
+.B ip ioam schema add
+.I ID DATA
+
+.ti -8
+.B ip ioam schema del
+.I ID
+
+.ti -8
+.B ip ioam namespace set
+.I ID
+.B schema
+.RI " { " ID " | "
+.BR none " }"
+
+.SH DESCRIPTION
+The \fBip ioam\fR command is used to configure IPv6 In-situ OAM (IOAM6)
+internal parameters, namely IOAM namespaces and schemas.
+.PP
+Those parameters also include the mapping between an IOAM namespace and an IOAM
+schema.
+
+.SH EXAMPLES
+.PP
+.SS Configure an IOAM namespace (ID = 1) with both data (32 bits) and wide data (64 bits)
+.nf
+# ip ioam namespace add 1 data 0xdeadbeef wide 0xcafec0caf00dc0de
+.PP
+.SS Link an existing IOAM schema (ID = 7) to an existing IOAM namespace (ID = 1)
+.nf
+# ip ioam namespace set 1 schema 7
+.SH SEE ALSO
+.br
+.BR ip-route (8)
+.SH AUTHOR
+Justin Iurman <justin.iurman@uliege.be>

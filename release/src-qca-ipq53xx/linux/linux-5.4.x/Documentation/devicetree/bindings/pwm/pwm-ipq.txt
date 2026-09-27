@@ -1,0 +1,13 @@
+QTI Pulse Width Modulation (PWM)
+
+Required properties:
+- compatible : Should contain "qti,ipq-pwm".
+- clock : Should contain the input clock.
+- clock-names : Should contain "core".
+- pwm-base-index : The base index to be used for the pwm device.
+	Should contain any unsigned integer.
+- used-pwm-indices : Vector specifying the devices that are being used.
+	Should contain a boolean entry for each pwm device in the chip
+	specifying whether the device is being used or not.
+		Example: used-pwm-indices = <1>, <1>, <0>, <1>;
+	This chip has 4 pwm devices of which the third one is not used.

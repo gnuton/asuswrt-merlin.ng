@@ -398,7 +398,12 @@ char *get_ovpn_custom(ovpn_type_t type, int unit, char* buffer, int bufferlen)
 
 	datalen = f_read(filename, buffer, bufferlen-1);
 	if (datalen < 0) {
+#ifdef RTCONFIG_SOC_IPQ53XX
+		snprintf(filename, sizeof(filename), "vpn_%s%d_custom", typeStr, unit);
+		strlcpy(buffer, nvram_safe_get(filename), bufferlen);
+#else
 		buffer[0] = '\0';
+#endif
 	} else {
 		buffer[datalen] = '\0';
 	}

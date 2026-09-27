@@ -1,0 +1,1 @@
+../../4G-AC86U/www/ajax_lte_info.asp

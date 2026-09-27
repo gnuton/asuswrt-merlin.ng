@@ -1,0 +1,103 @@
+{
+	"service_class":[
+		{
+			"svc_id": 1,
+			"disable": 0,
+			"app_name": "AR_VR",
+			"min_thruput_rate": 60000,
+			"burst_size": 81920,
+			"service_interval": 16,
+			"delay_bound":4,
+			"msdu_ttl": 20,
+			"priority": 1,
+			"tid": 7,
+			"msdu_rate_loss": 1,
+			"ul_min_tput": 30000,
+			"ul_service_interval": 16,
+			"ul_burst_size": 40960
+		},
+		{
+			"svc_id": 2,
+			"disable": 0,
+			"app_name": "Gaming",
+			"min_thruput_rate": 100,
+			"delay_bound":50,
+			"msdu_ttl": 200,
+			"priority": 10,
+			"tid": 6,
+			"msdu_rate_loss": 1000
+		},
+		{
+			"svc_id": 3,
+			"disable": 0,
+			"app_name": "Interactive_Video",
+			"min_thruput_rate": 3000,
+			"delay_bound":125,
+			"msdu_ttl": 250,
+			"priority": 20,
+			"tid": 5,
+			"msdu_rate_loss": 1000
+		},
+		{
+			"svc_id": 4,
+			"disable": 0,
+			"app_name": "Interactive_Audio",
+			"min_thruput_rate": 96,
+			"burst_size": 220,
+			"service_interval": 20,
+			"delay_bound":40,
+			"msdu_ttl": 200,
+			"priority": 11,
+			"tid": 6,
+			"msdu_rate_loss": 1000,
+			"ul_min_tput": 96,
+			"ul_service_interval": 20,
+			"ul_burst_size": 220
+		},
+		{
+			"svc_id": 5,
+			"disable": 0,
+			"app_name": "VOD Service",
+			"min_thruput_rate": 3000,
+			"delay_bound": 300,
+			"msdu_ttl": 10000,
+			"priority": 30,
+			"tid": 4,
+			"msdu_rate_loss": 1
+		},
+		{
+			"svc_id": 6,
+			"disable": 0,
+			"app_name": "VOIP",
+			"min_thruput_rate": 96,
+			"burst_size": 220,
+			"service_interval": 20,
+			"delay_bound":40,
+			"msdu_ttl": 200,
+			"priority": 12,
+			"tid": 6,
+			"msdu_rate_loss": 10000,
+			"ul_min_tput": 96,
+			"ul_service_interval": 20,
+			"ul_burst_size": 220
+		},
+		{
+			"svc_id": 7,
+			"disable": 0,
+			"app_name": "Control Traffic",
+			"min_thruput_rate": 100,
+			"delay_bound":100,
+			"msdu_ttl": 10000,
+			"priority": 31,
+			"tid": 4,
+			"msdu_rate_loss": 1000
+		},
+		{
+			"svc_id": 8,
+			"disable": 0,
+			"app_name": "Data Transfer",
+			"priority": 60,
+			"tid": 0
+		}
+	]
+}

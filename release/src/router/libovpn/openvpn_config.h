@@ -125,7 +125,11 @@ typedef struct ovpn_cconf {
 	int userauth;	//username, password
 	int useronly;	//client certificte not required
 	char username[64];
+#ifdef RTCONFIG_SOC_IPQ53XX
+	char password[256];
+#else
 	char password[64];
+#endif
 
 //Data Channel Encryption Options:
 	int direction;	//key-direction of secret or tls-auth (hmac)

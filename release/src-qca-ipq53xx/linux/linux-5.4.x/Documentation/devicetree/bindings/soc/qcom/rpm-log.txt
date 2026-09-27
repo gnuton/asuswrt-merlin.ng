@@ -1,0 +1,60 @@
+* RPM Log
+
+RPM maintains Ulog in the RPM RAM. A device tree node is added
+that will hold the address of the RPM RAM region from where
+Ulog is read. The physical address from the RPM RAM region
+contains a header where various parameters to read the log are
+defined. These parameter's offsets in the header are also stored
+as a part of the device tree node.
+
+The required properties for rpm-log are:
+
+- compatible: "qti,rpm-log"
+- reg: Specifies the base physical address and the size of the RPM
+	registers from where ulog is read.
+	Second register(optional) specifies the offset of the rpm
+	log start address pointer. If the second register is available,
+	the offset value read is added to the first register address
+	to read the ulog message.
+- qti,rpm-addr-phys: RPM reads physical address of the RPM RAM region
+		differently when compared to Apps. Physical address of
+		the RPM RAM region is at an offset when seen from Apps.
+		This property specifies the offset which will get added
+		to the physical address of RPM RAM to make it
+		accessible to the Apps.
+- qti,offset-version: Offset from the start of the phys_addr_base where version
+			information is stored.
+- qti,offset-page-buffer-addr: Offset from the start of the phys_addr_base
+				where raw log start address is stored. Raw log
+				start address is the start of raw log in the
+				RPM address space as it should be seen from rpm.
+- qti,offset-log-len: Offset from the start of the phy_addr_base where log
+			length is stored.
+- qti,offset-log-len-mask: Offset from the start of the phy_addr_base where
+				log length mask is stored.
+- qti,offset-page-indices: Offset from the start of the phy_addr_base where
+				index to the writer is stored.
+- qti,reg-offsets: Offset index to the writer.
+- qti,rpm-log-len: Log buffer length.
+
+Example 1:
+qti,rpm-log@10c0c8 {
+	compatible = "qti,rpm-log";
+	reg = <0x0010c0c8 0x00002000>;
+	qti,offset-version = <4>;
+	qti,reg-offsets = <0x00000080 0x000000A0>;
+	qti,rpm-log-len = <0x1800>;
+};
+
+Example 2:
+qti,rpm-log@fc000000 {
+	compatible = "qti,rpm-log";
+	reg = <0xfc000000 0x2000>,
+		<0xfc190018 0x4>;
+	qti,offset-rpm-addr = <0xfc000000>;
+	qti,offset-version = <4>;
+	qti,offset-page-buffer-addr = <36>;
+	qti,offset-log-len = <40>;
+	qti,offset-log-len-mask = <44>;
+	qti,offset-page-indices = <56>;
+};

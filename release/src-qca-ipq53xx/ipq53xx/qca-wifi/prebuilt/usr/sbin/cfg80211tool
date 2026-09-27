@@ -1,0 +1,145 @@
+#!/bin/sh
+#Copyright (c) 2016,2017,2023 Qualcomm Innovation Center, Inc.
+#All Rights Reserved.
+#Confidential and Proprietary – Qualcomm Innovation Center, Inc
+#2016 Qualcomm Atheros, Inc.
+#All Rights Reserved.
+#Qualcomm Atheros Confidential and Proprietary.
+
+row=1
+i=0
+xml_path=""
+mesh_command="/usr/sbin/cfg80211tool_mesh"
+mesh_xml_path="/lib/wifi/qcacommands_mesh.xml"
+
+if [[ "$1" == *:* ]]
+  then
+   iface=`echo "$1" | cut -d ":" -f 1`
+   link_in_iface=`echo "$1" | cut -d ":" -f 2`
+  else
+   iface=$1
+   while [ "$i" -le "$#" ]
+   do
+      eval  "val=\$$i"
+      if [ "$val" == "link_id" ]
+        then
+        if [ "$i" != 2 ]
+          then
+          echo "specify link_id in position after iface"
+          exit 1
+        fi
+        i=$((i+1))
+        eval  "link=\$$i"
+        break
+      fi
+      i=$((i+1))
+   done
+fi
+
+if [ "$0" == "$mesh_command" ]
+  then
+   xml_path="$mesh_xml_path"
+  else
+   xml_name=`sed -n "$row"p /sys/class/net/$iface/cfg80211_xmlfile 2> /dev/null`
+   if [ -n "$xml_name" ]
+     then
+      xml_path="/lib/wifi/$xml_name"
+   fi
+fi
+
+if [ -z "$link" ]
+  then
+   if [ -z "$link_in_iface" ]
+     then
+      link_in_iface=none
+   fi
+   if [ -z "$3" ]
+     then
+      val=0
+     else
+      val=$3
+   fi
+  else
+   if [ -z "$5" ]
+     then
+      val=0
+     else
+      val=$5
+   fi
+fi
+
+#echo "number of arguments: $# -> $0 $1 $2 $3 $4 $5 $6 $7"
+# Adjust command based on inputs
+
+if [ "$#" -eq 1 ] && [ -n "$xml_path" ] ; then
+cfg80211tool.1 -i $iface -f $xml_path -h list -l $link_in_iface
+fi
+if [ "$#" -eq 2 ] && [ -n "$xml_path" ] ; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --RESPONSE --$2 --END_CMD || return 255
+fi
+if [ "$#" -eq 3 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h list -l $link
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 4 ] && [ -n "$xml_path" ]; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 5 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --value2 $5 --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 6 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --value2 $5 --value3 $6 --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 7 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --value2 $7 --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --value2 $5 --value3 $6 --value4 $7 --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 8 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --value2 $7 --value3 $8 --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --value2 $5 --value3 $6 --value4 $7 --value5 $8 --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 9 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --value2 $7 --value3 $8 --value4 $9 --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --value2 $5 --value3 $6 --value4 $7 --value5 $8 --value6 $9 --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 10 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --value2 $7 --value3 $8 --value4 $9 --value5 ${10} --RESPONSE --$4 --END_CMD || return 255
+else
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link_in_iface --START_CMD --$2 --value0 $val --value1 $4 --value2 $5 --value3 $6 --value4 $7 --value5 $8 --value6 $9 --value7 ${10} --RESPONSE --$2 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 11 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --value2 $7 --value3 $8 --value4 $9 --value5 ${10} --value6 ${11} --RESPONSE --$4 --END_CMD || return 255
+fi
+fi
+if [ "$#" -eq 12 ] && [ -n "$xml_path" ] ; then
+if [ -n "$link" ]; then
+cfg80211tool.1 -i $iface -f $xml_path -h none -l $link --START_CMD --$4 --value0 $val --value1 $6 --value2 $7 --value3 $8 --value4 $9 --value5 ${10} --value6 ${11} --value7 ${12} --RESPONSE --$4 --END_CMD || return 255
+fi
+fi

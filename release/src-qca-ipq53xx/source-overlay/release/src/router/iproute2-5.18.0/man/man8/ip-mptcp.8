@@ -1,0 +1,225 @@
+.TH IP\-MPTCP 8 "4 Apr 2020" "iproute2" "Linux"
+.SH "NAME"
+ip-mptcp \- MPTCP path manager configuration
+.SH "SYNOPSIS"
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ]"
+.B mptcp
+.RB "{ "
+.B endpoint
+.RB " | "
+.B limits
+.RB " | "
+.B help
+.RB " }"
+.sp
+
+.ti -8
+.BR "ip mptcp endpoint add "
+.IR IFADDR
+.RB "[ " port
+.IR PORT " ]"
+.RB "[ " dev
+.IR IFNAME " ]"
+.RB "[ " id
+.I ID
+.RB "] [ "
+.I FLAG-LIST
+.RB "] "
+
+.ti -8
+.BR "ip mptcp endpoint delete id "
+.I ID
+.RB "[ "
+.I IFADDR
+.RB "] "
+
+.ti -8
+.BR "ip mptcp endpoint change "
+.RB "[ " id
+.I ID
+.RB "] [ "
+.IR IFADDR
+.RB "] [ " port
+.IR PORT " ]"
+.RB "CHANGE-OPT"
+
+.ti -8
+.BR "ip mptcp endpoint show "
+.RB "[ " id
+.I ID
+.RB "]"
+
+.ti -8
+.BR "ip mptcp endpoint flush"
+
+.ti -8
+.IR FLAG-LIST " := [ "  FLAG-LIST " ] " FLAG
+
+.ti -8
+.IR FLAG " := ["
+.B signal
+.RB "|"
+.B subflow
+.RB "|"
+.B backup
+.RB "|"
+.B fullmesh
+.RB  "]"
+
+.ti -8
+.IR CHANGE-OPT " := ["
+.B backup
+.RB "|"
+.B nobackup
+.RB "|"
+.B fullmesh
+.RB "|"
+.B nofullmesh
+.RB  "]"
+
+.ti -8
+.BR "ip mptcp limits set "
+.RB "[ "
+.B subflow
+.IR SUBFLOW_NR " ]"
+.RB "[ "
+.B add_addr_accepted
+.IR  ADD_ADDR_ACCEPTED_NR " ]"
+
+.ti -8
+.BR "ip mptcp limits show"
+
+.ti -8
+.BR "ip mptcp monitor"
+
+.SH DESCRIPTION
+
+MPTCP is a transport protocol built on top of TCP that allows TCP
+connections to use multiple paths to maximize resource usage and increase
+redundancy. The ip-mptcp sub-commands allow configuring several aspects of the
+MPTCP path manager, which is in charge of subflows creation:
+
+.P
+The
+.B endpoint
+object specifies the IP addresses that will be used and/or announced for
+additional subflows:
+
+.TS
+l l.
+ip mptcp endpoint add	add new MPTCP endpoint
+ip mptcp endpoint delete	delete existing MPTCP endpoint
+ip mptcp endpoint show	get existing MPTCP endpoint
+ip mptcp endpoint flush	flush all existing MPTCP endpoints
+.TE
+
+.TP
+.IR IFADDR
+An IPv4 or IPv6 address. When used with the
+.B delete id
+operation, an
+.B IFADDR
+is only included when the
+.B ID
+is 0.
+
+.TP
+.IR PORT
+When a port number is specified, incoming MPTCP subflows for already
+established MPTCP sockets will be accepted on the specified port, regardless
+the original listener port accepting the first MPTCP subflow and/or
+this peer being actually on the client side.
+
+.TP
+.IR ID
+is a unique numeric identifier for the given endpoint
+
+.TP
+.BR signal
+The endpoint will be announced/signaled to each peer via an MPTCP ADD_ADDR
+sub-option. Upon reception of an ADD_ADDR sub-option, the peer can try to
+create additional subflows, see
+.BR ADD_ADDR_ACCEPTED_NR.
+
+.TP
+.BR subflow
+If additional subflow creation is allowed by the MPTCP limits, the MPTCP
+path manager will try to create an additional subflow using this endpoint
+as the source address after the MPTCP connection is established.
+
+.TP
+.BR backup
+If this is a
+.BR subflow
+endpoint, the subflows created using this endpoint will have the backup
+flag set during the connection process. This flag instructs the peer to
+only send data on a given subflow when all non-backup subflows are
+unavailable. This does not affect outgoing data, where subflow priority
+is determined by the backup/non-backup flag received from the peer
+
+.TP
+.BR fullmesh
+If this is a
+.BR subflow
+endpoint and additional subflow creation is allowed by the MPTCP limits,
+the MPTCP path manager will try to create an additional subflow for each
+known peer address, using this endpoint as the source address. This will
+occur after the MPTCP connection is established. If the peer did not
+announce any additional addresses using the MPTCP ADD_ADDR sub-option,
+this will behave the same as a plain
+.BR subflow
+endpoint. When the peer does announce addresses, each received ADD_ADDR
+sub-option will trigger creation of an additional subflow to generate a
+full mesh topology.
+
+.sp
+.PP
+The
+.B limits
+object specifies the constraints for subflow creations:
+
+.TS
+l l.
+ip mptcp limits show	get current MPTCP subflow creation limits
+ip mptcp limits set	change the MPTCP subflow creation limits
+.TE
+
+.TP
+.IR SUBFLOW_NR
+specifies the maximum number of additional subflows allowed for each MPTCP
+connection. Additional subflows can be created due to: incoming accepted
+ADD_ADDR sub-option, local
+.BR subflow
+endpoints, additional subflows started by the peer.
+
+.TP
+.IR ADD_ADDR_ACCEPTED_NR
+specifies the maximum number of incoming ADD_ADDR sub-options accepted for
+each MPTCP connection. After receiving the specified number of ADD_ADDR
+sub-options, any other incoming one will be ignored for the MPTCP connection
+lifetime. When an ADD_ADDR sub-option is accepted and there are no local
+.IR fullmesh
+endpoints, the MPTCP path manager will try to create a new subflow using the
+address in the ADD_ADDR sub-option as the destination address and a source
+address determined using local routing resolution
+When
+.IR fullmesh
+endpoints are available, the MPTCP path manager will try to create new subflows
+using each
+.IR fullmesh
+endpoint as a source address and the peer's ADD_ADDR address as the destination.
+In both cases the
+.IR SUBFLOW_NR
+limit is enforced.
+
+.sp
+.PP
+.B monitor
+displays creation and deletion of MPTCP connections as well as addition or removal of remote addresses and subflows.
+
+.SH AUTHOR
+Original Manpage by Paolo Abeni <pabeni@redhat.com>

@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL03-C2 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al03-c1.dts"
+
+/ {
+        #address-cells = <0x2>;
+        #size-cells = <0x2>;
+        model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL03-C2";
+        compatible = "qcom,ipq9574-ap-al03-c2", "qcom,ipq9574-al03", "qcom,ipq9574";
+        interrupt-parent = <&intc>;
+
+};
+
+&wifi4 {
+	hremote_node = <&qcn9224_pcie0>;
+	board_id = <0x1016>;
+	status = "ok";
+};
+
+&wifi6 {
+	hremote_node = <&qcn9224_pcie2>;
+	board_id = <0x1015>;
+	status = "ok";
+};

@@ -1,0 +1,483 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/dts-v1/;
+/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ */
+#include "ipq8074.dtsi"
+#include "ipq8074-hk-cpu.dtsi"
+
+/* Internal radio is not enabled on hk12, so delete the
+ * references to internal radio's reserved memory
+ */
+#if !defined(__IPQ_MEM_PROFILE_256_MB__)
+&tmc_etr {
+	/delete-property/ memory-region;
+};
+
+&q6v5_wcss {
+	/delete-property/ memory-region;
+};
+#endif
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ8074/AP-HK12";
+	compatible = "qcom,ipq8074-ap-hk12", "qcom,ipq8074-ap-hk12", "qcom,ipq8074";
+	qcom,msm-id = <0x143 0x0>, <0x186 0x0>;
+	interrupt-parent = <&intc>;
+
+	aliases {
+		serial0 = &blsp1_uart5;
+		/* Aliases as required by u-boot to patch MAC addresses */
+		ethernet0 = "/soc/dp1";
+		ethernet1 = "/soc/dp2";
+		ethernet2 = "/soc/dp3";
+		ethernet3 = "/soc/dp4";
+		ethernet4 = "/soc/dp5";
+		ethernet5 = "/soc/dp6";
+	};
+
+	chosen {
+		stdout-path = "serial0";
+	};
+
+	reserved-memory {
+/* No Pine attach in 256M profile */
+#if !defined(__IPQ_MEM_PROFILE_256_MB__)
+#ifdef __IPQ_MEM_PROFILE_512_MB__
+	/*                      512 MB Profile
+	 * +========+==============+=========================+
+	 * | Region | Start Offset |          Size           |
+	 * +--------+--------------+-------------------------+
+	 * |  NSS   |  0x40000000  |          16MB           |
+	 * +--------+--------------+-------------------------+
+	 * | Linux  |  0x41000000  | Depends on total memory |
+	 * +--------+--------------+-------------------------+
+	 * | TZ APP |  0x4A400000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * | uboot  |  0x4A600000  |           4MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  SBL   |  0x4AA00000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  smem  |  0x4AB00000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |   TZ   |  0x4AC00000  |           4MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  Pine0 |  0x4B000000  |          26MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  Pine1 |  0x4CA00000  |          26MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  MHI0  |  0x4E400000  |           9MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  MHI1  |  0x4ED00000  |           9MB           |
+	 * +--------+--------------+-------------------------+
+	 * |                                                 |
+	 * |      Rest of the memory for Linux               |
+	 * |                                                 |
+	 * +=================================================+
+	 */
+		/delete-node/ wcnss@4b000000;
+		/delete-node/ q6_etr_dump@4e700000;
+		/delete-node/ m3_dump@4e800000;
+		qcn9000_pcie0: qcn9000_pcie0@4b000000 {
+			no-map;
+			reg = <0x0 0x4b000000 0x0 0x01A00000>;
+		};
+
+		qcn9000_pcie1: qcn9000_pcie1@4CA00000 {
+			no-map;
+			reg = <0x0 0x4CA00000 0x0 0x01A00000>;
+		};
+
+#if defined(__CNSS2__)
+		mhi_region0: dma_pool0@4e400000 {
+			compatible = "shared-dma-pool";
+			no-map;
+			reg = <0x0 0x4e400000 0x0 0x00900000>;
+		};
+
+		mhi_region1: dma_pool1@4ED00000 {
+			compatible = "shared-dma-pool";
+			no-map;
+			reg = <0x0 0x4ED00000 0x0 0x00900000>;
+		};
+#endif
+#else
+	/*                   Default Profile
+	 * +========+==============+=========================+
+	 * | Region | Start Offset |          Size           |
+	 * +--------+--------------+-------------------------+
+	 * |  NSS   |  0x40000000  |          16MB           |
+	 * +--------+--------------+-------------------------+
+	 * | Linux  |  0x41000000  | Depends on total memory |
+	 * +--------+--------------+-------------------------+
+	 * | TZ APP |  0x4A400000  |           2MB           |
+	 * +--------+--------------+-------------------------+
+	 * | uboot  |  0x4A600000  |           4MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  SBL   |  0x4AA00000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  smem  |  0x4AB00000  |           1MB           |
+	 * +--------+--------------+-------------------------+
+	 * |   TZ   |  0x4AC00000  |           4MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  Pine0 |  0x4B000000  |          53MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  Pine1 |  0x4E500000  |          53MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  MHI0  |  0x51A00000  |           9MB           |
+	 * +--------+--------------+-------------------------+
+	 * |  MHI1  |  0x52300000  |           9MB           |
+	 * +--------+--------------+-------------------------+
+	 * |                                                 |
+	 * |      Rest of the memory for Linux               |
+	 * |                                                 |
+	 * +=================================================+
+	 */
+		/delete-node/ wcnss@4b000000;
+		/delete-node/ q6_etr_dump@50f00000;
+		/delete-node/ m3_dump@51000000;
+		qcn9000_pcie0: qcn9000_pcie0@4b000000 {
+			no-map;
+			reg = <0x0 0x4b000000 0x0 0x03500000>;
+		};
+
+		qcn9000_pcie1: qcn9000_pcie1@4e500000 {
+			no-map;
+			reg = <0x0 0x4E500000 0x0 0x03500000>;
+		};
+
+#if defined(__CNSS2__)
+		mhi_region0: dma_pool0@51a00000 {
+			compatible = "shared-dma-pool";
+			no-map;
+			reg = <0x0 0x51A00000 0x0 0x00900000>;
+		};
+
+		mhi_region1: dma_pool1@52300000 {
+			compatible = "shared-dma-pool";
+			no-map;
+			reg = <0x0 0x52300000 0x0 0x00900000>;
+		};
+#endif
+#endif
+#endif
+	};
+
+	soc {
+		pinctrl@1000000 {
+			button_pins: button_pins {
+				wps_button {
+					pins = "gpio34";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			usb_mux_sel_pins: usb_mux_pins {
+				mux {
+					pins = "gpio27";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+			};
+
+			pcie0_pins: pcie_pins {
+				pcie0_rst {
+					pins = "gpio58";
+					function = "pcie0_rst";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+				pcie0_wake {
+					pins = "gpio59";
+					function = "pcie0_wake";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+			};
+
+			led_pins: led_pins {
+				led_2g {
+					pins = "gpio18";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+			};
+		};
+
+		serial@78b3000 {
+			status = "ok";
+		};
+
+		spi@78b5000 {
+			status = "ok";
+			pinctrl-0 = <&spi_0_pins>;
+			pinctrl-names = "default";
+			cs-select = <0>;
+
+			m25p80@0 {
+				  compatible = "n25q128a11";
+				  #address-cells = <1>;
+				  #size-cells = <1>;
+				  reg = <0>;
+				  spi-max-frequency = <50000000>;
+			};
+		};
+
+		dma@7984000 {
+			 status = "ok";
+		};
+
+		nand@79b0000 {
+			status = "ok";
+
+			nand@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				nand-ecc-strength = <4>;
+				nand-ecc-step-size = <512>;
+				nand-bus-width = <8>;
+			};
+		};
+
+		qusb@79000 {
+			status = "ok";
+		};
+
+		ssphy@78000 {
+			status = "ok";
+		};
+
+		usb3@8A00000 {
+			status = "ok";
+		};
+
+		qusb@59000 {
+			status = "ok";
+		};
+
+		ssphy@58000 {
+			status = "ok";
+		};
+
+		usb3@8C00000 {
+			status = "ok";
+		};
+
+		qcom,test@0 {
+			status = "ok";
+		};
+
+		phy@84000 {
+			status = "ok";
+		};
+
+		phy@86000 {
+			status = "ok";
+		};
+
+		pci@20000000 {
+			perst-gpio = <&tlmm 58 1>;
+			status = "ok";
+
+			pcie0_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@0 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x20>;
+#if defined(__CNSS2__)
+#if !defined(__IPQ_MEM_PROFILE_256_MB__)
+					memory-region = <0>,<&mhi_region0>;
+#endif
+#endif
+				};
+			};
+		};
+
+		phy@8e000 {
+			status = "ok";
+		};
+
+		pci@10000000 {
+			perst-gpio = <&tlmm 61 0x1>;
+			status = "ok";
+
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@1 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x21>;
+#if defined(__CNSS2__)
+#if !defined(__IPQ_MEM_PROFILE_256_MB__)
+					memory-region = <0>,<&mhi_region1>;
+#endif
+#endif
+				};
+			};
+		};
+
+		gpio_keys {
+			compatible = "gpio-keys";
+			pinctrl-0 = <&button_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+
+			button@1 {
+				label = "wps";
+				linux,code = <KEY_WPS_BUTTON>;
+				gpios = <&tlmm 34 GPIO_ACTIVE_LOW>;
+				linux,input-type = <1>;
+				debounce-interval = <60>;
+			};
+		};
+
+		leds {
+			compatible = "gpio-leds";
+			pinctrl-0 = <&led_pins>;
+			pinctrl-names = "default";
+
+			led_2g {
+				label = "led_2g";
+				gpio = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+				default-state = "off";
+			};
+		};
+
+	};
+};
+
+&wifi0 {
+	/delete-property/ mem-region;
+	status = "disabled";
+};
+
+&wifi1 {
+#if defined (__CNSS2__)
+	/delete-property/ mem-region;
+#else
+	/delete-property/ memory-region;
+#endif
+	status = "disabled";
+};
+
+&wifi2 {
+#if !defined(__IPQ_MEM_PROFILE_256_MB__)
+#ifdef __IPQ_MEM_PROFILE_512_MB__
+      /* QCN9000 tgt-mem-mode=1 layout - 26MB
+       * +=========+==============+=========+
+       * |  Region | Start Offset |   Size  |
+       * +---------+--------------+---------+
+       * | HREMOTE |  0x4B000000  |   12MB  |
+       * +---------+--------------+---------+
+       * | M3 Dump |  0x4BC00000  |   1MB   |
+       * +---------+--------------+---------+
+       * |   ETR   |  0x4BD00000  |   1MB   |
+       * +---------+--------------+---------+
+       * |  Caldb  |  0x4BE00000  |   8MB   |
+       * +---------+--------------+---------+
+       * | Pageable|  0x4C600000  |   4MB   |
+       * +==================================+
+       */
+	base-addr = <0x4B000000>;
+	m3-dump-addr = <0x4BC00000>;
+	etr-addr = <0x4BD00000>;
+	caldb-addr = <0x4BE00000>;
+	pageable-addr = <0x4C600000>;
+	hremote-size = <0xC00000>;
+	tgt-mem-mode = <0x1>;
+	pageable-size = <0x400000>;
+#else
+      /* QCN9000 tgt-mem-mode=0 layout - 45MB
+       * +=========+==============+=========+
+       * |  Region | Start Offset |   Size  |
+       * +---------+--------------+---------+
+       * | HREMOTE |  0x4B000000  |   35MB  |
+       * +---------+--------------+---------+
+       * | M3 Dump |  0x4D300000  |   1MB   |
+       * +---------+--------------+---------+
+       * |   ETR   |  0x4D400000  |   1MB   |
+       * +---------+--------------+---------+
+       * |  Caldb  |  0x4D500000  |   8MB   |
+       * +---------+--------------+---------+
+       * | Pageable|  0x4DD00000  |   8MB   |
+       * +==================================+
+       */
+	base-addr = <0x4B000000>;
+	m3-dump-addr = <0x4D300000>;
+	etr-addr = <0x4D400000>;
+	caldb-addr = <0x4D500000>;
+	pageable-addr = <0x4DD00000>;
+	hremote-size = <0x2300000>;
+	tgt-mem-mode = <0x0>;
+	pageable-size = <0x800000>;
+#endif
+	caldb-size = <0x800000>;
+	hremote_node = <&qcn9000_pcie0>;
+	status = "ok";
+#endif
+};
+
+#if !defined(__IPQ_MEM_PROFILE_256_MB__)
+&wifi3 {
+#ifdef __IPQ_MEM_PROFILE_512_MB__
+      /* QCN9000 tgt-mem-mode=1 layout - 30MB
+       * +=========+==============+=========+
+       * |  Region | Start Offset |   Size  |
+       * +---------+--------------+---------+
+       * | HREMOTE |  0x4CA00000  |   12MB  |
+       * +---------+--------------+---------+
+       * | M3 Dump |  0x4D600000  |   1MB   |
+       * +---------+--------------+---------+
+       * |   ETR   |  0x4D700000  |   1MB   |
+       * +---------+--------------+---------+
+       * |  Caldb  |  0x4D800000  |   8MB   |
+       * +---------+--------------+---------+
+       * | Pageable|  0x4E000000  |   4MB   |
+       * +==================================+
+       */
+	base-addr = <0x4CA00000>;
+	m3-dump-addr = <0x4D600000>;
+	etr-addr = <0x4D700000>;
+	caldb-addr = <0x4D800000>;
+	pageable-addr = <0x4E000000>;
+	hremote-size = <0xC00000>;
+	tgt-mem-mode = <0x1>;
+	pageable-size = <0x400000>;
+#else
+      /* QCN9000 tgt-mem-mode=0 layout - 45MB
+       * +=========+==============+=========+
+       * |  Region | Start Offset |   Size  |
+       * +---------+--------------+---------+
+       * | HREMOTE |  0x4E500000  |   35MB  |
+       * +---------+--------------+---------+
+       * | M3 Dump |  0x50800000  |   1MB   |
+       * +---------+--------------+---------+
+       * |   ETR   |  0x50900000  |   1MB   |
+       * +---------+--------------+---------+
+       * |  Caldb  |  0x50A00000  |   8MB   |
+       * +---------+--------------+---------+
+       * | Pageable|  0x51200000  |   8MB   |
+       * +==================================+
+       */
+	base-addr = <0x4E500000>;
+	m3-dump-addr = <0x50800000>;
+	etr-addr = <0x50900000>;
+	caldb-addr = <0x50A00000>;
+	pageable-addr = <0x51200000>;
+	hremote-size = <0x2300000>;
+	tgt-mem-mode = <0x0>;
+	pageable-size = <0x800000>;
+#endif
+	caldb-size = <0x800000>;
+	hremote_node = <&qcn9000_pcie1>;
+	status = "ok";
+};
+#endif

@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2017-2018, 2021 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#include <dt-bindings/sound/ipq8074-audio.h>
+#include <dt-bindings/clock/qca,adss-ipq8074.h>
+
+&tlmm {
+	voip_pins: voip_pinmux {
+		mux_1 {
+			pins = "gpio33";
+			function = "pcm_drx";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_2 {
+			pins = "gpio34";
+			function = "pcm_dtx";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_3 {
+			pins = "gpio35";
+			function = "pcm_fsync";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_4 {
+			pins = "gpio36";
+			function = "pcm_pclk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+};
+
+&soc {
+	adss_clk: qcom,adss_clk@7700000 {
+		compatible = "qcom,adss-ipq807x";
+		reg = <0x7700100 0x200>;
+		#clock-cells = <0x1>;
+	};
+
+	audio: audio@7700000 {
+		compatible = "qca,ipq8074-audio-adss";
+		reg = <0x7700000 0x34>;
+		resets = <&gcc GCC_ADSS_BCR>;
+		reset-names = "blk_rst";
+	};
+
+	mbox0: mbox@7708000 {
+		dma-index = <0>;
+		compatible = "qca,ipq8074-mbox";
+		reg = <0x7708000 0x1000>;
+		interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+		tx-channel = <MBOX0_TX_ID>;
+		rx-channel = <MBOX0_RX_ID>;
+	};
+
+	mbox3: mbox@770e000 {
+		dma-index = <3>;
+		compatible = "qca,ipq8074-mbox";
+		reg = <0x770E000 0x1000>;
+		interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+		tx-channel = <MBOX3_TX_ID>;
+		rx-channel = <MBOX3_RX_ID>;
+	};
+
+	pcm: pcm@7704000 {
+		compatible = "qca,ipq8074-pcm";
+		reg = <0x7704000 0x2000>;
+		adss_init;
+		dma-tx-channel = <MBOX3_TX_ID>;
+		dma-rx-channel = <MBOX0_RX_ID>;
+		stereo-tx-port = <STEREO3_ID>;
+		stereo-rx-port = <STEREO0_ID>;
+		clocks = <&adss_clk ADSS_AUDIO_PCM_CLK>;
+		clock-names = "audio_pcm_clk";
+	};
+
+	pcm_lb: pcm_lb@0 {
+		compatible = "qca,ipq8074-pcm-lb";
+		pinctrl-0 = <&voip_pins>;
+		pinctrl-names = "default";
+	};
+};

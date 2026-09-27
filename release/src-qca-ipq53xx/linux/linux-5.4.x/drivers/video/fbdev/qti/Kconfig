@@ -1,0 +1,24 @@
+config FB_QTI_QPIC
+	tristate "QPIC Framebuffer support"
+	depends on FB && ARCH_QCOM
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_SYS_FOPS
+	select FB_DEFERRED_IO
+	---help---
+	  Support for QTI QPIC framebuffer.
+	  QPIC is a wrapper module provides support for LCD controller
+	  connected with parallel interfaces pins. This option provides
+	  the support for QPIC framebuffer which can be used for display
+	  operations for QPIC LCD.
+
+config FB_QTI_QPIC_ER_SSD1963_PANEL
+	tristate "Qpic MIPI ER ssd1963 Panel"
+	depends on FB_QTI_QPIC
+	---help---
+	  Support for MIPI ER ssd1963  (800x480) panel
+	  EAST Rising TECHNOLOGY ssd1963
+	  with on-chip full display RAM
+	  use 9-bit parallel interface
+

@@ -1,0 +1,280 @@
+/dts-v1/;
+/*
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "ipq6018.dtsi"
+#include "ipq6018-cpr-regulator.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ6018/AP-CP03-C1";
+	compatible = "qcom,ipq6018-ap-cp03-c1", "qcom,ipq6018";
+	interrupt-parent = <&intc>;
+	qcom,msm-id = <0x1A5 0x0>;
+
+	aliases {
+		/*
+		 * Aliases as required by u-boot
+		 * to patch MAC addresses
+		 */
+		ethernet0 = "/soc/dp1";
+		ethernet1 = "/soc/dp2";
+	};
+
+	chosen {
+		bootargs = "console=ttyMSM0,115200,n8 rw init=/init";
+#ifdef __IPQ_MEM_PROFILE_256_MB__
+		bootargs-append = " swiotlb=1";
+#else
+		bootargs-append = " swiotlb=1 coherent_pool=2M";
+#endif
+	};
+
+	/*
+	 * +=========+==============+========================+
+	 * |        |              |                         |
+	 * | Region | Start Offset |          Size           |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * | Linux  |  0x41000000  |         139MB           |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * |        |              |                         |
+	 * +--------+--------------+-------------------------+
+	 * | TZ App |  0x49B00000  |           6MB           |
+	 * +--------+--------------+-------------------------+
+	 *
+	 * From the available 145 MB for Linux in the first 256 MB,
+	 * we are reserving 6 MB for TZAPP.
+	 *
+	 * Refer arch/arm64/boot/dts/qcom/qcom-ipq6018-memory.dtsi
+	 * for memory layout.
+	 */
+
+/* TZAPP is enabled only in default memory profile */
+#if !defined(__IPQ_MEM_PROFILE_256_MB__) && !defined(__IPQ_MEM_PROFILE_512_MB__)
+	reserved-memory {
+		tzapp:tzapp@49B00000 {	/* TZAPPS */
+			no-map;
+			reg = <0x0 0x49B00000 0x0 0x00600000>;
+		};
+	};
+#endif
+};
+
+&tlmm {
+	uart_pins: uart_pins {
+		mux {
+			pins = "gpio44", "gpio45";
+			function = "blsp2_uart";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
+
+	spi_0_pins: spi_0_pins {
+		mux {
+			pins = "gpio38", "gpio39", "gpio40", "gpio41";
+			function = "blsp0_spi";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
+
+	button_pins: button_pins {
+		wps_button {
+			pins = "gpio9";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
+
+	mdio_pins: mdio_pinmux {
+		mux_0 {
+			pins = "gpio64";
+			function = "mdc";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+		mux_1 {
+			pins = "gpio65";
+			function = "mdio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+		mux_2 {
+			pins = "gpio75";
+			function = "gpio";
+			bias-pull-up;
+		};
+	};
+
+	leds_pins: leds_pins {
+		led_5g {
+			pins = "gpio35";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+		led_2g {
+			pins = "gpio37";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-down;
+		};
+	};
+};
+
+&soc {
+	mdio@90000 {
+		pinctrl-0 = <&mdio_pins>;
+		pinctrl-names = "default";
+		phy-reset-gpio = <&tlmm 75 0>;
+		status = "ok";
+		phy0: ethernet-phy@0 {
+			reg = <3>;
+		};
+		phy1: ethernet-phy@1 {
+			reg = <4>;
+		};
+	};
+
+	ess-switch@3a000000 {
+		switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+		switch_lan_bmp = <0x08>; /* lan port bitmap */
+		switch_wan_bmp = <0x10>; /* wan port bitmap */
+		switch_inner_bmp = <0xc0>; /*inner port bitmap*/
+		switch_mac_mode = <0x0>; /* mac mode for uniphy instance0*/
+		switch_mac_mode1 = <0xff>; /* mac mode for uniphy instance1*/
+		switch_mac_mode2 = <0xff>; /* mac mode for uniphy instance2*/
+		qcom,port_phyinfo {
+			port@3 {
+				port_id = <3>;
+				phy_address = <4>;
+			};
+			port@4 {
+				port_id = <4>;
+				phy_address = <3>;
+			};
+		};
+	};
+
+	dp1 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <3>;
+		reg = <0x3a001400 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <4>;
+		phy-mode = "sgmii";
+	};
+
+	dp2 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <4>;
+		reg = <0x3a001600 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <3>;
+		phy-mode = "sgmii";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		pinctrl-0 = <&leds_pins>;
+		pinctrl-names = "default";
+
+		led@35 {
+			label = "led_5g";
+			gpios = <&tlmm 35 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "led_5g";
+			default-state = "off";
+		};
+		led@37 {
+			label = "led_2g";
+			gpios = <&tlmm 37 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "led_2g";
+			default-state = "off";
+		};
+	};
+};
+
+&blsp1_uart3 {
+	pinctrl-0 = <&uart_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&spi_0 {
+	pinctrl-0 = <&spi_0_pins>;
+	pinctrl-names = "default";
+	cs-select = <0>;
+	status = "ok";
+
+	m25p80@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reg = <0>;
+		compatible = "n25q128a11";
+		linux,modalias = "m25p80", "n25q128a11";
+		spi-max-frequency = <50000000>;
+		use-default-sizes;
+	};
+};
+
+&qpic_bam {
+	status = "ok";
+};
+
+&qpic_nand {
+	status = "ok";
+
+	nand@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		nand-ecc-strength = <4>;
+		nand-ecc-step-size = <512>;
+		nand-bus-width = <8>;
+	};
+};
+
+&ssphy_0 {
+	status = "ok";
+};
+
+&qusb_phy_0 {
+	status = "ok";
+};
+
+&usb3 {
+	status = "ok";
+};
+
+&nss_crypto {
+	status = "ok";
+};

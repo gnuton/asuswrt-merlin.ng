@@ -426,8 +426,14 @@ int ovpn_write_server_config(ovpn_sconf_t *sconf, int unit) {
 			fprintf(fp_client, "cipher %s\n", sconf->cipher);
 		}
 	}
+#ifdef RTCONFIG_SOC_IPQ53XX
+	// TLS fallback must not override the static-key cipher.
+	if (sconf->auth_mode == OVPN_AUTH_TLS)
+		fprintf(fp, "data-ciphers-fallback AES-128-CBC\n");
+#else
 	// Fallback to silence logged warning
 	fprintf(fp, "data-ciphers-fallback AES-128-CBC\n");
+#endif
 
 	// Digest
 	if (strcmp(sconf->digest, "default")) {
@@ -710,8 +716,17 @@ int ovpn_write_client_config(ovpn_cconf_t *cconf, int unit) {
 		fprintf(fp, "redirect-gateway def1\n");
 	}
 
+#ifdef RTCONFIG_SOC_IPQ53XX
+	if (cconf->if_type == OVPN_IF_TUN) {
+		fprintf(fp, "route-noexec\n");
+		/* Initialize route_vpn_gateway even if the peer pushes no routes. */
+		if (cconf->redirect_gateway == OVPN_RGW_POLICY)
+			fprintf(fp, "route 0.0.0.0 0.0.0.0 vpn_gateway\n");
+	}
+#else
 	if (cconf->if_type == OVPN_IF_TUN)
 		fprintf(fp, "route-noexec\n");
+#endif
 
 	if (cconf->auth_mode == OVPN_AUTH_TLS) {
 		if (cconf->reneg >= 0)

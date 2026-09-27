@@ -19,7 +19,7 @@ jobs:
           SDK: ${{ matrix.cfg.sdk }}
           UI: ${{ matrix.cfg.ui }}
           SKIP_BUILD: ${{ matrix.cfg.skip }}
-          GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
+          GIT_REPO: "https://github.com/${{ github.event.pull_request.head.repo.full_name || github.repository }}.git"
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
@@ -49,7 +49,7 @@ jobs:
                 echo "Fetching code from branch $BRANCH"
             fi
 
-            if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
+            if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO" "$PROJECT_DIR"; then
                 echo "Code fetched successfully."
             else
                 echo "Failed to fetch code. Check the repository and settings."

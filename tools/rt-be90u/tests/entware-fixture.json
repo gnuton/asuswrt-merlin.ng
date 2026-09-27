@@ -1,0 +1,12 @@
+{
+  "repository": "https://bin.entware.net/aarch64-k3.10/",
+  "files": {
+    "installer/opkg": "1c59274bd25080b869f376788795f5319d0d22e91f325f74ce98a7d596f68015",
+    "findutils_4.10.0-1_aarch64-3.10.ipk": "6f1ad0782d550a855da202e44c147fa20c822787325a4e714774d088ad99f347",
+    "libc_2.27-12_aarch64-3.10.ipk": "4d7825a9ddf7a382a985a44ec85c4ab458f8ebe12c3e3b5fb25da814f71167bb",
+    "libgcc_8.4.0-12_aarch64-3.10.ipk": "123882cd0063342b8cd058ea97541601d793ef1f847920e1da6be4c3a0b8da8b",
+    "libssp_8.4.0-12_aarch64-3.10.ipk": "8d85e466962569005ec604a64b2ffa739454a9db017a9a5e8dbe23b3c4bf2c25",
+    "librt_2.27-12_aarch64-3.10.ipk": "86d4adc05b939793f4fb7d54ecc6c34b867a1fe9c449983393f708f245b72b43",
+    "libpthread_2.27-12_aarch64-3.10.ipk": "a2af364e6e139069f8b37dd9e7f2accaf529efd35738c6d381d2e43e78b876d4"
+  }
+}

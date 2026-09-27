@@ -1,0 +1,411 @@
+Available APIs used in Sample App:
+
+QSClient - Client Application in Linux
+
+qseecom.ko is a loadable kernel module which acts as the QTI secure client
+in the non-secure world. It provides a sample interface for communication with
+the secure world(QSEE).
+
+Multiplication and Crypto functionalities are currently available in the sample
+app. Similarly an app can be written to support any required functionalities.
+
+For each platform, memory has been reserved in the QTI default device tree and
+the reference of that reserved memory node should be given in qseecom node
+for using the TZ App functionalities. If in case, the reserved memory node
+reference is not given, Notify region will fail -> TZApp cannot be used.
+
+Available APIs in kernel which can be reused/extended:
+
+(1) qti_scm_qseecom_notify	 -> to notify the load region of application
+(2) qti_scm_qseecom_load	 -> to load the libraries and application
+(3) qti_scm_qseecom_send_data	 -> to send data to perform operation
+(4) qti_scm_qseecom_unload	 -> to unload the application and libraries
+(5) qti_scm_tz_register_log_buf -> to register a log buf for sample app logs
+
+Refer to source code in drivers/misc/qseecom.c for re-using the above APIs. This
+can be modified or extended to support vendor applications.
+
+Sampleapp Usage Instructions:
+
+Note: We support only 64 bit sampleapp in ipq platforms.
+
+Across any platforms, apps can be loaded and functionalities can be performed
+securely from the non-secure world via the scm interface. Below are the steps
+to load a sample app and perform some basic operations:
+
+Before loading the sample app, the library required by sample app needs to be
+loaded.
+
+(1) To load sample app libraries
+
+Concatenate all the seg files into 1 segment file and feed it as
+input to sys/firmware/seg_file and feed the mdt file as input to
+sys/firmware/mdt_file as below:
+
+cat cmnlib.b00 > cmnlib.b0x
+cat cmnlib.b01 >> cmnlib.b0x
+cat cmnlib.b02 >> cmnlib.b0x
+cat cmnlib.b03 >> cmnlib.b0x
+cat cmnlib.b04 >> cmnlib.b0x
+cat cmnlib.b05 >> cmnlib.b0x
+
+Now cat the mdt and combined binary files to sysfs entries as below:
+
+cat cmnlib.mdt > /sys/firmware/mdt_file
+cat cmnlib.b0x > /sys/firmware/seg_file
+
+echo 0 > /sys/firmware/tzapp/load_start
+
+You will get a print saying you have successfully loaded app libraries.
+
+(2) To load sample app
+
+Concatenate all the seg files into 1 segment file and feed it as
+input to sys/firmware/seg_file and feed the mdt file as input to
+sys/firmware/mdt_file as below:
+
+cat sampleapp.b00 > sampleapp.b0x
+cat sampleapp.b01 >> sampleapp.b0x
+cat sampleapp.b02 >> sampleapp.b0x
+cat sampleapp.b03 >> sampleapp.b0x
+cat sampleapp.b04 >> sampleapp.b0x
+cat sampleapp.b05 >> sampleapp.b0x
+cat sampleapp.b06 >> sampleapp.b0x
+cat sampleapp.b07 >> sampleapp.b0x
+
+Now cat the mdt and combined binary files to sysfs entries as below:
+
+cat sampleapp.mdt > /sys/firmware/mdt_file
+cat sampleapp.b0x > /sys/firmware/seg_file
+
+echo 1 > /sys/firmware/tzapp/load_start
+
+Note that number of segment files in lib/app can change between
+platforms and all the segment files as avail in app should be
+concatenated using above/similar commands accordingly.
+
+Please refer the qseecom_props structure in qseecom driver to know the list of API's
+supported by each platform.
+Note: IPQ53xx platform uses the same qseecom_props structure of IPQ95xx platform.
+
+(3) Perform operations required in the application
+
+The following mult. operations can be tested in all the platforms: (qseecom_props function = MUL)
+
+To give input to Multiplication op:
+echo 100 > /sys/firmware/tzapp/basic_data
+
+To view Secure Multiplication output:
+cat /sys/firmware/tzapp/basic_data
+
+The "crypto" sysfs entry triggers the sample test encryption and decryption
+inside secure app and displays the result if the test has passed or failed.
+
+To test Crypto functionality: (qseecom_props function = CRYPTO)
+echo 1 > /sys/firmware/tzapp/crypto
+
+(4) To unload the sampleapp
+
+echo 2 > /sys/firmware/tzapp/load_start
+
+The libraries used by sample app are automatically unloaded when the device
+driver is removed (i.e. during rmmod to remove the qseecom module).
+
+If the user doesn't unload the app, then the app is unloaded when the
+device driver is removed.
+
+Note: sampleapp logging has been enabled for QSEE sample app. To view the log at
+any point after loading the sample app from kernel, please use below command:
+
+cat /sys/firmware/tzapp/log_buf > log.txt
+
+Other QSEE APIs supported in ipq platforms:
+
+There are RSA and AES APIs available to perform crypto operations.
+The steps to use AES and RSA APIs are as below:
+
+RSA API: (qseecom_props function = RSA_SEC_KEY)
+It is used for encrypting/decrypting data based on RSA algorithm in TZ.
+
+RSA pad scheme:
+Select the required RSA padding scheme with the below sysfs entry (1 -> PKCS, 2 -> PSS)
+(1) eg: echo 1 > /sys/rsa_sec_key/rsa_pad_scheme
+View the selected RSA pad scheme as shown below
+(2) cat /sys/rsa_sec_key/rsa_pad_scheme
+
+RSA Generate Key blob:
+(1) cat /sys/rsa_sec_key/rsa_generate > key_blob.txt
+
+RSA Import Key blob:
+(1) cat hex.dat > /sys/rsa_sec_key/rsa_import
+(2) cat /sys/rsa_sec_key/rsa_import > import_key_blob.txt
+
+Note:
+hex.dat contents must be a properly generated RSA vector.
+
+spec of the hex.dat file used in RSA Import Key blob:
+hex.dat size is 1066 bytes.
+
+1066 bytes split up:
+	528 bytes -> import modulus
+	2 bytes -> import modulus length in hexadecimal
+	5 bytes -> public exponent
+	1 byte -> public exponent length in hexadecimal
+	528 bytes -> private exponent
+	2 bytes -> private exponent length in hexadecimal
+
+public, private exponent can be any value other than 3
+modulus can be any value lesser than 4096
+
+RSA Sign data:
+(1) cat key_blob.txt > /sys/rsa_sec_key/rsa_key_blob
+    or
+    cat import_key_blob.txt > /sys/rsa_sec_key/rsa_key_blob
+(2) echo -n "data.txt" > /sys/rsa_sec_key/rsa_sign
+    (Note: data.txt is the input file that can contains plain data.
+     8k plain data size is supported only in IPQ807x platform.
+     For other platforms the plain data max size is 2k bytes.)
+(3) cat /sys/rsa_sec_key/rsa_sign > signed_data.txt
+
+RSA Verification of Signature:
+(1) cat key_blob.txt > /sys/rsa_sec_key/rsa_key_blob
+    or
+    cat import_key_blob.txt > /sys/rsa_sec_key/rsa_key_blob
+(2) echo -n "data.txt" > /sys/rsa_sec_key/rsa_sign
+    (Note: data.txt is the input file that can contains plain data.
+     8k plain data size is supported only in IPQ807x platform.
+     For other platforms the plain data max size is 2k bytes.)
+(3) cat signed_data.txt > /sys/rsa_sec_key/rsa_verify
+(4) cat /sys/rsa_sec_key/rsa_verify > verification_result.txt
+(5) cat verification_result.txt
+
+RSA Update key blob:
+Use these steps to update the padding scheme present in a key blob
+(1) cat key_blob.txt > /sys/rsa_sec_key/rsa_key_blob
+    or
+    cat import_key_blob.txt > /sys/rsa_sec_key/rsa_key_blob
+    Note: Users can also input an externally saved key blob which was not created
+          using Generate/Import commands
+(2) cat /sys/rsa_sec_key/rsa_update_keyblob > updated_key_blob.txt
+
+RSA TZAPP API: (qseecom_props function = RSA_TZAPP)
+It is used for encrypting/decrypting data based on RSA algorithm in TZapp.
+
+The input 256.txt should be of size 256 bytes.
+(1)  dd if=input.txt of=256.txt bs=256 count=1
+
+Input the keys
+(2)  echo "056b04216fe5f354ac77250a4b6b0c8525a85c59b0bd80c56450a22d5f438e596a333aa875e291dd43f48cb88b9d5fc0d499f9fcd1c397f9afc070cd9e398c8d19e61db7c7410a6b2675dfbf5d345b804d201add502d5ce2dfcb091ce9997bbebe57306f383e4d588103f036f7e85d1934d152a323e4a8db451d6f4a5b1b0f102cc150e02feee2b88dea4ad4c1baccb24d84072d14e1d24a6771f7408ee30564fb86d4393a34bcf0b788501d193303f13a2284b001f0f649eaf79328d4ac5c430ab4414920a9460ed1b7bc40ec653e876d09abc509ae45b525190116a0c26101848298509c1c3bf3a483e7274054e15e97075036e989f60932807b5257751e79" > /sys/firmware/tzapp/rsa/private_exponent_key
+(3)  echo "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001" > /sys/firmware/tzapp/rsa/public_exponent_key
+(4)  echo "ae45ed5601cec6b8cc05f803935c674ddbe0d75c4c09fd7951fc6b0caec313a8df39970c518bffba5ed68f3f0d7f22a4029d413f1ae07e4ebe9e4177ce23e7f5404b569e4ee1bdcf3c1fb03ef113802d4f855eb9b5134b5a7c8085adcae6fa2fa1417ec3763be171b0c62b760ede23c12ad92b980884c641f5a8fac26bdad4a03381a22fe1b754885094c82506d4019a535a286afeb271bb9ba592de18dcf600c2aeeae56e02f7cf79fc14cf3bdc7cd84febbbf950ca90304b2219a7aa063aefa2c3c1980e560cd64afe779585b6107657b957857efde6010988ab7de417fc88d8f384c4e6e72c3f943e0c31c0c4a5cc36f879d8a3ac9d7d59860eaada6b83bb" > /sys/firmware/tzapp/rsa/modulus_key
+
+Provide required RSA parameters
+(5)  echo 2048 > /sys/firmware/tzapp/rsa/nbits_key
+(6)  echo 2 > /sys/firmware/tzapp/rsa/hashidx
+(7)  echo 2 > /sys/firmware/tzapp/rsa/padding_type
+
+Encrypt RSA:
+(8)  cat 256.txt > /sys/firmware/tzapp/rsa/encrypt_rsa
+(9)  cat /sys/firmware/tzapp/rsa/encrypt_rsa > sam.txt
+(10) cat /sys/firmware/tzapp/log_buf
+
+Decrypt RSA:
+(11) cat sam.txt > /sys/firmware/tzapp/rsa/decrypt_rsa
+(12) cat /sys/firmware/tzapp/rsa/decrypt_rsa > sam1.txt
+(13) cat sam1.txt
+
+AES TZ API: (qseecom_props function = AES_SEC_KEY)
+This is used for performing AES encrypt/decrypt operations in TZ.
+
+AES Generate Key blob:
+(1) cat /sys/sec_key/generate > key_blob.txt
+
+AES Import Key blob:
+(1) cat key.txt > /sys/sec_key/import
+(2) cat /sys/sec_key/import > imported_key_blob.txt
+
+AES Encrypt data:
+(1) cat key_blob.txt > /sys/sec_key/key_blob
+    or
+    cat imported_key_blob.txt > /sys/sec_key/key_blob
+(2) cat data.txt > /sys/sec_key/seal
+(3) cat /sys/sec_key/seal > encrypted_data.txt
+
+AES Decrypt data:
+(1) cat key_blob.txt > /sys/sec_key/key_blob
+    or
+    cat imported_key_blob.txt > /sys/sec_key/key_blob
+(2) cat encrypted_data.txt > /sys/sec_key/unseal
+(3) cat /sys/sec_key/unseal
+
+AES TZAPP API: (qseecom_props function = AES_TZAPP)
+This is used for performing AES encrypt/decrypt operations in TZapp.
+
+Note:
+By default AES TZapp encrypt/decrypt is disabled in IPQ807x platform, update "OEM_crypto_service_enable" flag to 1 in
+"trustzone_images/core/secureMSM/trustzone/qsee/mink/oem/config/ipq8074/oem_config.xml" and flash updated devcfg.mbn
+for enabling AES encrypt/decrypt.
+
+Giving the required aes256 parameters:
+(1) echo 1 > sys/firmware/tzapp/aes/type_aes
+(2) echo 1 > sys/firmware/tzapp/aes/mode_aes
+(3) echo -n -e \\x69\\x01\\x50\\x05\\x26\\x35\\x27\\x2c\\xf4\\xe0\\x19\\x1c\\xa9\\x74\\x36\\x45 > sys/firmware/tzapp/aes/ivdata_aes
+
+To encrypt:
+(4) echo "Aes Encryption!" > sys/firmware/tzapp/aes/encrypt_aes
+(5) cat sys/firmware/tzapp/aes/encrypt_aes > /tmp/enc.txt
+
+To decrypt:
+(6) cat /tmp/enc.txt > sys/firmware/tzapp/aes/decrypt_aes
+(7) cat sys/firmware/tzapp/aes/decrypt_aes > /tmp/pt.txt
+(8) cat /tmp/pt.txt
+
+To check the tzlog buff after above operations if required:
+(8) cat sys/firmware/tzapp/log_buf
+
+Note:
+RSA generate functionality can take random amount of time to execute. This is
+because in this RSA algorithm we have to generate 2 random numbers with certain
+properties and then proceed. We can use the RSA import functionality if in case
+time is a concern.
+
+shk value is 0 by default in non-secure ipq targets.
+
+To make the keyblobs target dependent, shk values must be changed from default
+value in non-secure target systems.
+
+Without doing this, we will be able to encrypt in one board and decrypt in
+another board using the same keyblob.
+
+AES 256 V2 TZ API's supported in ipq9574,ipq5332 (TME-L based platform) can be used as
+below: (qseecom_props function = AES_SEC_KEY aes_v2 = true)
+
+Below are sample inputs:
+
+Context data is 64 byte which can be fed as below:
+(1) echo -n "34613132613738396434316363323738656166343132363635613831643530313461313261373839643431636332373865616634313236363561383164353031" > ./sys/sec_key/context_data
+
+source_data can be either 1 (OEM product seed) or 2 (CRBK)
+(2) echo 1 > ./sys/sec_key/source_data
+
+bindings data has device and software state bindings for key:
+(3) echo 32 > ./sys/sec_key/bindings_data
+
+To derive the key with given inputs:
+(4) cat /sys/sec_key/derive_aes_key > key_handle.txt
+(5) cat key_handle.txt
+
+(or)
+
+To derive the key for 128 byte context:
+(4) cat /sys/sec_key/derive_aes_max_ctxt_key > key_handle.txt
+(5) cat key_handle.txt
+clear key API:
+
+Note:
+The user cannot derive more than 3 keys. Trying to derive a 4th key would result
+in an error saying "key handle out of slot". If the user wants to derive a new key
+after 3 successful attempts, then the user has to clear an already existing key
+by passing it's key handle to the clear_key sysfs entry. Once a derived key handle
+is cleared, the key cannot be used for further encryption/decryption of data.
+
+To clear a derived key:
+eg: echo 31 > /sys/sec_key/clear_key
+
+Giving the required aes256 parameters:
+aes_type can be either 1 (OEM product seed) or 2 (CRBK)
+(6) echo 1 > ./sys/sec_key/aes_type
+
+aes_mode can be either 0 (ECB) or 1 (CBC)
+(7) echo 1 > ./sys/sec_key/aes_mode
+(8) echo -n -e \\x69\\x01\\x50\\x05\\x26\\x35\\x27\\x2c\\xf4\\xe0\\x19\\x1c\\xa9\\x74\\x36\\x45 > /sys/sec_key/aes_ivdata
+
+Specify the key handle to be used for encrypt/decrypt:
+(9) echo key_handle_value > /sys/sec_key/derive_aes_key
+
+To encrypt:
+(10) echo "Aes Encryption!" > /sys/sec_key/aes_encrypt
+(11) cat /sys/sec_key/aes_encrypt > /tmp/enc.txt
+
+To decrypt:
+(12) cat /tmp/enc.txt > /sys/sec_key/aes_decrypt
+(13) cat /sys/sec_key/aes_decrypt > /tmp/pt.txt
+(14) cat /tmp/pt.txt
+
+To check the tzlog buff after above operations if required:
+cat sys/firmware/tzapp/log_buf
+
+AES 256 v2 TZAPP API's supported in ipq9574,ipq5332 (TME-L based platform) can be used as below: (qseecom_props function = AES_TZAPP aes_v2 = true)
+
+Input source, context and bindings data
+(1) echo "34613132613738396434316363323738656166343132363635613831643530313461313261373839643431636332373865616634313236363561383164353031" > ./sys/firmware/tzapp/aes/context_data_aes
+(2) echo 1 > ./sys/firmware/tzapp/aes/source_data_aes
+(3) echo 2 > ./sys/firmware/tzapp/aes/bindings_data_aes
+
+Derive key handle
+(4) cat ./sys/firmware/tzapp/aes/derive_key_aes > key_handle.txt
+(5) cat key_handle.txt
+
+To clear a derived key from qtiapp:
+eg: echo 31 > ./sys/firmware/tzapp/aes/clear_key_qtiapp
+
+Giving the required aes parameters:
+(6) echo 1 > ./sys/firmware/tzapp/aes/type_aes
+(7) echo 1 > ./sys/firmware/tzapp/aes/mode_aes
+(8) echo -n -e \\x69\\x01\\x50\\x05\\x26\\x35\\x27\\x2c\\xf4\\xe0\\x19\\x1c\\xa9\\x74\\x36\\x45 > /sys/firmware/tzapp/aes/ivdata_aes
+
+Specify the key handle to be used for encrypt/decrypt:
+(9) echo key_handle_value > ./sys/firmware/tzapp/aes/derive_key_aes
+
+Encrypt AES:
+(10) echo "Aes Encryption!" > /sys/firmware/tzapp/aes/encrypt_aes
+(11) cat /sys/firmware/tzapp/aes/encrypt_aes > /tmp/enc.txt
+
+Decrypt AES:
+(12) cat /tmp/enc.txt > /sys/firmware/tzapp/aes/decrypt_aes
+(13) cat /sys/firmware/tzapp/aes/decrypt_aes > /tmp/pt.txt
+(14) cat /tmp/pt.txt
+
+Fusewrite: (qseecom_props function = FUSE_WRITE)
+
+To write into fuses from TA (Trusted APPS)
+
+Input the fuse address according to target
+(1) echo <fuse addr> > /sys/firmware/tzapp/fuse_write/addr
+
+(2) echo 0x1 > /sys/firmware/tzapp/fuse_write/value
+(3) echo 0 > /sys/firmware/tzapp/fuse_write/fec_enable (fec - forward error correction. Set this entry to enable error correction in fuse)
+(4) echo 1 > /sys/firmware/tzapp/fuse_write/blow
+(5) cat /sys/firmware/tzapp/log_buf
+
+Logbitmask: (qseecom_props function = LOG_BITMASK)
+
+TZapp supports different logging levels. This API will set mask for different log levels and checks if only expected logs are present.
+If expected logs are present then success is returned.
+User should check the /sys/firmware/tzapp/log_buf to see the result.
+
+If the below print is seen in log_buf, then it means the logbitmask test has encountered some error while testing the different log levels.
+-- ALERT: Should Not see this - run_log_bitmask_test----
+
+(1) echo 1 > /sys/firmware/tzapp/log_bitmask
+(2) cat /sys/firmware/tzapp/log_buf
+
+Fuse API: (qseecom_props function = FUSE)
+
+It tests if it can read fuses for the allowed regions from TA (Trusted APPS).
+For example the allowed regions for IPQ53xx platform are shown below.
+
+QFPROM_RAW_OEM_CONFIG_REGION:
+QFPROM_RAW_OEM_SECURE_BOOT_REGION:
+QFPROM_RAW_OEM_SPARE_REGION_31_REGION:
+QFPROM_RAW_FEC_ENABLES_REGION:
+
+(1) echo 1 > /sys/firmware/tzapp/fuse
+(2) cat /sys/firmware/tzapp/log_buf
+
+Misc API: (qseecom_props function = MISC)
+
+This API runs some miscellaneous tests to test the QSEE API's for malloc, free and some other string manipulation functions.
+
+(1) echo 1 > /sys/firmware/tzapp/misc
+(2) cat /sys/firmware/tzapp/log_buf

@@ -1,0 +1,24 @@
+{
+  "repository": "https://bin.entware.net/aarch64-k3.10/",
+  "files": {
+    "installer/opkg": "1c59274bd25080b869f376788795f5319d0d22e91f325f74ce98a7d596f68015",
+    "findutils_4.10.0-1_aarch64-3.10.ipk": "6f1ad0782d550a855da202e44c147fa20c822787325a4e714774d088ad99f347",
+    "libc_2.27-12_aarch64-3.10.ipk": "4d7825a9ddf7a382a985a44ec85c4ab458f8ebe12c3e3b5fb25da814f71167bb",
+    "libgcc_8.4.0-12_aarch64-3.10.ipk": "123882cd0063342b8cd058ea97541601d793ef1f847920e1da6be4c3a0b8da8b",
+    "libssp_8.4.0-12_aarch64-3.10.ipk": "8d85e466962569005ec604a64b2ffa739454a9db017a9a5e8dbe23b3c4bf2c25",
+    "librt_2.27-12_aarch64-3.10.ipk": "86d4adc05b939793f4fb7d54ecc6c34b867a1fe9c449983393f708f245b72b43",
+    "libpthread_2.27-12_aarch64-3.10.ipk": "a2af364e6e139069f8b37dd9e7f2accaf529efd35738c6d381d2e43e78b876d4",
+    "libstdcpp_8.4.0-12_aarch64-3.10.ipk": "7b945502a7e7eef3e172b0343a533f4cce71db1579a372a4cee6e4c209b1bdc1",
+    "entware-release_2025.05-1_all.ipk": "fe26b5b90f7293319240e2e79cef353d815a6d3f21a26c91c326ca32bf43d420",
+    "zoneinfo-core_2025c-1_aarch64-3.10.ipk": "30708ce57de9354022d30aebfe5ede68387a26c5cc46869513d65b15bc27d004",
+    "zoneinfo-asia_2025c-1_aarch64-3.10.ipk": "f55841a75671c7c8d93880f5d6de3936b02e945f83b7fce096c164a7e8db4ae1",
+    "zoneinfo-europe_2025c-1_aarch64-3.10.ipk": "1640940aa4b063bcc015014e15471e3e4d8db14f49349cf05ad41951dd9b9d00",
+    "terminfo_6.4-3_aarch64-3.10.ipk": "ec0fa04fcaa9485968eb3321e7820ff3f80874798fdb19d79718606dd759405a",
+    "libpcre2_10.47-1_aarch64-3.10.ipk": "177e0ac6a084c81a2731e99b0c386989752482a52068f16f3024eb67db3f6e92",
+    "grep_3.12-1_aarch64-3.10.ipk": "9571ab23c52da17977522274e447d0d5eeca8ea9ded329cab6e9a46cef24f3a3",
+    "locales_2.27-9_aarch64-3.10.ipk": "ee71c45537ad26b3a2abdd09fe252fc50b31de49e2aa93f55e741dfc3e5a4413",
+    "opkg_2025.11.05~80503d94-1_aarch64-3.10.ipk": "872821cc70fdd3b550b4458c056ad1a5c61edbfb9981b73b68c4b6644085cd73",
+    "entware-upgrade_1.0-1_all.ipk": "ed0db9ab7e0abc6141e4322a8b60a70f7693366005474b25b6b4b2c4175eac50",
+    "entware-opt_227000-3_all.ipk": "5a58514d284fd760080bef6076bdd115856a19a2379d9ce35e00c5b6931fd3b5"
+  }
+}

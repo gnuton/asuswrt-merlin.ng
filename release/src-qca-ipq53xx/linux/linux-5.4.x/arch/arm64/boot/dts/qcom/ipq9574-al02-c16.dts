@@ -1,0 +1,205 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C16 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c6.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C16";
+	compatible = "qcom,ipq9574-ap-al02-c16", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	reserved-memory {
+		mlo_global_mem1: mlo_global_mem_1@1 {
+			no-map;
+			size = <0x0 0xE00000>;
+			status = "ok";
+		};
+	};
+
+	soc {
+		pcie0_x1: pci@28000000 {
+			pinctrl-0 = <&pcie0_wake_pins &pci0_pin>;
+			interrupts-extended = <&tlmm 24 IRQ_TYPE_LEVEL_HIGH>,
+					      <&intc GIC_SPI 51 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "wake_gpio", "global_irq";
+                        status = "ok";
+                        pcie0_rp {
+                                reg = <0 0 0 0 0>;
+
+                                wifi@0 {
+                                        reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+                                        qrtr_node_id = <0x30>;
+                                        memory-region = <0>,<&mhi_region0>;
+#endif
+                                };
+                        };
+                };
+
+                pcie0_phy: phy@84000 {
+                        status = "ok";
+                };
+
+		pcie1_x1: pci@10000000 {
+			perst-gpio = <&tlmm 26 1>;
+			max-payload-size = <1>; // 1-256 TLP bytes for WKK
+			status = "ok";
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@1 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x31>;
+					memory-region = <0>,<&mhi_region1>;
+#endif
+				};
+			};
+		};
+
+		pcie1_phy: phy@fc000 {
+			status = "ok";
+		};
+
+		edma@3ab00000 {
+			qcom,ppeds-num = <4>;			/* Number of PPEDS nodes */
+			/* PPE-DS node format: <Rx-fill Tx-cmpl Rx Tx Queue-base Queue-count> */
+			qcom,ppeds-map = <1 1 1 1 32 8>,	/* PPEDS Node#0 ring and queue map */
+					<2 2 2 2 40 8>,		/* PPEDS Node#1 ring and queue map */
+					<3 3 3 3 48 8>,		/* PPEDS Node#2 ring and queue map */
+					<0 0 0 0 56 8>;		/* PPEDS Node#3 ring and queue map */
+
+			interrupts = <0 367 4>,			/* Tx complete ring id #4 IRQ info */
+				   <0 368 4>,			/* Tx complete ring id #5 IRQ info */
+				   <0 369 4>,			/* Tx complete ring id #6 IRQ info */
+				   <0 370 4>,			/* Tx complete ring id #7 IRQ info */
+				   <0 371 4>,			/* Tx complete ring id #8 IRQ info */
+				   <0 372 4>,			/* Tx complete ring id #9 IRQ info */
+				   <0 373 4>,			/* Tx complete ring id #10 IRQ info */
+				   <0 374 4>,			/* Tx complete ring id #11 IRQ info */
+				   <0 375 4>,			/* Tx complete ring id #12 IRQ info */
+				   <0 376 4>,			/* Tx complete ring id #13 IRQ info */
+				   <0 377 4>,			/* Tx complete ring id #14 IRQ info */
+				   <0 378 4>,			/* Tx complete ring id #15 IRQ info */
+				   <0 379 4>,			/* Tx complete ring id #16 IRQ info */
+				   <0 380 4>,			/* Tx complete ring id #17 IRQ info */
+				   <0 381 4>,			/* Tx complete ring id #18 IRQ info */
+				   <0 382 4>,			/* Tx complete ring id #19 IRQ info */
+				   <0 383 4>,			/* Tx complete ring id #20 IRQ info */
+				   <0 384 4>,			/* Tx complete ring id #21 IRQ info */
+				   <0 509 4>,			/* Tx complete ring id #22 IRQ info */
+				   <0 508 4>,			/* Tx complete ring id #23 IRQ info */
+				   <0 507 4>,			/* Tx complete ring id #24 IRQ info */
+				   <0 506 4>,			/* Tx complete ring id #25 IRQ info */
+				   <0 505 4>,			/* Tx complete ring id #26 IRQ info */
+				   <0 504 4>,			/* Tx complete ring id #27 IRQ info */
+				   <0 503 4>,			/* Tx complete ring id #28 IRQ info */
+				   <0 502 4>,			/* Tx complete ring id #29 IRQ info */
+				   <0 501 4>,			/* Tx complete ring id #30 IRQ info */
+				   <0 500 4>,			/* Tx complete ring id #31 IRQ info */
+				   <0 351 4>,			/* Rx desc ring id #20 IRQ info */
+				   <0 352 4>,			/* Rx desc ring id #21 IRQ info */
+				   <0 353 4>,			/* Rx desc ring id #22 IRQ info */
+				   <0 354 4>,			/* Rx desc ring id #23 IRQ info */
+				   <0 499 4>,			/* Misc error IRQ info */
+				   <0 364 4>,			/* PPEDS Node #0(TxComp ring id #1) TxComplete IRQ info */
+				   <0 332 4>,			/* PPEDS Node #0(Rx Desc ring id #1) Rx Desc IRQ info */
+				   <0 356 4>,			/* PPEDS Node #0(RxFill Desc ring id #1) Rx Fill IRQ info */
+				   <0 365 4>,			/* PPEDS Node #1(TxComp ring id #2) TxComplete IRQ info */
+				   <0 333 4>,			/* PPEDS Node #1(Rx Desc ring id #2) Rx Desc IRQ info */
+				   <0 357 4>,			/* PPEDS Node #1(RxFill Desc ring id #2) Rx Fill IRQ info */
+				   <0 366 4>,			/* PPEDS Node #2(TxComp ring id #3) TxComplete IRQ info */
+				   <0 334 4>,			/* PPEDS Node #2(Rx Desc ring id #3) Rx Desc IRQ info */
+				   <0 358 4>,			/* PPEDS Node #2(RxFill Desc ring id #3) Rx Fill IRQ info */
+				   <0 363 4>,			/* PPEDS Node #3(TxComp ring id #0) TxComplete IRQ info */
+				   <0 331 4>,			/* PPEDS Node #3(Rx Desc ring id #0) Rx Desc IRQ info */
+				   <0 355 4>;			/* PPEDS Node #3(RxFill Desc ring id #0) Rx Fill IRQ info */
+
+		};
+
+	};
+};
+
+/* MLO GLOBAL MEM REGION size is 22MB for RDP with 4 QCN9224 radios */
+&mlo_global_mem0 {
+	size = <0x0 0x1800000>;
+	status = "ok";
+};
+
+&mhi_region0 {
+	status = "ok";
+};
+
+&qcn9224_pcie0 {
+	status = "ok";
+};
+
+&mhi_region1 {
+	status = "ok";
+};
+&qcn9224_pcie1 {
+	status = "ok";
+};
+
+&wifi0 {
+	led-gpio = <&tlmm 64 1>;
+        qcom,board_id = <0x20>;
+        status = "ok";
+};
+&wifi4 {
+	hremote_node = <&qcn9224_pcie0>;
+        board_id = <0x11>;
+        group_id = <0x0>;
+	/delete-property/ interrupt-bmap;
+	hw_link_id = <1 0>;
+        status = "ok";
+};
+
+&wifi5 {
+	hremote_node = <&qcn9224_pcie1>;
+        board_id = <0x12>;
+        group_id = <0x1>;
+	/delete-property/ interrupt-bmap;
+	hw_link_id = <3 0>;
+        status = "ok";
+};
+
+&wifi6 {
+	hremote_node = <&qcn9224_pcie2>;
+        board_id = <0x14>;
+        group_id = <0x0>;
+	hw_link_id = <0 0>;
+        status = "ok";
+};
+
+&wifi7 {
+	hremote_node = <&qcn9224_pcie3>;
+        board_id = <0x13>;
+        group_id = <0x1>;
+	hw_link_id = <2 0>;
+        status = "ok";
+};
+

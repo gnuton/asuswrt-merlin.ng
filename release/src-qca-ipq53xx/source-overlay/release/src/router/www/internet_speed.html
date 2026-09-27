@@ -1,0 +1,1547 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<link rel="stylesheet" type="text/css" href="css/internetSpeed.css">
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/state.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script>
+
+var getUrlParameter = function getUrlParameter(param){
+	var url_parm = window.location.search.substring(1);
+	var parm_array = url_parm.split("&");
+	var key_value;
+
+	for(var i = 0; i < parm_array.length; i += 1){
+		key_value = parm_array[i].split("=");
+		if (key_value[0] == param) {
+			return typeof key_value[1] == "undefined" ? "" : decodeURIComponent(key_value[1]);
+		}
+	}
+	return "";
+};
+var theme = getUrlParameter("current_theme").toLocaleLowerCase();
+$(function(){
+	
+	if(theme == "white"){
+		$('link').last().after('<link rel="stylesheet" type="text/css" href="css/internetSpeed_' + theme + '_theme.css">');
+	}
+	else if(rog_support || tuf_support || isSupport("TS_UI")){
+		$('link').last().after('<link rel="stylesheet" type="text/css" href="css/internetSpeed_customize.css">');
+	}
+
+	if(isSupport("TS_UI"))
+		$('link').last().after('<link rel="stylesheet" type="text/css" href="css/difference.css">');
+
+	if(top.webWrapper || theme == "white"){
+		$('link').last().after('<link rel="stylesheet" type="text/css" href="/css/business-white.css">');
+
+		setTimeout(function(){
+			$("body").css({"visibility":"visible"})
+		}, 1000)
+	}
+
+	if(internetSpeed_lite_support){
+		$("#history_desc").hide();
+		$("#speedTest_history_div").hide();
+	}
+
+	$("#packet_loss_div").hide();
+});
+
+var speedTest_result = [];
+var speedTest_history = [];
+var speedTest_servers = [];
+var speedTest_history_str = "";
+var delete_array = [];
+var page_id = 0;
+var range_start_num = 0;
+var range_end_num = 0;
+var max_page_id = 0;
+var ookla_state = httpApi.nvramGet(["ookla_state"], true).ookla_state;
+var test_start_time = httpApi.nvramGet(["ookla_start_time"], true).ookla_start_time;
+var get_result_time = 0;
+var test_timeout = 120000;
+var go_btn_type = "go";
+var LEVEL_ERR_MAX = 50;
+var level_err_cnt = 0;
+var ookla_states = {
+		"IDLE": "0",
+		"RUN": "1",
+		"ERR_DISCON": "2",
+		"ERR_TIMEOUT": "3",
+		"ERR_TERMINATE": "4",
+		"ERR_UNKNOWN": "5"
+};
+var preferred_lang = httpApi.nvramGet(["preferred_lang"], true).preferred_lang;
+var enable_auto_server = 1;
+var cur_server_id = "";
+
+/* for link rate div */
+var tmp_ispctrl_desc = decodeURIComponent(httpApi.nvramCharToAscii(["ispctrl_desc"], true).ispctrl_desc);
+var ispctrl_desc = "";
+var is_ispctrl = false;
+if(tmp_ispctrl_desc){
+	ispctrl_desc = JSON.parse(tmp_ispctrl_desc);
+	is_ispctrl = (ispctrl_desc.ISPCtrl != "")? true:false;
+}
+var is_linkRate_over_5G = false;
+var show_linkRate = 0;
+var show_linkRate_Pri = 0;
+var show_linkRate_Sec = 0;
+
+let eth_monitor_support = isSupport("eth_monitor");
+let eth_monitor_result = [];
+let get_eth_monitor_result = false;
+let eth_monitor_download = "";
+let eth_monitor_upload = "";
+let eth_monitor_threshold = httpApi.nvramGet(["eth_monitor_threshold"]).eth_monitor_threshold == ""? 375000000:parseInt(httpApi.nvramGet(["eth_monitor_threshold"]).eth_monitor_threshold);
+let change_to_eth_monitor_result = false;
+
+var cap_mac = (httpApi.hookGet('get_lan_hwaddr')) ? httpApi.hookGet('get_lan_hwaddr') : "";
+httpApi.get_port_status_array(cap_mac, function(port_info){
+	if(Object.keys(port_info).length > 0){
+
+		var show_notice = false;
+		//Find out 
+		$.each(port_info, function(label, label_array){
+			$.each(port_info[label], function(index, port_item){
+				if(port_item.is_on == "1"){
+
+					//#define PHY_PORT_CAP_DUALWAN_SECONDARY_WAN  (1U << 29) - 536,870,912
+					//#define PHY_PORT_CAP_DUALWAN_PRIMARY_WAN    (1U << 30) - 1,073,741,824
+					if( port_item.cap & 1073741824){        //Actived Pri
+						if(port_item.link_rate >= 5000){
+							is_linkRate_over_5G = true;
+							show_linkRate_Pri = port_item.link_rate;
+						}
+					}
+					if( port_item.cap & 536870912){         //Actived Sec
+						if(port_item.link_rate >= 5000){
+							is_linkRate_over_5G = true;
+							show_linkRate_Sec = port_item.link_rate;
+						}
+					}
+				}
+			});
+		});
+
+		if(is_linkRate_over_5G){
+			show_linkRate = (show_linkRate_Pri >= show_linkRate_Sec)? show_linkRate_Pri:show_linkRate_Sec;
+		}
+
+	}
+});
+
+$(document).ready(function(){
+	
+	$(".bg_linkRate").hide();
+	$(".bg_internetSpeed").hide();
+	setTimeout(function(){
+		if(is_linkRate_over_5G && ((!isSupport("10g_speedTest") && !eth_monitor_support) || is_ispctrl))
+		{
+			$(".bg_linkRate").show();
+			$(".bg_internetSpeed").hide();
+			if(theme == "white"){
+				$("#LinkRate_div").addClass("LinkRate_div_white").removeClass("LinkRate_div");
+				$("#LinkRate_img").addClass("LinkRate_img_normal_white").removeClass("LinkRate_img_normal");
+				$("#receive_transmit_container").addClass("receive_transmit_container_white").removeClass("receive_transmit_container");
+			}
+			init_linkRate(show_linkRate);
+		}
+		else{
+			$(".bg_linkRate").hide();
+			$(".bg_internetSpeed").show();
+			init();
+		}
+	}, 100);
+
+});
+
+function init_linkRate(rate){
+	if(rate >= 1000){
+		rate = Math.round(rate/1000, -1);
+		$("#rLinkRate_unit").html("Gbps");
+		$("#tLinkRate_unit").html("Gbps");
+	}
+
+	$("#receive_rate").html(rate);
+	$("#transmit_rate").html(rate);
+	if(theme == "white"){
+		$("#receive_rate").addClass("rate_white");
+		$("#transmit_rate").addClass("rate_white");
+	}
+}
+
+function customize_speedTestBtn(){
+	if(preferred_lang == "UK")
+		$("#speedTest_btn").addClass("speedTest_btn_15");
+	else if(preferred_lang == "RU" || preferred_lang == "SV")
+		$("#speedTest_btn").addClass("speedTest_btn_18");
+	else if(preferred_lang == "NL" || preferred_lang == "RO")
+		$("#speedTest_btn").addClass("speedTest_btn_25");
+}
+
+function init(){
+	customize_speedTestBtn();
+	get_speedTest_history();
+	if(!internetSpeed_lite_support)
+		show_history_results();
+
+	if(ookla_state != "1")
+		do_speedTest_exe("list");
+
+	if(ookla_state == "1"){
+		setTimeout('continue_show_result();', 100);
+	}
+	else if(speedTest_history.length > 1)
+		show_latest_record();
+
+	check_wan_status();
+}
+
+function continue_show_result(){
+	if(wanConnectStatus){
+		reset_speed_level_btn();
+		change_speedTestBtn("testing");
+		get_speedTest_result();
+	}
+	else
+		set_ookla_state(ookla_states.ERR_TERMINATE);
+}
+
+function check_wan_status(){
+	var link_internet = httpApi.nvramGet(["link_internet"], true).link_internet;
+	if(go_btn_type != "testing"){
+		if(link_internet != "2"){
+			if(go_btn_type != "disable")
+				change_speedTestBtn("disable");
+
+			if(document.body.clientWidth > 720){
+				if($("#notification_str").css("display") != "block")
+					$("#notification_str").show();
+			}
+			else{
+				if($("#wan_disconn_hint").css("display") != "flex")
+					$("#wan_disconn_hint").css("display", "flex");
+			}
+			set_ookla_state(ookla_states.ERR_DISCON);
+		}
+		else if(link_internet == "2"){
+			if(go_btn_type != "go")
+				change_speedTestBtn("go");
+
+			if(document.body.clientWidth > 720){
+				if($("#notification_str").css("display") != "none")
+					$("#notification_str").hide();
+			}
+			else{
+				if($("#wan_disconn_hint").css("display") != "none")
+					$("#wan_disconn_hint").hide();
+			}
+		}
+
+		setTimeout("check_wan_status();", 2000);
+	}
+}
+
+function convert_to_localtime(gmt_time){
+	var milliseconds = new Date(gmt_time).getTime();
+	var timezone_offset = parseInt(timezone.slice(1,3))*60*60*1000;
+	var target_time_ms = 0;
+	var convert_time = { "date": "", "time": "", "ampm": "" };
+
+	if(timezone.slice(0, 1) == "+"){
+		target_time_ms = milliseconds + timezone_offset;
+	}
+	else if(timezone.slice(0, 1) == "-"){
+		target_time_ms = milliseconds - timezone_offset;
+	}
+
+	var target_time  = new Date(target_time_ms);
+	var year = target_time.getUTCFullYear();
+	var month = target_time.getUTCMonth() + 1;
+	var date = target_time.getUTCDate();
+	var hours = target_time.getUTCHours();
+	var target_hours = (hours < 10) ? '0' + hours : hours;
+	var minutes = target_time.getUTCMinutes();
+	var target_min = (minutes < 10) ? '0' + minutes : minutes;
+
+
+	var target_date = year + "/" + month + '/' + date;
+	var target_time = target_hours + ":" + target_min;
+
+	convert_time.date = target_date;
+	convert_time.time = target_time;
+	return convert_time;
+}
+
+function get_speedTest_servers(){
+	speedTest_servers = httpApi.hookGet("ookla_speedtest_get_servers", true);
+	if(speedTest_servers.length < 2)
+		setTimeout("get_speedTest_servers();", 1000);
+	else
+		create_server_list();
+}
+
+function change_speedTestBtn(type){
+	if(type == "go"){
+		$("#speedTest_btn").removeClass().addClass("speedTest_btn_normal");
+		$("#speedTest_btn_text").text("<#InternetSpeed_Go#>");
+		$("#speedTest_btn").css("pointer-events", "auto");
+		$("#speed_level_btn").css("pointer-events", "auto");
+		go_btn_type = "go";
+	}
+	else if(type == "testing"){
+		$("#speedTest_btn").removeClass().addClass("speedTest_btn_press");
+		$("#speedTest_btn_text").text("<#InternetSpeed_Testing#>");
+		$("#speedTest_btn").css("pointer-events", "none");
+		$("#speed_level_btn").css("pointer-events", "none");
+		go_btn_type = "testing";
+	}
+	else if(type == "disable"){
+		$("#speedTest_btn").removeClass().addClass("speedTest_btn_disable");
+		$("#speedTest_btn").css("pointer-events", "none");
+		$("#speedTest_btn_text").text("");
+		go_btn_type = "disable";
+	}
+	customize_speedTestBtn();
+}
+
+function convert_speedTestHistory_to_str(){
+	var tmp_str = "";
+	speedTest_history_str = "";
+
+	for(var i = 0; i < speedTest_history.length -1 ; i++){
+		tmp_str = JSON.stringify(speedTest_history[i]);
+		speedTest_history_str += tmp_str + '\n';
+	}
+}
+
+function reset_speed_level_btn(){
+	$("#speed_level_btn").removeClass().addClass("speed_level_default");
+	$("#speed_level_title").removeClass().addClass("speed_level_title_default");
+	$("#speed_level_text").text("");
+	$("#speed_level_text").removeClass();
+	$("#speed_level_icon").removeClass();
+}
+
+function do_speedTest_exe(exe_type, server_id){
+	var start = new Date();
+	var type = "";
+	var id = "";
+
+	test_start_time =  start.getTime();
+	set_ookla_start_time(test_start_time);
+	if(typeof exe_type !== "undefined")
+		type = exe_type;
+
+	if(typeof server_id !== "undefined")
+		id = server_id;
+
+	$.ajax({
+		url: "/ookla_speedtest_exe.cgi",
+		type: "POST",
+		data: {
+			"type": type,
+			"id": id
+		},
+		error: function(){
+			console.log("do_speedTest_exe error");
+		},
+		success: function() {
+			if(type == "")
+				setTimeout("get_speedTest_result();", 1000);
+			else if(type == "list")
+				setTimeout("get_speedTest_servers();", 1000);
+		}
+	});
+}
+
+function reset_speedTest_div(){
+	$("#download_test_result").text("--");
+	$("#upload_test_result").text("--");
+	$("#ping_result_latency").text("--");
+	$("#ping_result_jitter").text("--");
+	$("#packet_loss_result").text("--");
+	$("#date_div").text("");
+	$("#time_div").text("");
+	reset_speed_level_btn();
+}
+
+function start_speedTest(){
+	reset_speedTest_div();
+	change_speedTestBtn("testing");
+	if(!enable_auto_server && cur_server_id != "")
+		do_speedTest_exe("", cur_server_id);
+	else
+		do_speedTest_exe();
+}
+
+
+function save_speedTest_history(){
+	convert_speedTestHistory_to_str();
+	$.ajax({
+		url: "/ookla_speedtest_write_history.cgi",
+		type: "POST",
+		data: {
+			"speedTest_history": speedTest_history_str
+		},
+		success: function( response ) {
+
+		}
+	})
+}
+
+function check_duplicate_result(result_obj){
+	var duplicate = 0;
+
+	for(var i = 0; i < speedTest_history.length - 1; i++){
+		if(speedTest_history[i].result.id == result_obj.result.id){
+			duplicate = 1;
+			break;
+		}
+	}
+
+	return duplicate;
+}
+
+function get_speedTest_result(){
+	speedTest_result = httpApi.hookGet("ookla_speedtest_get_result", true);
+	var result_time = {};
+	var now = new Date();
+	var get_next = true;
+
+	get_result_time = now.getTime();
+	if(get_result_time - test_start_time >= test_timeout){
+		error_handling(ookla_states.ERR_TIMEOUT);
+		return;
+	}
+
+	if(speedTest_result.length < 2){
+		setTimeout("get_speedTest_result();", 200);
+	}
+	else{
+		if(typeof speedTest_result[speedTest_result.length - 2].error != "undefined")
+		{
+			error_handling(ookla_states.ERR_TERMINATE);
+			return;
+		}
+		else if(typeof speedTest_result[speedTest_result.length - 2].level != "undefined" && speedTest_result[speedTest_result.length - 2].level == "error"){
+			if(level_err_cnt < LEVEL_ERR_MAX){
+				level_err_cnt++;
+			}
+			else{
+				error_handling(ookla_states.ERR_TERMINATE);
+				level_err_cnt = 0;
+				return;
+			}
+		}
+
+		for(var i = 0; i < speedTest_result.length - 1; i++){
+			if(speedTest_result[i].type == "testStart"){
+				result_time = convert_to_localtime(speedTest_result[i].timestamp);
+				$("#date_div").text(result_time.date);
+				$("#time_div").text(result_time.time);
+				$("#last_host").text(speedTest_result[i].server.name);
+				$("#last_location").text(speedTest_result[i].server.location);
+				$("#last_location").css("display", "block");
+			}
+			else if(speedTest_result[i].type == "download"){
+				var download_result = convert_Bps_to_Mbps(speedTest_result[i].download.bandwidth);
+				$("#download_test_result").text(download_result);
+			}
+			else if(speedTest_result[i].type == "upload"){
+				var upload_result = convert_Bps_to_Mbps(speedTest_result[i].upload.bandwidth);
+				$("#upload_test_result").text(upload_result);
+			}
+			else if(speedTest_result[i].type == "result"){
+				get_next = false;
+				result_time = convert_to_localtime(speedTest_result[i].timestamp);
+				$("#date_div").text(result_time.date);
+				$("#time_div").text(result_time.time);
+				$("#ping_result_latency").text(speedTest_result[i].ping.latency.toFixed(2));
+				$("#ping_result_jitter").text(speedTest_result[i].ping.jitter.toFixed(2));
+				$("#download_test_result2").text(convert_Bps_to_Mbps(speedTest_result[i].download.bandwidth));
+				$("#upload_test_result2").text(convert_Bps_to_Mbps(speedTest_result[i].upload.bandwidth));
+				if(!internetSpeed_lite_support){
+					if(typeof speedTest_result[i].packetLoss != "undefined")
+						$("#packet_loss_result").text(speedTest_result[i].packetLoss.toFixed(2));
+					else
+						$("#packet_loss_result").text("0.00");
+				}
+				change_speed_level(convert_Bps_to_Mbps(speedTest_result[i].download.bandwidth));
+
+				$("#speedtest_result_timestamp").text(result_time.date+" "+result_time.time);
+
+				if(internetSpeed_lite_support){
+					if(speedTest_history.length == 2)
+						speedTest_history.splice(0, 1, speedTest_result[i]);
+					else
+						speedTest_history.splice(0, 0, speedTest_result[i]);
+					save_speedTest_history();
+				}
+				else{
+					if(!check_duplicate_result(speedTest_result[i])){
+						if(speedTest_history.length == 51){
+							speedTest_history.splice(49, 1);
+						}
+						speedTest_history.splice(0, 0, speedTest_result[i]);
+						update_history_inform();
+						show_history_results();
+						save_speedTest_history();
+					}
+				}
+
+				if(speedTest_servers.length < 2)
+					setTimeout("do_speedTest_exe('list')", 1000);
+
+				change_speedTestBtn('go');
+				setTimeout("check_wan_status()", 3000);
+				level_err_cnt = 0;
+			}
+		}
+
+		if(get_next)
+			setTimeout("get_speedTest_result();", 200);
+	}
+}
+
+function error_handling(error_status){//2: wan disconnected 3: timeout  4: error  5:unknown
+	var error_msg = "<#InternetSpeed_Failure_Hint#>"
+	set_ookla_state(error_status);
+	reset_speedTest_div();
+	change_speedTestBtn("go");
+	check_wan_status();
+	show_alert_message(error_msg);
+}
+
+function convert_Bps_to_Mbps(bytes){
+	let Mbps;
+	let ret;
+
+	Mbps = (bytes * 8) / (1000 * 1000);
+
+	if(parseInt(bytes) >= 12500000000)
+		ret = Mbps.toFixed(0);
+	else if(parseInt(bytes) >= 1250000000)
+		ret = Mbps.toFixed(1);
+	else
+		ret = Mbps.toFixed(2);
+
+	return ret;
+}
+
+function get_speedTest_history(){
+	speedTest_history = httpApi.hookGet("ookla_speedtest_get_history", true);
+	if(speedTest_history.length == 0)
+		speedTest_history = [{}];
+
+	update_history_inform();
+}
+
+function change_speed_level(download_speed){
+	var speed = parseInt(download_speed);
+
+	$("#speed_level_title").removeClass().addClass("speed_level_title");
+	$("#speed_level_text").removeClass().addClass("speed_level_text");
+
+	if(speed < 6){
+		$("#speed_level_text").text("<#InternetSpeed_Normal#>");
+		$("#speed_level_icon").removeClass().addClass("speed_icon_normal_s");
+		$("#speed_level_btn").removeClass().addClass("speed_level_normal");
+		$("#speed_level_text2").text("<#InternetSpeed_Normal#>");
+		$("#speed_level_icon2").removeClass().addClass("speed_icon_normal_l");
+		$("#level_desc_title").text("<#InternetSpeed_Normal_title#>");
+		$("#level_desc").text("<#InternetSpeed_Normal_desc#>");
+	}
+	else if(speed >= 6 && speed <= 50){
+		$("#speed_level_text").text("<#InternetSpeed_Good#>");
+		$("#speed_level_icon").removeClass().addClass("speed_icon_white speed_icon_good_white");
+		$("#speed_level_btn").removeClass().addClass("speed_level_good");
+		$("#speed_level_text2").text("<#InternetSpeed_Good#>");
+		$("#speed_level_icon2").removeClass().addClass("speed_result_level_icon speed_icon_good");
+		$("#level_desc_title").text("<#InternetSpeed_Good_title#>");
+		$("#level_desc").text("<#InternetSpeed_Good_desc#>");
+	}
+	else if(speed >= 51 && speed <= 100){
+		$("#speed_level_text").text("<#InternetSpeed_Great#>");
+		$("#speed_level_icon").removeClass().addClass("speed_icon_white speed_icon_great_white");
+		$("#speed_level_btn").removeClass().addClass("speed_level_great");
+		$("#speed_level_text2").text("<#InternetSpeed_Great#>");
+		$("#speed_level_icon2").removeClass().addClass("speed_result_level_icon speed_icon_great");
+		$("#level_desc_title").text("<#InternetSpeed_Great_title#>");
+		$("#level_desc").text("<#InternetSpeed_Great_detail#>");
+	}
+	else if(speed >= 101 && speed <= 250){
+		$("#speed_level_text").text("<#InternetSpeed_Fast#>");
+		$("#speed_level_icon").removeClass().addClass("speed_icon_white speed_icon_fast_white");
+		$("#speed_level_btn").removeClass().addClass("speed_level_fast");
+		$("#speed_level_text2").text("<#InternetSpeed_Fast#>");
+		$("#speed_level_icon2").removeClass().addClass("speed_result_level_icon speed_icon_fast");
+		$("#level_desc_title").text("<#InternetSpeed_Fast_title#>");
+		$("#level_desc").text("<#InternetSpeed_Fast_detail#>");
+	}
+	else if(speed >= 251 && speed <= 900){
+		$("#speed_level_text").text("<#InternetSpeed_Super#>");
+		$("#speed_level_icon").removeClass().addClass("speed_icon_white speed_icon_super_white");
+		$("#speed_level_btn").removeClass().addClass("speed_level_super");
+		$("#speed_level_text2").text("<#InternetSpeed_Super#>");
+		$("#speed_level_icon2").removeClass().addClass("speed_result_level_icon speed_icon_super");
+		$("#level_desc_title").text("<#InternetSpeed_Super_title#>");
+		$("#level_desc").text("<#InternetSpeed_Super_detail#>");
+	}
+	else if(speed >= 901){
+		$("#speed_level_text").text("<#InternetSpeed_Ultra#>");
+		$("#speed_level_icon").removeClass().addClass("speed_icon_white speed_icon_ultra_white");
+		$("#speed_level_btn").removeClass().addClass("speed_level_ultra");
+		$("#speed_level_text2").text("<#InternetSpeed_Ultra#>");
+		$("#speed_level_icon2").removeClass().addClass("speed_result_level_icon speed_icon_ultra");
+		$("#level_desc_title").text("<#InternetSpeed_Ultar_title#>");
+		$("#level_desc").text("<#InternetSpeed_Ultra_detail#>");
+	}
+}
+
+function show_history_results(){
+	var i = 0;
+
+	$("#speedtest_records").empty();
+	$("#speedtest_records").css("height", "auto");
+	if(speedTest_history.length < 2){
+		$("<div>")
+			.attr({"id": "no_test_result_row"})
+			.addClass("no_test_result")
+			.html("No Test Results.")
+			.appendTo($("#speedtest_records"));
+	}
+	else{
+		for(i = (range_start_num - 1) ; i < range_end_num; i++){
+			add_speedTest_history(speedTest_history[i], "last");
+		}
+	}
+
+	if($("#speedtest_records").height() < 270)
+		$("#speedtest_records").css("height", "270px");
+	else
+		$("#speedtest_records").css("height", "auto");
+}
+
+function add_speedTest_history(history_obj, type){//type: 'last', 'first'
+	var record_time = convert_to_localtime(history_obj.timestamp);
+	var parentObj = $("#speedtest_records");
+	var recordObj = $("<div>").addClass("history_row");
+
+	if($("#speedtest_records").find("#no_test_result_row")[0] != undefined)
+		$("#no_test_result_row").remove();
+
+	(type == "last")? recordObj.appendTo(parentObj): recordObj.prependTo(parentObj);
+	var selectContainerObj =
+			$("<div>")
+			.addClass("select_container")
+			.appendTo(recordObj);
+
+	var selectObj =
+			$("<div>")
+			.attr({"id": history_obj.result.id})
+			.addClass("history_select")
+			.appendTo(selectContainerObj);
+
+	selectObj.click(
+		function(){
+			if(selectObj.hasClass("history_select_checked")){
+				for(var i = 0; i < delete_array.length; i++){
+					if(delete_array[i] == this.id){
+						delete_array.splice(i, 1);
+					}
+				}
+			}
+			else{
+				delete_array.push(this.id);
+			}
+			selectObj.toggleClass("history_select_checked");
+			change_delete_icon();
+		});
+
+	var historyContainerObj =
+			$("<div>")
+			.addClass("history_container")
+			.appendTo(recordObj);
+
+	var timeSpeedContainerObj =
+			$("<div>")
+			.addClass("time_speed_container")
+			.appendTo(historyContainerObj);
+
+	var timestampObj =
+			$("<div>")
+			.addClass("history_timestamp_div")
+			.appendTo(timeSpeedContainerObj);
+
+			$("<div>")
+			.html(record_time.date)
+			.appendTo(timestampObj);
+
+			$("<div>")
+			.html(record_time.time)
+			.appendTo(timestampObj);
+
+	var downloadObj =
+			$("<div>")
+			.addClass("history_downup_div history_downup_font")
+			.appendTo(timeSpeedContainerObj);
+
+	var downloadIconObj =
+			$("<div>")
+			.addClass("download_icon")
+			.appendTo(downloadObj);
+
+	var downloadValObj =
+			$("<div>")
+			.html(convert_Bps_to_Mbps(history_obj.download.bandwidth))
+			.appendTo(downloadObj);
+
+	var uploadObj =
+			$("<div>")
+			.addClass("history_downup_div history_downup_font")
+			.appendTo(timeSpeedContainerObj);
+
+	var uploadIconObj =
+			$("<div>")
+			.addClass("upload_icon")
+			.appendTo(uploadObj);
+
+	var uploadValObj =
+			$("<div>")
+			.html(convert_Bps_to_Mbps(history_obj.upload.bandwidth))
+			.appendTo(uploadObj);
+
+	var pingContainerObj =
+			$("<div>")
+			.addClass("ping_container")
+			.appendTo(historyContainerObj);
+
+	var latencyContainer =
+			$("<div>")
+			.addClass("history_ping_div")
+			.appendTo(pingContainerObj);
+
+			$("<div>")
+			.addClass("ping_title")
+			.html("<#InternetSpeed_Ping#>")
+			.appendTo(latencyContainer);
+
+			var latencyValue =
+				$("<div>")
+				.addClass("history_ping_val")
+				.appendTo(latencyContainer);
+
+				$("<div>")
+				.addClass("history_value_font")
+				.html(history_obj.ping.latency.toFixed(2))
+				.appendTo(latencyValue);
+
+				$("<div>")
+				.addClass("ping_unit")
+				.html("<#InternetSpeed_ms#>")
+				.appendTo(latencyValue);
+
+	var jitterContainer =
+			$("<div>")
+			.addClass("history_jitter_div")
+			.appendTo(pingContainerObj);
+
+			$("<div>")
+			.addClass("ping_title")
+			.html("<#InternetSpeed_Jitter#>")
+			.appendTo(jitterContainer);
+
+			var jitterValue =
+				$("<div>")
+				.addClass("history_ping_val")
+				.appendTo(jitterContainer);
+
+				$("<div>")
+				.addClass("history_value_font")
+				.html(history_obj.ping.jitter.toFixed(2))
+				.appendTo(jitterValue);
+
+				$("<div>")
+				.addClass("ping_unit")
+				.html("<#InternetSpeed_ms#>")
+				.appendTo(jitterValue);
+
+	var packetloss = "0.00";
+	if(typeof history_obj.packetLoss != "undefined")
+		packetloss = history_obj.packetLoss.toFixed(2);
+/*
+	var packetLossContainer =
+			$("<div>")
+			.addClass("history_loss_div")
+			.appendTo(pingContainerObj);
+
+			$("<div>")
+			.addClass("ping_title")
+			.html("<#InternetSpeed_Loss#>")
+			.appendTo(packetLossContainer);
+
+			var lossValue =
+				$("<div>")
+				.addClass("history_ping_val")
+				.appendTo(packetLossContainer);
+
+				$("<div>")
+				.addClass("history_value_font")
+				.html(packetloss)
+				.appendTo(lossValue);
+
+				$("<div>")
+				.addClass("ping_unit")
+				.html("%")
+				.appendTo(lossValue);
+*/
+	var historyMoreObj =
+		$("<div>")
+		.addClass("history_more")
+		.appendTo(timeSpeedContainerObj);
+
+	historyMoreObj.click(
+		function(){
+			if(historyMoreObj.hasClass("down_arrow")){
+				pingContainerObj.css("display", "none");
+				timeSpeedContainerObj.removeClass("border_bottom");
+				historyMoreObj.removeClass().addClass("history_more");
+			}
+			else{
+				pingContainerObj.css("display", "flex");
+				timeSpeedContainerObj.addClass("border_bottom");
+				historyMoreObj.removeClass().addClass("down_arrow");
+			}
+		});
+}
+
+function change_delete_icon(){
+	var selected = false;
+	for(var i = range_start_num - 1; i < range_end_num; i++){
+		var selectObj = $("#"+speedTest_history[i].result.id);
+		if(selectObj.hasClass("history_select_checked") == true){
+			selected = true;
+		}
+	}
+
+	if(selected){
+		if($("#history_delete").hasClass("history_delete_enable") == false){
+			$("#history_delete").addClass("history_delete_enable");
+		}
+
+		if($("#history_delete_m").hasClass("history_delete_enable") == false){
+			$("#history_delete_m").addClass("history_delete_enable");
+		}
+	}
+	else{
+		if($("#history_delete").hasClass("history_delete_enable") == true){
+			$("#history_delete").removeClass("history_delete_enable");
+		}
+
+		if($("#history_delete_m").hasClass("history_delete_enable") == true){
+			$("#history_delete_m").removeClass("history_delete_enable");
+		}
+	}
+}
+
+function delete_history(type){
+	var save_history = 0;
+	var history_tmp = [];
+
+	if(type == "all"){
+		speedTest_history.length = 0;
+		speedTest_history = [{}];
+		save_history = 1;
+	}
+	else{
+		if(delete_array.length == 0)
+			return;
+
+		for(var i = 0; i < delete_array.length; i++){
+			for(var j = 0; j < speedTest_history.length - 1; j++){
+				if(delete_array[i] == speedTest_history[j].result.id.toString()){
+					speedTest_history.splice(j, 1);
+					save_history = 1;
+					break;
+				}
+			}
+		}
+	}
+
+	delete_array.length = 0;
+	if($("#history_select_all").hasClass("history_select_checked"))
+		$("#history_select_all").removeClass("history_select_checked");
+
+	if(save_history)
+		save_speedTest_history();
+
+	update_history_inform();
+	show_history_results();
+
+}
+
+function select_all(){
+	if($("#history_select_all").hasClass("history_select_checked") == false){
+		$("#history_select_all").addClass("history_select_checked");
+		for(var i = range_start_num - 1; i < range_end_num; i++){
+			var selectObj = $("#"+speedTest_history[i].result.id);
+			if(selectObj.hasClass("history_select_checked") == false){
+				selectObj.addClass("history_select_checked");
+				delete_array.push(speedTest_history[i].result.id.toString());
+			}
+		}
+	}
+	else{
+		$("#history_select_all").removeClass("history_select_checked");
+		for(var i = range_start_num - 1; i < range_end_num; i++){
+			var selectObj = $("#"+speedTest_history[i].result.id);
+			if(selectObj.hasClass("history_select_checked")){
+				selectObj.removeClass("history_select_checked");
+				for(var j = 0; j < delete_array.length; j++){
+					if(delete_array[j] == speedTest_history[i].result.id.toString()){
+						delete_array.splice(j, 1);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	change_delete_icon();
+}
+
+function update_history_inform(){
+	max_page_id = (speedTest_history.length <= 11)? 0 : Math.ceil((speedTest_history.length - 1)/10) - 1;
+	range_start_num = page_id*10 + 1;
+	range_end_num = Math.min((range_start_num + 9), (speedTest_history.length - 1));
+
+	if(speedTest_history.length > 1){
+		var range_str = range_start_num + '-' + range_end_num;
+		$("#item_range_str").text(range_str);
+		$("#history_item_range").css("display", "block");
+	}
+	else{
+		$("#history_item_range").css("display", "none");
+	}
+}
+
+function next_history_page(){
+	if(page_id < max_page_id){
+		page_id++;
+		update_history_inform();
+		$("#speedtest_records").empty();
+		show_history_results();
+		if($("#history_select_all").hasClass("history_select_checked"))
+			$("#history_select_all").removeClass("history_select_checked");
+	}
+}
+
+function previous_history_page(){
+	if(page_id > 0){
+		page_id--;
+		update_history_inform();
+		$("#speedtest_records").empty();
+		show_history_results();
+		if($("#history_select_all").hasClass("history_select_checked"))
+			$("#history_select_all").removeClass("history_select_checked");
+	}
+}
+
+function show_speed_level_detail(){
+	if(document.body.clientWidth <= 720){
+		$("#speed_level_detail").slideDown(300);
+		$("#speed_level_btn").on("click", close_speed_level_detail);
+	}
+	else{
+		$("#hiddenMask").fadeIn(300);
+		$("#speed_level_detail").fadeIn(300);
+	}
+}
+
+function close_speed_level_detail(){
+	if(document.body.clientWidth <= 720){
+		$("#speed_level_detail").slideUp(300);
+		$("#speed_level_btn").off("click", close_speed_level_detail);
+	}
+	else{
+		$("#speed_level_detail").fadeOut(300);
+		$("#hiddenMask").fadeOut(300);
+	}
+}
+
+function show_latest_record(){
+	var latest_record = speedTest_history[0];
+	var result_time = convert_to_localtime(latest_record.timestamp);
+	var download_result = convert_Bps_to_Mbps(latest_record.download.bandwidth);
+	var upload_result = convert_Bps_to_Mbps(latest_record.upload.bandwidth);
+	var server = latest_record.server;
+
+	$("#date_div").text(result_time.date);
+	$("#time_div").text(result_time.time);
+	$("#last_host").text(server.name);
+	if(server.name.length > 20){
+		document.getElementById("last_host").title = server.name;
+	}
+	$("#last_location").text(server.location);
+	if(server.location.length > 20){
+		document.getElementById("last_location").title = server.location;
+	}
+	$("#download_test_result").text(download_result);
+	$("#download_test_result2").text(download_result);
+	$("#upload_test_result").text(upload_result);
+	$("#upload_test_result2").text(upload_result);
+	$("#ping_result_latency").text(latest_record.ping.latency.toFixed(2));
+	$("#ping_result_jitter").text(latest_record.ping.jitter.toFixed(2));
+	if(!internetSpeed_lite_support){
+		if(typeof latest_record.packetLoss != "undefined")
+			$("#packet_loss_result").text(latest_record.packetLoss.toFixed(2));
+		else
+			$("#packet_loss_result").text("0.00");
+	}
+
+	change_speed_level(convert_Bps_to_Mbps(latest_record.download.bandwidth));
+}
+
+function set_ookla_state(state){
+	$.ajax({
+		url: "/set_ookla_speedtest_state.cgi",
+		type: "POST",
+		data: {
+			"ookla_state": state
+		},
+		error: function(){
+		},
+		success: function() {
+		}
+	});
+}
+
+function show_alert_message(msg){
+	if (typeof msg == "undefined") {
+		var tmp_str = "<#InternetSpeed_WAN_Discon_Hint#>";
+		$("#alert_str").removeClass().addClass("alert_text_withImg");
+		$("#alert_str").html(tmp_str);
+		$("#alert_img").removeClass().addClass("wan_disconn normal_show");
+	}
+	else{
+		$("#alert_str").removeClass().addClass("alert_text_noImg");
+		$("#alert_str").html(msg);
+		$("#alert_img").removeClass();
+	}
+
+	$("#hiddenMask").fadeIn(300);
+	$("#alert_div").fadeIn(300);
+}
+
+function hide_alert_message(){
+	$("#alert_div").fadeOut(300);
+	$("#hiddenMask").fadeOut(300);
+}
+
+function set_ookla_start_time(time){
+	$.ajax({
+		url: "/set_ookla_speedtest_start_time.cgi",
+		type: "POST",
+		data: {
+			"ookla_start_time": time
+		},
+		error: function(){
+		},
+		success: function(){
+		}
+	});
+}
+
+function show_server_list(){
+	var body = document.body;
+	body.classList.toggle('noscroll');
+
+	if($("#show_server_list").hasClass("down_arrow_up")){
+		if(document.body.clientWidth <= 720)
+			$("#outer_server_container").fadeOut(300);
+		else
+			$("#outer_server_container").css("display", "none");
+	}
+	else{
+		if(document.body.clientWidth <= 720)
+			$("#outer_server_container").fadeIn(300);
+		else
+			$("#outer_server_container").css("display", "block");
+	}
+
+	if(document.body.clientWidth > 720)
+		$("#cur_server_div").toggleClass("cur_server_container_click");
+	$("#show_server_list").toggleClass("down_arrow_up");
+}
+
+function create_server_list(){
+	var server_list = $("#server_list");
+	server_list.empty();
+
+	if(enable_auto_server)
+		$("#auto_server_check").addClass("server_list_check");
+
+	Object.keys(speedTest_servers).forEach(function(key) {
+		if(speedTest_servers[key]["name"] == undefined)
+			return;
+
+		var serverItemObj =
+				$("<div>")
+				.attr({"id": speedTest_servers[key]["id"]})
+				.addClass("host_div")
+				.appendTo(server_list);
+
+		var serverObj =
+				$("<div>")
+				.addClass("server_info")
+				.appendTo(serverItemObj);
+
+		var nameObj =
+				$("<div>")
+				.attr({"title": speedTest_servers[key]["name"].length > 20? speedTest_servers[key]["name"] : ""})
+				.addClass("host_font text_ellipsis")
+				.html(speedTest_servers[key]["name"])
+				.appendTo(serverObj);
+
+		var locationObj =
+				$("<div>")
+				.attr({"title": speedTest_servers[key]["location"].length > 20? speedTest_servers[key]["location"] : ""})
+				.addClass("location_font text_ellipsis")
+				.html(htmlEnDeCode.htmlEncode(speedTest_servers[key]["location"]))
+				.appendTo(serverObj);
+
+		var checkObj =
+				$("<div>")
+				.attr({"id": "server_check_"+speedTest_servers[key]["id"]})
+				.appendTo(serverItemObj);
+
+		if(!enable_auto_server && speedTest_servers[key]["id"] == cur_server_id)
+			checkObj.addClass("server_list_check");
+
+		serverItemObj.click(
+			function(){
+				if(cur_server_id != this.id || enable_auto_server){
+					if(enable_auto_server){
+						enable_auto_server = 0;
+						$("#auto_server_check").removeClass();
+					}
+					else{
+						var selectedId = "server_check_"+cur_server_id;
+						var selectedObj = $(document.getElementById(selectedId));
+						selectedObj.removeClass("server_list_check");
+					}
+					cur_server_id = this.id;
+					checkObj.addClass("server_list_check");
+					$("#last_host").text(nameObj.html());
+					$("#last_location").text(locationObj.html());
+					$("#last_location").css("display", "block");
+					if(nameObj.html().length > 20){
+						document.getElementById("last_host").title = nameObj.html();
+					}
+					if(locationObj.html().length > 20){
+						document.getElementById("last_location").title = locationObj.html();
+					}
+				}
+			}
+		);
+	});
+
+	$("#test_server_div").mouseleave(
+		function(){
+			if($("#outer_server_container").css("display") == "block")
+				show_server_list();
+		});
+}
+
+function choose_auto_server(){
+	if(!enable_auto_server){
+		enable_auto_server = 1;
+		$("#auto_server_check").addClass("server_list_check");
+		if(cur_server_id != ""){
+			var selectedId = "server_check_"+cur_server_id;
+			var selectedObj = $(document.getElementById(selectedId));
+			selectedObj.removeClass("server_list_check");
+		}
+		$("#last_host").text("<#Auto#>");
+		$("#last_location").css("display", "none");
+	}
+}
+
+function open_info(){
+	$("#hiddenMask").css("display", "block");
+	$(".function_desc").fadeIn(300);
+}
+
+function close_info(){
+	$(".function_desc").fadeOut(300);
+	$("#hiddenMask").css("display", "none");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+	const thirdpartyPolicy = 'Speedtest'
+	document.getElementById("thirdparty_pp").innerHTML=`<#Thirdparty_PP_Desc1#>`.replace("%1$@", thirdpartyPolicy).replace("[aa]%2$@[/aa]", `<a onclick="showThirdPartyPolicy('${thirdpartyPolicy}')" style="text-decoration: underline;cursor: pointer;">Ookla PRIVACY POLICY</a>`);
+})
+
+function showThirdPartyPolicy(party){
+	const thirdPartyPolicyModal = new ThirdPartyPolicyModalComponent({
+		policy: 'THIRDPARTY_PP',
+		party: party
+	});
+	thirdPartyPolicyModal.show();
+}
+</script>
+<div id="hiddenMask" class="speed_level_mask"></div>
+
+<div class="bg_linkRate" style="display:none;">
+	<div class="container">
+		<div class="function_desc">
+			<div class="function_title_pc"><div><#InternetSpeed#></div></div>
+			<div class="split-Line"></div>
+		</div>
+
+		<div id="LinkRate_div" class="LinkRate_div">
+			<div class="go_LinkRate_container">
+
+				<div class="LinkRate_container">
+					<div id="LinkRate_img" class="LinkRate_img_normal">
+
+						<div id="receive_transmit_container" class="receive_transmit_container">
+							<div class="speedRate_container">
+								<div class="LinkRate_container">
+									<div class="receive_icon">
+										<span class="receive_transmit_text"><#AiMesh_Receive_Rate#></span>
+									</div>
+								</div>
+								<span class="LinkRate_result"><div id="receive_rate">--</div><div id="rLinkRate_unit" class="LinkRate_unit"><#InternetSpeed_Mbps#></div></span>
+							</div>
+							<div class="speedRate_container" style="margin-left:200px;margin-top:-76px;">
+								<div class="LinkRate_container">
+									<div class="transmit_icon">
+										<span class="receive_transmit_text"><#AiMesh_Transmit_Rate#></span>
+									</div>
+								</div>
+								<span class="LinkRate_result"><div id="transmit_rate">--</div><div id="tLinkRate_unit" class="LinkRate_unit"><#InternetSpeed_Mbps#></div></span>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<div class="bg_internetSpeed" style="display:none;">
+	<div class="container">
+		<div class="function_desc">
+			<div class="function_container">
+				<div class="function_title_pc"><div><#InternetSpeed#></div></div>
+				<div class="function_title_m">
+					<div class="info_close"><div class="close_icon" style="margin-top: 10px;" onclick="close_info();"></div></div>
+					<div class="info_title"><#diskUtility_information#></div>
+				</div>
+				<div class="split-Line"></div>
+			</div>
+		</div>
+		<div class="normal_show">
+			<div id="notification_str" class="wan_notice">
+				<div><#InternetSpeed_Pause#></div>
+				<div onclick="show_alert_message();" style="text-decoration:underline; cursor: pointer;"><#InternetSpeed_More_Info#></div>
+			</div>
+		</div>
+		<div class="speedTest_div">
+			<div class="time_column">
+				<div style="width: 30%;">
+					<div class="time_container">
+						<div id="date_div" class="date_div"></div>
+						<div id="time_div" class="time_div"></div>
+					</div>
+				</div>
+				<div id="test_server_div" class="test_server_container">
+					<div id="cur_server_div" class="cur_server_container" onclick="show_server_list();">
+						<div class="server_item_div">
+							<div class="server_icon"></div>
+							<div class="cur_server_info">
+								<div id="last_host" class="host_font text_ellipsis"></div>
+								<div id="last_location" class="location_font text_ellipsis"></div>
+							</div>
+							<div id="show_server_list" class="down_arrow"></div>
+						</div>
+					</div>
+					<div id="outer_server_container">
+						<div class="server_list_close"><div class="close_icon" onclick="show_server_list();"></div></div>
+						<div id="server_list_div" class="server_list_container">
+							<div class="sub_server_container" style="height: 30px;">
+								<div class="server_brick_container"><div class="server_list_brick"></div></div>
+								<div style="display: flex; align-items: center; justify-content: space-between; width: 100%;" onclick="choose_auto_server();">
+									<div class="sub_server_title"><#Auto#></div>
+									<div id="auto_server_check" style="margin-right: 8px;"></div>
+								</div>
+							</div>
+							<div class="sub_server_container">
+								<div class="server_brick_container"><div class="server_list_brick"></div></div>
+								<div style="flex-grow: 1; display: flex; flex-direction: column;">
+									<div class="sub_server_title"><#InternetSpeed_Servers_Nearby#></div>
+									<div id="server_list"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="go_speed_container">
+				<div class="speedTest_btn_container">
+					<div id="speedTest_btn" class="speedTest_btn_normal"  style="display: flex; justify-content: center;" onclick ="start_speedTest();" title="<#InternetSpeed_Go#>"><div id="speedTest_btn_text" style="width: 110px; overflow: hidden; text-overflow: ellipsis;"><#InternetSpeed_Go#></div></div>
+				</div>
+				<div class="mobile_show">
+					<div id="wan_disconn_hint" style="width: 100%; height: 50px; display: flex; justify-content: center;" onclick="show_alert_message();"><div class="wan_notice_m"><div class="notice_icon"></div><div style="margin: 0 10px;">WAN Disconnected</div></div></div>
+				</div>
+				<div class="download_upload_container">
+					<div class="speedResult_container">
+						<div class="result_title_container">
+							<div class="download_result_icon">
+								<span class="download_upload_text"><#InternetSpeed_Download#></span>
+							</div>
+						</div>
+						<div class="test_result"><div id="download_test_result">--</div></div>
+						<div class="result_unit"><#InternetSpeed_Mbps#></div>
+					</div>
+					<div class="speedResult_container">
+						<div class="result_title_container">
+							<div class="upload_result_icon">
+								<span class="download_upload_text"><#InternetSpeed_Upload#></span>
+							</div>
+						</div>
+						<div class="test_result"><div id="upload_test_result">--</div></div>
+						<div class="result_unit"><#InternetSpeed_Mbps#></div>
+					</div>
+				</div>
+			</div>
+			<div class="level_ping_div">
+				<div class="speed_level_div">
+					<div id="speed_level_btn" class="speed_level_default" style="display: flex; align-items: center;" onclick="show_speed_level_detail();">
+						<div id="speed_level_title" class="speed_level_title_default"><#InternetSpeed_Level#></div>
+						<div id="speed_level_text"></div>
+						<div id="speed_level_icon"></div>
+						<div class="speed_level_more"></div>
+					</div>
+				</div>
+				<div class="ping_result_div">
+					<div class="ping_result_sub_div">
+						<div class="ping_result_title"><div><#InternetSpeed_Ping#></div></div><div class="ping_value_container"><div id="ping_result_latency" class="ping_result_value">--</div></div><div class="ping_result_unit"><div><#InternetSpeed_ms#></div></div>
+					</div>
+					<div class="ping_result_sub_div">
+						<div class="ping_result_title"><div><#InternetSpeed_Jitter#></div></div><div class="ping_value_container"><div id="ping_result_jitter" class="ping_result_value">--</div></div><div class="ping_result_unit"><div><#InternetSpeed_ms#></div></div>
+					</div>
+					<div id="packet_loss_div" class="ping_result_sub_div">
+						<div class="ping_result_title"><div><#InternetSpeed_Loss#></div></div><div class="ping_value_container"><div id="packet_loss_result" class="ping_result_value">--</div></div><div class="ping_result_unit">%</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="ookla_info"><div class="info_icon mobile_show" onclick="open_info();"></div><div><#InternetSpeed_ookla_mark#></div><div id="thirdparty_pp"></div></div>
+		<div id="speed_level_detail" class="speed_level_detail speedTest_div">
+			<div class="detail_speed_level">
+				<div class="last_test_container">
+					<div class="detail_title">
+						<div><#InternetSpeed_LastTest#></div>
+					</div>
+					<div class="detail_last_test_div">
+						<div id="speedtest_result_timestamp" style="height: 36px; font-size: 18px; margin-top: 15px;"></div>
+						<div class="speedtest_result_div_small">
+							<div style="height: 15px;">
+								<div class="download_result_icon">
+									<span class="download_upload_text"><#InternetSpeed_Download#></span>
+								</div>
+							</div>
+							<div id="download_test_result2" class="detail_downup_text">--</div>
+							<div style="height: 15px; margin-left: 22px; color:#B2BBC1"><#InternetSpeed_Mbps#></div>
+						</div>
+						<div class="speedtest_result_div_small">
+							<div style="height: 15px;">
+								<div class="upload_result_icon">
+									<span class="download_upload_text"><#InternetSpeed_Upload#></span>
+								</div>
+							</div>
+							<div id="upload_test_result2" class="detail_downup_text">--</div>
+							<div style="height: 15px; margin-left: 22px; color:#B2BBC1"><#InternetSpeed_Mbps#></div>
+						</div>
+					</div>
+					<div class="detail_level_desc_div">
+						<div class="speed_level_rating"><#InternetSpeed_downloadSpeedRating#></div>
+						<div style="height: 70px; display: flex; align-items: center;">
+							<div id="speed_level_text2" class="speed_level_text2"></div>
+							<div id="speed_level_icon2"></div>
+						</div>
+						<div>
+							<div id="level_desc_title" class="level_desc_title"></div>
+							<div id="level_desc" style="font-size: 12px;"></div>
+						</div>
+					</div>
+				</div>
+				<div class="speed_level_container">
+					<div class="fadeOut_close" style="flex-grow: 1;"><div class="close_icon speed_level_close" onclick="close_speed_level_detail();"></div></div>
+					<div style="width: 97%; min-height: 450px; flex-grow: 4;">
+						<div style="width: 15%; height: 450px; float: left;">
+							<div style="width: 90%; float: left;">
+								<div class="speed_level_range">901+</div>
+								<div class="speed_level_range">251 - 900</div>
+								<div class="speed_level_range">101 - 250</div>
+								<div class="speed_level_range">51 - 100</div>
+								<div class="speed_level_range">6 - 50</div>
+								<div class="speed_level_range">0 - 5</div>
+							</div>
+							<div class="speed_level_rainbow_bar" style=""></div>
+							<div style="text-align: right;"><#InternetSpeed_Mbps#></div>
+						</div>
+						<div style="width: 85%; float: left;">
+							<div>
+								<div class="speed_level_desc_icon speed_icon_ultra"></div>
+								<div class="speed_level_desc_div" style="border-top: #4C5B65 solid 1px;">
+									<div class="speed_level_desc_level"><#InternetSpeed_Ultra#></div>
+									<div class="speed_level_desc_detail">
+										<div class="speed_level_desc_title"><#InternetSpeed_Ultar_title#></div>
+										<div class="speed_level_desc_font"><#InternetSpeed_Ultra_detail#></div>
+									</div>
+								</div>
+							</div>
+							<div>
+								<div class="speed_level_desc_icon speed_icon_super"></div>
+								<div class="speed_level_desc_div">
+									<div class="speed_level_desc_level"><#InternetSpeed_Super#></div>
+									<div class="speed_level_desc_detail">
+										<div class="speed_level_desc_title"><#InternetSpeed_Super_title#></div>
+										<div class="speed_level_desc_font"><#InternetSpeed_Super_detail#></div>
+									</div>
+								</div>
+							</div>
+							<div>
+								<div class="speed_level_desc_icon speed_icon_fast"></div>
+								<div class="speed_level_desc_div">
+									<div class="speed_level_desc_level"><#InternetSpeed_Fast#></div>
+									<div class="speed_level_desc_detail">
+										<div class="speed_level_desc_title"><#InternetSpeed_Fast_title#></div>
+										<div class="speed_level_desc_font"><#InternetSpeed_Fast_detail#></div>
+									</div>
+								</div>
+							</div>
+							<div>
+								<div class="speed_level_desc_icon speed_icon_great"></div>
+								<div class="speed_level_desc_div">
+									<div class="speed_level_desc_level"><#InternetSpeed_Great#></div>
+									<div class="speed_level_desc_detail">
+										<div class="speed_level_desc_title"><#InternetSpeed_Great_title#></div>
+										<div class="speed_level_desc_font"><#InternetSpeed_Great_detail#></div>
+									</div>
+								</div>
+							</div>
+							<div>
+								<div class="speed_level_desc_icon speed_icon_good"></div>
+								<div class="speed_level_desc_div">
+									<div class="speed_level_desc_level"><#InternetSpeed_Good#></div>
+									<div class="speed_level_desc_detail">
+										<div class="speed_level_desc_title"><#InternetSpeed_Good_title#></div>
+										<div class="speed_level_desc_font"><#InternetSpeed_Good_desc#></div>
+									</div>
+								</div>
+							</div>
+							<div>
+								<div class="speed_level_desc_icon speed_icon_normal"></div>
+								<div class="speed_level_desc_div">
+									<div class="speed_level_desc_level"><#InternetSpeed_Normal#></div>
+									<div class="speed_level_desc_detail">
+										<div class="speed_level_desc_title"><#InternetSpeed_Normal_title#></div>
+										<div class="speed_level_desc_font"><#InternetSpeed_Normal_desc#></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="slideUp_close" style="flex-grow: 2;">
+						<div class="up_arrow_container" onclick="close_speed_level_detail();"><div class="up_arrow"></div></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="history_desc" class="history_desc"><div class="history_icon"></div><div style="height: 30px; line-height: 30px; margin-left: 10px;"><#InternetSpeed_History#></div></div>
+		<div  id="speedTest_history_div" class="speedTest_div">
+			<div id="function_row">
+				<div id="history_delete" class="history_delete" onclick="delete_history();"></div>
+				<div style="display: flex; justify-content: space-around; align-items: center;">
+					<div id="history_item_range" class="history_item_range"><span id="item_range_str"></span>&nbsp;<#InternetSpeed_Items#></div>
+					<div class="left_arrow" onclick="previous_history_page();"></div>
+					<div class="right_arrow" onclick="next_history_page();"></div>
+				</div>
+			</div>
+			<div class="history_row">
+				<div class="select_container">
+					<div id="history_select_all" class="history_select" onclick="select_all();"></div>
+				</div>
+				<div class="history_container history_title">
+					<div class="time_speed_container">
+						<div class="history_timestamp_div"><#diskUtility_time#></div>
+						<div class="history_downup_div">
+							<div class="downup_title_container">
+								<div class="download_icon"></div>
+								<div><#InternetSpeed_Download#></div>
+							</div>
+							<div>(<#InternetSpeed_Mbps#>)</div>
+						</div>
+						<div class="history_downup_div">
+							<div class="downup_title_container">
+								<div class="upload_icon"></div>
+								<div><#InternetSpeed_Upload#></div>
+							</div>
+							<div>(<#InternetSpeed_Mbps#>)</div>
+						</div>
+					</div>
+					<div class="ping_container">
+						<div class="history_ping_div">
+							<div><#InternetSpeed_Ping#></div>
+							<div>(<#InternetSpeed_ms#>)</div>
+						</div>
+						<div class="history_jitter_div">
+							<div><#InternetSpeed_Jitter#></div>
+							<div>(<#InternetSpeed_ms#>)</div>
+						</div>
+						<!--div class="history_loss_div">
+							<div><#InternetSpeed_Loss#></div>
+							<div>(%)</div>
+						</div-->
+					</div>
+				</div>
+				<div class="history_container history_title_m">
+					<div class="time_speed_container">
+						<div class="history_timestamp_div"><#diskUtility_time#></div>
+						<div class="history_downup_div">
+							<div class="downup_title_container">
+								<div><#InternetSpeed#>(<#InternetSpeed_Mbps#>)</div>
+							</div>
+						</div>
+						<div id="history_delete_m" class="history_delete" onclick="delete_history();"></div>
+					</div>
+				</div>
+			</div>
+			<div id="speedtest_records"></div>
+		</div>
+		<div id="alert_div" class="alert_notification">
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<div class="alert_close"><div class="close_icon alert_notification_close" onclick='hide_alert_message();'></div></div>
+				<div class="notice_title_container">
+					<div class="notice_icon normal_show" style="margin-left: 15px;"></div>
+					<div class="alert_header"><#InternetSpeed_Notice#></div>
+				</div>
+				<div class="content_div notice_content_m">
+					<div id="alert_str"></div>
+					<div id="alert_img" class=""></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

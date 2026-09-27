@@ -1,0 +1,409 @@
+/dts-v1/;
+/*
+ * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#include "ipq8074.dtsi"
+#include "ipq8074-hk-cpu.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ807x-DB.HK02";
+	compatible = "qcom,ipq807x-db.hk02", "qcom,ipq807x";
+	qcom,msm-id = <0x143 0x0>;
+	interrupt-parent = <&intc>;
+	qcom,board-id = <0x8 0x0>;
+	qcom,pmic-id = <0x0 0x0 0x0 0x0>;
+
+	aliases {
+		/*
+		 * Aliases as required by u-boot
+		 * to patch MAC addresses
+		 */
+		ethernet0 = "/soc/dp1";
+		ethernet1 = "/soc/dp2";
+		ethernet2 = "/soc/dp3";
+		ethernet3 = "/soc/dp4";
+		ethernet4 = "/soc/dp5";
+		ethernet5 = "/soc/dp6";
+	};
+
+	chosen {
+		bootargs = "console=ttyMSM0,115200,n8 root=/dev/ram0 rw init=/init";
+		#ifdef __IPQ_MEM_PROFILE_256_MB__
+			bootargs-append = " swiotlb=1";
+		#else
+			bootargs-append = " swiotlb=1 coherent_pool=2M";
+		#endif
+	};
+};
+
+&tlmm {
+	mdio_pins: mdio_pinmux {
+		mux_0 {
+			pins = "gpio68";
+			function = "mdc";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+		mux_1 {
+			pins = "gpio69";
+			function = "mdio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+		mux_2 {
+			pins = "gpio26";
+			function = "gpio";
+			bias-pull-up;
+		};
+
+	};
+
+	uart_pins: uart_pins {
+		mux {
+			pins = "gpio23", "gpio24";
+			function = "blsp4_uart1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	i2c_0_pinmux {
+		mux {
+			pins = "gpio42", "gpio43";
+			function = "blsp1_i2c";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	spi_0_pins {
+		mux {
+			pins = "gpio38", "gpio39", "gpio40", "gpio41";
+			function = "blsp0_spi";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	qpic_pins {
+		data_0 {
+			pins = "gpio15";
+			function = "qpic_pad0";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_1 {
+			pins = "gpio12";
+			function = "qpic_pad1";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_2 {
+			pins = "gpio13";
+			function = "qpic_pad2";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_3 {
+			pins = "gpio14";
+			function = "qpic_pad3";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_4 {
+			pins = "gpio5";
+			function = "qpic_pad4";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_5 {
+			pins = "gpio6";
+			function = "qpic_pad5";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_6 {
+			pins = "gpio7";
+			function = "qpic_pad6";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_7 {
+			pins = "gpio8";
+			function = "qpic_pad7";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		data_8 {
+			pins = "gpio16";
+			function = "qpic_pad8";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		qpic_pad {
+			pins = "gpio0", "gpio1", "gpio2", "gpio3", "gpio4",
+			       "gpio9", "gpio10", "gpio11", "gpio17";
+			function = "qpic_pad";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	hsuart_pins {
+		mux {
+			pins = "gpio46", "gpio47", "gpio48", "gpio49";
+			function = "blsp2_uart";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	uniphy_pins: uniphy_pinmux {
+		mux {
+			pins = "gpio60";
+			function = "rx2";
+			bias-disable;
+		};
+	};
+};
+
+&soc {
+	mdio@90000 {
+		pinctrl-0 = <&mdio_pins>;
+		pinctrl-names = "default";
+		phy-reset-gpio = <&tlmm 37 0 &tlmm 26 1>;
+		compatible = "qcom,ipq40xx-mdio", "qcom,qca-mdio";
+		phy0: ethernet-phy@0 {
+			reg = <0>;
+		};
+		phy1: ethernet-phy@1 {
+			reg = <1>;
+		};
+		phy2: ethernet-phy@2 {
+			reg = <2>;
+		};
+		phy3: ethernet-phy@3 {
+			reg = <3>;
+		};
+		phy4: ethernet-phy@4 {
+			compatible ="ethernet-phy-ieee802.3-c45";
+			reg = <15>;
+		};
+		phy5: ethernet-phy@5 {
+			reg = <28>;
+		};
+	};
+
+	ess-switch@3a000000 {
+		pinctrl-0 = <&uniphy_pins>;
+		pinctrl-names = "default";
+		switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+		switch_lan_bmp = <0x3e>; /* lan port bitmap */
+		switch_wan_bmp = <0x40>; /* wan port bitmap */
+		switch_mac_mode = <0x0>; /* mac mode for uniphy instance0*/
+		switch_mac_mode1 = <0xd>; /* mac mode for uniphy instance1*/
+		switch_mac_mode2 = <0xc>; /* mac mode for uniphy instance2*/
+		bm_tick_mode = <0>; /* bm tick mode */
+		tm_tick_mode = <0>; /* tm tick mode */
+		qcom,port_phyinfo {
+			port@0 {
+				port_id = <1>;
+				phy_address = <0>;
+			};
+			port@1 {
+				port_id = <2>;
+				phy_address = <1>;
+			};
+			port@2 {
+				port_id = <3>;
+				phy_address = <2>;
+			};
+			port@3 {
+				port_id = <4>;
+				phy_address = <3>;
+			};
+			port@4 {
+				port_id = <5>;
+				phy_address = <15>;
+				ethernet-phy-ieee802.3-c45;
+			};
+			port@5 {
+				port_id = <6>;
+				phy_address = <28>;
+				port_mac_sel = "QGMAC_PORT";
+			};
+		};
+	};
+};
+
+&soc {
+	dp1 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <1>;
+		reg = <0x3a001000 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <0>;
+		phy-mode = "sgmii";
+	};
+
+	dp2 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <2>;
+		reg = <0x3a001200 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <1>;
+		phy-mode = "sgmii";
+	};
+
+	dp3 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <3>;
+		reg = <0x3a001400 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <2>;
+		phy-mode = "sgmii";
+	};
+
+	dp4 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <4>;
+		reg = <0x3a001600 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <3>;
+		phy-mode = "sgmii";
+	};
+
+	dp5 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <5>;
+		reg = <0x3a003000 0x3fff>;
+		qcom,mactype = <1>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <15>;
+		phy-mode = "sgmii";
+	};
+
+	dp6 {
+		device_type = "network";
+		compatible = "qcom,nss-dp";
+		qcom,id = <6>;
+		reg = <0x3a001a00 0x200>;
+		qcom,mactype = <0>;
+		local-mac-address = [000000000000];
+		qcom,link-poll = <1>;
+		qcom,phy-mdio-addr = <28>;
+		phy-mode = "sgmii";
+	};
+};
+
+&blsp1_uart5 {
+	pinctrl-0 = <&uart_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&blsp1_spi1 { /* BLSP1 QUP1 */
+	pinctrl-0 = <&spi_0_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+
+	m25p80@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reg = <0>;
+		compatible = "n25q128a11";
+		linux,modalias = "m25p80", "n25q128a11";
+		spi-max-frequency = <50000000>;
+		use-default-sizes;
+	};
+};
+
+&blsp1_uart3 {
+	pinctrl-0 = <&hsuart_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&msm_imem {
+	status = "disabled";
+};
+
+&ssphy_0 {
+	status = "ok";
+};
+
+&qusb_phy_0 {
+	status = "ok";
+};
+
+&ssphy_1 {
+	status = "ok";
+};
+
+&qusb_phy_1 {
+	status = "ok";
+};
+
+&usb3_0 {
+	status = "ok";
+};
+
+&usb3_1 {
+	status = "ok";
+};
+
+&cryptobam {
+	status = "ok";
+};
+
+&crypto {
+	status = "ok";
+};
+
+&blsp1_i2c2 {
+	pinctrl-0 = <&i2c_0_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&blsp1_i2c3 {
+        status = "disabled";
+};
+
+&qpic_bam {
+	status = "ok";
+};
+
+&qpic_nand {
+	pinctrl-0 = <&qpic_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};

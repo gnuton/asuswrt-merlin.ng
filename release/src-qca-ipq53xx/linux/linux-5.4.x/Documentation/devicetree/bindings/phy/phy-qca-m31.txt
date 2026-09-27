@@ -1,0 +1,27 @@
+Qualcomm Technologies, Inc. M31 PHY
+--------------------------------------
+
+This file contains documentation for the USB M31 PHY found in Qualcomm
+Technologies, Inc. IPQ5018 SoCs.
+
+Required properties
+- compatible	: must be "qca,m31-usb-hsphy"
+- reg		: offset and length of the M31 PHY register set
+- phy_type	: specifies type of phy "utmi"/"ulpi"
+- resets	: a list of phandles and reset pairs, one for each
+			entry in reset-names.
+- reset-names	: Should contain "ref" for the reset
+
+Example:
+		hs_m31phy_0: hs_m31phy@5b00 {
+			compatible = "qca,m31-usb-hsphy";
+			reg = <0x5b000 0x3000>,
+				<0x08af8800 0x400>;
+			reg-names = "m31usb_phy_base",
+					"qscratch_base";
+			phy_type = "utmi";
+			resets = <&gcc GCC_QUSB2_0_PHY_BCR>;
+			reset-names = "usb2_phy_reset";
+
+			status = "ok";
+		};

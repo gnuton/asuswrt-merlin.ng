@@ -1,0 +1,149 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/pinctrl/qcom,ipq5332-pinctrl.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: IPQ5332 TLMM block
+
+maintainers:
+  - Timple Raj M <quic_timple@quicinc.com>
+
+description: |
+  This binding describes the Top Level Mode Multiplexer block found in the
+  IPQ5332 platform.
+
+properties:
+  compatible:
+    const: qcom,ipq5332-pinctrl
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    description: Specifies the TLMM summary IRQ
+    maxItems: 1
+
+  interrupt-controller: true
+
+  '#interrupt-cells':
+    description:
+      Specifies the PIN numbers and Flags, as defined in defined in
+      include/dt-bindings/interrupt-controller/irq.h
+    const: 2
+
+  gpio-controller: true
+
+  '#gpio-cells':
+    description: Specifying the pin number and flags, as defined in
+      include/dt-bindings/gpio/gpio.h
+    const: 2
+
+  gpio-ranges:
+    maxItems: 1
+
+#PIN CONFIGURATION NODES
+patternProperties:
+  '-pinmux$':
+    type: object
+    description:
+      Pinctrl node's client devices use subnodes for desired pin configuration.
+      Client device subnodes use below standard properties.
+    $ref: "/schemas/pinctrl/pincfg-node.yaml"
+
+    properties:
+      pins:
+        description:
+          List of gpio pins affected by the properties specified in this
+          subnode.
+        items:
+          oneOf:
+            - pattern: "^gpio([1-9]|[1-7][0-9]|65)$"
+            - enum: [ sdc1_clk, sdc1_cmd, sdc1_data, sdc2_clk, sdc2_cmd,
+              sdc2_data, qdsd_cmd, qdsd_data0, qdsd_data1, qdsd_data2,
+              qdsd_data3 ]
+        minItems: 1
+        maxItems: 4
+
+      function:
+        description:
+          Specify the alternative function to be configured for the specified
+          pins.
+
+        enum: [ PTA_0, PTA_1, PTA_2, atest_char, test_char0, atest_char1,
+		test_char2, atest_char3, test_tic, audio_pri, udio_pri0,
+		audio_pri1, udio_sec, audio_sec0, udio_sec1, blsp0_i2c,
+		lsp0_spi, blsp0_uart0, lsp0_uart1, blsp1_i2c0, lsp1_i2c1,
+		blsp1_spi0, lsp1_spi1, blsp1_uart0, lsp1_uart1, blsp1_uart2,
+		lsp2_i2c0, blsp2_i2c1, lsp2_spi, blsp2_spi0, lsp2_spi1,
+		core_voltage, ri_trng0, cri_trng1, ri_trng2, cri_trng3,
+		xc_clk, cxc_data, bg_out, gcc_plltest, cc_tlmm, gpio, ock_det,
+		mac0, ac1, mdc0, dc1, mdio0, dio1, pc, cie0_clk, pcie0_wake,
+		cie1_clk, pcie1_wake, cie2_clk, pcie2_wake, ll_test,
+		prng_rosc0, rng_rosc1, prng_rosc2, rng_rosc3, pwm0, wm1, pwm2,
+		wm3, qdss_cti_trig_in_a0, dss_cti_trig_in_a1,
+		qdss_cti_trig_in_b0, dss_cti_trig_in_b1, qdss_cti_trig_out_a0,
+		dss_cti_trig_out_a1, qdss_cti_trig_out_b0, dss_cti_trig_out_b1,
+		qdss_traceclk_a, dss_traceclk_b, qdss_tracectl_a,
+		dss_tracectl_b, qdss_tracedata_a, dss_tracedata_b, qspi_data,
+		spi_clk, qspi_cs, esout, rx0, x1, sdc_data, dc_clk, sdc_cmd,
+		sens_max, wci0, ci1, wci10, ci11, wci2, ci3, wci4, ci5, wci6,
+		ci7, wci8, ci9, wsi_clk, si_clk3, wsi_data, si_data3,
+		wsis_reset, fem0, xfem1, fem2, xfem3, fem4, xfem5, fem6,
+		xfem7 ]
+
+      drive-strength:
+        enum: [2, 4, 6, 8, 10, 12, 14, 16]
+        default: 2
+        description:
+          Selects the drive strength for the specified pins, in mA.
+
+      bias-pull-down: true
+
+      bias-pull-up: true
+
+      bias-disable: true
+
+      output-high: true
+
+      output-low: true
+
+    required:
+      - pins
+      - function
+
+    additionalProperties: false
+
+required:
+  - compatible
+  - reg
+  - interrupts
+  - interrupt-controller
+  - '#interrupt-cells'
+  - gpio-controller
+  - '#gpio-cells'
+  - gpio-ranges
+
+additionalProperties: false
+
+examples:
+  - |
+        #include <dt-bindings/interrupt-controller/arm-gic.h>
+	tlmm: pinctrl@1000000 {
+		compatible = "qcom,ipq5332-pinctrl";
+		reg = <0x01000000 0x300000>;
+		interrupts = <GIC_SPI 249 IRQ_TYPE_LEVEL_HIGH>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		gpio-ranges = <&tlmm 0 0 53>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		button_pins: button_pins {
+			wps_button {
+				pins = "gpio35";
+				function = "gpio";
+				drive-strength = <8>;
+				bias-pull-up;
+			};
+		};
+	};

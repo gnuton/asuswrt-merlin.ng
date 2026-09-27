@@ -1,0 +1,62 @@
+#! /usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0
+#
+# This is simple script to process JSON output from ip route
+# command and format it.  Based on earlier shell script version.
+"""Script to parse ip route output into more readable text."""
+
+import sys
+import json
+import getopt
+import subprocess
+
+
+def usage():
+    '''Print usage and exit'''
+    print("Usage: {} [tablenr [raw ip args...]]".format(sys.argv[0]))
+    sys.exit(64)
+
+
+def main():
+    '''Process the arguments'''
+    family = 'inet'
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h46f:", ["help", "family="])
+    except getopt.GetoptError as err:
+        print(err)
+        usage()
+
+    for opt, arg in opts:
+        if opt in ["-h", "--help"]:
+            usage()
+        elif opt == '-6':
+            family = 'inet6'
+        elif opt == "-4":
+            family = 'inet'
+        elif opt in ["-f", "--family"]:
+            family = arg
+        else:
+            assert False, "unhandled option"
+
+    if not args:
+        args = ['0']
+
+    cmd = ['ip', '-f', family, '-j', 'route', 'list', 'table'] + args
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    tbl = json.load(process.stdout)
+    if family == 'inet':
+        fmt = '{:15} {:15} {:15} {:8} {:8}{:<16} {}'
+    else:
+        fmt = '{:32} {:32} {:32} {:8} {:8}{:<16} {}'
+
+    # ip route json keys
+    keys = ['dst', 'gateway', 'prefsrc', 'protocol', 'scope', 'dev', 'table']
+    print(fmt.format(*map(lambda x: x.capitalize(), keys)))
+
+    for record in tbl:
+        fields = [record[k] if k in record else '' for k in keys]
+        print(fmt.format(*fields))
+
+
+if __name__ == "__main__":
+    main()

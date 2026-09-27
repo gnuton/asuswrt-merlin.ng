@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 AP-MI01.2-C2 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#ifdef __IPQ_MEM_PROFILE_512_MB__
+#include "ipq5332-512MB-memory.dtsi"
+#else
+#include "ipq5332-default-memory.dtsi"
+#endif
+
+#include "ipq5332-mi01.2.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5332/AP-MI01.2-C2";
+	compatible = "qcom,ipq5332-ap-mi01.2-c2", "qcom,ipq5332";
+	interrupt-parent = <&intc>;
+
+	soc {
+		phy@4b0000 {
+			status = "ok";
+		};
+
+		pcie@20000000 {
+			status = "ok";
+			pcie0_rp {
+				reg = <0 0 0 0 0>;
+				qcom,mhi@2 {
+					reg = <0 0 0 0 0>;
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x30>;
+					memory-region = <0>, <&mhi_region0>;
+#else
+					memory-region = <&qcn9224_pcie0>;
+					qcom,board_id = <0x15>;
+					qcom,wsi = <&wsi>;
+#endif
+				};
+			};
+		};
+
+		dp1 {
+
+			/delete-property/qcom,mdio-bus;
+			/delete-property/qcom,phy-mdio-addr;
+			/delete-property/qcom,link-poll;
+
+		};
+
+		edma@3ab00000 {
+			qcom,edma_loopback_ring;
+			qcom,num_loopback_rings = <1>;
+			qcom,txdesc_loopback_ring_id = <0>;
+			qcom,txcmpl_loopback_ring_id = <0>;
+			qcom,rxfill_loopback_ring_id = <0>;
+			qcom,rxdesc_loopback_ring_id = <0>;
+			qcom,loopback_queue_base = <56>;
+			qcom,loopback_num_queues = <8>;
+		};
+
+	};
+};
+
+&wifi0 {
+	qcom,rproc = <&q6_wcss_pd1>;
+	qcom,rproc_rpd = <&q6v5_wcss>;
+	qcom,multipd_arch;
+	qcom,userpd-subsys-name = "q6v5_wcss_userpd1";
+#if defined(__CNSS2__)
+	mem-region = <&q6_region>;
+#else
+	memory-region = <&q6_region>;
+	qcom,wsi = <&wsi>;
+#endif
+	qcom,board_id = <0x12>;
+	status = "ok";
+};
+
+&qcn9224_pcie0 {
+	status = "ok";
+};
+
+&qcn9224_pcie1 {
+	status = "ok";
+};
+
+&mhi_region0 {
+	status = "ok";
+};
+
+&mhi_region1 {
+	status = "ok";
+};
+
+&wifi1 {
+	/* QCN9224 radio 5G */
+	hremote_node = <&qcn9224_pcie0>;
+	board_id = <0x15>;
+	status = "ok";
+};
+
+&wifi2 {
+	/* QCN9224 radio 6G */
+	hremote_node = <&qcn9224_pcie1>;
+	board_id = <0x16>;
+	status = "ok";
+};

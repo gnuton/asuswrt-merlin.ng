@@ -1,0 +1,325 @@
+{
+  "source_commit": "3d17d4047ea047725225afc00fb587e8fbe90781",
+  "fixture_commit": "3d17d4047ea047725225afc00fb587e8fbe90781",
+  "base_commit": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+  "image": {
+    "bytes": 59049809,
+    "sha256": "7574fbaa257e85dd14d0b864976b757596855798f6475694ba93594aaf4a602a",
+    "model": "TUF-BE9400",
+    "timestamp": 1790447240,
+    "header_crc32": "valid",
+    "payload_crc32": "valid",
+    "flash_compatibility": "not established",
+    "squashfs_offset": 4322736,
+    "path": "release/src-qca-ipq53xx/image/TUF-BE9400_3.0.0.6_102_58138-rtbe90u-dev17-vpn.trx"
+  },
+  "build": {
+    "exit": 0,
+    "mode": "incremental native build after preserving dev16",
+    "network": "none",
+    "builder": "rt-be90u-ci-build:3006",
+    "builder_id": "sha256:3845b6cfe78593a062deefdabbd6aff280f101d9e012dc258f3c64c7c5dc9841"
+  },
+  "source_validation": {
+    "verified_repository_inputs": 150610,
+    "materialized": 150610,
+    "changes_from_dev16": [
+      "release/src/router/rc/openvpn.c",
+      "release/src/router/rc/wireguard.c",
+      "release/src/router/extendno.conf"
+    ]
+  },
+  "git_input_validation": {
+    "verified_inputs_in_git_index": 150602,
+    "explicit_manifest_aliases": 8,
+    "all_input_content_matches_build_record": true
+  },
+  "common_source_validation": {
+    "base": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+    "qca_base": "2db9b885dec71cb4971b54edf7ad31d00063d842",
+    "files": [
+      {
+        "file": "release/src/router/libovpn/amvpn_routing.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "7fbe55406429fb6c8b97693017ce8aa8b8ad8f8db292b6e4d17dcdccd6ba5122",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/amvpn_routing.h",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "9d65b164b1e61bc5e7f24215813a6c0dc19a7682fdd5b1a1994304545a274356",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_config.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "c9ec2b6c6618f072283460d31b7d28aca17495cf40e7483f1b7a037611c66e24",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_config.h",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "c2ee71fcafca1118659b6e4474c8b9cc05900b60452e7ad4d1eeadf4f648a164",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_control.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "ca14e81efda9d21d9ae08e63ce423e6573439ae80a22b280a08d4f88126d7332",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_control.h",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "23af539dc6407e92d2c0e64a7d5ccdc650aa909eb9d7c9311046d5f0321cbe04",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_options.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "54bf367278bef74537b0a76869d1aa538a2a26b02dc608959335ca6b32c29bc4",
+        "upstream_adjustments": [
+          "Correct the residual-state diagnostic format/argument mismatch"
+        ]
+      },
+      {
+        "file": "release/src/router/libovpn/openvpn_setup.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "212d95ca826634bb3c55c296b8f947f83f8d0ddf4bb060f31938f6e02eee6562",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/shared/scripts.c",
+        "profiles_checked": 128,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "386d4582e1d84725cd4c6ef003d5c2a07bee13f624aacac3bc5c7264c6160403",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/rc/openvpn.c",
+        "profiles_checked": 480,
+        "invalid_profiles_rejected": 32,
+        "upstream_sha256": "2c69e88f25b7b5a4ed16e40fb0152321c8eb253d5cbcaae9030ff539128f29ed",
+        "upstream_adjustments": []
+      },
+      {
+        "file": "release/src/router/rc/wireguard.c",
+        "profiles_checked": 512,
+        "invalid_profiles_rejected": 0,
+        "upstream_sha256": "2241959aa6f52b4b0e1191f6e3331e2b320ad6d6a46390f9428012f47eaf5baf",
+        "upstream_adjustments": []
+      }
+    ],
+    "comparisons_passed": 2144,
+    "invalid_profiles_rejected": 32,
+    "scope": "C tokens with includes removed; not a full other-model compile"
+  },
+  "helper_tests": {
+    "passed": 25,
+    "exit": 0
+  },
+  "runtime_suites": [
+    {
+      "test": "config",
+      "exit": 0
+    },
+    {
+      "test": "ovpn-wrappers",
+      "exit": 0
+    },
+    {
+      "test": "wg-import",
+      "exit": 0
+    },
+    {
+      "test": "network",
+      "exit": 0
+    },
+    {
+      "test": "wg-export",
+      "exit": 0
+    },
+    {
+      "test": "wg-tunnel",
+      "exit": 0
+    },
+    {
+      "test": "tunnel-static",
+      "exit": 0
+    },
+    {
+      "test": "tunnel-tls",
+      "exit": 0
+    },
+    {
+      "test": "tunnel-tls-crypt",
+      "exit": 0
+    },
+    {
+      "test": "tunnel-tls-crypt-v2",
+      "exit": 0
+    },
+    {
+      "test": "ipv6",
+      "exit": 0
+    }
+  ],
+  "script_hook_fixture_exit": 0,
+  "wrapper_fixture_dev16_baseline_exit": 0,
+  "build_equivalence": [
+    {
+      "file": "release/src-qca-ipq53xx/linux/linux-5.4.x/.config",
+      "sha256": "4b46c9f640842497ff599c144c57af5e8edacc02a8081c4773508a0a931e2b93",
+      "matches_dev16": true
+    },
+    {
+      "file": "release/src/router/rc/openvpn.o",
+      "sha256": "8fc14ccfe60c0513e192feb078cb3c3dad3ac1ebe286c4aeba7e1776a5c2b6ed",
+      "matches_dev16": true
+    },
+    {
+      "file": "release/src/router/rc/wireguard.o",
+      "sha256": "8c198c3e757922c175b2befe72525647ec1c3b0d28e20a3a2398143a8cfecfd0",
+      "matches_dev16": true
+    }
+  ],
+  "linkage_programs": [
+    "/sbin/rc",
+    "/usr/sbin/httpd",
+    "/usr/sbin/openvpn"
+  ],
+  "linkage_passed": true,
+  "content_audit": {
+    "packaging_issues": [],
+    "elf_architecture_counts": {
+      "183": 792,
+      "3": 4,
+      "40": 2,
+      "164": 5
+    },
+    "unchanged_coprocessor_firmware": [
+      "lib/firmware/IPQ5332/iu_fw.b00",
+      "lib/firmware/IPQ5332/iu_fw.b02",
+      "lib/firmware/IPQ5332/iu_fw.mdt",
+      "lib/firmware/IPQ5332/q6_fw0.b00",
+      "lib/firmware/IPQ5332/q6_fw0.mdt",
+      "lib/firmware/IPQ5332/q6_fw1.b00",
+      "lib/firmware/IPQ5332/q6_fw1.b02",
+      "lib/firmware/IPQ5332/q6_fw1.mdt",
+      "lib/firmware/qcn9224/amss.bin",
+      "lib/firmware/qcn9224/amss_dualmac.bin",
+      "lib/firmware/qcn9224/m3.bin"
+    ],
+    "verified_prebuild_source_files": 599,
+    "autotools_regenerated_files": [
+      "release/src/router/openvpn/doc/doxygen/Makefile.in",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile.in",
+      "release/src/router/openvpn/src/openvpnmsica/Makefile.in",
+      "release/src/router/openvpn/src/tapctl/Makefile.in"
+    ],
+    "required_flags_enabled": [
+      "RTCONFIG_SOC_IPQ53XX",
+      "RTCONFIG_OPENVPN",
+      "RTCONFIG_WIREGUARD",
+      "RTCONFIG_VPN_FUSION",
+      "RTCONFIG_VPN_FUSION_MERLIN",
+      "RTCONFIG_MULTILAN_CFG"
+    ],
+    "vpndirector_icons_match_source": true,
+    "http_fixture_absent": true
+  },
+  "hardware_tested": false,
+  "limitations": [
+    "Runtime fixtures use synthetic NVRAM, QEMU and the host kernel, not router boot orchestration.",
+    "The new wrapper fixture links the actual compiled rc/openvpn.o with service stubs; it verifies dispatch/order, not full service effects.",
+    "Common-source audit removes includes; it does not type-check headers or replace other-model builds.",
+    "Wrapper fixture setup initially lacked the platform include path and TUFBE6500 board define. It passed on dev16 and dev17 after matching the build configuration; no firmware changes were needed.",
+    "IPv6 whole-interface blocking does not provide dual-stack VPN routing or IPv6 device-policy protection.",
+    "Stock image validator and Entware suites were not rerun for dev17; their baseline remains dev16. Browser baseline remains dev12.",
+    "Recovery, physical USB, boot/hotplug order and persistent configuration migration remain unvalidated."
+  ],
+  "known_service_gaps": [
+    {
+      "source_commit": "3d17d4047ea047725225afc00fb587e8fbe90781",
+      "finding": "OpenVPN reset handlers are excluded by inactive YandexDNS conditional",
+      "services_file": "release/src-qca-ipq53xx/source-overlay/release/src/router/rc/services.c",
+      "handler_lines": [
+        20106,
+        20111
+      ],
+      "target_multilan": true,
+      "target_yandexdns": false,
+      "compiled_services_object_has_reset_actions": false,
+      "compiled_services_object_has_start_stop_actions": true,
+      "ui_caller": "release/src-qca-ipq53xx/source-overlay/release/src/router/www/Advanced_OpenVPNClient_Content.asp:759",
+      "introduced_in_dev17": false,
+      "fix_and_dispatch_regression_test": "Pending next firmware candidate; completed dev17 unchanged",
+      "wireguard_reset": {
+        "finding": "clearwgclient dispatch missing from services overlay",
+        "ui_caller": "release/src/router/www/Advanced_WireguardClient_Content.asp:527",
+        "compiled_services_object_has_reset_action": false,
+        "introduced_in_dev17": false
+      }
+    }
+  ],
+  "clean_hosted_ci": {
+    "run_id": 36262918390,
+    "url": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36262918390",
+    "source_commit": "3d17d4047ea047725225afc00fb587e8fbe90781",
+    "conclusion": "success",
+    "image": {
+      "bytes": 59049349,
+      "sha256": "1d34eb0c06444d89df2766abd6773c0167a140ad7fc1258253ddba4824d5f352",
+      "model": "TUF-BE9400",
+      "timestamp": 1790450086,
+      "header_crc32": "valid",
+      "payload_crc32": "valid",
+      "flash_compatibility": "not established",
+      "squashfs_offset": 4322528
+    },
+    "verified_input_records": 150610,
+    "input_records_match_local_dev17": true,
+    "downloaded_firmware_checksum_verified": true,
+    "common_source_comparisons": 2144,
+    "invalid_profile_rejections": 32,
+    "helper_tests_passed": 25,
+    "packaged_linkage_passed": true,
+    "script_config_event_fixture_passed": true,
+    "scope": "Clean build, source/image/linkage/script checks; full QEMU VPN suites remain local",
+    "ookla_prebuilt_check": {
+      "packaged_path": "/usr/sbin/ookla",
+      "sha256": "f5495f32793f0bb5c0a7a2f52a26efb1fe5cf8d8ef1f328a80a172bba7924a45",
+      "matches_dev16": true,
+      "runtime_tested": false
+    }
+  },
+  "other_model_ci": {
+    "run_id": 36262918415,
+    "url": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36262918415",
+    "source_commit": "3d17d4047ea047725225afc00fb587e8fbe90781",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Build (gt-be98, src-rt-5.04behnd.4916, default, false)",
+        "conclusion": "success",
+        "artifact_upload": "success"
+      },
+      {
+        "name": "Build (gt-be98, src-rt-5.04behnd.4916, rog, false)",
+        "conclusion": "success",
+        "artifact_upload": "success"
+      }
+    ],
+    "release_and_manifest_publishing": "skipped",
+    "scope": "Firmware compilation and artifact upload; no GT-BE98 hardware/runtime test"
+  }
+}

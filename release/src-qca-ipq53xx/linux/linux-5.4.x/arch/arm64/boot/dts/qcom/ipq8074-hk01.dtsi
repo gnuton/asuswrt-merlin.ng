@@ -1,0 +1,278 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/dts-v1/;
+/* Copyright (c) 2017, 2020, The Linux Foundation. All rights reserved.
+ */
+#include "ipq8074.dtsi"
+#include "ipq8074-hk-cpu.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	interrupt-parent = <&intc>;
+	qcom,msm-id = <0x143 0x0>, <0x186 0x0>, <0x158 0x0>, <0x188 0x0>;
+
+	aliases {
+		serial0 = &blsp1_uart5;
+		/*
+		 * Aliases as required by u-boot
+		 * to patch MAC addresses
+		 */
+		ethernet0 = "/soc/dp1";
+		ethernet1 = "/soc/dp2";
+		ethernet2 = "/soc/dp3";
+		ethernet3 = "/soc/dp4";
+		ethernet4 = "/soc/dp5";
+		ethernet5 = "/soc/dp6";
+	};
+
+	chosen {
+		stdout-path = "serial0";
+	};
+
+	soc {
+		pinctrl@1000000 {
+			sd_pins: sd-pinmux {
+				pins = "gpio63";
+				function = "sd_card";
+				drive-strength = <8>;
+				bias-pull-up;
+			};
+
+			button_pins: button_pins {
+				wps_button {
+					pins = "gpio57";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			ledc_pins: ledc_pinmux {
+				led_clk {
+					pins = "gpio18";
+					function = "led0";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+
+				led_data {
+					pins = "gpio19";
+					function = "led1";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+
+				led_clr {
+					pins = "gpio20";
+					function = "led2";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			mdio_pins: mdio_pinmux {
+				mux_0 {
+					pins = "gpio68";
+					function = "mdc";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				mux_1 {
+					pins = "gpio69";
+					function = "mdio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			uniphy_pins: uniphy_pinmux {
+				mux {
+					pins = "gpio60";
+					function = "rx2";
+					bias-disable;
+				};
+
+				sfp_tx {
+					pins = "gpio59";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+					output-low;
+				};
+			};
+
+			pwm_pins: pwm_pinmux {
+				mux_1 {
+					pins = "gpio25";
+					function = "pwm02";
+					drive-strength = <8>;
+				};
+			};
+		};
+
+		serial@78b3000 {
+			status = "ok";
+		};
+
+		spi@78b5000 {
+			status = "ok";
+			pinctrl-0 = <&spi_0_pins>;
+			pinctrl-names = "default";
+			cs-select = <0>;
+
+			m25p80@0 {
+				  compatible = "n25q128a11";
+				  #address-cells = <1>;
+				  #size-cells = <1>;
+				  reg = <0>;
+				  spi-max-frequency = <50000000>;
+			};
+		};
+
+		i2c@78b6000 {
+			 status = "ok";
+		};
+
+		sdhci@7824900 {
+			status = "ok";
+		};
+
+		dma@7984000 {
+			 status = "ok";
+		};
+
+		nand@79b0000 {
+			status = "ok";
+
+			nand@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				nand-ecc-strength = <4>;
+				nand-ecc-step-size = <512>;
+				nand-bus-width = <8>;
+			};
+		};
+
+		qusb@79000 {
+			status = "ok";
+		};
+
+		ssphy@78000 {
+			status = "ok";
+		};
+
+		usb3@8A00000 {
+			status = "ok";
+		};
+
+		qusb@59000 {
+			status = "ok";
+		};
+
+		ssphy@58000 {
+			status = "ok";
+		};
+
+		usb3@8C00000 {
+			status = "ok";
+		};
+
+		phy@84000 {
+			status = "ok";
+		};
+
+		phy@86000 {
+			status = "ok";
+		};
+
+		pci@20000000 {
+			perst-gpio = <&tlmm 58 1>;
+			status = "ok";
+		};
+
+		phy@8e000 {
+			status = "ok";
+		};
+
+		pci@10000000 {
+			perst-gpio = <&tlmm 61 0x1>;
+			status = "ok";
+		};
+
+		gpio_keys {
+			compatible = "gpio-keys";
+			pinctrl-0 = <&button_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+
+			button@1 {
+				label = "wps";
+				linux,code = <KEY_WPS_BUTTON>;
+				gpios = <&tlmm 57 GPIO_ACTIVE_LOW>;
+				linux,input-type = <1>;
+				debounce-interval = <60>;
+			};
+		};
+
+		ledc@191E000  {
+			pinctrl-0 = <&ledc_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+
+			led0 {
+				label = "ipq::led0";
+				linux,default-trigger = "led_wifi_son_green";
+			};
+			led1 {
+				label = "ipq::led1";
+				linux,default-trigger = "led_wifi_son_orange";
+			};
+			led2 {
+				label = "ipq::led2";
+				linux,default-trigger = "led_wifi_son_blue";
+			};
+			led3 {
+				label = "ipq::led3";
+				linux,default-trigger = "led_2g";
+			};
+			led4 {
+				label = "ipq::led4";
+				linux,default-trigger = "led_5gl";
+			};
+			led5 {
+				label = "ipq::led5";
+				linux,default-trigger = "led_5gh";
+			};
+			led6 {
+				label = "ipq::led6";
+				linux,default-trigger = "led_lan";
+			};
+			led7 {
+				label = "ipq::led7";
+				linux,default-trigger = "led_wan";
+			};
+			led8 {
+				label = "ipq::led8";
+				linux,default-trigger = "led_10g_link";
+			};
+			led9 {
+				label = "ipq::led9";
+				linux,default-trigger = "led_sfp";
+			};
+			led10 {
+				label = "ipq::led10";
+				linux,default-trigger = "led_bt";
+			};
+			led11 {
+				label = "ipq::led11";
+				linux,default-trigger = "none";
+			};
+			led12 {
+				label = "ipq::led12";
+				linux,default-trigger = "none";
+			};
+		};
+	};
+};

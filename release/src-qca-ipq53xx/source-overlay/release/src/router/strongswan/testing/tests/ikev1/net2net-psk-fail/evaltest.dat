@@ -1,0 +1,6 @@
+sun:: cat /var/log/daemon.log::invalid ID_V1 payload length, decryption failed::YES
+sun:: cat /var/log/daemon.log::generating INFORMATIONAL_V1 request.*HASH N(PLD_MAL)::YES
+moon::cat /var/log/daemon.log::invalid HASH_V1 payload length, decryption failed::YES
+moon::cat /var/log/daemon.log::ignore malformed INFORMATIONAL request::YES
+moon::swanctl --list-sas --raw 2> /dev/null::gw-gw.*state=ESTABLISHED.*state=INSTALLED mode=TUNNEL::NO
+sun:: swanctl --list-sas --raw 2> /dev/null::gw-gw.*state=ESTABLISHED.*state=INSTALLED mode=TUNNEL::NO

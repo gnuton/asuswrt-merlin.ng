@@ -1,0 +1,74 @@
+QTI TZLOG
+
+This binding describes tzlog used to inspect log created by TZ. This driver
+also provides capability to capture SMMU and XPU faults found by TZ.
+
+Required properties:
+ - compatible: should be "qti,tzlog"
+ - interrupts: must contain interrupt used by TZ when XPU or SMMU faults are
+		found
+ - qti,tz-diag-buf-size: contains the TZ diag buffer size
+ - qti,tz-ring-off: contains the TZ diag buffer ring offset
+ - qti,tz-log-pos-info-off: contains the TZ diag buffer log position info offset
+
+Optional properties:
+ - qti,tz_kpss: should be set in case of IPQ806x platform
+ - qti,hvc-enabled: defines whether TZ supports Hypervisor mode or not
+ - qti,get-smmu-state: when set, will be able to get the SMMU state
+ - qti,tzbsp-diag-buf-start: contains the TZ diag buffer start (as defined in
+		QSEE). When specified, NS world will directly read from the
+		region and dump it unlike reading the buffer via SCM interface
+
+Example:
+
+IPQ806x:
+	qti,tzlog {
+		compatible = "qti,tzlog";
+		qti,tz-diag-buf-size = <0x1000>;
+		qti,tz-ring-off = <7>;
+		qti,tz-log-pos-info-off = <0>;
+		qti,tz_kpss;
+	};
+
+IPQ40xx:
+	qti,tzlog {
+		compatible = "qti,tzlog";
+		qti,tz-diag-buf-size = <0x1000>;
+		qti,tz-ring-off = <7>;
+		qti,tz-log-pos-info-off = <522>;
+	};
+
+IPQ807x:
+	qti,tzlog {
+		compatible = "qti,tzlog";
+		interrupts = <GIC_SPI 244 IRQ_TYPE_EDGE_RISING>;
+		qti,tz-diag-buf-size = <0x2000>;
+		qti,tz-ring-off = <7>;
+		qti,tz-log-pos-info-off = <579>;
+		qti,hvc-enabled;
+		qti,get-smmu-state;
+	};
+
+IPQ60xx:
+	qti,tzlog {
+		compatible = "qti,tzlog-ipq6018";
+		interrupts = <GIC_SPI 244 IRQ_TYPE_EDGE_RISING>;
+		qti,tzbsp-diag-buf-start = <0x4a7df000>;
+		qti,tz-diag-buf-size = <0x3000>;
+		qti,tz-ring-off = <7>;
+		qti,tz-log-pos-info-off = <810>;
+		qti,hvc-enabled;
+		qti,get-smmu-state;
+	};
+
+IPQ9574:
+	qti,tzlog {
+		compatible = "qti,tzlog-ipq9574";
+		interrupts = <GIC_SPI 244 IRQ_TYPE_EDGE_RISING>;
+		qti,tzbsp-diag-buf-start = <0x4a7df000>;
+		qti,tz-diag-buf-size = <0x3000>;
+		qti,tz-ring-off = <7>;
+		qti,tz-log-pos-info-off = <810>;
+		qti,hvc-enabled;
+		qti,get-smmu-state;
+	};

@@ -1,0 +1,197 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C6 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c4.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C6";
+	compatible = "qcom,ipq9574-ap-al02-c6", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	soc {
+		pcie1_x1: pci@10000000 {
+			status = "disabled";
+			/delete-node/ pcie1_rp;
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+			};
+		};
+
+		pcie1_phy: phy@fc000 {
+			status = "disabled";
+		};
+
+		wsi: wsi {
+			id = <0>;
+			num_chip = <2>;
+		};
+
+		pcie2_x2: pci@20000000 {
+			/delete-node/ pcie2_rp;
+			pcie2_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@2 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x32>;
+					memory-region = <0>,<&mhi_region2>;
+#else
+
+				       /* qcn9224 tgt-mem-mode=0 layout - 46MB
+					* refer ipq9574-wkk-default-memory.dtsi
+					* +=========+==============+=========+
+					* |  Region | Start Offset |   Size  |
+					* +---------+--------------+---------+
+					* | HREMOTE |  0x4DD00000  |   36MB  |
+					* +---------+--------------+---------+
+					* | M3 Dump |  0x50100000  |   1MB   |
+					* +---------+--------------+---------+
+					* |   ETR   |  0x50200000  |   1MB   |
+					* +---------+--------------+---------+
+					* |  Caldb  |  0x50300000  |   8MB   |
+					* +==================================+
+					*/
+					memory-region = <&qcn9224_pcie2>;
+					qcom,board_id = <0x04>;
+					qcom,wsi = <&wsi>;
+#endif
+					status = "ok";
+
+				};
+			};
+		};
+
+		pcie3_x2: pci@18000000 {
+			/delete-node/ pcie3_rp;
+			pcie3_rp {
+				reg = <0 0 0 0 0>;
+
+				wifi@3 {
+					reg = <0 0 0 0 0>;
+
+					qti,disable-rddm-prealloc;
+					qti,rddm-seg-len = <0x1000>;
+					boot-args = <0x2 0x4 0x34 0x3 0x0 0x0     /* MX Rail, GPIO52, Drive strength 0x3 */
+							0x4 0x4 0x18 0x3 0x0 0x0  /* RFA1p2 Rail, GPIO24, Drive strength 0x3 */
+							0x0 0x4 0x0 0x0 0x0 0x0>; /* End of arguments */
+
+					license-file = "";
+#if defined(__CNSS2__)
+					qrtr_node_id = <0x33>;
+					memory-region = <0>,<&mhi_region3>;
+#else
+					/* qcn9224 tgt-mem-mode=0 layout - 46MB
+					* refer ipq9574-wkk-default-memory.dtsi
+					* +=========+==============+=========+
+					* |  Region | Start Offset |   Size  |
+					* +---------+--------------+---------+
+					* | HREMOTE |  0x50B00000  |   36MB  |
+					* +---------+--------------+---------+
+					* | M3 Dump |  0x52F00000  |   1MB   |
+					* +---------+--------------+---------+
+					* |   ETR   |  0x53000000  |   1MB   |
+					* +---------+--------------+---------+
+					* |  Caldb  |  0x53100000  |   8MB   |
+					* +==================================+
+					*/
+					memory-region = <&qcn9224_pcie3>;
+					qcom,board_id = <0x02>;
+					qcom,wsi = <&wsi>;
+#endif
+					status = "ok";
+				};
+			};
+		};
+	};
+};
+
+/* Enable IPQ9574 integrated radio's reserved memory */
+&q6_region {
+	status = "ok";
+};
+
+&m3_dump {
+	status = "ok";
+};
+
+&q6_etr_region {
+	status = "ok";
+};
+
+&q6_caldb_region {
+	status = "ok";
+};
+
+/* Enable reserved memory regions of QCN9224 on PCIe2 and PCIe3 */
+&qcn9224_pcie1 {
+	status = "disabled";
+};
+
+&mhi_region1 {
+	status = "disabled";
+};
+
+&qcn9224_pcie2 {
+	status = "ok";
+};
+
+&mhi_region2 {
+	status = "ok";
+};
+
+&qcn9224_pcie3 {
+	status = "ok";
+};
+
+&mhi_region3 {
+	status = "ok";
+};
+
+/* MLO GLOBAL MEM REGION size is 12MB for RDP with 2 QCN224 radios */
+&mlo_global_mem0 {
+	size = <0x0 0xD00000>;
+	status = "ok";
+};
+
+&wifi0 {
+	/* Enable IPQ9574 integratd 2G Radio */
+	led-gpio = <&tlmm 64 1>;
+	qcom,board_id = <0x20>;
+	status = "ok";
+};
+
+&wifi5 {
+	/* QCN9224 2G on PCI1 is disabled for AL02-C6 */
+	status = "disabled";
+};
+
+&wifi6 {
+	hremote_node = <&qcn9224_pcie2>;
+	board_id = <0x04>;
+	hw_link_id = <0 0>;
+	status = "ok";
+};
+
+&wifi7 {
+	hremote_node = <&qcn9224_pcie3>;
+	board_id = <0x02>;
+	hw_link_id = <1 0>;
+	status = "ok";
+};

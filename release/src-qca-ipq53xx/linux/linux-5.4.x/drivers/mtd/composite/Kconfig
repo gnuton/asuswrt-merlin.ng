@@ -1,0 +1,12 @@
+menu "Composite MTD device drivers"
+	depends on MTD!=n
+
+config MTD_VIRT_CONCAT
+	tristate "Virtual concat MTD device"
+	help
+	  This driver allows creation of a virtual MTD concat device, which
+	  concatenates multiple underlying MTD devices to a single device.
+	  This is required by some SoC boards where multiple memory banks are
+	  used as one device with partitions spanning across device boundaries.
+
+endmenu

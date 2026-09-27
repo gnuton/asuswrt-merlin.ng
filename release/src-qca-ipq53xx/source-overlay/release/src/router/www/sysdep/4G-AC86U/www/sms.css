@@ -1,0 +1,173 @@
+.popup_div{
+	position:absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index:200;
+	background-color:#2B373B;
+	display:none;
+	margin-left: 30%;
+	padding: 10px;
+	width:650px;
+	box-shadow: #262626 3px 3px 3px;
+}
+
+.table_title{
+	display: flex;
+	width: 100%;
+	height: 30px;
+	line-height: 30px;
+	color: #699BBF;
+	align-items: center;
+	border-top: #4C5B65 solid 1px;
+}
+
+.table_row{
+	display: flex;
+	width: 100%;
+	line-height: 30px;
+	align-items: center;
+	border-top: #4C5B65 solid 1px;
+}
+
+.select_container{
+	width: 32px;
+	height: 32px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-left: 5px;
+}
+
+.msg_select{
+	width: 12px;
+	height: 12px;
+	border: rgba(255,255,255,0.3) solid 1px;
+	cursor:pointer;
+}
+
+.msg_select_checked{
+	background: #2597FF url(images/checked_24px.svg) no-repeat center;
+	background-size: 90%;
+}
+
+.msg_select:hover{
+	border: 1px solid #FFFFFF;
+}
+
+.received_time{
+	width: 20%;
+	height: 100%;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	margin-left: 5px;
+}
+
+.phone_number{
+	width: 20%;
+	height: 100%;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	margin-left: 5px;
+}
+
+.msg_text{
+	width: 90%;
+	word-break: break-all;
+}
+
+.text_ellipsis{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.no_message{
+	font-size: 18px;
+	color: #7F91A4;
+	justify-content: center;
+}
+
+.read{
+	color: #92A0A5;
+	font-weight: normal;
+}
+
+.unread{
+	background-color: #33434B;
+	color: #FFFFFF;
+	font-weight: bolder;
+}
+
+.msg_delete{
+	width: 32px;
+	height: 32px;
+	background: url(images/delete_solid.svg) no-repeat center;
+	background-size: 50%;
+	cursor: pointer;
+}
+
+.msg_delete:hover{
+	background: rgba(37,151,255,0.10) url(images/delete_enable.svg) no-repeat center;
+	background-size: 50%;
+	border-radius: 50%;
+}
+
+.arrow_container{
+	width: 10%;
+	display: flex;
+	justify-content: center;
+}
+
+.down_arrow{
+	width: 32px;
+	height: 32px;
+	border-radius: 20%;
+	background: url(images/arrow_right_white.svg) no-repeat center;
+	background-size: 50%;
+	cursor: pointer;
+	transform:rotate(90deg);
+}
+
+.down_arrow:hover{
+	width: 32px;
+	height: 32px;
+	background: url(images/arrow_right_blue.svg) no-repeat center;
+	background-size: 50%;
+}
+
+.down_arrow_up{
+	transform:rotate(-180deg);
+}
+
+.new_sms{
+	width: 30px;
+	height: 30px;
+	background: url(images/edit.svg) no-repeat center;
+	background-size: 100%;
+	cursor: pointer;
+}
+
+.new_sms:hover{
+	width: 30px;
+	height: 30px;
+	background: url(images/edit_active.svg) no-repeat center;
+	background-size: 100%;
+}
+
+.close_icon{
+	width: 24px;
+	height: 24px;
+	background: url(images/close.svg) no-repeat center;
+	background-size: 65%;
+	cursor: pointer;
+}
+
+.close_icon:hover{
+	width: 24px;
+	height: 24px;
+	background: url(images/close_hover.svg) no-repeat center;
+	background-size: 65%;
+}

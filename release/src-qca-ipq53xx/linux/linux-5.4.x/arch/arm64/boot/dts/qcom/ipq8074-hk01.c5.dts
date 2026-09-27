@@ -1,0 +1,307 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/dts-v1/;
+/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ */
+#include "ipq8074-hk01.dtsi"
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+
+/ {
+	model = "Qualcomm Technologies, Inc. IPQ8074/AP-HK01-C5";
+	compatible = "qcom,ipq8074-ap-hk01-c5", "qcom,ipq8074-ap-hk01", "qcom,ipq8074";
+
+	soc {
+
+		pinctrl@1000000 {
+			mdio_pins: mdio_pinmux {
+				mux_0 {
+					pins = "gpio68";
+					function = "mdc";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				mux_1 {
+					pins = "gpio69";
+					function = "mdio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			pcie_sdx_pins: pcie_sdx_pinmux {
+				ap2mdm_err_ftl {
+					pins = "gpio27";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+
+				sdx_pon_gpio {
+					pins = "gpio30";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-up;
+					output-high;
+				};
+
+				ap2mdm_status {
+					pins = "gpio26";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-up;
+					output-high;
+				};
+
+				mdm2ap_e911_status {
+					pins = "gpio33";
+					drive-strength = <8>;
+					bias-pull-down;
+				};
+			};
+
+			pcie_wake_pins: pcie0_wake_gpio {
+				pins = "gpio59";
+				function = "pcie0_wake";
+				drive-strength = <8>;
+				bias-pull-up;
+			};
+		};
+
+		gpio_keys {
+			status = "disabled";
+		};
+
+		i2c@78b6000 {
+			 status = "disabled";
+		};
+
+		mdio@90000 {
+			pinctrl-0 = <&mdio_pins>;
+			pinctrl-names = "default";
+			phy-reset-gpio = <&tlmm 37 0>;
+			phy0: ethernet-phy@0 {
+				reg = <0>;
+			};
+			phy1: ethernet-phy@1 {
+				reg = <1>;
+			};
+			phy2: ethernet-phy@2 {
+				reg = <2>;
+			};
+			phy3: ethernet-phy@3 {
+				reg = <3>;
+			};
+			phy4: ethernet-phy@4 {
+				reg = <4>;
+			};
+			phy5: ethernet-phy@5 {
+				compatible ="ethernet-phy-ieee802.3-c45";
+				reg = <7>;
+			};
+		};
+
+		dp1 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <1>;
+			reg = <0x3a001000 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <0>;
+			phy-mode = "sgmii";
+		};
+
+		dp2 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <2>;
+			reg = <0x3a001200 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <1>;
+			phy-mode = "sgmii";
+		};
+
+		dp3 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <3>;
+			reg = <0x3a001400 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <2>;
+			phy-mode = "sgmii";
+		};
+
+		dp4 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <4>;
+			reg = <0x3a001600 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <3>;
+			phy-mode = "sgmii";
+		};
+
+		dp5 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <5>;
+			reg = <0x3a001800 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <4>;
+			phy-mode = "sgmii";
+		};
+
+		dp6 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <6>;
+			reg = <0x3a007000 0x3fff>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <7>;
+			phy-mode = "sgmii";
+		};
+
+		ess-switch@3a000000 {
+			switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+			switch_lan_bmp = <0x3e>; /* lan port bitmap */
+			switch_wan_bmp = <0x40>; /* wan port bitmap */
+			switch_mac_mode = <0x0>; /* mac mode for uniphy instance0*/
+			switch_mac_mode1 = <0xff>; /* mac mode for uniphy instance1*/
+			switch_mac_mode2 = <0xd>; /* mac mode for uniphy instance2*/
+			bm_tick_mode = <0>; /* bm tick mode */
+			tm_tick_mode = <0>; /* tm tick mode */
+		};
+	};
+
+};
+
+&spmi_bus {
+	pmic@0 {
+		compatible ="qcom,spmi-pmic";
+		reg = <0x0 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pm8074_gpios: gpios@c000 {
+			compatible = "qcom,pm8074-gpio";
+			reg = <0xc000>;
+			gpio-controller;
+			gpio-ranges = <&pm8074_gpios 0 0 12>;
+			#gpio-cells = <2>;
+			interrupts = <0 0xc0 0 IRQ_TYPE_NONE>,
+				     <0 0xc1 0 IRQ_TYPE_NONE>,
+				     <0 0xc2 0 IRQ_TYPE_NONE>,
+				     <0 0xc3 0 IRQ_TYPE_NONE>,
+				     <0 0xc4 0 IRQ_TYPE_NONE>,
+				     <0 0xc5 0 IRQ_TYPE_NONE>,
+				     <0 0xc6 0 IRQ_TYPE_NONE>,
+				     <0 0xc7 0 IRQ_TYPE_NONE>,
+				     <0 0xc8 0 IRQ_TYPE_NONE>,
+				     <0 0xc9 0 IRQ_TYPE_NONE>,
+				     <0 0xca 0 IRQ_TYPE_NONE>,
+				     <0 0xcb 0 IRQ_TYPE_NONE>;
+			pinctrl-0 = <&pm8074_gpio>;
+			pinctrl-names = "default";
+
+			pm8074_gpio: pmm8074_gpio {
+				pinconf {
+					pins = "gpio6";
+					function = PMIC_GPIO_FUNC_NORMAL;
+					bias-pull-up;
+					output-high;
+				};
+			};
+		};
+	};
+};
+
+&pcie0 {
+	pinctrl-0 = <&pcie_sdx_pins>, <&pcie_wake_pins>;
+	pinctrl-names = "default";
+	x65_attached = <1>;
+	e911-gpio =  <&tlmm 33 GPIO_ACTIVE_HIGH>;
+	e911_x65-gpio =  <&tlmm 22 GPIO_ACTIVE_HIGH>;
+
+	interrupts-extended = <&tlmm 59 IRQ_TYPE_LEVEL_HIGH>,
+			      <&tlmm 33 IRQ_TYPE_LEVEL_HIGH>,
+			      <&tlmm 22 IRQ_TYPE_LEVEL_HIGH>,
+			      <&intc GIC_SPI 51 IRQ_TYPE_LEVEL_HIGH>;
+	interrupt-names = "wake_gpio", "mdm2ap_e911", "mdm2ap_e911_x65", "global_irq";
+
+	slot_id = <0>;
+	link_retries_count = <100>;
+
+	status = "ok";
+
+	pcie0_rp: pcie0_rp {
+		reg = <0 0 0 0 0>;
+	};
+};
+
+&pcie0_rp {
+	#address-cells = <5>;
+	#size-cells = <0>;
+
+	status = "ok";
+	aliases {
+		mhi_netdev2 = &mhi_netdev_2;
+	};
+	mhi_0: qcom,mhi@0 {
+		reg = <0 0 0 0 0 >;
+
+		ap2mdm-gpio = <&tlmm 26 0>;
+		ap2mdm-x65-gpio = <&tlmm 45 0>;
+		mdm2ap-gpio = <&tlmm 25 0>;
+		mdm2ap-x65-gpio = <&tlmm 21 0>;
+
+		// controller specific configuration
+		qcom,iommu-dma = "disabled";
+
+		// mhi bus specific settings
+		mhi,ssr-negotiate;
+
+		mhi_devices: mhi_devices {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mhi_netdev_0: mhi_rmnet@0 {
+				reg = <0x0>;
+				mhi,chan = "IP_HW0";
+				mhi,interface-name = "rmnet_mhi";
+				mhi,mru = <0x4000>;
+				mhi,chain-skb;
+			};
+
+			mhi_rmnet@1 {
+				reg = <0x1>;
+				mhi,chan = "IP_HW0_RSC";
+				mhi,mru = <0x8000>;
+				mhi,rsc-parent = <&mhi_netdev_0>;
+			};
+
+			mhi_netdev_2: mhi_rmnet@2 {
+				reg = <0x2>;
+				mhi,chan = "IP_SW0";
+				mhi,interface-name = "rmnet_mhi_sw";
+				mhi,mru = <0x4000>;
+				mhi,disable-chain-skb;
+			};
+
+			mhi_qrtr {
+				mhi,chan = "IPCR";
+				qom,net-id = <3>;
+			};
+		};
+
+	};
+};

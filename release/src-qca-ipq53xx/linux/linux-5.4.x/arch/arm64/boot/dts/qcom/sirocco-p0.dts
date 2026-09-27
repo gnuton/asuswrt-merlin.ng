@@ -1,0 +1,280 @@
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/dts-v1/;
+
+#include "ipq5018.dtsi"
+
+/ {
+	model = "Qualcomm Technologies, Inc. IPQ5018/SIROCCO-P0";
+	compatible = "qcom,sirocco-p0", "qcom,ipq5018";
+
+	aliases {
+		serial0 = &blsp1_uart1;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	reserved-memory {
+		q6_mem_regions: q6_mem_regions@4B000000 {
+			no-map;
+			reg = <0x0 0x4B000000 0x0 0x5400000>;
+		};
+
+		q6_etr_region: q6_etr_dump@4D300000 {
+			no-map;
+			reg = <0x0 0x4D300000 0x0 0x100000>;
+		};
+
+		q6_caldb_region: q6_caldb_region@4D400000 {
+			no-map;
+			reg = <0x0 0x4D400000 0x0 0x200000>;
+		};
+	};
+};
+
+&blsp1_uart1 {
+	pinctrl-0 = <&serial_1_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&sdhc_1 {
+	pinctrl-0 = <&sdc_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&tlmm {
+	serial_1_pins: serial1-pinmux {
+		pins = "gpio28", "gpio29";
+		function = "blsp0_uart1";
+		drive-strength = <8>;
+		bias-pull-down;
+	};
+
+	sdc_pins: sdc_pins {
+		sdc_clk {
+			pins = "gpio9";
+			function = "sdc1_clk";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		sdc_cmd {
+			pins = "gpio8";
+			function = "sdc1_cmd";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+		sdc_data0 {
+			pins = "gpio7";
+			function = "sdc10";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		sdc_data1 {
+			pins = "gpio6";
+			function = "sdc11";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		sdc_data2 {
+			pins = "gpio5";
+			function = "sdc12";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		sdc_data3 {
+			pins = "gpio4";
+			function = "sdc13";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	blsp0_spi_pins: blsp0_spi_pins {
+		mux {
+			pins = "gpio10", "gpio11", "gpio12", "gpio13";
+			function = "blsp0_spi";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	i2c_pins: i2c_pins {
+		i2c_scl {
+			pins = "gpio33";
+			function = "blsp2_i2c0";
+			drive-strength = <8>;
+			bias-disable;
+		};
+
+		i2c_sda {
+			pins = "gpio34";
+			function = "blsp2_i2c0";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+};
+
+&q6v5_wcss {
+	compatible = "qcom,ipq5018-q6-mpd";
+	#address-cells = <1>;
+	#size-cells = <1>;
+	ranges;
+	firmware = "IPQ5018/q6_fw.mdt";
+	reg = <0x0cd00000 0x4040>,
+		<0x1938000 0x8>,
+		<0x193d204 0x4>;
+	reg-names = "qdsp6",
+			"tcsr-msip",
+			"tcsr-q6";
+	resets = <&gcc GCC_WCSSAON_RESET>,
+			<&gcc GCC_WCSS_Q6_BCR>;
+
+	reset-names = "wcss_aon_reset",
+			"wcss_q6_reset";
+
+	clocks = <&gcc GCC_Q6_AXIS_CLK>,
+		<&gcc GCC_WCSS_ECAHB_CLK>,
+		<&gcc GCC_Q6_AXIM_CLK>,
+		<&gcc GCC_Q6_AXIM2_CLK>,
+		<&gcc GCC_Q6_AHB_CLK>,
+		<&gcc GCC_Q6_AHB_S_CLK>,
+		<&gcc GCC_WCSS_AXI_S_CLK>;
+	clock-names = "gcc_q6_axis_clk",
+		"gcc_wcss_ecahb_clk",
+		"gcc_q6_axim_clk",
+		"gcc_q6_axim2_clk",
+		"gcc_q6_ahb_clk",
+		"gcc_q6_ahb_s_clk",
+		"gcc_wcss_axi_s_clk";
+
+	memory-region = <&q6_mem_regions>, <&q6_etr_region>, <&q6_caldb_region>;
+
+	qcom,rproc = <&q6v5_wcss>;
+	status = "ok";
+	q6_wcss_pd1 {
+		compatible = "qcom,ipq5018-wcss-ahb-mpd";
+		reg = <0x4ab000 0x20>;
+		reg-names = "rmb";
+		firmware = "IPQ5018/q6_fw.mdt";
+		m3_firmware = "IPQ5018/m3_fw.mdt";
+		interrupts-extended = <&wcss_smp2p_in 8 0>,
+					<&wcss_smp2p_in 9 0>,
+					<&wcss_smp2p_in 12 0>,
+					<&wcss_smp2p_in 11 0>;
+		interrupt-names = "fatal",
+					"ready",
+					"spawn-ack",
+					"stop-ack";
+
+		resets = <&gcc GCC_WCSSAON_RESET>,
+				<&gcc GCC_WCSS_BCR>,
+				<&gcc GCC_CE_BCR>;
+		reset-names = "wcss_aon_reset",
+				"wcss_reset",
+				"ce_reset";
+
+		clocks = <&gcc GCC_WCSS_AHB_S_CLK>,
+				<&gcc GCC_WCSS_ACMT_CLK>,
+				<&gcc GCC_WCSS_AXI_M_CLK>;
+		clock-names = "gcc_wcss_ahb_s_clk",
+					"gcc_wcss_acmt_clk",
+					"gcc_wcss_axi_m_clk";
+
+		qcom,halt-regs = <&tcsr_q6_block 0xa000 0xd000 0x0>;
+
+		qcom,smem-states = <&wcss_smp2p_out 8>,
+					<&wcss_smp2p_out 9>,
+					<&wcss_smp2p_out 10>;
+		qcom,smem-state-names = "shutdown",
+					"stop",
+					"spawn";
+	};
+
+	q6_wcss_pd2 {
+		compatible = "qcom,ipq5018-wcss-pcie-mpd";
+		firmware = "IPQ5018/q6_fw.mdt";
+		m3_firmware = "qcn6122/m3_fw.mdt";
+		interrupts-extended = <&wcss_smp2p_in 16 0>,
+					<&wcss_smp2p_in 17 0>,
+					<&wcss_smp2p_in 20 0>,
+					<&wcss_smp2p_in 19 0>;
+		interrupt-names = "fatal",
+					"ready",
+					"spawn-ack",
+					"stop-ack";
+
+		qcom,smem-states = <&wcss_smp2p_out 16>,
+					<&wcss_smp2p_out 17>,
+					<&wcss_smp2p_out 18>;
+		qcom,smem-state-names = "shutdown",
+					"stop",
+					"spawn";
+	};
+
+	q6_wcss_pd3 {
+		compatible = "qcom,ipq5018-wcss-pcie-mpd";
+		firmware = "IPQ5018/q6_fw.mdt";
+		interrupts-extended = <&wcss_smp2p_in 24 0>,
+					<&wcss_smp2p_in 25 0>,
+					<&wcss_smp2p_in 28 0>,
+					<&wcss_smp2p_in 27 0>;
+		interrupt-names = "fatal",
+					"ready",
+					"spawn-ack",
+					"stop-ack";
+
+		qcom,smem-states = <&wcss_smp2p_out 24>,
+					<&wcss_smp2p_out 25>,
+					<&wcss_smp2p_out 26>;
+		qcom,smem-state-names = "shutdown",
+					"stop",
+					"spawn";
+	};
+};
+
+&spi_0 {
+	pinctrl-0 = <&blsp0_spi_pins>;
+	pinctrl-names = "default";
+	cs-select = <0>;
+	status = "ok";
+
+	spi@0 {
+		compatible = "qti,spidev";
+		reg = <0>;
+		spi-max-frequency = <50000000>;
+	};
+};
+
+&i2c_0 {
+	pinctrl-0 = <&i2c_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&usb3 {
+       device-power-gpio = <&tlmm 24 1>;
+};
+
+&dwc_0 {
+	/delete-property/ #phy-cells;
+	/delete-property/ phys;
+	/delete-property/ phy-names;
+};

@@ -53,6 +53,10 @@
 
 #include <vpn_utils.h>
 #include <vpnc_fusion.h>
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+#include <qca_vpn_deferred.h>
+#include <amvpn_deferred.h>
+#endif
 
 char vpnc_resolv_path[] = "/tmp/resolv.vpnc%d";
 
@@ -240,7 +244,10 @@ int change_default_wan()
 	nvram_set_int("vpnc_default_wan", default_wan_new);
 	// _set_default_routing_table(VPNC_ROUTE_ADD, default_wan_new);
 	_set_sdn0_vpnc_idx(default_wan_new);
+	/* QCA's SDN reconciler installs protection before replacing the IPv4 rule. */
+#if !defined(RTCONFIG_SOC_IPQ53XX) || !defined(RTCONFIG_VPN_FUSION_MERLIN) || defined(RTCONFIG_MULTIWAN_IF)
 	remove_ip_rules(IP_RULE_PREF_DEFAULT_CONN, 0);
+#endif
 	remove_ip_rules(IP_RULE_PREF_DEFAULT_CONN, 1);
 	handle_sdn_feature(LAN_IN_SDN_IDX, SDN_FEATURE_VPNC, 0);
 #else
@@ -1308,6 +1315,14 @@ int vpnc_handle_policy_rule(const int action, const VPNC_DEV_POLICY *policy)
 		return -1;
 	}
 
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+	/* A retained stock index is not a fixed Merlin tunnel. Protect the
+	 * original selectors even when that unrelated fixed slot is disconnected. */
+	if (action && policy->vpnc_idx > 0 &&
+	    (qca_vpn_binding_deferred(policy->vpnc_idx) || nvram_match("qca_merlin_vpn_migrated", "1")))
+		return amvpn_refresh_deferred();
+#endif
+
 	if (!action) // delete
 	{
 		//_dprintf("[%s, %d]remove rule. src_ip=%s, vpnc_idx=%d\n", __FUNCTION__, __LINE__,  src_ip, vpnc_idx);
@@ -1370,6 +1385,12 @@ int vpnc_set_dev_policy_rule()
 	int policy_cnt_new, policy_cnt_old, i, j, flag;
 	VPNC_DEV_POLICY *policy_ptr;
 	VPNC_DEV_POLICY dev_policy_new[MAX_DEV_POLICY] = {{0}}, dev_policy_old[MAX_DEV_POLICY] = {{0}};
+
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+	/* Publish guards before stock policy changes; also retire quarantine after
+	 * a successful conversion, without touching independent Director rules. */
+	if (amvpn_refresh_deferred()) return -1;
+#endif
 
 	policy_cnt_old = vpnc_get_dev_policy_list(dev_policy_old, MAX_DEV_POLICY, 1);
 	policy_cnt_new = vpnc_get_dev_policy_list(dev_policy_new, MAX_DEV_POLICY, 0);
@@ -2196,6 +2217,14 @@ static int _set_routing_rule(const VPNC_ROUTE_CMD cmd, const VPNC_DEV_POLICY *po
 	if (!policy)
 		return -1;
 
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+	/* Completed conversion clears stock policies, including every supported
+	 * positive target. A captured old callback cannot recreate those routes. */
+	if (cmd == VPNC_ROUTE_ADD && policy->vpnc_idx > 0 &&
+	    (qca_vpn_binding_deferred(policy->vpnc_idx) || nvram_match("qca_merlin_vpn_migrated", "1")))
+		return amvpn_refresh_deferred();
+#endif
+
 	//_dprintf("[%s, %d]<%d><%s><%d>\n", __FUNCTION__, __LINE__, cmd, source_ip, vpnc_id);
 	snprintf(cmd_str, sizeof(cmd_str), "%s", (cmd == VPNC_ROUTE_DEL) ? "del" : "add");
 	snprintf(priority, sizeof(priority), "%d", IP_RULE_PREF_VPNC_POLICY_CLIENT);
@@ -2462,6 +2491,12 @@ int write_vpn_fusion_nat(FILE *fp, const char *lan_ip)
 	{
 		if (dev_policy[i].active)
 		{
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+			/* Preserve the real fixed-slot resolver for independent Merlin
+			 * clients; only suppress this retained stock policy's DNS redirect. */
+			if (dev_policy[i].vpnc_idx > 0 &&
+			    (qca_vpn_binding_deferred(dev_policy[i].vpnc_idx) || nvram_match("qca_merlin_vpn_migrated", "1"))) continue;
+#endif
 			snprintf(vpnc_prefix, sizeof(vpnc_prefix), "vpnc%d_", dev_policy[i].vpnc_idx);
 
 			// check vpnc connetced

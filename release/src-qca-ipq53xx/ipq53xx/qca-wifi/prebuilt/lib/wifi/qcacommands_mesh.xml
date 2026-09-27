@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2020 Qualcomm Innovation Center, Inc. -->
+<!-- All Rights Reserved. -->
+<!-- Confidential and Proprietary – Qualcomm Innovation Center, Inc -->
+
+<!-- Naming conventions:For default attributes keep name as dparam<N> unique name -->
+<WCN_VenTool>
+    <VendorCmd name="get_whc_wds" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="40"/>
+        <VendorRsp name="get_whc_wds" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_wds" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_whc_son" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="39"/>
+        <VendorRsp name="get_whc_son" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_son" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_whc_ul_rate" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="32"/>
+        <VendorRsp name="get_whc_ul_rate" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_ul_rate" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="g_curr_caprssi" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="41"/>
+        <VendorRsp name="g_curr_caprssi" ID="75" ATTR_MAX="2">
+            <Attribute name="g_curr_caprssi" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="g_best_ob_bssid" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="36"/>
+        <VendorRsp name="g_best_ob_bssid" ID="75" ATTR_MAX="2">
+            <Attribute name="g_best_ob_bssid" ID="1" TYPE="STRING"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="g_whc_ob_bssid" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="38"/>
+        <VendorRsp name="g_whc_ob_bssid" ID="75" ATTR_MAX="2">
+            <Attribute name="g_whc_ob_bssid" ID="1" TYPE="STRING"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_whc_dist" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="31"/>
+        <VendorRsp name="get_whc_dist" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_dist" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="set_skip_hyst" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="43"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_skip_hyst" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="43"/>
+        <VendorRsp name="get_skip_hyst" ID="75" ATTR_MAX="2">
+            <Attribute name="get_skip_hyst" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="set_whc_sfactor" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="42"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="set_whc_dist" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="31"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="set_whc_ul_rate" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="32"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="bsteerrssi_log" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="55"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="otherband_bssid" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="33"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+        <Attribute name="value1" ID="20" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_whc_sfactor" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="42"/>
+        <VendorRsp name="get_whc_sfactor" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_sfactor" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_whc_rate" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="34"/>
+        <VendorRsp name="get_whc_rate" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_rate" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_whc_bssid" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="35"/>
+        <VendorRsp name="get_whc_bssid" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_bssid" ID="1" TYPE="STRING"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="g_whc_cap_bssid" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="37"/>
+        <VendorRsp name="g_whc_cap_bssid" ID="75" ATTR_MAX="2">
+            <Attribute name="g_whc_cap_bssid" ID="1" TYPE="STRING"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="whc_mixedbh_ul" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="46"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="g_whc_mixedbh_ul" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="46"/>
+        <VendorRsp name="g_whc_mixedbh_ul" ID="75" ATTR_MAX="2">
+            <Attribute name="g_whc_mixedbh_ul" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="whc_mixedbh_bh_type" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="45"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="caprssi" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="44"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="g_caprssi" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="44"/>
+        <VendorRsp name="g_caprssi" ID="75" ATTR_MAX="2">
+            <Attribute name="g_caprssi" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="MapBSSType" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="51"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_MapBSSType" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="51"/>
+        <VendorRsp name="get_MapBSSType" ID="75" ATTR_MAX="2">
+            <Attribute name="get_MapBSSType" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="mapset_vapup" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="54"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="mapget_vapup" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="54"/>
+        <VendorRsp name="mapget_vapup" ID="75" ATTR_MAX="2">
+            <Attribute name="mapget_vapup" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="map" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="50"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_map" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="50"/>
+        <VendorRsp name="get_map" ID="75" ATTR_MAX="2">
+            <Attribute name="get_map" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="map_sta_vlan" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="52"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_map_sta_vlan" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="52"/>
+        <VendorRsp name="map8021qvlan" ID="75" ATTR_MAX="2">
+            <Attribute name="get_map_sta_vlan" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="ssid_config" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="48"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_ssid_config" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="48"/>
+        <VendorRsp name="get_ssid_config" ID="75" ATTR_MAX="2">
+            <Attribute name="get_ssid_config" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="son_event_bcast" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="53"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="g_son_event_bcast" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="53"/>
+        <VendorRsp name="g_son_event_bcast" ID="75" ATTR_MAX="2">
+            <Attribute name="g_son_event_bcast" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_whc_ul_snr" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="47"/>
+        <VendorRsp name="get_whc_ul_snr" ID="75" ATTR_MAX="2">
+            <Attribute name="get_whc_ul_snr" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="ul_hyst" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="49"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="g_ul_hyst" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="49"/>
+        <VendorRsp name="g_ul_hyst" ID="75" ATTR_MAX="2">
+            <Attribute name="g_ul_hyst" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_mesh_version" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="58"/>
+        <VendorRsp name="get_mesh_version" ID="75" ATTR_MAX="2">
+            <Attribute name="get_mesh_version" ID="1" TYPE="STRING"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="son" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="60"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="get_son" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="60"/>
+        <VendorRsp name="get_son" ID="75" ATTR_MAX="2">
+            <Attribute name="get_son" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="get_vap_count" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="61"/>
+        <VendorRsp name="get_vap_count" ID="75" ATTR_MAX="2">
+            <Attribute name="get_vap_count" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="rept_spl" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="62"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="g_rept_spl" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="62"/>
+        <VendorRsp name="g_rept_spl" ID="75" ATTR_MAX="2">
+            <Attribute name="g_rpt_spl" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="ald_buf_thr" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="63"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+    <VendorCmd name="g_ald_buf_thr" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="63"/>
+        <VendorRsp name="g_ald_buf_thr" ID="75" ATTR_MAX="2">
+            <Attribute name="g_ald_buf_thr" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="set_innetwork_2g" ID="74" DEFAULTS="17,18">
+      <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+      <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="64"/>
+      <Attribute name="value0" ID="19" TYPE="MAC_ADDR"/>
+      <Attribute name="value1" ID="21" TYPE="u32"/>
+   </VendorCmd>
+   <VendorCmd name="get_active_vdev_count" ID="75" DEFAULTS="17,18">
+       <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+       <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="65"/>
+       <VendorRsp name="get_active_vdev_count" ID="75" ATTR_MAX="2">
+           <Attribute name="get_active_vdev_count" ID="1" TYPE="u32"/>
+       </VendorRsp>
+   </VendorCmd>
+   <VendorCmd name="g_bstaflag" ID="75" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="68"/>
+        <VendorRsp name="g_bstaflag" ID="75" ATTR_MAX="2">
+            <Attribute name="g_bstaflag" ID="1" TYPE="u32"/>
+        </VendorRsp>
+    </VendorCmd>
+    <VendorCmd name="bstaflag" ID="74" DEFAULTS="17,18">
+        <Attribute name="dparam0" ID="17" TYPE="u32" DEFAULT="316"/>
+        <Attribute name="dparam1" ID="18" TYPE="u32" DEFAULT="69"/>
+        <Attribute name="value0" ID="19" TYPE="u32"/>
+    </VendorCmd>
+</WCN_VenTool>

@@ -1,0 +1,138 @@
+name: RT-BE90U experimental
+
+on:
+  push:
+    branches: [master-3006, 'DEV_*']
+    paths:
+      - '.github/workflows/rt-be90u.yml'
+      - 'tools/rt-be90u/**'
+      - 'release/src/**'
+      - 'release/src-qca-ipq53xx/**'
+  pull_request:
+    branches: [master-3006]
+    paths:
+      - '.github/workflows/rt-be90u.yml'
+      - 'tools/rt-be90u/**'
+      - 'release/src/**'
+      - 'release/src-qca-ipq53xx/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rt-be90u-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Clean build and image checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    env:
+      TOOLCHAIN_REVISION: 5e5b8ae593edb9c3f0711c56ef7fe73e113506d0
+      DEPS_IMAGE: rt-be90u-ci-deps:20.04
+      BUILDER_IMAGE: rt-be90u-ci-build:3006
+    steps:
+      - name: Initialize evidence directory
+        run: |
+          echo "EVIDENCE=$RUNNER_TEMP/rt-be90u-evidence" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/rt-be90u-evidence"
+
+      - name: Check out firmware sources
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows
+            tools/rt-be90u
+            release/src
+            release/src-qca-ipq53xx
+
+      - name: Record source and runner
+        run: |
+          mkdir -p "$EVIDENCE"
+          git rev-parse HEAD | tee "$EVIDENCE/source-commit.txt"
+          df -h | tee "$EVIDENCE/disk-before.txt"
+          free -h | tee "$EVIDENCE/memory.txt"
+          test ! -e release/src-qca-ipq53xx/.build
+          test ! -e release/src-qca-ipq53xx/image
+
+      - name: Check helpers and common source profiles
+        run: |
+          python3 -m unittest discover -s tools/rt-be90u/tests -p 'test_*.py' 2>&1 | tee "$EVIDENCE/helper-tests.log"
+          python3 tools/rt-be90u/check-common-sources.py --fetch-baselines > "$EVIDENCE/common-sources.json"
+          make -C release/src-qca-ipq53xx check 2>&1 | tee "$EVIDENCE/source-inputs.log"
+
+      - name: Check out pinned toolchain
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: SWRT-dev/qca-toolchains
+          ref: ${{ env.TOOLCHAIN_REVISION }}
+          path: .ci-toolchain
+          persist-credentials: false
+          sparse-checkout: openwrt-gcc750_musl1124.aarch64
+
+      - name: Provision build dependencies from scratch
+        run: |
+          docker build --pull --no-cache -t "$DEPS_IMAGE" - < tools/rt-be90u/Dockerfile.deps 2>&1 | tee "$EVIDENCE/dependencies.log"
+          tools/rt-be90u/prepare-toolchain.sh .ci-toolchain "$BUILDER_IMAGE" "$DEPS_IMAGE" 2>&1 | tee "$EVIDENCE/toolchain.log"
+          docker image inspect "$DEPS_IMAGE" "$BUILDER_IMAGE" > "$EVIDENCE/builder-images.json"
+          docker run --rm --network none "$BUILDER_IMAGE" dpkg-query -W > "$EVIDENCE/host-packages.txt"
+          printf '%s\n' "$TOOLCHAIN_REVISION" > "$EVIDENCE/toolchain-commit.txt"
+
+      - name: Build firmware without network access
+        run: |
+          docker run --rm --network none --ulimit core=0 \
+            --user "$(id -u):$(id -g)" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/work" \
+            "$BUILDER_IMAGE" make rt-be90u 2>&1 | tee "$EVIDENCE/build.log"
+          cp release/src-qca-ipq53xx/.build/inputs.json "$EVIDENCE/build-inputs.json"
+          git diff --exit-code
+
+      - name: Validate image and packaged linkage
+        run: |
+          shopt -s nullglob
+          images=(release/src-qca-ipq53xx/image/TUF-BE9400_*.trx)
+          test "${#images[@]}" -eq 1
+          docker run --rm --network none --ulimit core=0 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/work,readonly" \
+            --mount "type=bind,src=$RUNNER_TEMP,dst=/results" \
+            "$BUILDER_IMAGE" python3 /work/tools/rt-be90u/validate-ci-image.py \
+            "/work/${images[0]}" /results/rt-be90u-rootfs /results/rt-be90u-evidence/image.json \
+            2>&1 | tee "$EVIDENCE/image-check.log"
+          docker run --rm --network none --read-only --tmpfs /tmp:exec --tmpfs /jffs \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/release/src-qca-ipq53xx/.build/source,dst=/work,readonly" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/tools/rt-be90u/tests,dst=/tests,readonly" \
+            "$BUILDER_IMAGE" sh /tests/run-scripts-test.sh 2>&1 | tee "$EVIDENCE/script-hooks.log"
+          mkdir -p "$EVIDENCE/firmware"
+          cp "${images[0]}" "$EVIDENCE/firmware/"
+          (cd "$EVIDENCE/firmware" && sha256sum ./*.trx > SHA256SUMS)
+          printf '%s\n' 'Experimental CI image; recovery and hardware validation are incomplete. Not ready to flash.' > "$EVIDENCE/firmware/README.txt"
+
+      - name: Test packaged VPN configuration and compiled service dispatch
+        run: |
+          docker build --build-arg "BASE_IMAGE=$BUILDER_IMAGE" \
+            -t rt-be90u-ci-test:3006 - < tools/rt-be90u/tests/Dockerfile \
+            2>&1 | tee "$EVIDENCE/runtime-dependencies.log"
+          python3 tools/rt-be90u/validate-image.py "$RUNNER_TEMP/rt-be90u-rootfs" \
+            --group basic --runtime-image rt-be90u-ci-test:3006 \
+            --logs "$EVIDENCE/basic" --name rt-be90u-ci
+
+      - name: Record final disk usage
+        if: always()
+        run: |
+          mkdir -p "$EVIDENCE"
+          df -h > "$EVIDENCE/disk-after.txt"
+
+      - name: Save build logs and experimental firmware
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rt-be90u-experimental-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE }}
+          if-no-files-found: error
+          retention-days: 14

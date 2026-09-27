@@ -1,0 +1,25 @@
+QSEECOM DRIVER
+--------------
+
+This driver acts as an interface for communication between the secure and non-
+secure world which allows us to load and run applications securely.
+
+Required properties:
+  - compatible = "ipq807x-qseecom"; for IPQ807x device
+		= "ipq8064-qseecom"; for IPQ8064 device
+		= "ipq40xx-qseecom"; for IPQ40xx device
+		= "ipq6018-qseecom"; for IPQ6018 device
+  - mem-start: Address in reserved memory region to load the application
+  - mem-size: Size available for the application
+
+Note:
+mem-start and mem-size entries should not be given for ipq8064 device as it is
+taken from the elf data.
+
+Example:
+
+qseecom {
+	compatible = "ipq807x-qseecom";
+	mem-start = <0x4a400000>;
+	mem-size = <0x200000>;
+};

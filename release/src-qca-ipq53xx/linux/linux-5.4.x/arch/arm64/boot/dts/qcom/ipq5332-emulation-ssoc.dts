@@ -1,0 +1,345 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 Emulation board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq5332.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5332/EMULATION";
+	compatible = "qcom,ipq5332-ap-emulation", "qcom,ipq5332";
+	interrupt-parent = <&intc>;
+
+	/*                Default Profile
+	 * +==========+==============+========================+
+	 * |         |              |                         |
+	 * |  Region | Start Offset |          Size           |
+	 * |         |              |                         |
+	 * +---------+--------------+-------------------------+
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * |  Linux  |  0x40000000  |           161MB         |
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * +---------+--------------+-------------------------+
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * |  TZ App |  0x49B00000  |           6MB           |
+	 * |         |              |                         |
+	 * |         |              |                         |
+	 * +---------+--------------+-------------------------+
+	 * |         |              |                         |
+	 * |  uboot  |  0x4A100000  |           4MB           |
+	 * |         |              |                         |
+	 * +---------+--------------+-------------------------+
+	 * |   SBL   |  0x4A500000  |           1MB           |
+	 * +---------+--------------+-------------------------+
+	 * |         |              |                         |
+	 * |   TZ    |  0x4A600000  |           2MB           |
+	 * |         |              |                         |
+	 * +---------+--------------+-------------------------+
+	 * |   smem  |  0x4A800000  |           1MB           |
+	 * +---------+--------------+-------------------------+
+	 * |   Q6    |              |                         |
+	 * |  code/  |  0x4A900000  |          21MB           |
+	 * |  data   |              |                         |
+	 * +---------+--------------+-------------------------+
+	 * | IPQ5332 |              |                         |
+	 * |  data   |  0x4BE00000  |          30MB           |
+	 * +---------+--------------+-------------------------+
+	 * | IPQ5332 |              |                         |
+	 * | M3 Dump |  0x4DC00000  |           1MB           |
+	 * +---------+--------------+-------------------------+
+	 * | IPQ5332 |              |                         |
+	 * |  QDSS   |  0x4DD00000  |           1MB           |
+	 * +---------+--------------+-------------------------+
+	 * | IPQ5332 |              |                         |
+	 * |  CALDB  |  0x4DE00000  |           5MB           |
+	 * +---------+--------------+-------------------------+
+	 * |QCN6432_1|              |                         |
+	 * |  data   |  0x4E300000  |          30MB           |
+	 * +---------+--------------+-------------------------+
+	 * |QCN6432_1|              |                         |
+	 * | M3 Dump |  0x50100000  |           1MB           |
+	 * +---------+--------------+-------------------------+
+	 * |QCN6432_1|              |                         |
+	 * |  QDSS   |  0x50200000  |           1MB           |
+	 * +---------+--------------+-------------------------+
+	 * |QCN6432_1|              |                         |
+	 * |  CALDB  |  0x50300000  |           5MB           |
+	 * +==================================================+
+	 * |                                                  |
+	 * |                                                  |
+	 * |                                                  |
+	 * |             Rest of memory for Linux             |
+	 * |                                                  |
+	 * |                                                  |
+	 * |                                                  |
+	 * +==================================================+
+	 */
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x40000000 0x0 0x20000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		tzapp: tzapp@49B00000 {
+			no-map;
+			reg = <0x0 0x49B00000 0x0 0x00600000>;
+		};
+
+		uboot@4A100000 {
+			no-map;
+			reg = <0x0 0x4A100000 0x0 0x00400000>;
+		};
+
+		sbl@4A500000 {
+			no-map;
+			reg = <0x0 0x4A500000 0x0 0x00100000>;
+		};
+
+		tz@4A600000 {
+			no-map;
+			reg = <0x0 0x4A600000 0x0 0x00200000>;
+		};
+
+		smem_region: smem@4A800000 {
+			no-map;
+			reg = <0x0 0x4A800000 0x0 0x00100000>;
+		};
+
+		q6_code_data: q6_code_data@4A900000 {
+			no-map;
+			reg = <0x0 0x4a900000 0x0 0x1500000>;
+		};
+
+		q6_ipq5332_data: q6_ipq5332_data@4BE00000 {
+			no-map;
+			reg = <0x0 0x4BE00000 0x0 0x1E00000>;
+		};
+
+		m3_dump: m3_dump@4DC00000 {
+			no-map;
+			reg = <0x0 0x4DC00000 0x0 0x100000>;
+		};
+
+		q6_etr_region: q6_etr_dump@4DD00000 {
+			no-map;
+			reg = <0x0 0x4DD00000 0x0 0x100000>;
+		};
+
+		q6_ipq5332_caldb: q6_ipq5332_caldb@4DE00000 {
+			no-map;
+			reg = <0x0 0x4DE00000 0x0 0x500000>;
+		};
+
+		q6_qcn6432_data_1: q6_qcn6432_data_1@4E300000 {
+			no-map;
+			reg = <0x0 0x4E300000 0x0 0x1E00000>;
+		};
+
+		m3_dump_qcn6432_1: m3_dump_qcn6432_1@50100000 {
+			no-map;
+			reg = <0x0 0x50100000 0x0 0x100000>;
+		};
+
+		q6_qcn6432_etr_1: q6_qcn6432_etr_1@50200000 {
+			no-map;
+			reg = <0x0 0x50200000 0x0 0x100000>;
+		};
+
+		q6_qcn6432_caldb: q6_qcn6432_caldb@50300000 {
+			no-map;
+			reg = <0x0 0x50300000 0x0 0x500000>;
+		};
+
+		minidump_mem: minidump_mem@0 {
+			no-map;
+		};
+        };
+
+	clocks {
+		sleep_clk: sleep-clk {
+			clock-frequency = <160>;
+		};
+
+		xo: xo {
+			clock-frequency = <120000>;
+		};
+	};
+
+	aliases {
+		serial0 = &blsp1_uart0;
+		serial1 = &blsp1_uart1;
+	};
+
+	chosen {
+		linux,initrd-end = <0x57000000>;
+		linux,initrd-start = <0x55000000>;
+		bootargs = "root=/dev/ram0 rw init=/init";
+		stdout-path = "serial0";
+	};
+
+	cpus: cpus {
+		CPU0: cpu@0 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc0>;
+		};
+
+		CPU1: cpu@1 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc1>;
+		};
+
+		CPU2: cpu@2 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc2>;
+		};
+
+		CPU3: cpu@3 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc3>;
+		};
+	};
+
+	firmware {
+		qfprom {
+			status = "disabled";
+		};
+	};
+
+	soc {
+		pinctrl@1000000 {
+			serial_0_pins: serial0-pinmux {
+				pins = "gpio18", "gpio19";
+				function = "blsp0_uart0";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+		};
+
+		gcc: gcc@1800000 {
+			gcc-use-dummy;
+		};
+
+		nsscc: nsscc@39b00000 {
+			nsscc-use-dummy;
+		};
+
+		serial@78af000 {
+			pinctrl-0 = <&serial_0_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		acc0: clock-controller@b188000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b188000 0x1000>;
+		};
+
+		acc1: clock-controller@b198000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b198000 0x1000>;
+		};
+
+		acc2:clock-controller@b1a8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1a8000 0x1000>;
+		};
+
+		acc3:clock-controller@b1b8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1b8000 0x1000>;
+		};
+
+		/* Timer freq for SSOC RUMI  = timer freq / 200 */
+		timer {
+			clock-frequency = <120000>;
+		};
+
+		timer@b120000 {
+			clock-frequency = <120000>;
+		};
+
+		q6v5_wcss: remoteproc@d100000 {
+			qcom,emulation;
+			qcom,nosecure;
+			bootaddr = <0x4A900000>;
+			memory-region = <&q6_code_data>, <&q6_ipq5332_data>,
+					<&q6_qcn6432_data_1>, <&q6_etr_region>;
+			q6_wcss_pd1: remoteproc_pd1 {
+				qcom,emulation;
+				qcom,nosecure;
+				bootaddr = <0x4A900000>;
+				qcom,fw_shared;
+			};
+			q6_wcss_pd2: remoteproc_pd2 {
+				qcom,emulation;
+				qcom,nosecure;
+				bootaddr = <0x4A900000>;
+				qcom,fw_shared;
+				status = "ok";
+			};
+		};
+
+		scm {
+			status = "disabled";
+		};
+	};
+
+	psci {
+		status = "disabled";
+	};
+
+	qti,tzlog {
+		status = "disabled";
+	};
+
+	qti,scm_restart_reason {
+		status = "disabled";
+	};
+
+	ctx-save {
+		status = "disabled";
+	};
+
+};
+
+&wifi0 {
+	qcom,multipd_arch;
+	qcom,rproc = <&q6_wcss_pd1>;
+	qcom,userpd-subsys-name = "q6v5_wcss_userpd1";
+	qcom,tgt-mem-mode = <1>;
+	qcom,bdf-addr = <0x4BE00000 0x4BE00000 0x4BE00000 0x0 0x0 0x0>;
+	qcom,caldb-addr = <0x4DE00000 0x4DE00000 0x4DE00000 0x0 0x0 0x0>;
+	qcom,caldb-size = <0x500000>;
+	mem-region = <&q6_ipq5332_data>;
+	status = "ok";
+};
+
+&wifi4 {
+	qcom,multipd_arch;
+	qcom,rproc = <&q6_wcss_pd2>;
+	qcom,userpd-subsys-name = "q6v5_wcss_userpd2";
+	qcom,tgt-mem-mode = <1>;
+	qcom,bdf-addr = <0x4E300000 0x4E300000 0x4E300000 0x0 0x0 0x0>;
+	qcom,caldb-addr = <0x50300000 0x50300000 0x50300000 0x0 0x0 0x0>;
+	qcom,caldb-size = <0x500000>;
+	mem-region = <&q6_qcn6432_data_1>;
+	status = "ok";
+};

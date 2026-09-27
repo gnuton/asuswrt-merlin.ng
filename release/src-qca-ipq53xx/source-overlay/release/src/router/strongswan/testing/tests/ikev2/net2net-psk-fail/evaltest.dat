@@ -1,0 +1,4 @@
+sun:: cat /var/log/daemon.log::tried 1 shared key for.*sun.strongswan.org.*moon.strongswan.org.*but MAC mismatched::YES
+moon::cat /var/log/daemon.log::received AUTHENTICATION_FAILED notify error::YES
+moon::swanctl --list-sas --raw 2> /dev/null::gw-gw.*state=ESTABLISHED.*state=INSTALLED mode=TUNNEL::NO
+sun:: swanctl --list-sas --raw 2> /dev/null::gw-gw.*state=ESTABLISHED.*state=INSTALLED mode=TUNNEL::NO

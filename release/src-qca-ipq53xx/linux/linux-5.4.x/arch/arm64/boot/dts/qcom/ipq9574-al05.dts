@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL05 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c4.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL05";
+	compatible = "qcom,ipq9574-ap-al05", "qcom,ipq9574-al05", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	soc {
+		pinctrl@1000000 {
+			sfp_pins: sfp_pinmux {
+				sfp_rx {
+					pins = "gpio46";
+					function = "rx1";
+					bias-disable;
+				};
+
+				sfp_tx {
+					pins = "gpio41";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+					output-low;
+				};
+			};
+		};
+
+		dp6 {
+			/delete-property/qcom,link-poll;
+			/delete-property/qcom,phy-mdio-addr;
+		};
+		mdio@90000 {
+			phy5: ethernet-phy@5 {
+				reg = <30>;
+				/delete-property/ compatible;
+			};
+		};
+
+		edma@3ab00000 {
+			qcom,edma_loopback_ring;
+			qcom,num_loopback_rings = <1>;
+			qcom,txdesc_loopback_ring_id = <0>;
+			qcom,txcmpl_loopback_ring_id = <0>;
+			qcom,rxfill_loopback_ring_id = <0>;
+			qcom,rxdesc_loopback_ring_id = <0>;
+			qcom,loopback_queue_base = <56>;
+			qcom,loopback_num_queues = <8>;
+		};
+
+		ess-instance {
+			num_devices = <0x1>;
+			ess-switch@3a000000 {
+				pinctrl-0 = <&sfp_pins>;
+				pinctrl-names = "default";
+				switch_mac_mode2 = <0xe>; /* mac mode for uniphy instance2*/
+				qcom,port_phyinfo {
+					port@5 {
+						port_id = <6>;
+						phy_address = <30>;
+						media-type = "sfp"; /* fiber mode */
+					};
+				};
+
+			};
+		};
+	};
+};

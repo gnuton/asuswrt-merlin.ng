@@ -1,0 +1,155 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/dts-v1/;
+/* Copyright (c) 2017, 2020, The Linux Foundation. All rights reserved.
+ */
+#include "ipq8074-hk01.dtsi"
+#include "ipq8074-audio.dtsi"
+
+/ {
+	model = "Qualcomm Technologies, Inc. IPQ8074/AP-HK01-C1";
+	compatible = "qcom,ipq8074-ap-hk01-c1", "qcom,ipq8074-hk01", "qcom,ipq8074";
+
+	aliases {
+		serial1 = &blsp1_uart3;
+	};
+
+	soc {
+		dp1 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <1>;
+			reg = <0x3a001000 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <0>;
+			phy-mode = "sgmii";
+		};
+
+		dp2 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <2>;
+			reg = <0x3a001200 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <1>;
+			phy-mode = "sgmii";
+		};
+
+		dp3 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <3>;
+			reg = <0x3a001400 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <2>;
+			phy-mode = "sgmii";
+		};
+
+		dp4 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <4>;
+			reg = <0x3a001600 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <3>;
+			phy-mode = "sgmii";
+		};
+
+		dp5 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <5>;
+			reg = <0x3a001800 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <4>;
+			phy-mode = "sgmii";
+		};
+
+		dp6 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <6>;
+			reg = <0x3a007000 0x3fff>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,link-poll = <1>;
+			qcom,phy-mdio-addr = <7>;
+			phy-mode = "sgmii";
+		};
+
+		serial@78b1000 {
+			 status = "ok";
+		};
+
+		sd-pwrseq {
+			status = "ok";
+		};
+
+		sdhci@7864900 {
+			pinctrl-0 = <&sd_pins>;
+			pinctrl-names = "default";
+			cd-gpios = <&tlmm 63 GPIO_ACTIVE_LOW>;
+			status = "ok";
+		};
+
+		mdio@90000 {
+			pinctrl-0 = <&mdio_pins>;
+			pinctrl-names = "default";
+			phy-reset-gpio = <&tlmm 37 0>;
+			phy0: ethernet-phy@0 {
+				reg = <0>;
+			};
+			phy1: ethernet-phy@1 {
+				reg = <1>;
+			};
+			phy2: ethernet-phy@2 {
+				reg = <2>;
+			};
+			phy3: ethernet-phy@3 {
+				reg = <3>;
+			};
+			phy4: ethernet-phy@4 {
+				reg = <4>;
+			};
+			phy5: ethernet-phy@5 {
+				compatible ="ethernet-phy-ieee802.3-c45";
+				reg = <7>;
+			};
+		};
+
+		ess-switch@3a000000 {
+			switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+			switch_lan_bmp = <0x3e>; /* lan port bitmap */
+			switch_wan_bmp = <0x40>; /* wan port bitmap */
+			switch_mac_mode = <0x0>; /* mac mode for uniphy instance0*/
+			switch_mac_mode1 = <0xff>; /* mac mode for uniphy instance1*/
+			switch_mac_mode2 = <0xd>; /* mac mode for uniphy instance2*/
+			bm_tick_mode = <0>; /* bm tick mode */
+			tm_tick_mode = <0>; /* tm tick mode */
+		};
+
+		pwm {
+			pinctrl-0 = <&pwm_pins>;
+			pinctrl-names = "default";
+			used-pwm-indices = <1>, <0>, <0>, <0>;
+			status = "disabled";
+		};
+
+		qti_mdss_qpic@7980000 {
+			status = "ok";
+		};
+
+		qti_mdss_qpic_panel {
+			status = "ok";
+		};
+	};
+};

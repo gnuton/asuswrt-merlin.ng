@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 Emulation board device tree source
+ *
+ * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ */
+
+#include "../../../arm64/boot/dts/qcom/ipq9574-emulation-fbc.dts"
+

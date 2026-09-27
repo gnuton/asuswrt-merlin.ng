@@ -1,0 +1,2962 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+		<meta name=viewport content="width=device-width, target-densitydpi=device-dpi, initial-scale=1, user-scalable=no">
+		<title><#Web_Title#> - <#QIS_title#></title>
+		<link rel="stylesheet" href="css/jquery.mobile.css"></link>
+		<link rel="stylesheet" href="css/icon.css"></link>
+		<link rel="stylesheet" href="css/qis.css"></link>
+		<script type="text/javascript" src="js/jquery.js"></script>
+		<script type="text/javascript" src="js/verge.min.js"></script>
+		<script type="text/javascript" src="js/jquery.mobile.js"></script>
+		<script type="text/javascript" src="/require/require.min.js"></script>
+		<script type="text/javascript" src="/validator.js"></script>
+		<script type="text/javascript" src="/js/httpApi.js"></script>
+		<script type="text/javascript" src="/js/https_redirect/https_redirect.js"></script>
+		<script>
+			if(location.hash != "")	location.href = "QIS_wizard.htm";
+			
+			String.prototype.repeat = function(times) {
+			   return (new Array(times + 1)).join(this);
+			};
+
+			String.prototype.strReverse = function() {
+				var newstring = "";
+				for (var s=0; s < this.length; s++) {
+					newstring = this.charAt(s) + newstring;
+				}
+				return newstring;
+			};
+			
+			jQuery.fn.showTextHint = function(hintStr){
+				this.parent().children().remove(".hint");
+				$("<div class='hint'>" + hintStr + "</div>").appendTo(this.parent());
+			}
+
+			var isPage = function(page){
+				return $("#" + page).is(":visible");
+			}
+
+			var qisOriginData = {
+				/* user */
+				"http_username": '<% nvram_get("http_username"); %>',
+				"http_passwd": '<% nvram_get("http_passwd"); %>',
+			
+				/* wireless */
+				"wl0_ssid": decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'),
+				"wl0_wpa_psk": decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>'),
+				"wl0_auth_mode_x": '<% nvram_get("wl0_auth_mode_x"); %>',
+				"wl0_crypto": '<% nvram_get("wl0_crypto"); %>',
+				"wl1_ssid": decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'),
+				"wl1_wpa_psk": decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>'),
+				"wl1_auth_mode_x": '<% nvram_get("wl1_auth_mode_x"); %>',
+				"wl1_crypto": '<% nvram_get("wl1_crypto"); %>',
+				"wl2_ssid": decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'),
+				"wl2_wpa_psk": decodeURIComponent('<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>'),
+				"wl2_auth_mode_x": '<% nvram_get("wl2_auth_mode_x"); %>',
+				"wl2_crypto": '<% nvram_get("wl2_crypto"); %>',
+			
+				/* wan */
+				"wan_unit": '<% nvram_get("wan_unit"); %>',
+				"wan_proto": '<% nvram_get("wan_proto"); %>', /* dhcp or pppoe */
+				"wan_dhcpenable_x": '<% nvram_get("wan_dhcpenable_x"); %>',
+				"wan_dnsenable_x": '<% nvram_get("wan_dnsenable_x"); %>',
+				"wan_pppoe_username": '<% nvram_get("wan_pppoe_username"); %>',
+				"wan_pppoe_passwd": '<% nvram_get("wan_pppoe_passwd"); %>',
+				"wan_ipaddr_x": '<% nvram_get("wan_ipaddr_x"); %>',
+				"wan_netmask_x": '<% nvram_get("wan_netmask_x"); %>',
+				"wan_gateway_x": '<% nvram_get("wan_gateway_x"); %>',
+				"wan_dns1_x": '<% nvram_get("wan_dns1_x"); %>',
+				"wan_dns2_x": '<% nvram_get("wan_dns2_x"); %>',
+				"wan_heartbeat_x": '<% nvram_get("wan_heartbeat_x"); %>',
+				"vpn_enable": '<% nvram_get("vpn_enable"); %>',
+
+				/* iptv */
+				"switch_stb_x": '<% nvram_get("switch_stb_x"); %>',
+				"switch_wantag": '<% nvram_get("switch_wantag"); %>',
+				"switch_wan0tagid": '<% nvram_get("switch_wan0tagid"); %>',
+				"switch_wan0prio": '<% nvram_get("switch_wan0prio"); %>',
+				"switch_wan1tagid": '<% nvram_get("switch_wan1tagid"); %>',
+				"switch_wan1prio": '<% nvram_get("switch_wan1prio"); %>',
+				"switch_wan2tagid": '<% nvram_get("switch_wan2tagid"); %>',
+				"switch_wan2prio": '<% nvram_get("switch_wan2prio"); %>',
+
+				/* triple vlan settings */
+				"wan10_proto": '<% nvram_get("wan10_proto"); %>',
+				"wan10_dhcpenable_x": '<% nvram_get("wan10_dhcpenable_x"); %>',
+				"wan10_ipaddr_x": '<% nvram_get("wan10_ipaddr_x"); %>',
+				"wan10_netmask_x": '<% nvram_get("wan10_netmask_x"); %>',
+				"wan10_gateway_x": '<% nvram_get("wan10_gateway_x"); %>',
+				"wan10_dns1_x": '<% nvram_get("wan10_dns1_x"); %>',
+				"wan10_dns2_x": '<% nvram_get("wan10_dns2_x"); %>',
+				"wan10_auth_x": '<% nvram_get("wan10_auth_x"); %>',
+				"wan10_pppoe_username": '<% nvram_get("wan10_pppoe_username"); %>',
+				"wan10_pppoe_passwd": '<% nvram_get("wan10_pppoe_passwd"); %>',
+				"mr_enable_x": '<% nvram_get("mr_enable_x"); %>',
+				"mr_altnet_x": '<% nvram_get("mr_altnet_x"); %>',
+				"quagga_enable": '<% nvram_get("quagga_enable"); %>',
+
+				/* general */
+				"time_zone": '<% nvram_get("time_zone"); %>',
+				"time_zone_dst": '<% nvram_get("time_zone_dst"); %>',
+				"bt_turn_off_service": 'ble_qis_done',
+				"sw_mode": '<% nvram_get("sw_mode"); %>',
+				"x_Setting": '<% nvram_get("x_Setting"); %>',
+				"w_Setting": '1',
+				"qis_Setting": '<% nvram_get("qis_Setting"); %>',
+				'lan_ipaddr': '<% nvram_get("lan_ipaddr"); %>'
+			}
+			
+			var qisPostData = {
+				/* user */
+				"http_username": '<% nvram_get("http_username"); %>',
+				"http_passwd": '<% nvram_get("http_passwd"); %>',
+			
+				/* wireless */
+				"wl0_ssid": decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'),
+				"wl0_wpa_psk": decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>'),
+				"wl0_auth_mode_x": '<% nvram_get("wl0_auth_mode_x"); %>',
+				"wl0_crypto": '<% nvram_get("wl0_crypto"); %>',
+				"wl1_ssid": decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>'),
+				"wl1_wpa_psk": decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>'),
+				"wl1_auth_mode_x": '<% nvram_get("wl1_auth_mode_x"); %>',
+				"wl1_crypto": '<% nvram_get("wl1_crypto"); %>',
+				"wl2_ssid": decodeURIComponent('<% nvram_char_to_ascii("", "wl2_ssid"); %>'),
+				"wl2_wpa_psk": decodeURIComponent('<% nvram_char_to_ascii("", "wl2_wpa_psk"); %>'),
+				"wl2_auth_mode_x": '<% nvram_get("wl2_auth_mode_x"); %>',
+				"wl2_crypto": '<% nvram_get("wl2_crypto"); %>',
+			
+				/* wan */
+				"wan_unit": '<% nvram_get("wan_unit"); %>',
+				"wan_proto": '<% nvram_get("wan_proto"); %>', /* dhcp or pppoe */
+				"wan_dhcpenable_x": '<% nvram_get("wan_dhcpenable_x"); %>',
+				"wan_dnsenable_x": '<% nvram_get("wan_dnsenable_x"); %>',
+				"wan_pppoe_username": '<% nvram_get("wan_pppoe_username"); %>',
+				"wan_pppoe_passwd": '<% nvram_get("wan_pppoe_passwd"); %>',
+				"wan_ipaddr_x": '<% nvram_get("wan_ipaddr_x"); %>',
+				"wan_netmask_x": '<% nvram_get("wan_netmask_x"); %>',
+				"wan_gateway_x": '<% nvram_get("wan_gateway_x"); %>',
+				"wan_dns1_x": '<% nvram_get("wan_dns1_x"); %>',
+				"wan_dns2_x": '<% nvram_get("wan_dns2_x"); %>',
+				"wan_heartbeat_x": '<% nvram_get("wan_heartbeat_x"); %>',
+				"vpn_enable": '<% nvram_get("vpn_enable"); %>',
+
+				/* iptv */
+				"switch_stb_x": '<% nvram_get("switch_stb_x"); %>',
+				"switch_wantag": '<% nvram_get("switch_wantag"); %>',
+				"switch_wan0tagid": '<% nvram_get("switch_wan0tagid"); %>',
+				"switch_wan0prio": '<% nvram_get("switch_wan0prio"); %>',
+				"switch_wan1tagid": '<% nvram_get("switch_wan1tagid"); %>',
+				"switch_wan1prio": '<% nvram_get("switch_wan1prio"); %>',
+				"switch_wan2tagid": '<% nvram_get("switch_wan2tagid"); %>',
+				"switch_wan2prio": '<% nvram_get("switch_wan2prio"); %>',
+
+				/* triple vlan settings */
+				"wan10_proto": '<% nvram_get("wan10_proto"); %>',
+				"wan10_dhcpenable_x": '<% nvram_get("wan10_dhcpenable_x"); %>',
+				"wan10_ipaddr_x": '<% nvram_get("wan10_ipaddr_x"); %>',
+				"wan10_netmask_x": '<% nvram_get("wan10_netmask_x"); %>',
+				"wan10_gateway_x": '<% nvram_get("wan10_gateway_x"); %>',
+				"wan10_dns1_x": '<% nvram_get("wan10_dns1_x"); %>',
+				"wan10_dns2_x": '<% nvram_get("wan10_dns2_x"); %>',
+				"wan10_auth_x": '<% nvram_get("wan10_auth_x"); %>',
+				"wan10_pppoe_username": '<% nvram_get("wan10_pppoe_username"); %>',
+				"wan10_pppoe_passwd": '<% nvram_get("wan10_pppoe_passwd"); %>',
+				"mr_enable_x": '<% nvram_get("mr_enable_x"); %>',
+				"mr_altnet_x": '<% nvram_get("mr_altnet_x"); %>',
+				"quagga_enable": '<% nvram_get("quagga_enable"); %>',
+
+				/* general */
+				"time_zone": '<% nvram_get("time_zone"); %>',
+				"time_zone_dst": '<% nvram_get("time_zone_dst"); %>',
+				"bt_turn_off_service": 'ble_qis_done',
+				"sw_mode": '1',
+				"x_Setting": '1',
+				"w_Setting": '1',
+				"wifison_ready": '1',
+				"qis_Setting": '1'
+			}
+
+			var forceChangePW = ('<% check_pw(); %>' == '1') ? true : false;
+			var wanType = "";
+			var based_modelid = '<% nvram_get("productid"); %>';
+			var lyraGoodimage = new Image(); //Add for preload image
+			var loadingIcon = new Image();
+			lyraGoodimage.src = '../images/qis/asus_hive_good.png';
+			loadingIcon.src = '../images/InternetScan.gif';
+
+			var portName = {
+				"voip": "Primary Node LAN Port",
+				"iptv": "Primary Node LAN Port"
+			}
+
+			$(document).ready(function(){
+				if(Check_Https_Redirect_Status()){
+					Initial_Https_Redirect();
+					return;
+				}
+				document.querySelector("meta[name=viewport]").setAttribute(
+					'content', 'width=' + verge.viewportW() + ', target-densitydpi=device-dpi, initial-scale=' + (0.5*verge.viewportW())/375 + ', maximum-scale=1, user-scalable=no'
+				);
+
+				// setup time_zone
+				var isDefault = ('<% nvram_get("x_Setting"); %>' == 0) ? true : false;
+				if(isDefault){
+					require(['/require/modules/timeZone.js'], function(timeZone) {
+						var timeZoneObj = new timeZone.get('<% nvram_get("preferred_lang"); %>');
+			
+						qisPostData.time_zone = timeZoneObj.time_zone;
+						qisPostData.time_zone_dst = (timeZoneObj.hasDst) ? 1 : 0;
+					});
+				}
+
+				if(!isWLclient() && based_modelid != "MAP-AC1750" && based_modelid != "VZW-AC1300") {
+					goTo.wiredHint();
+				} else {
+					setTimeout(detectWanType, 500);
+				}
+
+				$("#pap_ip_advance_setting_ipaddr").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#pap_ip_advance_setting_subnet").focus();
+					}
+				});
+
+				$("#pap_ip_advance_setting_subnet").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#pap_ip_advance_setting_gateway").focus();
+					}
+				});
+
+				$("#pap_ip_advance_setting_gateway").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#pap_ip_advance_setting_dns1").focus();
+					}
+				});
+
+				$("#pap_ip_advance_setting_dns1").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#pap_ip_advance_setting_dns2").focus();
+					}
+				});
+
+				$("#pap_ip_advance_setting_dns2").keyup(function(e){
+					if(e.keyCode == 13){
+						apply.static();
+					}
+				});
+
+				$("#wireless_ssid").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#wireless_key").focus();
+					}
+				});
+
+				$("#wireless_key").keyup(function(e){
+					if(e.keyCode == 13){
+						apply.wireless();
+					}
+				});
+
+				$("#http_username").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#http_passwd").focus();
+					}
+				});
+
+				$("#http_passwd").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#http_passwd_confirm").focus();
+					}
+				});
+
+				$("#http_passwd_confirm").keyup(function(e){
+					if(e.keyCode == 13){
+						apply.login();
+					}
+				});
+
+				$("#wan_pppoe_username").keyup(function(e){
+					if(e.keyCode == 13){
+						$("#wan_pppoe_passwd").focus();
+					}
+				});
+
+				$("#wan_pppoe_passwd").keyup(function(e){
+					if(e.keyCode == 13){
+						if($("#wan_heartbeat_x").is(":visible"))
+							$("#wan_heartbeat_x").focus();
+						else
+							apply.pppoe();
+					}
+				});
+
+				$("#wan_heartbeat_x").keyup(function(e){
+					if(e.keyCode == 13){
+						apply.pppoe();
+					}
+				});
+
+				patchUntranslatedString();
+
+				if(isSku("CN") || isSku("US") || isSku("CA")){
+					$("#iptvCheckboxContainer").hide();
+					$("#iptvCheckboxContainer_PPPoE").hide();
+				}
+				else if(isSku("TW")){
+					$("#iptvCheckboxContainer label").text("Hinet MOD");
+					$("#iptvCheckboxContainer_PPPoE label").text("Hinet MOD");
+				}
+
+				if(based_modelid == "MAP-AC1750"){
+					if($("#iptvDesc").hasClass("lyra_iptv"))
+						$("#iptvDesc").removeClass("lyra_iptv").addClass("lyraTrio_iptv");
+					$("#iptvDescTitle").text("Please connect your ISP modem LAN port to the port label \"LAN/WAN\".");
+				}
+			});
+			
+			function patchUntranslatedString(){	
+				var untranslatedString = {
+					"": ""
+				}
+
+				$.each($(".untranString"), function(idx, obj){
+					$(obj).html(untranslatedString[obj.id])
+				})
+			}
+
+			function start_welcome(){
+				if(!forceChangePW){
+					goTo.autoWan();
+				}
+				else{
+					$.mobile.changePage("#login_name", {transition: "slide", changeHash: false});
+				}
+			}
+
+			function getDetectResult(){
+				if(wanType == ""){
+					setTimeout(getDetectResult, 500);
+					return false;
+				}
+
+				goTo.autoWan();
+			}
+
+			var detectWanType = function(handler){
+				wanType = "";
+
+				$.ajax({
+					url: '/detwan.cgi?action_mode=GetWanStatus',
+					dataType: 'json',
+					error: function(xhr){
+						wanType = "unKnown";
+						finishDetect();
+					},
+					
+					success: function(response){
+						var wanTypeState = parseInt(response.state);
+
+						if(wanTypeState == 2 || wanTypeState == 5){
+							wanType = "DHCP";
+						}
+						else if(wanTypeState == 3 || wanTypeState == 6){
+							wanType = "PPPoE";
+						}
+						else if(wanTypeState == 8 || wanTypeState == 9){
+							var linkInternet = (httpApi.nvramGet(["link_internet"], true).link_internet == "2");
+							wanType = (!linkInternet) ? "PPPoE": "PPPDHCP";
+						}
+						else if(wanTypeState == 0){
+							wanType = "NoWan";
+						}
+						else{
+							wanType = "unKnown";
+						}
+
+						if(handler) handler.call(response);
+					}
+				});	
+			};
+
+			function finishDetect(){
+				clearInterval(window.noWanDetectTimer);
+				// $(".detectBtn").html('<#CTL_next#>');
+			}
+
+			function start_detect(){
+				// $(".detectBtn").html('<div class="loadingIcon"></div>');
+				detectWanType(function(){
+					if(wanType == "DHCP"){
+						goTo.DHCP();
+					}
+					else if(wanType == "PPPoE"){
+						goTo.PPPoE();
+					}
+					else if(wanType == "PPPDHCP"){
+						goTo.PPPDHCP();
+					}
+					else if(wanType == "Static"){
+						goTo.Static();
+					}
+					else if(wanType == "unKnown"){
+						goTo.resetModem();
+					}
+					else if(wanType == "NoWan"){
+						setTimeout(start_detect, 1000);
+					}
+					else{
+						return false;
+					}
+				});
+			}
+
+			var isSku = function(_ptn){
+				var ttc = '<% nvram_get("territory_code"); %>';
+				return (ttc.search(_ptn) == -1) ? false : true;
+			}
+	
+			var pass_checked = function(obj, icon){
+				var switchType = function(obj, hide){
+					var _Type = hide ? "text" : "password";
+					if (obj.type != _Type) {
+						if (navigator.userAgent.indexOf("MSIE") != -1) {
+							var input2 = document.createElement('input');
+							input2.mergeAttributes(obj);
+							input2.id = obj.id? obj.id : obj.name;
+							input2.value = obj.value;
+							input2.type = _Type;
+							input2.name = obj.name;
+							obj.parentNode.replaceChild(input2 ,obj);
+							if (hide)
+								setTimeout(function(){document.getElementById(input2.id).focus();document.getElementById(input2.id).select();},10);
+						} else
+							obj.type= _Type;
+					}
+				}
+			
+				var _obj = document.getElementById(obj);
+				if(_obj.type == "text"){
+					switchType(_obj, false);
+					icon.className = "icon_eye_close";
+					if(obj == "http_passwd")
+						switchType(http_passwd_confirm, false);
+				}
+				else{
+					switchType(_obj, true);
+					icon.className = "icon_eye_open";
+					if(obj == "http_passwd")
+						switchType(http_passwd_confirm, true);
+				}
+			}
+			
+			var check_common_string = function(pwd, flag){	
+				//Sequential
+				var termAlphas = "abcdefghijklmnopqrstuvwxyz";
+				var termNumerics = "01234567890";
+				var termSymbols = "~!@#$%^&*()_+";
+				var termKeyboards1 = "qwertyuiop";
+				var termKeyboards2 = "asdfghjkl";
+				var termKeyboards3 = "zxcvbnm";
+				var termCommon5 = ["123123","abc123","letmein","master","qazwsx","admin"];
+				var termCommon8 = ["adminpassword","loginpassword","passw0rd","password","useradmin","userpassword"];
+				var nSeqString = 0;
+
+				if(flag == "httpd_password"){	//at lease length 5		
+					if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termKeyboards3.toLowerCase().indexOf(pwd) != -1 || termKeyboards3.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					for(var s=0;s<termCommon5.length;s++){
+						if(pwd == termCommon5[s])	{ nSeqString++; }	
+					}
+					for(var t=0;t<termCommon8.length;t++){
+						if(pwd == termCommon8[t])	{ nSeqString++; }	
+					}		
+				}
+				else if(flag == "wpa_key"){	//at lease length 8
+					if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
+					for(var s=0;s<termCommon8.length;s++){
+						if(pwd == termCommon8[s]){ nSeqString++; }
+					}		
+				}
+				
+				//pure repeat character string
+				if(pwd == pwd.charAt(0).repeat(pwd.length)) { nSeqString++; }
+				
+				if(nSeqString > 0)
+					return true;
+				else		
+					return false;
+			}
+
+			var trim = function(val){
+				val = val+'';
+				for (var startIndex=0;startIndex<val.length && val.substring(startIndex,startIndex+1) == ' ';startIndex++);
+				for (var endIndex=val.length-1; endIndex>startIndex && val.substring(endIndex,endIndex+1) == ' ';endIndex--);
+				return val.substring(startIndex,endIndex+1);
+			}
+			
+			// Convert a obj to post
+			var postData = function(obj, action_mode, action_script, action_wait,  flag){
+				var obj_tmp = obj;
+				obj_tmp.action_mode = action_mode;
+				obj_tmp.rc_service = action_script;
+				obj_tmp.action_wait = action_wait;
+				obj_tmp.flag = flag;
+				return obj_tmp;
+			}
+			
+			// Nvram Set
+			var nvramSet = function(postData, handler){
+				$.ajax({
+					url: '/applyapp.cgi',
+					dataType: 'json',
+					data: postData,
+			
+					error: function(response){
+						if(handler) handler.call(response);
+					},
+			
+					success: function(response){ 
+						if(handler) handler.call(response);
+					}
+				});
+			};
+
+			var isWLclient = function(){  //detect login client is by wireless or wired
+				<% login_state_hook(); %>
+				var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
+				if(wireless[0] == undefined)
+					return false;
+
+				if(wireless.length > 0) {
+					for(var i = 0; i < wireless.length; i += 1) {
+						if(wireless[i][0].toUpperCase() == login_mac_str().toUpperCase()) {
+							return true;  //wireless
+						}
+					}
+				}
+
+				return false; //wired
+			};
+
+			function hasBlank(objArray){
+				$(".hint").remove();
+				$.each(objArray, function(idx, $obj){
+					if($obj.val() == ""){
+						$obj.showTextHint("<#JS_fieldblank#>");
+					}
+				})
+				if($(".hint").length > 0) return true;
+			}
+
+			var apply = {
+				"login": function(){
+					if(hasBlank([$("#http_username"), $("#http_passwd"), $("#http_passwd_confirm")])) return false;
+
+					var validForm = function(){
+						if($("#http_username").val() == 0){
+							$("#http_username").showTextHint("<#File_Pop_content_alert_desc1#>");
+							document.getElementById("http_username").focus();
+							document.getElementById("http_username").select();
+							return false;
+						}
+						else{
+							var alert_str = validator.host_name(document.getElementById("http_username"));
+			
+							if(alert_str != ""){
+								$("#http_username").showTextHint(alert_str);
+								document.getElementById("http_username").focus();
+								document.getElementById("http_username").select();
+								return false;
+							}
+			
+							document.getElementById("http_username").value = trim(document.getElementById("http_username").value);
+			
+							if(document.getElementById("http_username").value == "root"
+							|| document.getElementById("http_username").value == "guest"
+							|| document.getElementById("http_username").value == "anonymous"){
+								$("#http_username").showTextHint("<#USB_Application_account_alert#>");
+								document.getElementById("http_username").focus();
+								document.getElementById("http_username").select();
+								return false;
+							}
+						}
+			
+						var httpPassInput = document.getElementById("http_passwd");
+						var httpPassConfirmInput = document.getElementById("http_passwd_confirm");
+			
+						if(httpPassInput.value != httpPassConfirmInput.value){
+							$("#http_passwd").showTextHint("<#File_Pop_content_alert_desc7#>");
+
+							if(httpPassInput.value.length <= 0){
+								httpPassInput.focus();
+								httpPassInput.select();
+							}else{
+								httpPassConfirmInput.focus();
+								httpPassConfirmInput.select();
+							}
+							return false;
+						}
+			
+						if(httpPassInput.value.length <= 0 || httpPassConfirmInput.value.length <= 0){
+							$("#http_passwd").showTextHint("<#File_Pop_content_alert_desc6#>");
+							httpPassInput.focus();
+							httpPassInput.select();
+							return false;
+						}
+			
+						if(httpPassInput.value.length > 0 && httpPassConfirmInput.value.length < 5){
+							$("#http_passwd").showTextHint("<#JS_short_password#>");
+							httpPassInput.focus();
+							httpPassInput.select();
+							return false;
+						}
+			
+						if(!validator.string(httpPassInput)){
+							httpPassInput.focus();
+							httpPassInput.select();
+							return false;
+						}	
+			
+						if(httpPassInput.value == '<% nvram_default_get("http_passwd"); %>'){
+							$("#http_passwd").showTextHint("<#QIS_adminpass_confirm0#>");
+							httpPassInput.focus();
+							httpPassInput.select();
+							return false;
+						}	
+			
+						if(check_common_string(httpPassInput.value, "httpd_password")){
+							if(!confirm("<#JS_common_passwd#>")){
+								httpPassInput.focus();
+								httpPassInput.select();
+								return false;
+							}
+						}
+			
+						return true;
+					}
+			
+					if(validForm()){
+						qisPostData.http_username = $("#http_username").val();
+						qisPostData.http_passwd = $("#http_passwd").val();
+
+						goTo.autoWan();
+					}
+				},
+			
+				"dhcp": function(){
+					qisPostData.wan_dhcpenable_x = "1";
+					qisPostData.wan_dnsenable_x = "1";
+
+					if($("#iptv_checkbox").is(":checked")){
+						$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: false});
+					}
+					else
+						$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+				},
+			
+				"pppoe": function(){
+					if(qisPostData.wan_proto === "l2tp" || qisPostData.wan_proto === "pptp"){
+						if(hasBlank([$("#wan_pppoe_username"), $("#wan_pppoe_passwd"), $("#wan_heartbeat_x")])) return false;
+
+						qisPostData.wan_pppoe_username = $("#wan_pppoe_username").val();
+						qisPostData.wan_pppoe_passwd = $("#wan_pppoe_passwd").val();
+						qisPostData.wan_heartbeat_x = $("#wan_heartbeat_x").val();
+
+						$.mobile.changePage("#getIp_setting", {transition: "slide", changeHash: false, reverse: false});
+					}
+					else{
+						if(hasBlank([$("#wan_pppoe_username"), $("#wan_pppoe_passwd")])) return false;
+						
+						qisPostData.wan_proto = "pppoe";
+						qisPostData.wan_pppoe_username = $("#wan_pppoe_username").val();
+						qisPostData.wan_pppoe_passwd = $("#wan_pppoe_passwd").val();
+				
+						if($("#iptv_checkbox").is(":checked") || $("#iptv_checkbox_pppoe").is(":checked")){
+							$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: false});
+						}
+						else
+							$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+					}
+				},
+			
+				"static": function(){
+					if(hasBlank([
+						$("#pap_ip_advance_setting_ipaddr"), 
+						$("#pap_ip_advance_setting_subnet"), 
+						$("#pap_ip_advance_setting_gateway"),
+						$("#pap_ip_advance_setting_dns1")
+					])) return false;
+
+					qisPostData.wan_unit = "0";
+					qisPostData.wan_dhcpenable_x = "0";
+					qisPostData.wan_ipaddr_x = $("#pap_ip_advance_setting_ipaddr").val()
+					qisPostData.wan_netmask_x = $("#pap_ip_advance_setting_subnet").val()
+					qisPostData.wan_gateway_x = $("#pap_ip_advance_setting_gateway").val()
+					qisPostData.wan_dnsenable_x = "0";
+					qisPostData.wan_dns1_x = $("#pap_ip_advance_setting_dns1").val();
+					qisPostData.wan_dns2_x = $("#pap_ip_advance_setting_dns2").val();
+
+					if($("#iptv_checkbox").is(":checked")){
+						$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: false});
+					}
+					else
+						$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+				},
+			
+				"wireless": function(){
+					if(hasBlank([$("#wireless_ssid"), $("#wireless_key")])) return false;
+					if(!validator.stringSSID(document.getElementById("wireless_ssid"))) return false;
+
+					if($("#wireless_key").val() == ""){
+						if(isSku("KR")){
+							$("#wireless_key").showTextHint("<#JS_PSK64Hex_kr#> <#JS_validPWD#>");
+
+							document.getElementById("wireless_key").focus();
+							return false;
+						}
+
+						if(!confirm("<#QIS_confirm_recommand_encryp#>")){
+							document.getElementById("wireless_key").focus();
+							return false;			
+						}
+					}
+					else{
+						if(isSku("KR")){
+							if(!validator.psk_KR(document.getElementById("wireless_key"))) return false;
+						}
+						else{
+							if(!validator.psk(document.getElementById("wireless_key"))) return false;
+						}
+						
+						if(check_common_string($("#wireless_key").val(), "wpa_key")){
+							if(!confirm("<#JS_common_passwd#>")){
+								return false;
+							}
+						}
+					}
+
+					qisPostData.wl0_ssid = $("#wireless_ssid").val();
+					qisPostData.wl0_wpa_psk = $("#wireless_key").val();
+					qisPostData.wl0_auth_mode_x = (qisPostData.wl0_wpa_psk == "") ? "open" : "psk2";
+					qisPostData.wl0_crypto = "aes";
+
+					qisPostData.wl1_ssid = $("#wireless_ssid").val();
+					qisPostData.wl1_wpa_psk = $("#wireless_key").val();
+					qisPostData.wl1_auth_mode_x = ($("#wireless_key").val() == "") ? "open" : "psk2";
+					qisPostData.wl1_crypto = "aes";
+
+					qisPostData.wl2_ssid = $("#wireless_ssid").val();
+					qisPostData.wl2_wpa_psk = $("#wireless_key").val();
+					qisPostData.wl2_auth_mode_x = ($("#wireless_key").val() == "") ? "open" : "psk2";
+					qisPostData.wl2_crypto = "aes";
+
+					$("#ssidSummary").val(qisPostData.wl0_ssid);
+					$("#pskSummary").val((function(){
+						return (qisPostData.wl0_wpa_psk == "") ? "OPEN" : qisPostData.wl0_wpa_psk;
+					})());
+
+					nvramSet(new postData(qisPostData, "apply", "reboot", "", ""));
+					goTo.Finish();
+				},
+
+				"manual": function(){
+					finishDetect();
+					$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false});
+				},
+
+				"checkAddMore": function(){
+					$('.backToFinish').hide();
+					goTo.WPS();
+				},
+
+				"iptv_desc": function(){
+					goTo.iptv();
+				},
+
+				"iptv": function(){
+					 if(qisPostData.switch_wantag == "manual"){
+						if(hasBlank([
+							$("#internet_vid"),
+							$("#internet_prio"),
+							$("#stb_vid"),
+							$("#stb_prio"),
+						])) return false;
+
+						qisPostData.switch_wan0tagid = $("#internet_vid").val();
+						qisPostData.switch_wan0prio = $("#internet_prio").val();
+						qisPostData.switch_wan1tagid = $("#stb_vid").val();
+						qisPostData.switch_wan1prio = $("#stb_prio").val();
+					}
+
+					else if(qisPostData.switch_wantag == "movistar"){
+						qisPostData.wan10_proto = "static";
+						qisPostData.wan10_dhcpenable_x = "0";
+						qisPostData.wan10_ipaddr_x = $("#ip_addr").val();
+						qisPostData.wan10_netmask_x = $("#subnet_mask").val();
+						qisPostData.wan10_gateway_x = $("#gateway").val();
+						qisPostData.wan10_dns1_x = $("#dns1").val();
+						qisPostData.wan10_dns2_x = $("#dns2").val();
+						qisPostData.wan10_auth_x = $("#auth_type").val();
+						qisPostData.wan10_pppoe_username = $("#wan10_pppoe_username").val();
+						qisPostData.wan10_pppoe_passwd = $("#wan10_pppoe_passwd").val();
+						qisPostData.mr_enable_x = "1";
+						qisPostData.mr_altnet_x = "172.0.0.0/8";
+						qisPostData.quagga_enable = "1";
+					}
+
+					$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+				}
+			};
+			
+			var abort = {
+				"login": function(){
+					qisPostData.http_username = qisOriginData.http_username;
+					qisPostData.http_passwd = qisOriginData.http_passwd;
+			
+					$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+				},
+			
+				"wan": function(){
+					qisPostData.wan_proto = qisOriginData.wan_proto;
+					qisPostData.wan_dhcpenable_x = qisOriginData.wan_dhcpenable_x;
+					qisPostData.wan_dnsenable_x = qisOriginData.wan_dnsenable_x;
+					qisPostData.wan_pppoe_username = qisOriginData.wan_pppoe_username;
+					qisPostData.wan_pppoe_passwd = qisOriginData.wan_pppoe_passwd;
+					$("#wanTypePrompt_setting").hide();
+
+					if(wanType == "NoWan"){
+						start_detect();
+						$.mobile.changePage("#noWan_page", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else{
+						if(!forceChangePW)
+							$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+						else
+							$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
+					}
+				},
+
+				"resetModem": function(){
+					setTimeout(start_detect, 2000);
+					$.mobile.changePage("#waiting_page", {transition: "slide", changeHash: false, reverse: true});	
+				},
+
+				"nowan": function(){
+					finishDetect();
+
+					if(!forceChangePW)
+						$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+					else
+						$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
+				},
+			
+				"pppoe": function(){
+					qisPostData.wan_proto = qisOriginData.wan_proto;
+					qisPostData.wan_pppoe_username = qisOriginData.wan_pppoe_username;
+					qisPostData.wan_pppoe_passwd = qisOriginData.wan_pppoe_passwd;
+					qisPostData.wan_heartbeat_x = qisOriginData.wan_heartbeat_x;
+
+					$("#vpnServerContainer").hide();
+
+					if(wanType == "PPPoE"){
+						if(!forceChangePW)
+							$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+						else
+							$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else if(wanType == "PPPDHCP"){
+						$.mobile.changePage("#wanTypePrompt_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else{
+						$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+				},
+
+				"pppdhcp":function(){
+					$("#wanTypePrompt_setting").hide();
+					if(!forceChangePW)
+						$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+					else
+						$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
+				},
+
+				"getIp": function(){
+					qisPostData.wan_proto = qisOriginData.wan_proto;
+					$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: true});	
+				},
+			
+				"static": function(){
+					qisPostData.wan_proto = qisOriginData.wan_proto;
+					qisPostData.wan_unit = qisOriginData.wan_unit;
+					qisPostData.wan_dhcpenable_x = qisOriginData.wan_dhcpenable_x;
+					qisPostData.wan_ipaddr_x = qisOriginData.wan_ipaddr_x;
+					qisPostData.wan_netmask_x = qisOriginData.wan_netmask_x;
+					qisPostData.wan_gateway_x = qisOriginData.wan_gateway_x;
+					qisPostData.wan_dnsenable_x = qisOriginData.wan_dnsenable_x;
+					qisPostData.wan_dns1_x = qisOriginData.wan_dns1_x;
+					qisPostData.wan_dns2_x = qisOriginData.wan_dns2_x;
+			
+					if(wanType == "Static"){
+						if(!forceChangePW)
+							$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+						else
+							$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else{
+						$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+				},
+			
+				"wireless": function(){
+					qisPostData.wl0_ssid = qisOriginData.wl0_ssid;
+					qisPostData.wl0_wpa_psk = qisOriginData.wl0_wpa_psk;
+					qisPostData.wl0_auth_mode_x = qisOriginData.wl0_auth_mode_x;
+					qisPostData.wl0_crypto = qisOriginData.wl0_crypto;
+			
+					qisPostData.wl1_ssid = qisOriginData.wl1_ssid;
+					qisPostData.wl1_wpa_psk = qisOriginData.wl1_wpa_psk;
+					qisPostData.wl1_auth_mode_x = qisOriginData.wl1_auth_mode_x;
+					qisPostData.wl1_crypto = qisOriginData.wl1_crypto;
+			
+					if(qisPostData.wan_proto == "dhcp" && wanType == "DHCP"){
+						if(!forceChangePW)
+							$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});
+						else
+							$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else if(qisPostData.wan_proto == "pppoe"){
+						if($("#iptv_checkbox").is(":checked") || $("#iptv_checkbox_pppoe").is(":checked")){
+							$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: true});
+						}
+						else
+							$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else if(qisPostData.wan_proto == "static"){
+						if($("#iptv_checkbox").is(":checked")){
+							$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: true});
+						}
+						else
+							$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else{
+						if($("#iptv_checkbox").is(":checked")){
+							$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: true});
+						}
+						else
+							$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+				},
+
+				"Pair": function(){
+					$.mobile.changePage("#wps_page", {transition: "slide", changeHash: false, reverse: true});	
+					$(".flashingColor").removeClass("blue");
+					window.flashTimer = setInterval(function(){
+						if(based_modelid == "MAP-AC1750")
+							$(".flashingColor").toggleClass("blue");
+						else
+							$(".flashingColor").toggleClass("green");
+					}, 500);
+				},
+
+				"APP": function(){
+					$.mobile.changePage("#pair_page", {transition: "slide", changeHash: false, reverse: true});	
+					clearInterval(window.flashTimer);
+					$(".flashingColor").removeClass("green");
+					setTimeout(function(){
+						$(".flashingColor").addClass("blue");
+					}, 300);
+				},
+
+				"WPS": function(){
+					$.mobile.changePage("#summary_page", {transition: "slide", changeHash: false, reverse: true});
+					clearInterval(window.flashTimer);
+					setTimeout(function(){
+						$(".flashingColor").removeClass("green").addClass("blue")
+					}, 300);
+				},
+
+				"iptv_desc": function(){
+					if(qisPostData.wan_proto == "pppoe" || qisPostData.wan_proto == "pptp" || qisPostData.wan_proto == "l2tp"){
+						$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else if(qisPostData.wan_proto == "static"){
+						$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else{
+						$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+				},
+
+				"iptv": function(){
+					qisPostData.switch_wantag = qisOriginData.switch_wantag;
+					qisPostData.switch_stb_x = qisOriginData.switch_stb_x;
+					qisPostData.switch_wan0tagid = qisOriginData.switch_wan0tagid;
+					qisPostData.switch_wan0prio = qisOriginData.switch_wan0prio;
+					qisPostData.switch_wan1tagid = qisOriginData.switch_wan1tagid;
+					qisPostData.switch_wan1prio = qisOriginData.switch_wan1prio;
+					qisPostData.switch_wan2tagid = qisOriginData.switch_wan2tagid;
+					qisPostData.switch_wan2prio = qisOriginData.switch_wan2prio;
+
+					qisPostData.wan10_proto = qisOriginData.wan10_proto;
+					qisPostData.wan10_dhcpenable_x = qisOriginData.wan10_dhcpenable_x;
+					qisPostData.wan10_ipaddr_x = qisOriginData.wan10_ipaddr_x;
+					qisPostData.wan10_netmask_x = qisOriginData.wan10_netmask_x;
+					qisPostData.wan10_gateway_x = qisOriginData.wan10_gateway_x;
+					qisPostData.wan10_dns1_x = qisOriginData.wan10_dns1_x;
+					qisPostData.wan10_dns2_x = qisOriginData.wan10_dns2_x;
+					qisPostData.wan10_auth_x = qisOriginData.wan10_auth_x;
+					qisPostData.wan10_pppoe_username = qisOriginData.wan10_pppoe_username;
+					qisPostData.wan10_pppoe_passwd = qisOriginData.wan10_pppoe_passwd;
+					qisPostData.mr_enable_x = qisOriginData.mr_enable_x;
+					qisPostData.mr_altnet_x = qisOriginData.mr_altnet_x;
+					qisPostData.quagga_enable = qisOriginData.quagga_enable;
+					$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: true});
+				},
+			};
+			
+			var goTo = {
+				"autoWan": function(){
+					if(wanType == "DHCP"){
+						goTo.DHCP();
+					}
+					else if(wanType == "PPPoE"){
+						goTo.PPPoE();
+					}
+					else if(wanType == "PPPDHCP"){
+						goTo.PPPDHCP();
+					}
+					else if(wanType == "Static"){
+						goTo.Static();
+					}
+					else if(wanType == "unKnown"){
+						goTo.resetModem();
+					}
+					else if(wanType == "NoWan"){
+						goTo.NoWan();
+					}
+					else if(wanType == ""){
+						goTo.waiting();
+					}
+					else{
+						goTo.manual();
+					}
+				},
+
+				"DHCP": function(){
+					qisPostData.wan_proto = "dhcp";
+					apply.dhcp();
+				},
+
+				"PPPoE": function(){
+					qisPostData.wan_proto = "pppoe";
+					$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: false});
+					$("#iptvCheckboxContainer_PPPoE").hide();
+				},
+
+				"PPPDHCP": function(){
+					$("#wanTypePrompt_setting").show();
+					$.mobile.changePage("#wanTypePrompt_setting", {transition: "slide", changeHash: false, reverse: false});
+				},
+
+				"Static": function(){
+					qisPostData.wan_proto = "static";
+					$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: false});
+				},
+
+				"PPTP": function(){
+					qisPostData.wan_proto = "pptp";
+					$("#vpnServerContainer").show();
+					$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: false});
+					$("#iptvCheckboxContainer_PPPoE").hide();
+				},
+
+				"L2TP": function(){
+					qisPostData.wan_proto = "l2tp";
+					$("#vpnServerContainer").show();
+					$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: false});
+					$("#iptvCheckboxContainer_PPPoE").hide();
+				},
+
+				"vpnStatic": function(){
+					$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: false});		
+				},
+
+				"Finish": function(){
+					$.mobile.changePage("#summary_page", {transition: "slide", changeHash: false, reverse: false});
+					clearInterval(window.flashTimer);
+					setTimeout(function(){
+						$(".flashingColor").removeClass("green").addClass("blue")
+					}, 300);
+				},
+
+				"APP": function(){
+					$.mobile.changePage("#app_page", {transition: "slide", changeHash: false, reverse: false});	
+				},
+
+				"WPS": function(){
+					$.mobile.changePage("#wps_page", {transition: "slide", changeHash: false, reverse: false});
+					$(".flashingColor").removeClass("blue");
+					window.flashTimer = setInterval(function(){
+						if(based_modelid == "MAP-AC1750")
+							$(".flashingColor").toggleClass("blue");
+						else
+							$(".flashingColor").toggleClass("green");
+					}, 500);
+				},
+
+				"Pair": function(){
+					$.mobile.changePage("#pair_page", {transition: "slide", changeHash: false, reverse: false});	
+					clearInterval(window.flashTimer);
+					setTimeout(function(){
+						$(".flashingColor").removeClass("green").addClass("blue")
+					}, 300);
+				},
+
+				"Welcome": function(){
+					$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});	
+				},
+
+				"resetModem": function(){
+					setTimeout(function(){
+						if($("#resetModem").hasClass("unplug")){
+							$("#resetModem").removeClass("unplug").addClass("plug")
+						}
+						else{
+							$("#resetModem").removeClass("plug").addClass("unplug")
+						}
+
+						if(isPage("resetModem_page")) setTimeout(arguments.callee, 1500);
+					}, 1500);
+
+					$.mobile.changePage("#resetModem_page", {transition: "slide", changeHash: false, reverse: false});	
+				},
+
+				"NoWan": function(){
+					start_detect();
+					$.mobile.changePage("#noWan_page", {transition: "slide", changeHash: false, reverse: false});	
+				},
+
+				"wiredHint": function(){
+					$.mobile.changePage("#wiredUser_page", {transition: "slide", changeHash: false, reverse: false});
+				},
+
+				"waiting": function(){
+					getDetectResult();
+					$.mobile.changePage("#waiting_page", {transition: "slide", changeHash: false, reverse: false});	
+				},
+
+				"indexPage": function(){
+					$("#finish_btn").html('');
+					$("#finish_btn").removeClass('desktop_applyBtn').addClass('loadingIcon');
+					setInterval(function(){
+						httpApi.isAlive("", qisOriginData.lan_ipaddr, function(){
+							location.href = "/";
+						});
+					}, 2000);
+				},
+
+				"iptv": function(){
+					$("#switch_wantag")
+						.change(function(){
+							var isp = $("#switch_wantag").val();
+							switch(isp){
+								case "none":
+									qisPostData.switch_wantag = "none";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+
+									$("#triple_vlan_settings").hide();
+									break;
+								case "unifi_home":
+									qisPostData.switch_wantag = "unifi_home";
+									qisPostData.switch_stb_x = "4";
+									qisPostData.switch_wan0tagid = "500";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "600";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "unifi_biz":
+									qisPostData.switch_wantag = "unifi_biz";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "500";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "singtel_others":
+									qisPostData.switch_wantag = "singtel_others";
+									qisPostData.switch_stb_x = "4";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "20";
+									qisPostData.switch_wan1prio = "4";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "m1_fiber":
+									qisPostData.switch_wantag = "m1_fiber";
+									qisPostData.switch_stb_x = "3";
+									qisPostData.switch_wan0tagid = "1103";
+									qisPostData.switch_wan0prio = "1";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "1107";
+									qisPostData.switch_wan2prio = "1";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").show();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "maxis_fiber":
+									qisPostData.switch_wantag = "maxis_fiber";
+									qisPostData.switch_stb_x = "3";
+									qisPostData.switch_wan0tagid = "621";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "821";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").show();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "maxis_fiber_sp":
+									qisPostData.switch_wantag = "maxis_fiber_sp";
+									qisPostData.switch_stb_x = "3";
+									qisPostData.switch_wan0tagid = "11";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "14";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").show();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "movistar":
+									qisPostData.switch_wantag = "movistar";
+									qisPostData.switch_stb_x = "8";
+									qisPostData.switch_wan0tagid = "6";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "2";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "3";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").show();
+									$("#auth_type")
+										.change(function(){
+											var auth_type = $("#auth_type").val();
+											switch(auth_type){
+												case "":
+													$("#wan10_auth_type").hide();
+												break;
+												case "8021x-md5":
+													$("#wan10_auth_type").show();
+												break;
+											}
+										})
+										.trigger("change");
+									break;
+								case "hinet":
+									qisPostData.switch_wantag = "hinet";
+									qisPostData.switch_stb_x = "4";
+									qisPostData.switch_wan0tagid = "";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "stuff_fibre":
+									qisPostData.switch_wantag = "stuff_fibre";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "spark":
+									qisPostData.switch_wantag = "spark";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "2degrees":
+									qisPostData.switch_wantag = "2degrees";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "slingshot":
+									qisPostData.switch_wantag = "slingshot";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "orcon":
+									qisPostData.switch_wantag = "orcon";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "voda_nz":
+									qisPostData.switch_wantag = "voda_nz";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "tpg":
+									qisPostData.switch_wantag = "tpg";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "2";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "iinet":
+									qisPostData.switch_wantag = "iinet";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "aapt":
+									qisPostData.switch_wantag = "aapt";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "2";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "intronode":
+									qisPostData.switch_wantag = "intronode";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "2";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "amaysim":
+									qisPostData.switch_wantag = "amaysim";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "100";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "dodo":
+									qisPostData.switch_wantag = "dodo";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "100";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "iprimus":
+									qisPostData.switch_wantag = "iprimus";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "100";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									$("#triple_vlan_settings").hide();
+									break;
+								case "manual":
+									qisPostData.switch_wantag = "manual";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").show();
+									$("#triple_vlan_settings").hide();
+									break;
+							}
+						})
+					.trigger("change");
+
+					if(isSku("TW")){
+						$("#switch_wantag")
+							.val("hinet")
+							.trigger("change")
+					}
+
+					$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: false});
+				}
+			};
+		</script>
+	</head>
+	<body>
+		<!-- Welcome Page -->
+		<div id="welcome" data-role="page" class="qisBackgroundIndex">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a onclick="goTo.Finish()">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div>
+				<div style="font-family:Uni Sans Thin, Helvetica W01 Light, Arial;font-size:5em;color:#FFF;margin:50px 46px 0 46px;text-align:center;">
+					<#lyra_welcome_title#>
+				</div>
+				<!--div style="font-family:Uni Sans Thin, Helvetica W01 Light, Arial;font-size:2.5em;color:#999;text-align:center;margin:0px 20px 0 40px;">
+					Lyra makes sure your connection stable, well-covered and secure.
+				</div-->
+				<div id="model_image" class="model_image"></div>
+				<div id="model_welcome_field" style="text-align:center;color:#0ECDA4;font-size:30pt;font-family:HelveticaNeueW10-35Thin,Helvetica W01 Light,Arial;line-height:23px;margin:21px 0"></div>
+				<div style="text-align:center;margin:31px 0">
+					<div id="welcome_button" style="cursor:pointer;width:600px;height:88px;border-radius:4px;color:#FFF;background-color:#27D1A4;border:1px solid #27D1A4;font-size:2.25em;margin:auto;line-height:88px;" onclick="start_welcome();"><#lyra_welcome_create#></div>
+				</div>
+				<div style="color:#FFF;font-size:2em;text-align:center;">
+					<a href="#" style="color:#27D1A4" onclick="apply.checkAddMore()"><#lyra_welcome_onboard#></a>
+				</div>
+			</div>
+		</div>
+
+		<!-- Wired User -->
+		<div id="wiredUser_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px;"><#QIS_finish_Tips#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div><#lyra_connecting_hint#></div>
+				</div>
+
+				<div style="margin: 30px 0 0 150px;">
+					<div style="position: absolute; margin-left: 5.5%; margin-top: 3.5%; font-size: 1.8em;"><#lyra_primary#></div>
+					<div><img width="70%" style="margin-top: 30px;" src="/images/qis/wiredUser.png"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Login Page -->	
+		<div id="login_name" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px;"><#CTL_login#></div>
+					<div style="font-size:32px;"><#HSDPAConfig_Username_itemname#>/<#PPPConnection_Password_itemname#></div>
+					<div style="font-size:32px;"><#Settings#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div id="login_desc" class="pageDesc"><#lyra_user_desc#></div>
+				<div id="login_field">
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#HSDPAConfig_Username_itemname#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="http_username" type="text" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#PASS_new#></div>
+							<div class="icon_eye_close" onclick="pass_checked('http_passwd', this)"></div>
+						</div>
+						<div class="inputContainer">
+							<input id="http_passwd" type="password" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#PASS_retype#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="http_passwd_confirm" type="password" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.login()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="apply.login();"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.login()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.login();">
+									<div class="mobile_applyBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Detecting -->
+		<div id="waiting_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#QKSet_detect_sanglass#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div><#QKSet_detect_waitdesc#></div>
+				</div>
+
+				<div>
+					<div class="cssload-bell">
+						<div class="cssload-circle">
+							<div class="cssload-inner"></div>
+						</div>
+						<div class="cssload-circle">
+							<div class="cssload-inner"></div>
+						</div>
+						<div class="cssload-circle">
+							<div class="cssload-inner"></div>
+						</div>
+						<div class="cssload-circle">
+							<div class="cssload-inner"></div>
+						</div>
+						<div class="cssload-circle">
+							<div class="cssload-inner"></div>
+						</div>
+					</div>
+					<!-- Action Button -->
+					<!--div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick="abort.nowan()"><#CTL_prev#></div>
+						<div class="desktop_applyBtn detectBtn" onclick="apply.manual()"><#Manual_Setting_btn#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.nowan()'>
+									<div  class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.manual()">
+									<div  class="mobile_applyBtn detectBtn"><#Manual_Setting_btn#></div>
+								</td>
+							</tr>
+						</table>
+					</div-->
+				</div>
+			</div>
+		</div>
+
+		<!-- Reset Modem -->
+		<div id="resetModem_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#Settings#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div><#QIS_internet_success_desc4_1#></div>
+					<div><#QIS_internet_success_desc4#></div>
+				</div>
+
+				<div>
+
+					<div id="resetModemContainer">
+						<div class="unplug" id="resetModem"></div>
+					</div>
+
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick="abort.resetModem()"><#QKSet_detect_freshbtn#></div>
+						<div class="desktop_applyBtn detectBtn" onclick="apply.manual()"><#Manual_Setting_btn#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.resetModem()'>
+									<div  class="mobile_abortBtn"><#QKSet_detect_freshbtn#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.manual()">
+									<div  class="mobile_applyBtn detectBtn"><#Manual_Setting_btn#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- No WAN -->
+		<div id="noWan_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#Settings#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<#QIS_desc_1#>
+				</div>
+
+				<div>
+					<div class="noWanPic"></div>
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick="abort.nowan()"><#CTL_prev#></div>
+						<div class="desktop_applyBtn detectBtn" onclick="apply.manual()"><#Manual_Setting_btn#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.nowan()'>
+									<div  class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.manual()">
+									<div  class="mobile_applyBtn detectBtn"><#Manual_Setting_btn#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Account prompt for PPPDHCP -->
+		<div id="wanTypePrompt_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#Connectiontype#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div><#QIS_SmartConn_title1#></div>
+				</div>
+				<div>
+					<div style="margin-left:35px;color:#888">
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.PPPoE()">
+									<#checkbox_Yes#>
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.DHCP()">
+									<#checkbox_No#>
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop" style="text-align:center;margin-top:60px;">
+						<div class="desktop_abortBtn" onclick='abort.pppdhcp()'><#CTL_prev#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.pppdhcp()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- WAN Setting -->
+		<div id="wan_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div>
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#Settings#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#QIS_type_desc1#></div>
+				<div>
+					<div style="margin-left:35px;color:#888">
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.DHCP()">
+									DHCP
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.PPPoE()">
+									PPPoE
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.Static()">
+									Static IP
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%;">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.PPTP()">
+									PPTP
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%;">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.L2TP()">
+									L2TP
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="iptvCheckboxContainer" style="margin-left:25px; margin-top:10px; color:#888;">
+						<label for="iptv_checkbox" class="labelInput"><#PPPConnection_x_HostNameForISP_sectionname#></label>
+						<input type="checkbox" id="iptv_checkbox" style="margin-top: 6px;" value="1" data-mini="true" />						
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:30px;">
+						<div class="desktop_abortBtn" onclick='abort.wan()'><#CTL_prev#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:100%;" onclick='abort.wan()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Get IP Setting -->
+		<div id="getIp_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div>
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#MER_cfg_title2#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#LANHostConfig_x_LAN_DHCP_itemname#></div>
+				<div>
+					<div style="margin-left:35px;color:#888">
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="apply.dhcp()">
+									<#BOP_ctype_title1#>
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+						<div style="border-bottom:1px solid #999;padding:29px 0;display:table;width:100%">
+							<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;">
+								<div class="selectBar" onclick="goTo.vpnStatic()">
+									<#Manual_Setting_assign#>
+								</div>
+								<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">
+									<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:30px;">
+						<div class="desktop_abortBtn" onclick='abort.getIp()'><#CTL_prev#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:100%;" onclick='abort.getIp()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- PPPoE Setting -->
+		<div id="pppoe_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#QKSet_account_webtitle#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div><#PPP_cfg_usersel_desc#></div>
+				</div>
+				<div id="pppoe_field">
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#Username#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="wan_pppoe_username" type="text" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#PPPConnection_Password_itemname#></div>
+							<div class="icon_eye_close" onclick="pass_checked('wan_pppoe_passwd', this)"></div>
+						</div>
+						<div class="inputContainer">
+							<input id="wan_pppoe_passwd" type="password" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+
+					<div id="vpnServerContainer" style="margin-left:17px;display:none">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#BOP_isp_heart_item#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="wan_heartbeat_x" type="text" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+					<div id="iptvCheckboxContainer_PPPoE" style="margin-left:35px; margin-top:-80px; color:#888;">
+						<label for="iptv_checkbox_pppoe" class="labelInput"><#PPPConnection_x_HostNameForISP_sectionname#></label>
+						<input type="checkbox" id="iptv_checkbox_pppoe" style="margin-top: 6px;" value="1" data-mini="true" />	
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.pppoe()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="apply.pppoe();"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.pppoe()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.pppoe();">
+									<div class="mobile_applyBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Static Setting -->
+		<div id="static_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#BOP_ctype_title5#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#BOP_ctype_item5#></div>
+				<div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#IPConnection_ExternalIPAddress_itemname#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="pap_ip_advance_setting_ipaddr" class="textInput" data-role="none" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text">
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#IPConnection_x_ExternalSubnetMask_itemname#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="pap_ip_advance_setting_subnet" class="textInput" data-role="none" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text">
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#IPConnection_x_ExternalGateway_itemname#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="pap_ip_advance_setting_gateway" class="textInput" data-role="none" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text">
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#IPConnection_x_DNSServer1_itemname#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="pap_ip_advance_setting_dns1" class="textInput" data-role="none" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text">
+						</div>
+					</div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#IPConnection_x_DNSServer2_itemname#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="pap_ip_advance_setting_dns2" class="textInput" data-role="none" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text">
+						</div>
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.static()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="apply.static();"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.static()'>
+									<div  class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.static();">
+									<div  class="mobile_applyBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- IPTV Setting -->
+		<div id="iptv_desc" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px;">Tips</div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div id="iptvDescTitle">
+						Please connect your ISP modem LAN port to LAN port next to power socket.
+					</div>
+				</div>
+
+				<div style="margin-left:17px;">
+					<div id="iptvDesc" class="lyra_iptv"></div>
+				</div>
+				<!-- Action Button -->
+				<div class="footer_desktop">
+					<div class="desktop_abortBtn" onclick='abort.iptv_desc()'><#CTL_prev#></div>
+					<div class="desktop_applyBtn" onclick="apply.iptv_desc();"><#CTL_next#></div>
+				</div>
+				<div class="footer_mobile">
+					<table style="width:100%;" cellpadding="0" cellspacing="0">
+						<tr style="height:102px;text-align:center">
+							<td style="width:50%" onclick='abort.iptv_desc()'>
+								<div class="mobile_abortBtn"><#CTL_prev#></div>
+							</td>
+							<td style="width:50%;background:#27D1A4" onclick="apply.iptv_desc();">
+								<div class="mobile_applyBtn"
+								><#CTL_next#></div>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div id="iptv_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px; word-break: keep-all;"><#Internet#></div>
+					<div style="font-size:32px;"><#QKSet_ISP_head#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#PPPConnection_x_HostNameForISP_sectionname#></div>
+				<div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#Select_ISPfile#></div>
+						</div>
+						<div class="inputContainer">
+							<select id="switch_wantag" class="optionInput">
+								<option value="none"><#wl_securitylevel_0#></option>
+								<option value="unifi_home">Unifi-Home</option>
+								<option value="unifi_biz">Unifi-Business</option>
+								<option value="singtel_others">Singtel-Others</option>
+								<option value="m1_fiber">M1-Fiber</option>
+								<option value="maxis_fiber">Maxis-Fiber</option>
+								<option value="maxis_fiber_sp">Maxis-Fiber-Special</option>
+								<option value="movistar">Movistar Triple VLAN</option>
+								<option value="hinet">Hinet MOD</option>
+								<option value="stuff_fibre">Stuff-Fibre</option>
+								<option value="spark">Spark</option>
+								<option value="2degrees">2degrees</option>
+								<option value="slingshot">Slingshot</option>
+								<option value="orcon">Orcon</option>
+								<option value="voda_nz">Vodafone(New Zealand)</option>
+								<option value="tpg">TPG</option>
+								<option value="iinet">iiNET</option>
+								<option value="aapt">AAPT</option>
+								<option value="intronode">Internode</option>
+								<option value="amaysim">Amaysim</option>
+								<option value="dodo">Dodo</option>
+								<option value="iprimus">Iprimus</option>
+								<option value="manual"><#Manual_Setting_btn#></option>
+							</select>
+						</div>
+					</div>
+					<div id="iptv_voip" style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle" id="iptv_voip_title">VoIP Port</div>
+						</div>
+						<div class="inputContainer">
+							<input class="textInput" id="iptv_voip" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="Primary Node LAN Port" disabled />
+						</div>
+					</div>
+
+					<div id="iptv_stb" style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle" id="iptv_stb_title">IPTV STB Port</div>
+						</div>
+						<div class="inputContainer">
+							<input class="textInput" id="iptv_stb" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="Primary Node LAN Port" disabled />
+						</div>
+					</div>
+
+					<div id="iptv_manual" style="margin-left:17px;">
+						<div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#Internet#></div>
+							</div>
+							<div class="inputContainer">
+								<div>
+									<div class="ui-block-a">
+										VID: <input class="textInput textInputIptv" id="internet_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+									<div class="ui-block-b">
+										PRIO: <input class="textInput textInputIptv" id="internet_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+								</div>
+							</div>
+						</div>
+						<div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle">Primary Node LAN Port</div>
+							</div>
+							<div class="inputContainer">
+								<div class="ui-grid-a">
+									<div class="ui-block-a">
+										VID: <input class="textInput textInputIptv" id="stb_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+									<div class="ui-block-b">
+										PRIO: <input class="textInput textInputIptv" id="stb_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="triple_vlan_settings" style="margin-left:17px;">
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle">VoIP Connection Type</div>
+							</div>
+							<div class="inputContainer">
+								<input class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="DHCP" disabled />
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle">IPTV Connection Type</div>
+							</div>
+							<div class="inputContainer">
+								<input class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="Static IP" disabled />
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#IPConnection_ExternalIPAddress_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<input id="ip_addr" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#IPConnection_x_ExternalSubnetMask_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<input id="subnet_mask" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#IPConnection_x_ExternalGateway_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<input id="gateway" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#IPConnection_x_DNSServer1_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<input id="dns1" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#IPConnection_x_DNSServer2_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<input id="dns2" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+							</div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#PPPConnection_Authentication_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<select id="auth_type" class="optionInput">
+									<option value=""><#wl_securitylevel_0#></option>
+									<option value="8021x-md5">802.1x MD5</option>
+								</select>
+							</div>
+							<div id="wan10_auth_type">
+								<div style="display:table;margin:18px 0 19px 30px;width:100%">
+									<div class="inputTitle"><#PPPConnection_UserName_itemname#></div>
+								</div>
+								<div class="inputContainer">
+									<input id="wan10_pppoe_username" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+								</div>
+								<div style="display:table;margin:18px 0 19px 30px;width:100%">
+									<div class="inputTitle"><#PPPConnection_Password_itemname#></div>
+								</div>
+								<div class="inputContainer">
+									<input id="wan10_pppoe_passwd" class="textInput" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+								</div>
+							</div>
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.iptv()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="apply.iptv();"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.iptv()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.iptv();">
+									<div class="mobile_applyBtn"
+									><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Wireless SSID/Password Setting -->
+		<div id="wireless_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div style="font-size:60px"><#menu5_1#></div>
+				<div style="font-size:32px"><#Settings#></div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#qis_wireless_setting#></div>
+				<div id="wireless_field" style="padding-bottom:35px;width:100%;">
+					<div style="margin:31px 48px 7px 46px">
+						<div>
+							<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.8em;color:#888;"><#QIS_finish_wireless_item1#></span>
+						</div>
+						<div style="display:table;margin:18px 0px 19px 0px;width:100%">
+							<input id="wireless_ssid" type="text" maxlength="32" onkeypress="return validator.isString(this, event)" class="textInput" data-role="none" data-clear-btn="true">
+						</div>
+					</div>
+					<div style="margin:31px 48px 7px 46px">
+						<div>
+							<table style="width:100%">
+								<tr>
+									<td>
+										<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.8em;color:#888;"><#QIS_finish_wireless_item2#></div>
+									</td>
+									<td style="width: 20px;">
+										<div class="icon_eye_close" onclick="pass_checked('wireless_key', this)"></div>
+									</td>
+								</tr>
+							</table>
+						</div>
+						<div style="margin-top:19px">
+							<input id="wireless_key" type="password" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
+						</div>
+					</div>
+				</div>
+				<!-- Action Button -->
+				<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:0;max-width:1000px;">
+					<div class="desktop_abortBtn" onclick='abort.wireless();'><#CTL_prev#></div>
+					<div class="desktop_applyBtn" onclick="apply.wireless();"><#CTL_apply#></div>
+				</div>
+				<div class="footer_mobile">
+					<table style="width:100%;" cellpadding="0" cellspacing="0">
+						<tr style="height:102px;text-align:center">
+							<td style="width:50%" onclick='abort.wireless();'>
+								<div class="mobile_abortBtn"><#CTL_prev#></div>
+							</td>
+							<td style="width:50%;background:#27D1A4" onclick="apply.wireless();">
+								<div class="mobile_applyBtn"><#CTL_apply#></div>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Summary -->
+		<div id="summary_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div>
+					<div style="font-size:60px;"><#QIS_finish_Summary#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#QIS_finish_wait#></div>
+
+				<div>
+					<div class="flashingColor"></div>
+					<div class="wpsPic"></div>
+
+					<div style="margin-left:17px;" class="summaryNetwork">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#QIS_finish_wireless_item1#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="ssidSummary" type="text" class="textInput" data-role="none" disabled>
+						</div>
+					</div>
+					<div style="margin-left:17px;margin-top: -50px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#QIS_finish_wireless_item2#></div>
+						</div>
+						<div class="inputContainer">
+							<input id="pskSummary" type="text" class="textInput" data-role="none" disabled>
+						</div>
+					</div>
+				</div>
+
+				<div>
+					<div class="footer_desktop">
+						<div class="desktop_applyBtn" onclick="goTo.WPS();"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%;background:#27D1A4" onclick="goTo.WPS();">
+									<div class="mobile_applyBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- WPS button -->
+		<div id="wps_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div>
+					<div style="font-size:60px;"><#QIS_finish_Tips#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<#lyra_pairing_desc1#>
+					<br/>
+					<#lyra_pairing_desc2#>
+				</div>
+
+				<div>
+					<div class="flashingColor"></div>
+					<div class="wpsPic"></div>
+
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn backToFinish" onclick='abort.WPS()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="goTo.Pair()"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.WPS()' class="backToFinish">
+									<div  class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="goTo.Pair()">
+									<div  class="mobile_applyBtn detectBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Paring  -->
+		<div id="pair_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div>
+					<div style="font-size:60px;"><#QIS_finish_Tips#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<#lyra_pairing_desc3#>
+					<br/>
+					<#lyra_pairing_desc4#>
+				</div>
+
+				<div>
+					<div class="flashingColor"></div>
+					<div class="wpsPic"></div>
+
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.Pair()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="goTo.APP()"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.Pair()'>
+									<div  class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="goTo.APP()">
+									<div  class="mobile_applyBtn detectBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- APP -->
+		<div id="app_page" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div>
+					<div style="font-size:60px;"><#QIS_finish_Tips#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<#lyra_download_app#>
+
+					<div class="lyraGood"></div>
+					<div>
+						<div class="desktopView AppDownloadLink">
+							<table class="appTable">
+								<tr>
+									<td rowspan="2" align="right">
+										<div class="appQR"></div>
+									</td>
+									<td>
+										<div class="itunesStore"></div>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div class="googlePlay"></div>
+									</td>
+								</tr>
+							</table>
+
+							<div class="appMobile"></div>
+						</div>
+		
+						<div class="mobileView">
+							<div class="appMobile"></div>
+						</div>
+					</div>
+				</div>
+
+				<div>
+					<div class="footer_desktop">
+						<div id="finish_btn" class="desktop_applyBtn" onclick='goTo.indexPage()'><#QKSet_finishpre_rebootnow#></div>
+						<div class="desktop_applyBtn iOS_go goToDownload AppDownloadLink" onclick="apply.openStore();">Open iTunes Store</div>
+						<div class="desktop_applyBtn android_go goToDownload AppDownloadLink" onclick="apply.openStore();">Open Google Play</div>
+					</div>
+
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='goTo.indexPage()'>
+									<div  class="mobile_applyBtn"><#QKSet_finishpre_rebootnow#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" class="AppDownloadLink" onclick="goTo.openStore()">
+									<div class="mobile_applyBtn iOS_go AppDownloadLink goToDownload">Open iTunes Store</div>
+									<div class="mobile_applyBtn android_go AppDownloadLink goToDownload">Open Google Play</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<script>
+					(function(){
+						var mobileOS = (function(){
+							var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+							if (/android/i.test(userAgent)) return "Android";
+							if(/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "iOS";
+							return "unknown"; 
+						})();
+
+						switch(mobileOS){
+							case "Android":
+								goTo.openStore = function(){
+									window.open("https://play.google.com/store/apps/details?id=com.asustek.aicloud");
+								}
+
+								$(".iOS_go").hide();
+								$(".desktopView").hide();							
+							break;
+
+							case "iOS":
+								goTo.openStore = function(){
+									window.open("https://itunes.apple.com/us/app/aicloud-lite/id527118674");
+								}
+
+								$(".android_go").hide();
+								$(".desktopView").hide();								
+							break;
+
+							case "unknown":
+								$(".mobileView").hide();
+								$(".goToDownload").hide();
+
+								$(".appIconContainer").css({
+									"margin-top": "0px",
+									"margin-left": "60px",
+									"padding-bottom": "20px",
+									"position": "relative"
+								})
+							break;
+						}
+					})()
+				</script>
+			</div>
+		</div>
+	</body>
+</html>

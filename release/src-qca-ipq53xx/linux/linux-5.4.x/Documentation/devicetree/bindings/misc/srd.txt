@@ -1,0 +1,11 @@
+Silent Reboot Debug
+
+Required properties:
+
+- compatible : srd
+
+Example:
+
+srd_trace: srd_trace {
+	compatible = "srd";
+};

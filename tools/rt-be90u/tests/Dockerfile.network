@@ -1,0 +1,8 @@
+FROM debian:bookworm AS emulator
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    qemu-user-static && rm -rf /var/lib/apt/lists/*
+
+FROM rt-be90u-test:58138
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    busybox-static iproute2 iptables && rm -rf /var/lib/apt/lists/*
+COPY --from=emulator /usr/bin/qemu-aarch64-static /usr/bin/qemu-aarch64-static

@@ -1,0 +1,14 @@
+menu "ASUS NVRAM"
+
+config	ASUS_NVRAM_API
+	tristate "ASUS NVRAM R/W API"
+	default m
+	---help---
+	ASUS NVRAM R/W API
+
+config NVRAM_64K
+	bool "Support nvram 64K. In fact, only 60KB for Ralink platfrom and the first 4KB is used by uboot."
+	depends on ASUS_NVRAM_API
+	default n
+
+endmenu

@@ -1,0 +1,88 @@
+* Qualcomm Technologies Inc. NSS CRYPTO Driver.
+
+This driver is responsible for setting up the ipq50xx crypto engine.
+The driver is responsible for initialization of crypto engine, downloading
+of crypto engine firmware, allocating a dma, setting up context record.
+
+Required properties:
+- compatible: "qcom,nss-crypto"
+- qcom,max-contexts: Maximum number of supported context
+- qcom,max-context-size: Maximum context size in words supported by HW.
+- ranges: used when there is a reg_map in child node.
+
+* ce5_node: This is the first child node that denotes that this driver supports ce5 crypto engine.
+
+Required properties:
+- compatible: "qcom,ce5".
+- reg-names: Indicates various resources passed to driver by name.
+- reg: physical address and length of the register set for the device.
+- qcom,dma-mask: Max dma rings supported, each bit represent a ring number
+- qcom,transform-enabled: Whether Packet for tranformation will be sent from host or not.
+- qcom,aes128-cbc: Enable crypto algorithm
+- qcom,aes256-cbc: Enable crypto algorithm
+- qcom,aes128-ctr: Enable crypto algorithm
+- qcom,aes256-ctr: Enable crypto algorithm
+- qcom,aes128-ecb: Enable crypto algorithm
+- qcom,aes256-ecb: Enable crypto algorithm
+- qcom,3des-cbc: Enable crypto algorithm
+- qcom,sha160-hash: Enable crypto algorithm
+- qcom,sha256-hash: Enable crypto algorithm
+- qcom,sha160-hmac: Enable crypto algorithm
+- qcom,sha256-hmac: Enable crypto algorithm
+- qcom,aes128-cbc-sha160-hmac: Enable crypto algorithm
+- qcom,aes256-cbc-sha160-hmac: Enable crypto algorithm
+- qcom,aes128-ctr-sha160-hmac: Enable crypto algorithm
+- qcom,aes256-ctr-sha160-hmac: Enable crypto algorithm
+- qcom,3des-cbc-sha160-hmac: Enable crypto algorithm
+- qcom,3des-cbc-sha256-hmac: Enable crypto algorithm
+- qcom,aes128-cbc-sha256-hmac: Enable crypto algorithm
+- qcom,aes256-cbc-sha256-hmac: Enable crypto algorithm
+- qcom,aes128-ctr-sha256-hmac: Enable crypto algorithm
+- qcom,aes256-ctr-sha256-hmac: Enable crypto algorithm
+
+* engine0: First engine for CE5 block. Some crypto HW can support multiple engine.
+
+Required properties:
+- qcom,ee: Execution engines to be used.
+
+example:
+	qcom,nss_crypto {
+		compatible = "qcom,nss-crypto";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		qcom,max-contexts = <64>;
+		qcom,max-context-size = <144>;
+		ranges;
+		ce5_node {
+			compatible = "qcom,ce5";
+			reg-names = "crypto_pbase", "bam_base";
+			reg = <0x0073a000 0x6000>,
+			    <0x00704000 0x20000>;
+			qcom,dma-mask = <0x0c>;
+			qcom,transform-enabled;
+			qcom,aes128-cbc;
+			qcom,aes256-cbc;
+			qcom,aes128-ctr;
+			qcom,aes256-ctr;
+			qcom,aes128-ecb;
+			qcom,aes256-ecb;
+			qcom,3des-cbc;
+			qcom,sha160-hash;
+			qcom,sha256-hash;
+			qcom,sha160-hmac;
+			qcom,sha256-hmac;
+			qcom,aes128-cbc-sha160-hmac;
+			qcom,aes256-cbc-sha160-hmac;
+			qcom,aes128-ctr-sha160-hmac;
+			qcom,aes256-ctr-sha160-hmac;
+			qcom,3des-cbc-sha160-hmac;
+			qcom,3des-cbc-sha256-hmac;
+			qcom,aes128-cbc-sha256-hmac;
+			qcom,aes256-cbc-sha256-hmac;
+			qcom,aes128-ctr-sha256-hmac;
+			qcom,aes256-ctr-sha256-hmac;
+			engine0 {
+				qcom,ee = <2 3>;
+			};
+		};
+	};

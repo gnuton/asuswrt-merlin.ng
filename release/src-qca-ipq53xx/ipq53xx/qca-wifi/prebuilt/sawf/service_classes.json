@@ -1,0 +1,198 @@
+{
+	"service_class":[
+		{
+			"disable": 0,
+			"svc_id": 9,
+			"app_name": "BE_VOIP",
+			"min_thruput_rate": 96,
+			"burst_size": 220,
+			"service_interval": 20,
+			"delay_bound":40,
+			"msdu_ttl": 200,
+			"priority": 10,
+			"tid": 0,
+			"msdu_rate_loss": 10000,
+			"ul_min_tput": 96,
+			"ul_service_interval": 20,
+			"ul_burst_size": 220
+		},
+		{
+			"disable": 0,
+			"svc_id": 10,
+			"app_name": "BiDi20M_VideoDelay40",
+			"min_thruput_rate": 30000,
+			"delay_bound":40,
+			"priority": 20,
+			"tid": 5,
+			"ul_min_tput": 30000
+		},
+		{
+			"disable": 0,
+			"svc_id": 11,
+			"app_name": "BE_BiDi_GameDelay30",
+			"delay_bound":30,
+			"priority": 11,
+			"tid": 0
+		},
+		{
+			"disable": 0,
+			"svc_id": 12,
+			"app_name": "BE_BiDi20M_VideoDelay20",
+			"min_thruput_rate": 30000,
+			"delay_bound":20,
+			"priority": 20,
+			"tid": 0,
+			"ul_min_tput": 30000
+		},
+		{
+			"disable": 0,
+			"svc_id": 13,
+			"app_name": "BE_DL_Video40M",
+			"min_thruput_rate": 60000,
+			"priority": 21,
+			"tid": 0
+		},
+		{
+			"disable": 0,
+			"svc_id": 14,
+			"app_name": "BE_DL_Video40M",
+			"min_thruput_rate": 60000,
+			"priority": 22,
+			"tid": 0
+		},
+		{
+			"disable": 0,
+			"svc_id": 15,
+			"app_name": "BE_DL_VideoDelay10",
+			"min_thruput_rate": 60000,
+			"delay_bound":10,
+			"priority": 23,
+			"tid": 0
+		},
+		{
+			"disable": 0,
+			"svc_id": 16,
+			"app_name": "BE_BiDi_Video40M",
+			"min_thruput_rate": 60000,
+			"priority": 24,
+			"tid": 0,
+			"ul_min_tput": 60000
+		},
+		{
+			"disable": 0,
+			"svc_id": 17,
+			"app_name": "BE_UL_Video40M",
+			"priority": 25,
+			"tid": 0,
+			"ul_min_tput": 60000
+		},
+		{
+			"disable": 0,
+			"svc_id": 18,
+			"app_name": "BE_BiDi1.5M_VideoDelay20",
+			"min_thruput_rate": 2250,
+			"delay_bound":20,
+			"priority": 26,
+			"tid": 0,
+			"ul_min_tput": 2250
+		},
+		{
+			"disable": 0,
+			"svc_id": 19,
+			"app_name": "DL_Video100M",
+			"min_thruput_rate": 150000,
+			"priority": 27,
+			"tid": 0
+		},
+		{
+			"disable": 0,
+			"svc_id": 20,
+			"app_name": "DL_Video10M_Delay20",
+			"min_thruput_rate": 15000,
+			"delay_bound":20,
+			"priority": 21,
+			"tid": 5
+		},
+		{
+			"svc_id": 121,
+			"disable": 0,
+			"app_name": "ML_Gaming",
+			"min_thruput_rate": 100,
+			"delay_bound":50,
+			"msdu_ttl": 200,
+			"tid": 7,
+			"msdu_rate_loss": 1000
+		},
+		{
+			"svc_id": 122,
+			"disable": 0,
+			"app_name": "ML_Interactive_Video",
+			"min_thruput_rate": 3000,
+			"delay_bound":125,
+			"msdu_ttl": 250,
+			"tid": 5,
+			"msdu_rate_loss": 1000
+		},
+		{
+			"svc_id": 123,
+			"disable": 0,
+			"app_name": "ML_Interactive_Audio",
+			"min_thruput_rate": 96,
+			"burst_size": 220,
+			"service_interval": 20,
+			"delay_bound":40,
+			"msdu_ttl": 200,
+			"tid": 7,
+			"msdu_rate_loss": 1000,
+			"ul_min_tput": 96,
+			"ul_service_interval": 20,
+			"ul_burst_size": 220
+		},
+		{
+			"svc_id": 124,
+			"disable": 0,
+			"app_name": "ML_VOD_Service",
+			"min_thruput_rate": 3000,
+			"delay_bound": 300,
+			"msdu_ttl": 10000,
+			"tid": 5,
+			"msdu_rate_loss": 1
+		},
+		{
+			"svc_id": 125,
+			"disable": 0,
+			"app_name": "ML_VOIP",
+			"min_thruput_rate": 96,
+			"burst_size": 220,
+			"service_interval": 20,
+			"delay_bound":40,
+			"msdu_ttl": 200,
+			"tid": 7,
+			"msdu_rate_loss": 10000,
+			"ul_min_tput": 96,
+			"ul_service_interval": 20,
+			"ul_burst_size": 220
+		},
+		{
+			"svc_id": 126,
+			"disable": 0,
+			"app_name": "RM_TPUT_CLASS1",
+			"min_thruput_rate": 125000,
+			"tid": 0
+		},
+		{
+			"svc_id": 127,
+			"disable": 0,
+			"app_name": "RM_TPUT_CLASS2",
+			"min_thruput_rate": 625000,
+			"tid": 0
+		},
+		{
+			"svc_id": 128,
+			"disable": 0,
+			"app_name": "RM_TPUT_CLASS3",
+			"min_thruput_rate": 1250000,
+			"tid": 0
+		}
+	]
+}

@@ -1,0 +1,186 @@
+{
+  "date": "2026-09-26",
+  "status": "clean hosted RT-BE90U build and checks passed",
+  "native": {
+    "commit": "d82460889c4859c3bc0d7d6c75908033d6adc55d",
+    "run_url": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36254108733",
+    "conclusion": "success",
+    "artifact_name": "rt-be90u-experimental-d82460889c4859c3bc0d7d6c75908033d6adc55d-1",
+    "image_name": "TUF-BE9400_3.0.0.6_102_58138-rtbe90u-dev16-vpn.trx",
+    "image": {
+      "bytes": 59048789,
+      "sha256": "31c9cbf1d8a70af31e62ec8644029e67ebf8395cf23d452080256185fe12b941",
+      "model": "TUF-BE9400",
+      "timestamp": 1790440524,
+      "header_crc32": "valid",
+      "payload_crc32": "valid",
+      "flash_compatibility": "not established",
+      "squashfs_offset": 4321960
+    },
+    "helper_tests_passed": 25,
+    "source_comparisons_passed": 1152,
+    "input_records_identical_to_preserved_dev16": 150610,
+    "inputs_json_sha256": "3cd2f817d83100ad451f759495ed451b15eefe3bc64e44d403a18ce44325a976",
+    "toolchain_revision": "5e5b8ae593edb9c3f0711c56ef7fe73e113506d0",
+    "host_package_list_sha256": "2b163cdd56800ffe0364b92ef4498a40947694a887c6b3365afeb46ec2503649",
+    "builder_images": [
+      {
+        "tags": [
+          "rt-be90u-ci-deps:20.04"
+        ],
+        "id": "sha256:50a4e4a0d45b8c1686940d4dcd12eb10a69e6ffb7d1380f36e6a1071826d9499"
+      },
+      {
+        "tags": [
+          "rt-be90u-ci-build:3006"
+        ],
+        "id": "sha256:a4a625908b3414dbd548db2ba4a479962a696d6bb192682d0d070a860d592cfc"
+      }
+    ],
+    "linkage": [
+      {
+        "program": "/sbin/rc",
+        "libraries": [
+          "/lib/libasuslog.so",
+          "/lib/libc.so",
+          "/lib/libdisk.so",
+          "/lib/libgcc_s.so.1",
+          "/sbin/rc",
+          "/usr/lib/libamas-utils.so",
+          "/usr/lib/libasc.so",
+          "/usr/lib/libbwdpi.so",
+          "/usr/lib/libbwdpi_sql.so",
+          "/usr/lib/libcfgmnt.so",
+          "/usr/lib/libcodb.so",
+          "/usr/lib/libconn_diag.so",
+          "/usr/lib/libcrypto.so.1.1",
+          "/usr/lib/libcurl.so.4.8.0",
+          "/usr/lib/libjansson.so",
+          "/usr/lib/libjson-c.so.2.0.2",
+          "/usr/lib/libletsencrypt.so",
+          "/usr/lib/liblldpctl.so.4.8.0",
+          "/usr/lib/libnmpapi.so",
+          "/usr/lib/libnt.so",
+          "/usr/lib/libnvram.so",
+          "/usr/lib/libovpn.so",
+          "/usr/lib/libshared.so",
+          "/usr/lib/libsqlite3.so.0.8.6",
+          "/usr/lib/libssl.so.1.1",
+          "/usr/lib/libwebapi.so"
+        ],
+        "missing_libraries": [],
+        "wrong_architecture": [],
+        "unresolved_symbols": {},
+        "ok": true
+      },
+      {
+        "program": "/usr/sbin/httpd",
+        "libraries": [
+          "/lib/libasuslog.so",
+          "/lib/libc.so",
+          "/lib/libdisk.so",
+          "/lib/libgcc_s.so.1",
+          "/usr/lib/libbwdpi.so",
+          "/usr/lib/libbwdpi_sql.so",
+          "/usr/lib/libcfgmnt.so",
+          "/usr/lib/libcodb.so",
+          "/usr/lib/libconn_diag.so",
+          "/usr/lib/libcrypto.so.1.1",
+          "/usr/lib/libjson-c.so.2.0.2",
+          "/usr/lib/libletsencrypt.so",
+          "/usr/lib/libmssl.so",
+          "/usr/lib/libnmpapi.so",
+          "/usr/lib/libnt.so",
+          "/usr/lib/libnvram.so",
+          "/usr/lib/libovpn.so",
+          "/usr/lib/libpasswd.so",
+          "/usr/lib/libshared.so",
+          "/usr/lib/libsqlite3.so.0.8.6",
+          "/usr/lib/libssl.so.1.1",
+          "/usr/lib/libwebapi.so",
+          "/usr/sbin/httpd"
+        ],
+        "missing_libraries": [],
+        "wrong_architecture": [],
+        "unresolved_symbols": {},
+        "ok": true
+      },
+      {
+        "program": "/usr/sbin/openvpn",
+        "libraries": [
+          "/lib/libc.so",
+          "/lib/libgcc_s.so.1",
+          "/usr/lib/libcap-ng.so.0.0.0",
+          "/usr/lib/libcrypto.so.1.1",
+          "/usr/lib/liblz4.so.1.8.3",
+          "/usr/lib/liblzo2.so.2",
+          "/usr/lib/libssl.so.1.1",
+          "/usr/lib/libz.so.1",
+          "/usr/sbin/openvpn"
+        ],
+        "missing_libraries": [],
+        "wrong_architecture": [],
+        "unresolved_symbols": {},
+        "ok": true
+      }
+    ],
+    "script_config_event_fixture": "passed",
+    "downloaded_firmware_sha256_verification": "passed"
+  },
+  "broadcom": {
+    "commit": "cb0c3d00acaacbd9f6116c2bd02f3165a75f82a7",
+    "run_url": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36252624626",
+    "conclusion": "success",
+    "builds": [
+      {
+        "name": "Build (gt-be98, src-rt-5.04behnd.4916, rog, false)",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build (gt-be98, src-rt-5.04behnd.4916, default, false)",
+        "conclusion": "success"
+      }
+    ],
+    "firmware_source_diff_to_native_commit": "empty for release/src and release/src-qca-ipq53xx"
+  },
+  "local_reproduction": {
+    "exit": 0,
+    "checkout": "native-ci-clean-checkout",
+    "commit": "27a11e57d9339415e8415c512d260c4ac3db54b7",
+    "network": "none",
+    "clean_source_tree": true,
+    "tracked_sources_unchanged_after_build": true,
+    "image": {
+      "bytes": 59049845,
+      "sha256": "3b5643fb86fccc4c46c186f1b0932e95497bbefe07310038582e1753f1dae7ee",
+      "model": "TUF-BE9400",
+      "timestamp": 1790439181,
+      "header_crc32": "valid",
+      "payload_crc32": "valid",
+      "flash_compatibility": "not established",
+      "squashfs_offset": 4322804
+    },
+    "script_config_event_fixture": "passed"
+  },
+  "toolchain_sparse_export_regression": {
+    "first_failed_run": "https://github.com/fredrir/asuswrt-merlin.ng/actions/runs/36253650001",
+    "fix_commit": "d82460889c4859c3bc0d7d6c75908033d6adc55d",
+    "fresh_sparse_clone_passed": true,
+    "archive_entries_equivalent": 3714,
+    "compared": [
+      "names",
+      "types",
+      "modes",
+      "symlink targets",
+      "file SHA-256"
+    ]
+  },
+  "limits": [
+    "Existing SDK proprietary/prebuilt inputs remain required.",
+    "Toolchain equivalence to the ASUS LFS objects remains unverified.",
+    "Clean build reproducibility does not mean byte-identical firmware; timestamps and host package versions are not frozen.",
+    "The CI job does not run the complete QEMU, browser, Entware or hardware suites.",
+    "No router writes, flashing, reboot/reset, physical USB preparation or host network changes.",
+    "Recovery, hardware validation and full service/migration/add-on support remain incomplete."
+  ]
+}

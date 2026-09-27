@@ -903,7 +903,12 @@ static void _wg_client_gen_conf(char* prefix, char* path)
 	char aips[4096] = {0};
 	char ep_addr[128] = {0};
 	int ep_port = 51820;
+#ifdef RTCONFIG_SOC_IPQ53XX
+	/* Zero disables keepalive; only an unset value uses the default. */
+	int alive = nvram_pf_safe_get(prefix, "alive")[0] ? nvram_pf_get_int(prefix, "alive") : 25;
+#else
 	int alive = nvram_pf_get_int(prefix, "alive");
+#endif
 	char *p;
 	char buffer[32];
 	int unit = 1;
@@ -944,7 +949,11 @@ static void _wg_client_gen_conf(char* prefix, char* path)
 			);
 		if (psk[0] != '\0')
 			fprintf(fp, "PresharedKey = %s\n", psk);
+#ifdef RTCONFIG_SOC_IPQ53XX
+		fprintf(fp, "PersistentKeepalive = %d\n", alive);
+#else
 		fprintf(fp, "PersistentKeepalive = %d\n", alive ?: 25);
+#endif
 
 		fclose(fp);
 
@@ -1080,11 +1089,31 @@ static void _wg_server_gen_client_conf(char* s_prefix, char* c_prefix, char* c_p
 
 	if (caips[0] == '\0')
 	{
+#ifdef RTCONFIG_SOC_IPQ53XX
+		char addr[64] = {0};
+		char *next = NULL, *mask;
+		int ret;
+
+		/* With no peer routes, export host routes to the server addresses. */
+		foreach_44(addr, buf, next)
+		{
+			if ((mask = strchr(addr, '/')) != NULL)
+				*mask = '\0';
+			ret = is_valid_ip(addr);
+			if (ret <= 0)
+				return;
+			if (caips[0]) strlcat(caips, ",", sizeof(caips));
+			strlcat(caips, addr, sizeof(caips));
+			strlcat(caips, (ret > 1) ? "/128" : "/32", sizeof(caips));
+		}
+		if (!caips[0]) return;
+#else
 		int ret = is_valid_ip(buf);
 		if (ret > 0)
 			strlcat(caips, (ret > 1) ? "/128" : "/32", sizeof(caips));
 		else
 			return;
+#endif
 	}
 
 	fp = fopen(c_path, "w");
@@ -1639,6 +1668,10 @@ void start_wgc(int unit)
 	int vpnc_idx;
 #endif
 
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_IPV6) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+	amvpn_refresh_ipv6_killswitch();
+#endif
+
 	_dprintf("%s %d\n", __FUNCTION__, unit);
 
 	snprintf(prefix, sizeof(prefix), "%s%d_", WG_CLIENT_NVRAM_PREFIX, unit);
@@ -1741,6 +1774,10 @@ void stop_wgc(int unit)
 	char tmp[4];
 #ifdef RTCONFIG_VPN_FUSION
 	int vpnc_idx;
+#endif
+
+#if defined(RTCONFIG_SOC_IPQ53XX) && defined(RTCONFIG_IPV6) && defined(RTCONFIG_VPN_FUSION_MERLIN)
+	amvpn_refresh_ipv6_killswitch();
 #endif
 
 	_dprintf("%s %d\n", __FUNCTION__, unit);

@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-C13 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-al02-c4.dts"
+
+/ {
+        #address-cells = <0x2>;
+        #size-cells = <0x2>;
+        model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C13";
+        compatible = "qcom,ipq9574-ap-al02-c13", "qcom,ipq9574-al02", "qcom,ipq9574";
+        interrupt-parent = <&intc>;
+	soc {
+		pcie0_x1: pci@28000000 {
+			perst-gpio = <&tlmm 23 1>;
+			status = "ok";
+
+			pcie0_rp {
+				wifi@0 {
+					reg = <0 0 0 0 0>;
+					qrtr_node_id = <0x20>;
+#if defined(__CNSS2__)
+					memory-region = <0>,<&mhi_region0>;
+#endif
+				};
+			};
+		};
+
+		pcie0_phy: phy@84000 {
+			status ="ok";
+		};
+	};
+};
+
+&mhi_region0 {
+	/* Reduce size of PCIe0 MHI region for QCN9000 Scan radio */
+	size = <0x0 0x00900000>;
+	status = "ok";
+};
+
+#if !defined(__IPQ_MEM_PROFILE_256_MB__) && !defined(__IPQ_MEM_PROFILE_512_MB__)
+&qcn9000_pcie0{
+	reg = <0x0 0x5C500000 0x0 0x01600000>;
+	status = "ok";
+};
+
+/* Enable QCN9000 on PCI0 and remove interrupt-bmap field for QCN9000 on PCI0
+ * QCN9224 on PCI1 to reset the number of MSI interrupts to 16 for PCI0 and
+ * PCI1. PCI2 and PCI3 QCN9224s will use 32 MSI interrupts
+ */
+&wifi1 {
+	/* QCN9000 tgt-mem-mode=5 layout - 21MB
+	 * +=========+==============+=========+
+	 * |  Region | Start Offset |   Size  |
+	 * +---------+--------------+---------+
+	 * | HREMOTE |  0x5C500000  |   9MB   |
+	 * +---------+--------------+---------+
+	 * | M3 Dump |  0x5CE00000  |   1MB   |
+	 * +---------+--------------+---------+
+	 * |   ETR   |  0x5CF00000  |   1MB   |
+	 * +---------+--------------+---------+
+	 * |  Caldb  |  0x5D000000  |   8MB   |
+	 * +---------+--------------+---------+
+	 * | Pageable|  0x5D800000  |   3MB   |
+	 * +==================================+
+	 */
+	base-addr = <0x5C500000>;
+	m3-dump-addr = <0x5CE00000>;
+	etr-addr = <0x5CF00000>;
+	caldb-addr = <0x5D000000>;
+	pageable-addr = <0x5D800000>;
+	hremote-size = <0x900000>;
+	pageable-size = <0x300000>;
+	tgt-mem-mode = <0x5>;
+	hremote_node = <&qcn9000_pcie0>;
+	caldb-size = <0x800000>;
+	board_id = <0xaa>;
+	/delete-property/ interrupt-bmap;
+	status = "ok";
+};
+
+&wifi5 {
+	/delete-property/ interrupt-bmap;
+};
+#endif

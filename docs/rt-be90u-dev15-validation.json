@@ -1,0 +1,149 @@
+{
+  "source_commit": "cc18977deec814fe6e1a2f0ed6d50e98da21e7b8",
+  "base_commit": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+  "image": {
+    "bytes": 59049669,
+    "sha256": "30fd584fa05e77ee2c9245372ca0a2ddd3a5845121c8681612d7123b771141b5",
+    "model": "TUF-BE9400",
+    "timestamp": 1790435313,
+    "header_crc32": "valid",
+    "payload_crc32": "valid",
+    "flash_compatibility": "not established",
+    "squashfs_offset": 4322736,
+    "path": "release/src-qca-ipq53xx/image/TUF-BE9400_3.0.0.6_102_58138-rtbe90u-dev15-vpn.trx"
+  },
+  "build": {
+    "exit": 0,
+    "clean_source_tree": true,
+    "vendor_prebuilt_components": true,
+    "network": "none",
+    "builder_id": "sha256:74cad8c3c730d9bd59d2618f9b3d70eb315ae7b25f089e5d8a812e0530575461"
+  },
+  "source_validation": {
+    "verified_repository_inputs": 150610,
+    "port_inputs": 599,
+    "changes_from_dev14": [
+      "release/src/router/extendno.conf"
+    ]
+  },
+  "git_input_validation": {
+    "verified_inputs_in_git_index": 150602,
+    "explicit_manifest_aliases": 8,
+    "all_input_content_matches_build_record": true
+  },
+  "helper_tests": {
+    "passed": 25,
+    "exit": 0
+  },
+  "runtime_suites": {
+    "basic": [
+      {
+        "test": "config",
+        "exit": 0
+      },
+      {
+        "test": "wg-import",
+        "exit": 0
+      },
+      {
+        "test": "official-validator",
+        "exit": 0
+      }
+    ],
+    "network": [
+      {
+        "test": "network",
+        "exit": 0
+      },
+      {
+        "test": "wg-export",
+        "exit": 0
+      },
+      {
+        "test": "wg-tunnel",
+        "exit": 0
+      }
+    ],
+    "openvpn": [
+      {
+        "test": "tunnel-static",
+        "exit": 0
+      },
+      {
+        "test": "tunnel-tls",
+        "exit": 0
+      },
+      {
+        "test": "tunnel-tls-crypt",
+        "exit": 0
+      },
+      {
+        "test": "tunnel-tls-crypt-v2",
+        "exit": 0
+      }
+    ],
+    "ipv6": [
+      {
+        "test": "ipv6",
+        "exit": 0
+      }
+    ]
+  },
+  "linkage_programs": [
+    "/sbin/rc",
+    "/usr/sbin/httpd",
+    "/usr/sbin/openvpn"
+  ],
+  "linkage_passed": true,
+  "kernel_config_matches_dev14": true,
+  "ecm_selector_matches_dev14": true,
+  "content_audit": {
+    "packaging_issues": [],
+    "elf_architecture_counts": {
+      "183": 792,
+      "3": 4,
+      "40": 2,
+      "164": 5
+    },
+    "unchanged_coprocessor_firmware": [
+      "lib/firmware/IPQ5332/iu_fw.b00",
+      "lib/firmware/IPQ5332/iu_fw.b02",
+      "lib/firmware/IPQ5332/iu_fw.mdt",
+      "lib/firmware/IPQ5332/q6_fw0.b00",
+      "lib/firmware/IPQ5332/q6_fw0.mdt",
+      "lib/firmware/IPQ5332/q6_fw1.b00",
+      "lib/firmware/IPQ5332/q6_fw1.b02",
+      "lib/firmware/IPQ5332/q6_fw1.mdt",
+      "lib/firmware/qcn9224/amss.bin",
+      "lib/firmware/qcn9224/amss_dualmac.bin",
+      "lib/firmware/qcn9224/m3.bin"
+    ],
+    "verified_prebuild_source_files": 599,
+    "autotools_regenerated_files": [
+      "release/src/router/openvpn/doc/doxygen/Makefile.in",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile",
+      "release/src/router/openvpn/sample/sample-plugins/Makefile.in",
+      "release/src/router/openvpn/src/openvpnmsica/Makefile.in",
+      "release/src/router/openvpn/src/tapctl/Makefile.in"
+    ],
+    "required_flags_enabled": [
+      "RTCONFIG_SOC_IPQ53XX",
+      "RTCONFIG_OPENVPN",
+      "RTCONFIG_WIREGUARD",
+      "RTCONFIG_VPN_FUSION",
+      "RTCONFIG_VPN_FUSION_MERLIN",
+      "RTCONFIG_MULTILAN_CFG"
+    ],
+    "vpndirector_icons_match_source": true,
+    "http_fixture_absent": true
+  },
+  "hardware_tested": false,
+  "limitations": [
+    "Stock validator accepts the synthetic wrong-model probe; it is not a flash-safety test.",
+    "Runtime fixtures use synthetic NVRAM, QEMU and the host kernel, not router boot orchestration.",
+    "IPv6 whole-interface blocking is not dual-stack VPN routing or IPv6 device-policy protection.",
+    "Browser baseline remains dev12; Entware baseline remains dev11.",
+    "Broadcom sources were unchanged; other-model firmware builds were not run.",
+    "Builder OS dependencies were reused from a cached image, not provisioned from scratch offline."
+  ]
+}

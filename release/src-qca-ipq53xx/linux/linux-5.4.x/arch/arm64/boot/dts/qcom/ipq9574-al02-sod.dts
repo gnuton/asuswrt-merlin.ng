@@ -1,0 +1,155 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 AL02-SOD board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574.dtsi"
+#include "ipq9574-default-memory.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/AP-AL02-C1";
+	compatible = "qcom,ipq9574-ap-al02-c1", "qcom,ipq9574-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	aliases {
+		serial0 = &blsp1_uart2;
+	};
+
+	chosen {
+		linux,initrd-end = <0x47000000>;
+		linux,initrd-start = <0x45000000>;
+		bootargs = "root=/dev/ram0 rw init=/init";
+		stdout-path = "serial0";
+	};
+
+	/delete-node/ ctx-save;
+	/delete-node/ firmware;
+	/delete-node/ hwlock;
+	/delete-node/ pmu;
+	/delete-node/ pmu-v7;
+	/delete-node/ qti,tzlog;
+	/delete-node/ smem;
+	/delete-node/ qseecom;
+
+	cpus: cpus {
+		CPU0: cpu@0 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc0>;
+			/delete-property/ clocks;
+			/delete-property/ clock-names;
+		};
+
+		/delete-node/ cpu@1;
+		/delete-node/ cpu@2;
+		/delete-node/ cpu@3;
+	};
+
+	soc {
+		/delete-node/ mailbox@b111000;
+		/delete-node/ clock@b116000;
+		/delete-node/ prng@e3000;
+		/delete-node/ dma@704000;
+		/delete-node/ crypto@73a000;
+		/delete-node/ pwm;
+		/delete-node/ mdio@90000;
+		/delete-node/ ess-instance;
+		/delete-node/ ess-uniphy@7a00000;
+		/delete-node/ watchdog@b017000;
+		/delete-node/ qcom,msm-imem@8600000;
+		/delete-node/ dcc_v2@797F000;
+		/delete-node/ syscon@1905000;
+		/delete-node/ syscon@1945000;
+		/delete-node/ dma@7884000;
+		/delete-node/ i2c@78b6000;
+		/delete-node/ i2c@78b7000;
+		/delete-node/ i2c@78b8000;
+		/delete-node/ i2c@78b9000;
+		/delete-node/ i2c@78bA000;
+		/delete-node/ spi@78b5000;
+		/delete-node/ spi@78b6000;
+		/delete-node/ spi@78b7000;
+		/delete-node/ spi@78b8000;
+		/delete-node/ spi@78b9000;
+		/delete-node/ edma@3ab00000;
+		/delete-node/ nss-common;
+		/delete-node/ nss@40000000;
+		/delete-node/ nss@40800000;
+		/delete-node/ nss@41000000;
+		/delete-node/ nss@41800000;
+		/delete-node/ ssphy@78000;
+		/delete-node/ qusb@79000;
+		/delete-node/ usb3@8A00000;
+		/delete-node/ remoteproc@cd00000;
+		/delete-node/ pci@28000000;
+		/delete-node/ pci@10000000;
+		/delete-node/ pci@20000000;
+		/delete-node/ pci@18000000;
+		/delete-node/ qti,rpm-log@29fc00;
+		/delete-node/ wifi@c0000000;
+		/delete-node/ qfprom@a4000;
+		/delete-node/ csr@6001000;
+		/delete-node/ stm@6002000;
+		/delete-node/ funnel@6041000;
+		/delete-node/ funnel@6042000;
+		/delete-node/ funnel@6045000;
+		/delete-node/ replicator@6046000;
+		/delete-node/ etf@6047000;
+		/delete-node/ tmc@6048000;
+		/delete-node/ cti@6291000;
+		/delete-node/ etm@6293000;
+		/delete-node/ cti@6295000;
+		/delete-node/ etm@6297000;
+		/delete-node/ cti@6299000;
+		/delete-node/ etm@629b000;
+		/delete-node/ cti@629d000;
+		/delete-node/ etm@629f000;
+		/delete-node/ funnel@62a1000;
+
+		gcc@1800000 {
+			gcc-use-dummy;
+		};
+
+		nsscc@39b00000 {
+			nsscc-use-dummy;
+		};
+
+		interrupt-controller@b000000 {
+			/delete-node/ v2m@0;
+			/delete-node/ v2m@1;
+			/delete-node/ v2m@2;
+		};
+
+		pinctrl@1000000 {
+			blsp1_uart2_pins: blsp1_uart2_pinmux {
+				pins = "gpio34", "gpio35";
+				function = "blsp2_uart";
+				drive-strength = <8>;
+				bias-disable;
+			};
+		};
+
+		serial@78b1000 {
+			pinctrl-0 = <&blsp1_uart2_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		acc0: clock-controller@b188000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b188000 0x1000>;
+		};
+	};
+
+	/delete-node/ psci;
+	/delete-node/ wcss-smp2p;
+	/delete-node/ qti,sps;
+	/delete-node/ rpm-glink;
+	/delete-node/ qti,scm_restart_reason;
+	/delete-node/ qti,gadget_diag@0;
+};

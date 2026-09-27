@@ -1,0 +1,26 @@
+QTI LED Controller Driver.
+
+Required properties:
+- compatible: "qti,ledc"
+- reg: Base address for LED registers.
+- reg-names: Register name for reference.
+- qti,tcsr_ledc_values: The values with which the 12 LED Control registers needs to be initialized with.
+- qti,ledc_blink_indices_cnt: No.of blink registers configured. Allowed value is 0 to 4.
+- qti,ledc_blink_indices: Indices of LEDs which are configured as blink LEDs. No. of entries
+                        should correspond to the value in qti,ledc_blink_indices_cnt.
+
+Optional properties:
+- qti,ledc_blink_idx_src_pair: List of LED index + blink source pairs.
+
+Examples:
+
+qti: ledc@1937000 {
+	compatible = "qti,ledc";
+	reg = <0x1937000 0x20070>;
+	reg-names = "ledc_base_addr";
+	qti,tcsr_ledc_values = <0x320195 0xA418820 0x16A4A0E6 0x2307B9AC 0x16AD272 \
+		0xFFFFFFFF 0x0 0x0 0x7D006F 0x0 0x10482090 0x3FFFFE4>;
+	qti,ledc_blink_indices_cnt = <4>;
+	qti,ledc_blink_indices = <19 20 21 22>;
+	qti,ledc_blink_idx_src_pair = <3 20>, <4 21>, <5 22>;
+};

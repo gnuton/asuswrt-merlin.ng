@@ -1,0 +1,189 @@
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2016 Qualcomm Atheros, Inc.
+#
+# All Rights Reserved.
+# Qualcomm Atheros Confidential and Proprietary.
+
+START=54
+ECM_SYSFS_FILE="/sys/kernel/debug/ecm/ecm_classifier_hyfi/enabled"
+
+. /lib/functions/hyfi-debug.sh
+. /lib/functions/hyfi-iface.sh
+. /lib/functions/hyfi-network.sh
+config_load 'repacd'
+config_get_bool ezmesh repacd 'Ezmesh' '0'
+config_get dev_role repacd 'Role' 'NonCAP'
+    if [ "$ezmesh" -eq 1 ]; then
+        MAP='ezmesh'
+    else
+        MAP='hyd'
+    fi
+config_get_bool multi_inst_enable repacd 'multi_inst_enable' '0'
+config_get MAX_ACC_MULTI_INST_SUPPORT repacd 'max_inst_supported' '4'
+config_get_bool enable_yocto_build MAPConfig 'EnableYoctoBuild' '0'
+config_get map_version MAPConfig 'MapVersionEnabled'
+config_get map_ts_enabled MAPConfig 'MapTrafficSeparationEnable' '0'
+brindex=0
+
+if [ "$enable_yocto_build" -eq 1 ]; then
+     brprefix=''
+else
+     brprefix='br-'
+fi
+
+# attach hyfi bridge
+# Input: $1 - network name
+# Output: $2 - 1 if failure
+__hyfi_bridge_attach() {
+    local nw_config="$1" type ieee1905managed fwmode
+
+    hyfi_network_get_device_type $nw_config type
+
+    [ -z "$type" -o ! "$type" = "bridge" ] && return
+    config_get_bool ieee1905managed "$nw_config" ieee1905managed
+    [ -z "$ieee1905managed" -o "$ieee1905managed" -eq 0 ] && return
+    [ "$multi_inst_enable" -eq 1 -a "$brindex" -ge "$MAX_ACC_MULTI_INST_SUPPORT" ] && return
+
+    if ! hyctl attach $brprefix$nw_config; then
+	eval "$2='1'"
+    fi
+    config_get fwmode 'hy' 'ForwardingMode' 'SINGLE'
+    if [ "$fwmode" = "SINGLE" ]; then
+        echo "Setting fwmode SINGLE for $brprefix$nw_config" > /dev/console
+        hyctl setfwmode $brprefix$nw_config SINGLE
+    fi
+    brindex=`expr $brindex + 1`
+}
+
+# detach hyfi bridge
+# Input: $1 - network name
+__hyfi_bridge_detach() {
+    local nw_config="$1" type ieee1905managed
+
+    hyfi_network_get_device_type $nw_config type
+
+    [ -z "$type" -o ! "$type" = "bridge" ] && return
+    config_get_bool ieee1905managed "$nw_config" ieee1905managed
+    [ -z "$ieee1905managed" -o "$ieee1905managed" -eq 0 ] && return
+    [ "$multi_inst_enable" -eq 1 -a "$brindex" -ge "$MAX_ACC_MULTI_INST_SUPPORT" ] && return
+
+    hyctl detach $brprefix$nw_config
+    brindex=`expr $brindex + 1`
+}
+
+start() {
+	brindex=0
+	config_load $MAP
+	config_get_bool enabled config 'Enable' '0'
+	config_get_bool mcEnabled mc 'Enable' '0'
+	local managed_bridge ieee1905managed_bridges
+	local fwmode
+
+	if [ "$enable_yocto_build" -eq 0 ]; then
+		local hyfi_bridging_rcd_enabled=`ls /etc/rc.d/S${START}hyfi-bridging 2> /dev/null`
+		[ "$enabled" -gt 0 -a -n "$hyfi_bridging_rcd_enabled" ] || {
+			return 1
+		}
+	fi
+
+	# Enable hyfi-netfilter
+	if [ -f /proc/sys/net/bridge/bridge-nf-call-custom ]; then
+		sysctl -w net.bridge.bridge-nf-call-custom=1
+	fi
+
+	if [ "$multi_inst_enable" -eq 0 ]; then
+            # Get the IEEE1905.1 managed bridge name and attach
+            hyfi_get_ieee1905_managed_iface ieee1905managed_bridge ieee1905managed_bridge2
+
+            # Bail out from starting hyd if attach fails.
+            if ! hyctl attach $brprefix$ieee1905managed_bridge; then
+                stop
+                return 1
+            fi
+            config_get fwmode 'hy' 'ForwardingMode' 'SINGLE'
+            if [ "$fwmode" = "SINGLE" ]; then
+                echo "Setting fwmode SINGLE for $brprefix$ieee1905managed_bridge" > /dev/console
+                hyctl setfwmode $brprefix$ieee1905managed_bridge SINGLE
+            fi
+
+            if [ -n "$ieee1905managed_bridge2" ];then
+                if ! hyctl attach $brprefix$ieee1905managed_bridge2; then
+                    stop
+                    return 1
+                fi
+                if [ "$fwmode" = "SINGLE" ]; then
+                    echo "Setting fwmode SINGLE for $brprefix$ieee1905managed_bridge2" > /dev/console
+                    hyctl setfwmode $brprefix$ieee1905managed_bridge2 SINGLE
+                fi
+            fi
+	else
+	    local status
+	    config_load network
+	    config_foreach __hyfi_bridge_attach interface status
+	    if [ "$status" -eq 1 ]; then
+	        stop
+	        return 1
+	    fi
+	fi
+	# Get Secondary bridge Names and attach
+	hyfi_get_ieee1905_brguest_map ieee1905_brguest_map ieee1905_brbh_map
+	if [ -n "$ieee1905_brguest_map" ];then
+		for br_name in $ieee1905_brguest_map; do
+			if [ "$enable_yocto_build" -eq 0 ]; then
+				ifnames="$(hyfi_network_get_ifnames $br_name)"
+			fi
+			if [ -n "$ifnames" -a "$ifnames" != " " ] || [ "$enable_yocto_build" -eq 1 -a "$map_version" -gt 1 -a "$map_ts_enabled" -gt 0 ]; then
+                config_get fwmode 'hy' 'ForwardingMode' 'SINGLE'
+				if ! hyctl attach $brprefix$br_name; then
+					stop
+					return 1
+				fi
+                if [ "$fwmode" = "SINGLE" ]; then
+                    echo "Setting fwmode SINGLE for $brprefix$br_name" > /dev/console
+                    hyctl setfwmode $brprefix$br_name SINGLE
+                fi
+			fi
+		done
+	fi
+	if [ "$mcEnabled" -eq "0" ]; then
+		if [[ "${dev_role}" == "CAP" ]]; then
+			echo 1 > /sys/class/net/br-lan/bridge/multicast_query_use_ifaddr
+		fi
+		uci set mcsd.config.Enable=1
+		uci commit
+		/etc/init.d/mcsd restart
+	fi
+
+}
+
+stop() {
+	brindex=0
+	local managed_bridge ieee1905managed_bridges
+	config_load $MAP
+
+	# Disable hyfi-netfilter
+	if [ -f /proc/sys/net/bridge/bridge-nf-call-custom ]; then
+		sysctl -w net.bridge.bridge-nf-call-custom=0
+	fi
+
+	if [ "$multi_inst_enable" -eq 0 ]; then
+            # Get the IEEE1905.1 managed bridge name and detach
+            hyfi_get_ieee1905_managed_iface ieee1905managed_bridge ieee1905managed_bridge2
+            hyctl detach $brprefix$ieee1905managed_bridge
+
+            if [ -n "$ieee1905managed_bridge2" ]; then
+                hyctl detach $brprefix$ieee1905managed_bridge2
+            fi
+	else
+	    config_load network
+            config_foreach __hyfi_bridge_detach interface
+	fi
+
+	# Get Secondary bridge Names and detach
+	hyfi_get_ieee1905_brguest_map ieee1905_brguest_map ieee1905_brbh_map
+	if [ -n "$ieee1905_brguest_map" ];then
+		for br_name in $ieee1905_brguest_map; do
+			hyctl detach $brprefix$br_name
+		done
+	fi
+}

@@ -1,0 +1,6 @@
+{
+  "name": "rt-be90u-vpn-ui-tests",
+  "private": true,
+  "scripts": { "test": "node vpn-ui.cjs" },
+  "devDependencies": { "playwright": "1.63.0" }
+}

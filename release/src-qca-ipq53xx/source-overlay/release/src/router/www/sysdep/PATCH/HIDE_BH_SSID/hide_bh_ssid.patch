@@ -1,0 +1,139 @@
+<style>
+.system_settings_bg.hide_bh_ssid > .system_icon{
+	background-position: 3px -399px;
+}
+</style>
+<script>
+class HideBHSSID {
+	constructor(props = {}) {
+		this.element = document.createElement('div');
+		this.generateUI();
+		this.switchEvent();
+	}
+
+	generateUI() {
+		const template = document.createElement('template');
+		template.innerHTML = `
+			<div class="system_settings_bg hide_bh_ssid">
+				<div class="system_icon"></div>
+				<div class="system_text">
+					<span><#AiMesh_WiFi_Backhaul_HideSSID#></span>
+				</div>
+				<div class="switch"></div>
+			</div>
+		`;
+		this.element.appendChild(template.content.cloneNode(true));
+	}
+
+	switchEvent() {
+		const switchElement = this.element.querySelector('.switch');
+		$(switchElement)
+			.addClass(() => {
+				const hide_bh_ssid = httpApi.nvramGet(["hide_bh_ssid"]).hide_bh_ssid;
+				return hide_bh_ssid === "1" ? "on" : "off";
+			})
+			.unbind("click")
+			.click((e) => {
+				e = e || event;
+				e.stopPropagation();
+				const switchStatus = $(switchElement).hasClass("on");
+				if (switchStatus) {// on to off
+					$(switchElement).toggleClass("off on").promise().done(() => {
+						showLoading(15);
+						httpApi.nvramSet({
+							"hide_bh_ssid" : "0",
+							"action_mode" : "apply",
+							"rc_service" : "restart_wireless"
+						}, () => {
+							setTimeout(() => {
+								httpApi.nvramGet(["hide_bh_ssid"], true);
+								if (typeof jstree_refresh === "function") {
+									jstree_refresh();
+								}
+							}, 1000);
+						});
+					});
+				}
+				else {
+					const get_cfg_clientlist = httpApi.hookGet("get_cfg_clientlist");
+					const capModelName = get_cfg_clientlist[0]?.ui_model_name || '';
+					let modelList = '';
+					if (get_cfg_clientlist.length > 1) {
+						get_cfg_clientlist.slice(1).find((item, index) => {
+							const model_name = item.model_name;
+							const fwver = item.fwver;
+							const modelMatch = ["ZenWiFi_BT8", "RT-BE14000", "ZenWiFi_BE14000"].includes(model_name);
+							const versionMatch = fwver.match(/_(\d+)-/);
+							const extractedVersion = versionMatch ? versionMatch[1] : '';
+							const fwverMatch = ["55875", "56084"].includes(extractedVersion);
+
+							if (modelMatch && fwverMatch) {
+								if (modelList) modelList += ", ";
+								modelList += item.ui_model_name || model_name;
+								modelList += ` (${node_location_translate(item, true)})`;
+							}
+						});
+					}
+					const ui_lang = httpApi.nvramGet(["preferred_lang"]).preferred_lang;
+					const faq_href = `https://nw-dlcdnet.asus.com/support/forward.html?model=&type=Faq&lang=${ui_lang}&kw=&num=205`;
+					const $faqObj = $("<span>").html(`* <#AiMesh_confirm_msg12#>`);
+					$faqObj.find("#wpa3FaqLink").attr({"target": "_blank", "href": faq_href}).addClass("text_link");
+
+					const case1Hint = `
+						<#AiMesh_Backhaul_hide_SSID_hint0#><br>
+						<#AiMesh_Backhaul_hide_SSID_hint1#><br><br>
+						${$faqObj[0].outerHTML}
+					`;
+					const case2Hint = `
+						<#AiMesh_Backhaul_hide_SSID_hint2#><br>
+						<#AiMesh_Backhaul_hide_SSID_hint3#><br>
+						<#AiMesh_Backhaul_hide_SSID_hint4#><br><br>
+						${$faqObj[0].outerHTML}
+					`;
+					const hint = modelList === '' ? case1Hint : case2Hint;
+					popupHint.show_hint();
+					popupHint.set_text(hint);
+					popupHint.set_btn_ok(() => {
+						$(switchElement).toggleClass("off on").promise().done(() => {
+							showLoading(15);
+							httpApi.nvramSet({
+								"hide_bh_ssid" : "1",
+								"action_mode" : "apply",
+								"rc_service" : "restart_wireless"
+							}, () => {
+								setTimeout(() => {
+									httpApi.nvramGet(["hide_bh_ssid"], true);
+									if (typeof jstree_refresh === "function") {
+										jstree_refresh();
+									}
+								},1000);
+							});
+						});
+					});
+					popupHint.hide_btn("cancel");
+				}
+			});
+	}
+
+	render() {
+		return this.element;
+	}
+}
+setTimeout(()=>{
+	const $appendCntr = (()=>{
+		const firstVisibleSwitch = $(".system_settings_bg .switch").filter(function() {
+			return $(this).closest(".system_settings_bg").css("display") !== "none";
+		}).first();
+		if (firstVisibleSwitch.length > 0) {
+			return $(firstVisibleSwitch.closest(".system_settings_bg"));
+		}
+		else {
+			return $("#AiMesh_System_Settings");
+		}
+	})();
+	if ($appendCntr.length > 0) {
+		const hideBHSSID = new HideBHSSID();
+		$appendCntr.after(hideBHSSID.render());
+	}
+},100);
+</script>

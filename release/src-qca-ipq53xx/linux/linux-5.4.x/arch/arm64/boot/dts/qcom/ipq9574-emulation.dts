@@ -1,0 +1,752 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 Emulation board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574.dtsi"
+#include "ipq9574-default-memory.dtsi"
+#include "ipq9574-cpu.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574-EMULATION";
+	compatible = "qcom,ipq9574-ap-al-emulation", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	clocks {
+		sleep_clk: sleep-clk {
+			clock-frequency = <320>;
+		};
+
+		xo: xo {
+			clock-frequency = <240000>;
+		};
+	};
+
+	aliases {
+		serial0 = &blsp1_uart0;
+		ethernet0 = "/soc/dp1";
+		ethernet1 = "/soc/dp2";
+		ethernet2 = "/soc/dp3";
+		ethernet3 = "/soc/dp4";
+		ethernet4 = "/soc/dp5";
+		ethernet5 = "/soc/dp6";
+	};
+
+	chosen {
+		linux,initrd-end = <0x47000000>;
+		linux,initrd-start = <0x45000000>;
+		bootargs = "root=/dev/ram0 rw init=/init maxcpus=2";
+		stdout-path = "serial0";
+	};
+
+	cpus: cpus {
+		CPU0: cpu@0 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc0>;
+		};
+
+		CPU1: cpu@1 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc1>;
+		};
+
+		CPU2: cpu@2 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc2>;
+		};
+
+		CPU3: cpu@3 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc3>;
+		};
+	};
+
+	ctx_save: ctx-save {
+		status = "disabled";
+	};
+
+	tzlog: qti,tzlog {
+		status = "disabled";
+	};
+
+	firmware {
+		qfprom {
+			status = "disabled";
+		};
+	};
+
+	soc {
+		pinctrl@1000000 {
+			i2c_1_pins: i2c-1-pinmux {
+				pins = "gpio36", "gpio37";
+				function = "blsp1_i2c";
+				drive-strength = <8>;
+				bias-disable;
+			};
+
+			serial_0_pins: serial0-pinmux {
+				pins = "gpio13", "gpio14";
+				function = "blsp0_uart";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			serial_3_pins: serial3-pinmux {
+				pins = "gpio34", "gpio35";
+				function = "blsp2_uart";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			mdio_pins: mdio_pinmux {
+				mux_0 {
+					pins = "gpio38";
+					function = "mdc";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				mux_1 {
+					pins = "gpio39";
+					function = "mdio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+		};
+
+		serial@78af000 {
+			pinctrl-0 = <&serial_0_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		cryptobam: dma@704000 {
+			qcom,controlled-remotely = <0>;
+			qti,config-pipe-trust-reg = <1>;
+		};
+
+		dma@7984000 {
+			status = "ok";
+		};
+
+		nand@79b0000 {
+			status = "ok";
+
+			nand@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				nand-ecc-strength = <4>;
+				nand-ecc-step-size = <512>;
+				nand-bus-width = <8>;
+			};
+		};
+
+		spi_0: spi@78b5000 { /* BLSP1 QUP0 */
+			status = "ok";
+			cs-select = <0>;
+
+			m25p80@0 {
+				compatible = "n25q128a11";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0>;
+				spi-max-frequency = <50000000>;
+			};
+		};
+
+		i2c_1: i2c@78b6000 {
+			pinctrl-0 = <&i2c_1_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+
+			eeprom: eeprom@50 {
+				compatible = "atmel,24c32";
+				reg = <0x51>;
+			};
+		};
+
+		sdhci@7804000 {
+			status = "ok";
+			qcom,emulation;
+		};
+
+		gcc: gcc@1800000 {
+			gcc-use-dummy;
+		};
+
+		a73pll: clock@b116000 {
+			status = "disabled";
+		};
+
+		nsscc: nsscc@39b00000 {
+			nsscc-use-dummy;
+		};
+
+		remoteproc@cd00000 {
+			qcom,emulation;
+			bootaddr=<0x4AB00000>;
+		};
+
+		pwm {
+			used-pwm-indices = <1>, <1>, <1>, <1>;
+			status = "ok";
+		};
+
+		ess-instance {
+			num_devices = <0x1>;
+			ess-switch@3a000000 {
+				qcom,emulation; /* RUMI ENV */
+				switch_cpu_bmp = <0x1>;  /* cpu port bitmap */
+				switch_lan_bmp = <0x3e>; /* lan port bitmap */
+				switch_wan_bmp = <0x40>; /* wan port bitmap */
+				switch_mac_mode = <0x0>; /* mac mode for uniphy instance0*/
+				switch_mac_mode1 = <0xd>; /* mac mode for uniphy instance1*/
+				switch_mac_mode2 = <0xd>; /* mac mode for uniphy instance2*/
+				bm_tick_mode = <0>; /* bm tick mode */
+				tm_tick_mode = <0>; /* tm tick mode */
+
+				qcom,port_phyinfo {
+					port@0 {
+						port_id = <1>;
+						forced-speed = <1000>;
+						forced-duplex = <1>;
+					};
+					port@1 {
+						port_id = <2>;
+						forced-speed = <1000>;
+						forced-duplex = <1>;
+					};
+					port@2 {
+						port_id = <3>;
+						forced-speed = <1000>;
+						forced-duplex = <1>;
+					};
+					port@3 {
+						port_id = <4>;
+						forced-speed = <1000>;
+						forced-duplex = <1>;
+					};
+					port@4 {
+						port_id = <5>;
+						forced-speed = <10000>;
+						forced-duplex = <1>;
+					};
+					port@5 {
+						port_id = <6>;
+						forced-speed = <10000>;
+						forced-duplex = <1>;
+					};
+				};
+				port_scheduler_resource {
+					port@0 {
+						port_id = <0>;
+						ucast_queue = <0 43>;
+						mcast_queue = <256 262>;
+						l0sp = <0 6>;
+						l0cdrr = <0 27>;
+						l0edrr = <0 27>;
+						l1cdrr = <0 0>;
+						l1edrr = <0 0>;
+					};
+					port@1 {
+						port_id = <1>;
+						ucast_queue = <204 211>;
+						mcast_queue = <272 275>;
+						l0sp = <51 52>;
+						l0cdrr = <108 115>;
+						l0edrr = <108 115>;
+						l1cdrr = <23 24>;
+						l1edrr = <23 24>;
+					};
+					port@2 {
+						port_id = <2>;
+						ucast_queue = <212 219>;
+						mcast_queue = <276 279>;
+						l0sp = <53 54>;
+						l0cdrr = <116 123>;
+						l0edrr = <116 123>;
+						l1cdrr = <25 26>;
+						l1edrr = <25 26>;
+					};
+					port@3 {
+						port_id = <3>;
+						ucast_queue = <220 227>;
+						mcast_queue = <280 283>;
+						l0sp = <55 56>;
+						l0cdrr = <124 131>;
+						l0edrr = <124 131>;
+						l1cdrr = <27 28>;
+						l1edrr = <27 28>;
+					};
+					port@4 {
+						port_id = <4>;
+						ucast_queue = <228 235>;
+						mcast_queue = <284 287>;
+						l0sp = <57 58>;
+						l0cdrr = <132 139>;
+						l0edrr = <132 139>;
+						l1cdrr = <29 30>;
+						l1edrr = <29 30>;
+					};
+					port@5 {
+						port_id = <5>;
+						ucast_queue = <236 243>;
+						mcast_queue = <288 291>;
+						l0sp = <59 60>;
+						l0cdrr = <140 147>;
+						l0edrr = <140 147>;
+						l1cdrr = <31 32>;
+						l1edrr = <31 32>;
+					};
+					port@6 {
+						port_id = <6>;
+						ucast_queue = <244 251>;
+						mcast_queue = <292 295>;
+						l0sp = <61 62>;
+						l0cdrr = <148 155>;
+						l0edrr = <148 155>;
+						l1cdrr = <33 34>;
+						l1edrr = <33 34>;
+					};
+					port@7 {
+						port_id = <7>;
+						ucast_queue = <252 255>;
+						mcast_queue = <296 299>;
+						l0sp = <63 63>;
+						l0cdrr = <156 159>;
+						l0edrr = <156 159>;
+						l1cdrr = <35 35>;
+						l1edrr = <35 35>;
+					};
+					reserved {
+						ucast_queue = <44 203>;
+						mcast_queue = <263 271>;
+						l0sp = <7 50>;
+						l0cdrr = <28 107>;
+						l0edrr = <28 107>;
+						l1cdrr = <1 22>;
+						l1edrr = <1 22>;
+					};
+				};
+				port_scheduler_config {
+					port@0 {
+						port_id = <0>;
+						l1scheduler {
+							group@0 {
+								/* L0 SP */
+								sp = <0 1 2 3 4 5 6>;
+								/* cpri cdrr epri edrr */
+								cfg = <0 0 0 0>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								/* unicast queue */
+								ucast_queue = <0>;
+								ucast_loop_pri = <4>;
+								/* multicast queue */
+								mcast_queue = <256>;
+								/* sp cpri cdrr epri edrr */
+								cfg = <0 0 0 0 0>;
+							};
+							group@1 {
+								ucast_queue = <4>;
+								ucast_loop_pri = <4>;
+								cfg = <0 0 0 0 0>;
+							};
+							group@2 {
+								ucast_queue = <8>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <257>;
+								cfg = <1 0 4 0 4>;
+							};
+							group@3 {
+								ucast_queue = <12>;
+								ucast_loop_pri = <4>;
+								cfg = <1 0 4 0 4>;
+							};
+							group@4 {
+								ucast_queue = <16>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <258>;
+								cfg = <2 0 8 0 8>;
+							};
+							group@5 {
+								ucast_queue = <20>;
+								ucast_loop_pri = <4>;
+								cfg = <2 0 8 0 8>;
+							};
+							group@6 {
+								ucast_queue = <24>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <259>;
+								cfg = <3 0 12 0 12>;
+							};
+							group@7 {
+								ucast_queue = <28>;
+								ucast_loop_pri = <4>;
+								cfg = <3 0 12 0 12>;
+							};
+							group@8 {
+								ucast_queue = <32>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <260>;
+								cfg = <4 0 16 0 16>;
+							};
+							group@9 {
+								ucast_queue = <36>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <261>;
+								cfg = <5 0 20 0 20>;
+							};
+							group@10 {
+								ucast_queue = <40>;
+								ucast_loop_pri = <4>;
+								mcast_queue = <262>;
+								cfg = <6 0 24 0 24>;
+							};
+						};
+					};
+					port@1 {
+						port_id = <1>;
+						l1scheduler {
+							group@0 {
+								sp = <51>;
+								cfg = <0 23 0 23>;
+							};
+							group@1 {
+								sp = <52>;
+								cfg = <1 24 1 24>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <204>;
+								ucast_loop_pri = <8>;
+								/* max priority per SP */
+								ucast_max_pri = <4>;
+								mcast_queue = <272>;
+								mcast_loop_pri = <4>;
+								cfg = <51 0 108 0 108>;
+							};
+						};
+					};
+					port@2 {
+						port_id = <2>;
+						l1scheduler {
+							group@0 {
+								sp = <53>;
+								cfg = <0 25 0 25>;
+							};
+							group@1 {
+								sp = <54>;
+								cfg = <1 26 1 26>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <212>;
+								ucast_loop_pri = <8>;
+								ucast_max_pri = <4>;
+								mcast_queue = <276>;
+								mcast_loop_pri = <4>;
+								cfg = <53 0 116 0 116>;
+							};
+						};
+					};
+					port@3 {
+						port_id = <3>;
+						l1scheduler {
+							group@0 {
+								sp = <55>;
+								cfg = <0 27 0 27>;
+							};
+							group@1 {
+								sp = <56>;
+								cfg = <1 28 1 28>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <220>;
+								ucast_loop_pri = <8>;
+								ucast_max_pri = <4>;
+								mcast_queue = <280>;
+								mcast_loop_pri = <4>;
+								cfg = <55 0 124 0 124>;
+							};
+						};
+					};
+					port@4 {
+						port_id = <4>;
+						l1scheduler {
+							group@0 {
+								sp = <57>;
+								cfg = <0 29 0 29>;
+							};
+							group@1 {
+								sp = <58>;
+								cfg = <1 30 1 30>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <228>;
+								ucast_loop_pri = <8>;
+								ucast_max_pri = <4>;
+								mcast_queue = <284>;
+								mcast_loop_pri = <4>;
+								cfg = <57 0 132 0 132>;
+							};
+						};
+					};
+					port@5 {
+						port_id = <5>;
+						l1scheduler {
+							group@0 {
+								sp = <59>;
+								cfg = <0 31 0 31>;
+							};
+							group@1 {
+								sp = <60>;
+								cfg = <1 32 1 32>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <236>;
+								ucast_loop_pri = <8>;
+								ucast_max_pri = <4>;
+								mcast_queue = <288>;
+								mcast_loop_pri = <4>;
+								cfg = <59 0 140 0 140>;
+							};
+						};
+					};
+					port@6 {
+						port_id = <6>;
+						l1scheduler {
+							group@0 {
+								sp = <61>;
+								cfg = <0 33 0 33>;
+							};
+							group@1 {
+								sp = <62>;
+								cfg = <1 34 1 34>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <244>;
+								ucast_loop_pri = <8>;
+								ucast_max_pri = <4>;
+								mcast_queue = <292>;
+								mcast_loop_pri = <4>;
+								cfg = <61 0 148 0 148>;
+							};
+						};
+					};
+					port@7 {
+						port_id = <7>;
+						l1scheduler {
+							group@0 {
+								sp = <63>;
+								cfg = <0 35 0 35>;
+							};
+						};
+						l0scheduler {
+							group@0 {
+								ucast_queue = <252>;
+								ucast_loop_pri = <4>;
+								ucast_max_pri = <4>;
+								mcast_queue = <296>;
+								mcast_loop_pri = <4>;
+								cfg = <63 0 156 0 156>;
+							};
+						};
+					};
+				};
+			};
+		};
+
+		dp1 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <1>;
+			reg = <0x3a001000 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <0>;
+			phy-mode = "sgmii";
+		};
+
+		dp2 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <2>;
+			reg = <0x3a001200 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <1>;
+			phy-mode = "sgmii";
+		};
+
+		dp3 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <3>;
+			reg = <0x3a001400 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <2>;
+			phy-mode = "sgmii";
+		};
+
+		dp4 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <4>;
+			reg = <0x3a001600 0x200>;
+			qcom,mactype = <0>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <3>;
+			phy-mode = "sgmii";
+		};
+
+		dp5 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <5>;
+			reg = <0x3a510000 0x4000>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <4>;
+			phy-mode = "sgmii";
+		};
+
+		dp6 {
+			device_type = "network";
+			compatible = "qcom,nss-dp";
+			qcom,id = <6>;
+			reg = <0x3a514000 0x4000>;
+			qcom,mactype = <1>;
+			local-mac-address = [000000000000];
+			qcom,phy-mdio-addr = <7>;
+			phy-mode = "sgmii";
+		};
+
+		acc0: clock-controller@b188000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b188000 0x1000>;
+		};
+
+		acc1: clock-controller@b198000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b198000 0x1000>;
+		};
+
+		acc2:clock-controller@b1a8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1a8000 0x1000>;
+		};
+
+		acc3:clock-controller@b1b8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1b8000 0x1000>;
+		};
+
+		/*Timer freq for rumi = timer freq / 100*/
+		timer {
+			clock-frequency = <240000>;
+		};
+
+		timer@b120000 {
+			clock-frequency = <240000>;
+		};
+
+		usb: usb3@8A00000 {
+			status = "ok";
+			dwc_0: dwc3@8A00000 {
+				phys = <>;
+				phy-names = "";
+			};
+		};
+
+		pcie0_x1: pci@28000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 39 1>;
+			status = "disabled";
+			pcie0_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@0 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x20>;
+				};
+			};
+		};
+
+		pcie1_x1: pci@10000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 40 1>;
+			status = "disabled";
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@1 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x21>;
+				};
+			};
+		};
+
+		pcie2_x2: pci@20000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 41 1>;
+			status = "disabled";
+			pcie2_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@2 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x22>;
+				};
+			};
+		};
+
+		pcie3_x2: pci@18000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 42 1>;
+			status = "disabled";
+			pcie3_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@3 {
+					reg = <0 0 0 0 0>;
+					qrtr_instance_id = <0x23>;
+				};
+			};
+		};
+
+		qti,rpm-log@29fc00 {
+			status = "disabled";
+		};
+
+	};
+
+	psci {
+		status = "disabled";
+	};
+
+	qti,scm_restart_reason {
+		status = "disabled";
+	};
+};

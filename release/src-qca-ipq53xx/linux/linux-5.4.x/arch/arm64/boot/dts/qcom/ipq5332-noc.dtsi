@@ -1,0 +1,135 @@
+/*
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+&soc {
+	noc-tprobe {
+		compatible = "qcom,noc-tprobe-driver";
+		reg = <0x402000 0x48c>,
+		    <0x581800 0x48c>,
+		    <0x583000 0x48c>,
+		    <0x402800 0x424>,
+		    <0x405000 0x484>,
+		    <0x582000 0x504>,
+		    <0x400000 0x5500>,
+		    <0x580000 0x2500>;
+		reg-names =  "memnoc_dbhn_tprobe_base",
+			"snoc_memnoc_tprobe_base_0",
+			"snoc_memnoc_tprobe_base_1",
+			"memnoc_dtb_tprobe_base",
+			"memnoc_ec_base",
+			"snoc_ec_base",
+			"memnoc_phy_base",
+			"snoc_phy_base";
+		memnoc_phy_addr_base = <0x400000>;
+		snoc_phy_addr_base = <0x580000>;
+		num_sys_bus = <2>;
+		status = "ok";
+	};
+
+app0_tprobe: app0 {
+		     compatible = "qcom,app0-tprobe-driver";
+		     reg = <0x400400 0x16c>;
+		     reg-names = "base-addr";
+		     subnoc-phy-base-addr = <0x400400>;
+		     rd_counter_addr = <0x4051c0>;
+		     wr_counter_addr = <0x405240>;
+		     ddr_rd_wr_counter_addr = <0x4053c0>;
+		     ddr_rd_counter_addr = <0x405440>;
+		     ddr_wr_counter_addr = <0x4054c0>;
+		     hist_bin_width = <0x8>;
+		     config_tr_type = <0x1>;
+		     status = "ok";
+	     };
+
+sys0_tprobe: sys0 {
+		     compatible = "qcom,sys0-tprobe-driver";
+		     reg = <0x400600 0x16c>;
+		     reg-names = "base-addr";
+		     subnoc-phy-base-addr = <0x400600>;
+		     ddr_rd_wr_counter_addr = <0x4053c0>;
+		     ddr_rd_counter_addr = <0x405440>;
+		     ddr_wr_counter_addr = <0x4054c0>;
+		     hist_bin_width = <0xf>;
+		     config_tr_type = <0x1>;
+		     status = "ok";
+	     };
+
+sys1_tprobe: sys1 {
+		     compatible = "qcom,sys1-tprobe-driver";
+		     reg = <0x400a00 0x16c>;
+		     reg-names = "base-addr";
+		     subnoc-phy-base-addr = <0x400a00>;
+		     ddr_rd_wr_counter_addr = <0x4053c0>;
+		     ddr_rd_counter_addr = <0x405440>;
+		     ddr_wr_counter_addr = <0x4054c0>;
+		     hist_bin_width = <0x7>;
+		     config_tr_type = <0x1>;
+		     status = "ok";
+	     };
+
+wcss_q6_tprobe: wcss_q6 {
+			compatible = "qcom,wcss-q6-tprobe-driver";
+			reg = <0x400800 0x16c>;
+			reg-names = "base-addr";
+			subnoc-phy-base-addr = <0x400800>;
+			rd_counter_addr = <0x4052c0>;
+			wr_counter_addr = <0x405340>;
+			ddr_rd_wr_counter_addr = <0x4053c0>;
+			ddr_rd_counter_addr = <0x405440>;
+			ddr_wr_counter_addr = <0x4054c0>;
+			hist_bin_width = <0x1A>;
+			config_tr_type = <0x1>;
+			status = "ok";
+		};
+
+#if !defined __IPQ_MEM_PROFILE_256_MB__
+pcie_G3X1_0_tprobe: pcie1 {
+			    compatible = "qcom,pcie-G3X1-0-tprobe-driver";
+			    reg = <0x584600 0x13c>;
+			    reg-names = "base-addr";
+			    subnoc-phy-base-addr = <0x584600>;
+			    ddr_rd_wr_counter_addr = <0x4053c0>;
+			    ddr_rd_counter_addr = <0x405440>;
+			    ddr_wr_counter_addr = <0x4054c0>;
+			    hist_bin_width = <0x11>;
+			    status = "ok";
+		    };
+#endif
+
+pcie_G3X2_tprobe: pcie2 {
+			  compatible = "qcom,pcie-G3X2-tprobe-driver";
+			  reg = <0x584a00 0x13c>;
+			  reg-names = "base-addr";
+			  subnoc-phy-base-addr = <0x584a00>;
+			  ddr_rd_wr_counter_addr = <0x4053c0>;
+			  ddr_rd_counter_addr = <0x405440>;
+			  ddr_wr_counter_addr = <0x4054c0>;
+			  hist_bin_width = <0x11>;
+			  status = "ok";
+		  };
+
+ppe_tprobe: nss_ppe {
+		    compatible = "qcom,ppe-tprobe-driver";
+		    reg = <0x1d8c000 0x13c>;
+		    reg-names = "base-addr";
+		    subnoc-phy-base-addr = <0x1d8c000>;
+		    ddr_rd_wr_counter_addr = <0x4053c0>;
+		    ddr_rd_counter_addr = <0x405440>;
+		    ddr_wr_counter_addr = <0x4054c0>;
+		    hist_bin_width = <0xc>;
+		    status = "ok";
+	    };
+};

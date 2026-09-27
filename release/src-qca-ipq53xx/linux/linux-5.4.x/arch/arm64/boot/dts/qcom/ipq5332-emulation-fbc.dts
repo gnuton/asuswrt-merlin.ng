@@ -1,0 +1,216 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ5332 Emulation board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq5332.dtsi"
+#include "ipq5332-default-memory.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5332/EMULATION";
+	compatible = "qcom,ipq5332-ap-emulation", "qcom,ipq5332";
+	interrupt-parent = <&intc>;
+
+	clocks {
+		sleep_clk: sleep-clk {
+			clock-frequency = <320>;
+		};
+
+		xo: xo {
+			clock-frequency = <240000>;
+		};
+	};
+
+	aliases {
+		serial0 = &blsp1_uart0;
+		serial1 = &blsp1_uart1;
+	};
+
+	chosen {
+		stdout-path = "serial0";
+	};
+
+	soc {
+		pinctrl@1000000 {
+			emmc_pins: emmc_pins {
+				emmc_clk {
+					pins = "gpio13";
+					function = "sdc_clk";
+					drive-strength = <8>;
+					bias-disable;
+				};
+				emmc_cmd {
+					pins = "gpio12";
+					function = "sdc_cmd";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				emmc_data {
+					pins = "gpio8", "gpio9", "gpio10",
+						"gpio11";
+					function = "sdc_data";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+
+			spi_0_pins: spi0-pinmux {
+				pins = "gpio14", "gpio15", "gpio16", "gpio17";
+				function = "blsp0_spi";
+				drive-strength = <2>;
+				bias-disable;
+			};
+
+			serial_0_pins: serial0-pinmux {
+				pins = "gpio18", "gpio19";
+				function = "blsp0_uart0";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			serial_1_pins: serial1-pinmux {
+				pins = "gpio25", "gpio26", "gpio27", "gpio28";
+				function = "blsp1_uart1";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			i2c_1_pins: i2c-1-pinmux {
+				pins = "gpio29", "gpio30";
+				function = "blsp1_i2c0";
+				drive-strength = <8>;
+				bias-disable;
+			};
+		};
+
+		gcc: gcc@1800000 {
+			gcc-use-dummy;
+		};
+
+		nsscc: nsscc@39b00000 {
+			nsscc-use-dummy;
+		};
+
+		serial@78af000 {
+			pinctrl-0 = <&serial_0_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		serial@78b0000 {
+			pinctrl-0 = <&serial_1_pins>;
+			pinctrl-names = "default";
+		};
+
+		spi@78b5000 {
+			pinctrl-0 = <&spi_0_pins>;
+			pinctrl-names = "default";
+			cs-select = <0>;
+			status = "ok";
+
+			m25p80@0 {
+				compatible = "n25q128a11";
+				#address-cells = <1>;
+				#size-cells = <1>;
+				reg = <0>;
+				spi-max-frequency = <50000000>;
+			};
+		};
+
+		i2c_1: i2c@78b6000 {
+			pinctrl-0 = <&i2c_1_pins>;
+			pinctrl-names = "default";
+		};
+
+		dma@7984000 {
+			status = "ok";
+		};
+
+		nand: nand@79b0000 {
+			status = "ok";
+		};
+
+		/*Timer freq for rumi = timer freq / 100*/
+		timer {
+			clock-frequency = <240000>;
+		};
+
+		timer@b120000 {
+			clock-frequency = <240000>;
+		};
+
+		usb3@8A00000 {
+			status = "ok";
+
+			dwc3@8A00000 {
+				usb-phy = <>;
+				phys = <>;
+				phy-names = "";
+			};
+		};
+
+		pcie2: pcie@10000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 40 GPIO_ACTIVE_LOW>;
+			status = "disabled";
+			pcie2_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@0 {
+					reg = <0 0 0 0 0>;
+				};
+			};
+		};
+
+		pcie1: pcie@18000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 41 GPIO_ACTIVE_LOW>;
+			status = "disabled";
+			pcie1_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@1 {
+					reg = <0 0 0 0 0>;
+				};
+			};
+		};
+
+		pcie0: pcie@20000000 {
+			max-link-speed = <1>;
+			perst-gpio = <&tlmm 42 GPIO_ACTIVE_LOW>;
+			status = "disabled";
+			pcie0_rp {
+				reg = <0 0 0 0 0>;
+
+				qcom,mhi@2 {
+					reg = <0 0 0 0 0>;
+				};
+			};
+		};
+
+		q6v5_wcss: remoteproc@d100000 {
+			qcom,emulation;
+			qcom,nosecure;
+			q6_wcss_pd1: remoteproc_pd1 {
+				qcom,nosecure;
+			};
+		};
+	};
+
+};
+
+&sdhc_1 {
+	/* over-ride the frequency to 48Mhz for emulation platform */
+	max-frequency = <48000000>;
+	/* Force 3.3V, because only that will support on emulation platform */
+	mmc-ddr-3_3v;
+	qcom,emulation;
+        status = "ok";
+};

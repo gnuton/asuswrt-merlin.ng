@@ -1,0 +1,270 @@
+.TH DEVLINK\-RATE 8 "12 Mar 2021" "iproute2" "Linux"
+.SH NAME
+devlink-rate \- devlink rate management
+.SH SYNOPSIS
+.sp
+.ad l
+.in +8
+.ti -8
+.B devlink
+.RI "[ " OPTIONS " ]"
+.B port function rate
+.RI  " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { "
+.BR -j [ \fIson "] | " -p [ \fIretty "] | " -i [ \fIec "] }"
+
+.ti -8
+.B devlink port function rate show
+.RI "[ { " DEV/PORT_INDEX " | " DEV/NODE_NAME " } ]"
+
+.ti -8
+.B devlink port function rate set
+.RI "{ " DEV/PORT_INDEX " | " DEV/NODE_NAME " } "
+.RB [ " tx_share \fIVALUE " ]
+.RB [ " tx_max \fIVALUE " ]
+.RB "[ {" " parent \fINODE_NAME " | " noparent " "} ]"
+
+.ti -8
+.BI "devlink port function rate add " DEV/NODE_NAME
+.RB [ " tx_share \fIVALUE " ]
+.RB [ " tx_max \fIVALUE " ]
+.RB "[ {" " parent \fINODE_NAME " | " noparent " "} ]"
+
+.ti -8
+.BI "devlink port function rate del " DEV/NODE_NAME
+
+.ti -8
+.B devlink port function rate help
+
+.SH "DESCRIPTION"
+
+.SS devlink port function rate show - display rate objects.
+Displays specified rate object or, if not specified, all rate objects. Rate
+object can be presented by one of the two types:
+.TP 8
+.B leaf
+Represents a single devlink port; created/destroyed by the driver and bound to
+the devlink port. As example, some driver may create leaf rate object for every
+devlink port associated with VF. Since leaf have 1to1 mapping to it's devlink
+port, in user space it is referred as corresponding devlink port
+\fIDEV/PORT_INDEX\fR;
+.TP 8
+.B node
+Represents a group of rate objects; created/deleted by the user (see command
+below) and bound to the devlink device rather then to the devlink port. In
+userspace it is referred as \fIDEV/NODE_NAME\fR, where node name can be any,
+except decimal number, to avoid collisions with leafs.
+.PP
+Command output show rate object identifier, it's type and rate values along with
+parent node name. Rate values printed in SI units which are more suitable to
+represent specific value. To print values in IEC units \fB-i\fR switch is
+used. JSON (\fB-j\fR) output always print rate values in bytes per second. Zero
+rate values means "unlimited" rates and omitted in output, as well as parent
+node name.
+
+.SS devlink port function rate set - set rate object parameters.
+Allows set rate object's parameters. If any parameter specified multiple times
+the last occurrence is used.
+.PP
+.I DEV/PORT_INDEX
+- specifies devlink leaf rate object.
+.br
+.I DEV/NODE_NAME
+- specifies devlink node rate object.
+.PP
+.BI tx_share " VALUE"
+- specifies minimal tx rate value shared among all rate objects. If rate object
+is a part of some rate group, then this value shared with rate objects of this
+rate group.
+.PP
+.BI tx_max " VALUE"
+- specifies maximum tx rate value.
+.TP 8
+.I VALUE
+These parameter accept a floating point number, possibly followed by either a
+unit (both SI and IEC units supported).
+.RS
+.TP
+bit or a bare number
+Bits per second
+.TP
+kbit
+Kilobits per second
+.TP
+mbit
+Megabits per second
+.TP
+gbit
+Gigabits per second
+.TP
+tbit
+Terabits per second
+.TP
+bps
+Bytes per second
+.TP
+kbps
+Kilobytes per second
+.TP
+mbps
+Megabytes per second
+.TP
+gbps
+Gigabytes per second
+.TP
+tbps
+Terabytes per second
+.P
+To specify in IEC units, replace the SI prefix (k-, m-, g-, t-) with IEC prefix
+(ki-, mi-, gi- and ti-) respectively. Input is case-insensitive.
+.RE
+.PP
+.BI parent " NODE_NAME \fR| " noparent
+- set rate object parent to existing node with name \fINODE_NAME\fR or unset
+parent. Rate limits of the parent node applied to all it's children. Actual
+behaviour is details of driver's implementation. Setting parent to empty ("")
+name due to the kernel logic threated as parent unset.
+
+.SS devlink port function rate add - create node rate object with specified parameters.
+Creates rate object of type node and sets parameters. Parameters same as for the
+"set" command.
+.PP
+.I DEV/NODE_NAME
+- specifies the devlink node rate object to create.
+
+.SS devlink port function rate del - delete node rate object
+Delete specified devlink node rate object. Node can't be deleted if there is any
+child, user must explicitly unset the parent.
+.PP
+.I DEV/NODE_NAME
+- specifies devlink node rate object to delete.
+
+.SS devlink port function rate help - display usage information
+Display devlink rate usage information
+
+.SH "EXAMPLES"
+
+.PP
+\fB*\fR Display all rate objects:
+.RS 4
+.PP
+# devlink port function rate show
+.br
+pci/0000:03:00.0/1 type leaf parent some_group
+.br
+pci/0000:03:00.0/2 type leaf tx_share 12Mbit
+.br
+pci/0000:03:00.0/some_group type node tx_share 1Gbps tx_max 5Gbps
+.RE
+
+.PP
+\fB*\fR Display leaf rate object bound to the 1st devlink port of the
+pci/0000:03:00.0 device:
+.RS 4
+.PP
+# devlink port function rate show pci/0000:03:00.0/1
+.br
+pci/0000:03:00.0/1 type leaf
+.br
+.RE
+
+.PP
+\fB*\fR Display leaf rate object rate values using IEC units:
+.RS 4
+.PP
+# devlink -i port function rate show pci/0000:03:00.0/2
+.br
+pci/0000:03:00.0/2 type leaf 11718Kibit
+.br
+.RE
+
+.PP
+\fB*\fR Display node rate object with name some_group of the pci/0000:03:00.0 device:
+.RS 4
+.PP
+# devlink port function rate show pci/0000:03:00.0/some_group
+.br
+pci/0000:03:00.0/some_group type node
+.br
+.RE
+
+.PP
+\fB*\fR Display pci/0000:03:00.0/2 leaf rate object as pretty JSON output:
+.RS 4
+.PP
+# devlink -jp port function rate show pci/0000:03:00.0/2
+.br
+{
+.br
+    "rate": {
+.br
+        "pci/0000:03:00.0/2": {
+.br
+            "type": "leaf",
+.br
+            "tx_share": 1500000
+.br
+        }
+.br
+    }
+.br
+}
+.RE
+
+.PP
+\fB*\fR Create node rate object with name "1st_group" on pci/0000:03:00.0 device:
+.RS 4
+.PP
+# devlink port function rate add pci/0000:03:00.0/1st_group
+.RE
+
+.PP
+\fB*\fR Create node rate object with specified parameters:
+.RS 4
+.PP
+# devlink port function rate add pci/0000:03:00.0/2nd_group \\
+.br
+	tx_share 10Mbit tx_max 30Mbit parent 1st_group
+.RE
+
+.PP
+\fB*\fR Set parameters to the specified leaf rate object:
+.RS 4
+.PP
+# devlink port function rate set pci/0000:03:00.0/1 \\
+.br
+	tx_share 2Mbit tx_max 10Mbit
+.RE
+
+.PP
+\fB*\fR Set leaf's parent to "1st_group":
+.RS 4
+.PP
+# devlink port function rate set pci/0000:03:00.0/1 parent 1st_group
+.RE
+
+.PP
+\fB*\fR Unset leaf's parent:
+.RS 4
+.PP
+# devlink port function rate set pci/0000:03:00.0/1 noparent
+.RE
+
+.PP
+\fB*\fR Delete node rate object:
+.RS 4
+.PP
+# devlink port function rate del pci/0000:03:00.0/2nd_group
+.RE
+
+.SH SEE ALSO
+.BR devlink (8),
+.BR devlink-port (8)
+.br
+
+.SH AUTHOR
+Dmytro Linkin <dlinkin@nvidia.com>

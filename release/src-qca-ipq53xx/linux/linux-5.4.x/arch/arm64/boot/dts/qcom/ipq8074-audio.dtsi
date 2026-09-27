@@ -1,0 +1,338 @@
+/*
+ * Copyright (c) 2017-2018, 2021 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#include <dt-bindings/sound/ipq8074-audio.h>
+#include <dt-bindings/clock/qca,adss-ipq8074.h>
+
+&tlmm {
+	audio_gpio_pins: audio_gpio_pinmux {
+		mux_1 {
+			pins = "gpio25";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_2 {
+			pins = "gpio26";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_3 {
+			pins = "gpio27";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_4 {
+			pins = "gpio28";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_5 {
+			pins = "gpio29";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_6 {
+			pins = "gpio30";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_7 {
+			pins = "gpio31";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		mux_8 {
+			pins = "gpio32";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+	};
+
+	audio_pins: audio_pinmux {
+		mux_1 {
+			pins = "gpio26";
+			function = "audio_txbclk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_2 {
+			pins = "gpio27";
+			function = "audio_txfsync";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_3 {
+			pins = "gpio28";
+			function = "audio_txd";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_4 {
+			pins = "gpio30";
+			function = "audio_rxbclk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_5 {
+			pins = "gpio31";
+			function = "audio_rxfsync";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_6 {
+			pins = "gpio32";
+			function = "audio_rxd";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	audio_pins_master: audio_pinmux_master {
+		mux_1 {
+			pins = "gpio25";
+			function = "audio_txmclk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_2 {
+			pins = "gpio29";
+			function = "audio_rxmclk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	audio_pins_slave: audio_pinmux_slave {
+		mux_1 {
+			pins = "gpio25";
+			function = "audio_txmclk";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		mux_2 {
+			pins = "gpio29";
+			function = "audio_rxmclk";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	voip_pins: voip_pinmux {
+		mux_1 {
+			pins = "gpio33";
+			function = "pcm_drx";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_2 {
+			pins = "gpio34";
+			function = "pcm_dtx";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_3 {
+			pins = "gpio35";
+			function = "pcm_fsync";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mux_4 {
+			pins = "gpio36";
+			function = "pcm_pclk";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+};
+
+&soc {
+	adss_clk: qcom,adss_clk@7700000 {
+		compatible = "qcom,adss-ipq807x";
+		reg = <0x7700100 0x200>;
+		#clock-cells = <0x1>;
+	};
+
+	audio: audio@7700000 {
+		compatible = "qca,ipq8074-audio-adss";
+		reg = <0x7700000 0x34>;
+		resets = <&gcc GCC_ADSS_BCR>;
+		reset-names = "blk_rst";
+	};
+
+	mbox0: mbox@7708000 {
+		dma-index = <0>;
+		compatible = "qca,ipq8074-mbox";
+		reg = <0x7708000 0x1000>;
+		interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+		tx-channel = <MBOX0_TX_ID>;
+		rx-channel = <MBOX0_RX_ID>;
+	};
+
+	mbox3: mbox@770e000 {
+		dma-index = <3>;
+		compatible = "qca,ipq8074-mbox";
+		reg = <0x770E000 0x1000>;
+		interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+		tx-channel = <MBOX3_TX_ID>;
+		rx-channel = <MBOX3_RX_ID>;
+	};
+
+	stereo0: stereo@7709000 {
+		stereo-index = <STEREO0_ID>;
+		compatible = "qca,ipq8074-stereo";
+		reg = <0x7709000 0x1000>;
+	};
+
+	stereo3: stereo@770f000 {
+		stereo-index = <STEREO3_ID>;
+		compatible = "qca,ipq8074-stereo";
+		reg = <0x770F000 0x1000>;
+	};
+
+	i2splatform: qca-pcm-i2s@7709000 {
+		compatible = "qca,ipq8074-pcm-i2s";
+		reg = <0x7709000 0x1000>;
+	};
+
+	i2s: ipq8074-pcm-i2s@0 {
+		compatible = "qca,ipq8074-i2s";
+		dma-tx-channel = <MBOX0_TX_ID>;
+		stereo-tx-port = <STEREO0_ID>;
+		dma-rx-channel = <MBOX3_RX_ID>;
+		stereo-rx-port = <STEREO3_ID>;
+		clocks = <&adss_clk ADSS_AUDIO_TXB_CLK>,
+			<&adss_clk ADSS_AUDIO_TXM_CLK>,
+			<&adss_clk ADSS_AUDIO_RXB_CLK>,
+			<&adss_clk ADSS_AUDIO_RXM_CLK>;
+		clock-names = "audio_tx_bclk",
+			"audio_tx_mclk",
+			"audio_rx_bclk",
+			"audio_rx_mclk";
+	};
+
+	tdmplatform: qca-pcm-tdm@7709000 {
+		compatible = "qca,ipq8074-pcm-tdm";
+		reg = <0x7709000 0x1000>;
+	};
+
+	tdm: tdm@0 {
+		compatible = "qca,ipq8074-tdm";
+		dma-tx-channel = <MBOX0_TX_ID>;
+		dma-rx-channel = <MBOX3_RX_ID>;
+		stereo-tx-port = <STEREO0_ID>;
+		stereo-rx-port = <STEREO3_ID>;
+		clocks = <&adss_clk ADSS_AUDIO_TXB_CLK>,
+			<&adss_clk ADSS_AUDIO_TXM_CLK>,
+			<&adss_clk ADSS_AUDIO_RXB_CLK>,
+			<&adss_clk ADSS_AUDIO_RXM_CLK>;
+		clock-names = "audio_tx_bclk",
+			"audio_tx_mclk",
+			"audio_rx_bclk",
+			"audio_rx_mclk";
+	};
+
+	sound: sound@0 {
+		compatible = "qca,ipq8074-audio";
+		pinctrl-0 = <&audio_gpio_pins>;
+		pinctrl-1 = <&audio_pins &audio_pins_master>;
+		pinctrl-2 = <&audio_pins &audio_pins_slave>;
+		pinctrl-names = "default",
+			"audio",
+			"audio_slave";
+	};
+
+	pcm: pcm@7704000 {
+		compatible = "qca,ipq8074-pcm";
+		reg = <0x7704000 0x2000>;
+		dma-tx-channel = <MBOX3_TX_ID>;
+		dma-rx-channel = <MBOX0_RX_ID>;
+		stereo-tx-port = <STEREO3_ID>;
+		stereo-rx-port = <STEREO0_ID>;
+		clocks = <&adss_clk ADSS_AUDIO_PCM_CLK>;
+		clock-names = "audio_pcm_clk";
+	};
+
+	pcm_lb: pcm_lb@0 {
+		compatible = "qca,ipq8074-pcm-lb";
+		pinctrl-0 = <&voip_pins>;
+		pinctrl-names = "default";
+	};
+
+	i2c_0: i2c@78b6000 {
+		qca_codec: qca_codec@12 {
+			compatible = "qca,ipq8074-codec";
+			reg = <0x12>;
+		};
+	};
+};
+
+&clocks {
+	audio_rxbpad_clk {
+		compatible = "fixed-clock";
+		clock-frequency = <254>;
+		#clock-cells = <0>;
+	};
+
+	audio_txbpad_clk {
+		compatible = "fixed-clock";
+		clock-frequency = <254>;
+		#clock-cells = <0>;
+	};
+
+	audio_rxmpad_clk {
+		compatible = "fixed-clock";
+		clock-frequency = <252>;
+		#clock-cells = <0>;
+	};
+
+	audio_txmpad_clk {
+		compatible = "fixed-clock";
+		clock-frequency = <252>;
+		#clock-cells = <0>;
+	};
+};

@@ -1,0 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2020 The Linux Foundation. All rights reserved.
+
+#include <arm64/qcom/ipq8074-hk08.dts>
+#include "ipq8074.dtsi"

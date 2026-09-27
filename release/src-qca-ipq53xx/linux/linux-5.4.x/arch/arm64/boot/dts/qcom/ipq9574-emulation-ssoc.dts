@@ -1,0 +1,182 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 Emulation board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574.dtsi"
+#include "ipq9574-default-memory.dtsi"
+#include "ipq9574-cpu.dtsi"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574-EMULATION";
+	compatible = "qcom,ipq9574-ap-al-emulation", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	clocks {
+		sleep_clk: sleep-clk {
+			clock-frequency = <320>;
+		};
+
+		xo: xo {
+			clock-frequency = <240000>;
+		};
+	};
+
+	chosen {
+		linux,initrd-end = <0x47000000>;
+		linux,initrd-start = <0x45000000>;
+		bootargs = "root=/dev/ram0 rw init=/init maxcpus=2";
+		stdout-path = "serial0";
+	};
+
+	cpus: cpus {
+		CPU0: cpu@0 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc0>;
+		};
+
+		CPU1: cpu@1 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc1>;
+		};
+
+		CPU2: cpu@2 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc2>;
+		};
+
+		CPU3: cpu@3 {
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc3>;
+		};
+	};
+
+	ctx_save: ctx-save {
+		status = "disabled";
+	};
+
+	tzlog: qti,tzlog {
+		status = "disabled";
+	};
+
+	firmware {
+		qfprom {
+			status = "disabled";
+		};
+	};
+
+	soc {
+		pinctrl@1000000 {
+			i2c_1_pins: i2c-1-pinmux {
+				pins = "gpio36", "gpio37";
+				function = "blsp1_i2c";
+				drive-strength = <8>;
+				bias-disable;
+			};
+
+			serial_0_pins: serial0-pinmux {
+				pins = "gpio13", "gpio14";
+				function = "blsp0_uart";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			serial_3_pins: serial3-pinmux {
+				pins = "gpio34", "gpio35";
+				function = "blsp2_uart";
+				drive-strength = <8>;
+				bias-pull-down;
+			};
+
+			mdio_pins: mdio_pinmux {
+				mux_0 {
+					pins = "gpio38";
+					function = "mdc";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+				mux_1 {
+					pins = "gpio39";
+					function = "mdio";
+					drive-strength = <8>;
+					bias-pull-up;
+				};
+			};
+		};
+
+		serial@78af000 {
+			pinctrl-0 = <&serial_0_pins>;
+			pinctrl-names = "default";
+			status = "ok";
+		};
+
+		gcc: gcc@1800000 {
+			gcc-use-dummy;
+		};
+
+		a73pll: clock@b116000 {
+			status = "disabled";
+		};
+
+		nsscc: nsscc@39b00000 {
+			nsscc-use-dummy;
+		};
+
+		remoteproc@cd00000 {
+			qcom,emulation;
+			bootaddr = <0x4AB00000>;
+		};
+
+		acc0: clock-controller@b188000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b188000 0x1000>;
+		};
+
+		acc1: clock-controller@b198000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b198000 0x1000>;
+		};
+
+		acc2:clock-controller@b1a8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1a8000 0x1000>;
+		};
+
+		acc3:clock-controller@b1b8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b1b8000 0x1000>;
+		};
+
+		/*Timer freq for rumi = timer freq / 100*/
+		timer {
+			clock-frequency = <240000>;
+		};
+
+		timer@b120000 {
+			clock-frequency = <240000>;
+		};
+
+		qti,rpm-log@29fc00 {
+			status = "disabled";
+		};
+
+	};
+
+	psci {
+		status = "disabled";
+	};
+
+	qti,scm_restart_reason {
+		status = "disabled";
+	};
+};
+
+&wifi0 {
+       status = "ok";
+};

@@ -1,0 +1,13 @@
+carol::iptables-restore < /etc/iptables.rules
+moon::systemctl start strongswan
+carol::systemctl start strongswan
+dave::systemctl start strongswan
+carol::expect-connection moon
+moon::expect-connection carol
+moon::swanctl --initiate --child carol 2> /dev/null
+moon::sleep 1
+carol::iptables -D INPUT  -i eth0 -p udp --dport 500 --sport 500 -j ACCEPT
+carol::iptables -D OUTPUT -o eth0 -p udp --dport 500 --sport 500 -j ACCEPT
+moon::sed -i 's/192.168.0.100/192.168.0.200/g' /etc/hosts
+dave::expect-connection moon
+dave::swanctl --initiate --child moon 2> /dev/null

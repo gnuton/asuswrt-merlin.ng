@@ -1,0 +1,24 @@
+QTI_SCM_RESTART_REASON
+
+scm restart reason driver controls the collection of crashdump.
+During panic/assert the notifiers registered in this driver will be kicked in
+and the magic cookie is set, the crashdumps are collected in apps bootloader.
+
+Required properties:
+ - compatible: must contain "qti,scm_restart_reason" for IPQ40xx, IPQ807x
+
+Optional properties:
+ - dload_status: indicate whether memory is reserved for crashdump.
+ - dload_sec_status: indicate whether crashdump is enabled for
+   secure boot.
+ - dload_warm_reset: set this property to 1 to retain IMEM data
+   during warm reset. dload_status also should be set to 1 when
+   setting this property to 1.
+
+Example for ipq40xx:
+
+	qti,scm_restart_reason {
+		compatible = "qti,scm_restart_reason";
+		dload_status = <0>;
+		dload_sec_status = <0>;
+	};

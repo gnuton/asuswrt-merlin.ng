@@ -1,0 +1,96 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+/*
+ * IPQ9574 DB-AL02-C3 board device tree source
+ *
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "ipq9574-db-al02-c1.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ9574/DB-AL02-C3";
+	compatible = "qcom,ipq9574-db-al02-c3", "qcom,ipq9574-db-al02", "qcom,ipq9574";
+	interrupt-parent = <&intc>;
+
+	aliases {
+		/delete-property/ serial1;
+	};
+
+	soc {
+		pinctrl@1000000 {
+			/delete-node/ QCC710_pins;
+
+			sfp_pins: sfp_pinmux {
+				sfp_rx {
+					pins = "gpio46";
+					function = "rx1";
+					bias-disable;
+				};
+
+				sfp_tx {
+					pins = "gpio61";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-pull-down;
+					output-low;
+                                };
+                        };
+
+			i2c_4_pins: i2c-4-pinmux {
+				pins = "gpio50", "gpio51";
+				function = "blsp4_i2c";
+				drive-strength = <8>;
+				bias-disable;
+			};
+		};
+
+		blsp1_uart4: serial@78b3000 {
+			/delete-property/ pinctrl-0;
+			/delete-property/ pinctrl-names;
+			status = "disabled";
+		};
+
+		dp5 {
+			reg = <0x3a510000 0x4000>;
+			qcom,mactype = <1>;
+			qcom,phy-mdio-addr = <30>;
+		};
+
+		i2c_4: i2c@78b9000 {
+			status = "ok";
+			pinctrl-0 = <&i2c_4_pins>;
+			pinctrl-names = "default";
+                };
+
+		mdio@90000 {
+			/*gpio60 for malibu reset*/
+			phy-reset-gpio = <&tlmm 60 0>;
+			phy4: ethernet-phy@4 {
+				compatible ="ethernet-phy-ieee802.3-c45";
+				reg = <0>;
+			};
+			/delete-node/ ethernet-phy@5;
+                };
+
+		ess-instance {
+			ess-switch@3a000000 {
+				pinctrl-0 = <&sfp_pins>;
+				pinctrl-names = "default";
+				switch_mac_mode1 = <0xe>; /* mac mode for uniphy instance1*/
+				qcom,port_phyinfo {
+					port@4 {
+						port_id = <5>;
+						phy_address = <30>;
+						/delete-property/port_mac_sel;
+						media-type = "sfp"; /* fiber mode */
+					};
+				};
+			};
+		};
+		/delete-node/ nss-macsec0;
+	};
+};

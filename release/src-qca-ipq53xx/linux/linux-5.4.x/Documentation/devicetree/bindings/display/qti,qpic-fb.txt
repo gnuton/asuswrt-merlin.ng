@@ -1,0 +1,49 @@
+* QPIC LCD node
+
+Required properties:
+- compatible:		"qti,mdss_qpic"
+- reg:			QPIC LCD register address range
+- clocks:		must contain core clock and always on clock
+- clock-names:		must contain "core" for the core clock and "aon" for the
+			always on clock
+- dmas:			DMA specifier, consisting of a phandle BAM DMA
+			controller node and the channel number to
+			be used for LCD. Refer to dma.txt and
+			qcom_bam_dma.txt for more details
+Optional properties:
+- qti,bam_timeout:	Timeout in ms for QPIC BAM transfer. Default timeout
+			i.e. 400 ms will be used if this parameter is not
+			present.
+
+Example:
+
+qti_mdss_qpic@7980000 {
+	compatible = "qti,mdss_qpic";
+	reg = <0x7980000 0x24000>;
+	interrupts = <0 106 0>;
+	clocks = <&gcc GCC_QPIC_CLK>, <&gcc GCC_QPIC_AHB_CLK>;
+	clock-names = "core", "aon";
+	dmas = <&qpic_bam 6>;
+	qti,bam_timeout = <1000>;
+};
+
+* QPIC LCD Display Panel
+
+Required properties:
+- compatible:		"qti,mdss-qpic-panel"
+- label:		QPIC LCD Panel Name
+- qti,mdss-pan-res:	QPIC LCD Display Panel resolution in x,y
+- qti,mdss-pan-bpp:	QPIC LCD Display Panel bits per pixel
+- qti,refresh_rate:	QPIC LCD Display Panel refresh rate
+
+Example:
+
+qti_mdss_qpic_panel {
+	compatible = "qti,mdss-qpic-panel";
+	label = "qpic lcd panel";
+	qti,mdss-pan-res = <800 480>;
+	qti,mdss-pan-bpp = <18>;
+	qti,refresh_rate = <60>;
+	status = "disabled";
+};
+

@@ -1,0 +1,9 @@
+carol::systemctl stop strongswan
+dave::systemctl stop strongswan
+moon::systemctl stop strongswan
+moon::cd /etc/swanctl; rm rsa/* x509/*
+carol::cd /etc/swanctl; rm rsa/* x509/*
+dave::cd /etc/swanctl; rm rsa/* x509/*
+moon::iptables-restore < /etc/iptables.flush
+carol::iptables-restore < /etc/iptables.flush
+dave::iptables-restore < /etc/iptables.flush

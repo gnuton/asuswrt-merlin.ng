@@ -1,0 +1,79 @@
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "ipq5018-mp03.3.dts"
+
+/ {
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
+	model = "Qualcomm Technologies, Inc. IPQ5018/AP-MP03.3-C5";
+	compatible = "qcom,ipq5018-ap-mp03.3-c5", "qcom,ipq5018-mp03.3-c5", "qcom,ipq5018";
+	interrupt-parent = <&intc>;
+};
+
+&qpic_bam {
+	status = "disabled";
+};
+
+&nand {
+	status = "disabled";
+};
+
+&sdhc_1 {
+	pinctrl-0 = <&emmc_pins>;
+	pinctrl-names = "default";
+	status = "ok";
+};
+
+&tlmm {
+	emmc_pins: emmc_pins {
+		emmc_clk {
+			pins = "gpio9";
+			function = "sdc1_clk";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		emmc_cmd {
+			pins = "gpio8";
+			function = "sdc1_cmd";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+		emmc_data_0 {
+			pins = "gpio7";
+			function = "sdc10";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		emmc_data_1 {
+			pins = "gpio6";
+			function = "sdc11";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		emmc_data_2 {
+			pins = "gpio5";
+			function = "sdc12";
+			drive-strength = <8>;
+			bias-disable;
+		};
+		emmc_data_3 {
+			pins = "gpio4";
+			function = "sdc13";
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+};
