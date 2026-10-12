@@ -1,0 +1,68 @@
+# Experimental BQ16 support
+
+This port is not yet approved for flashing or daily use. Test results are
+tracked in `tasks/todo.md`; unchecked hardware tests remain unverified.
+
+## Source and hardware baseline
+
+- Merlin base: `920b77f5f92db14717a27abd5c8e1b06ae6c8ec1`, version 3006.102.6.
+- ASUS donor: `GPL_BQ16_3.0.0.6.102.39256-g4282d34_1529-gfdee1_BB0B.tgz`.
+- Stock image: `ZenWiFi_BQ16_3.0.0.6_102_39256-g4282d34_1529-gfdee1_BB0B_nand_squashfs.pkgtb`.
+- Stock image SHA-256: `00c411ef8ec2c7be2fa071acc0a6fbfe66b6d59328a72c8ef6c1a2462cc7091a`.
+- Actual unit: BQ16, EU/01, board `BQ16_2556_2`, bootloader 1.0.0.10.
+- SDK: `src-rt-5.04behnd.4916`, profile `96813GW`, chip 6813, Wi-Fi impl103.
+- Kernel: 4.19.294, AArch64. Router programs: 32-bit ARM soft-float ABI.
+- Wireless driver: 17.10.369.39012, BSP BB0B.
+- Vendor settings: BCM53134 switch, NVSIZE 128, MLO_CONFIG_556 and
+  MLO_DEFAULT_ACTIVE. The kernel profile defaults to BQ16_2556, while
+  the stock boot bundle also contains BQ16_2556_2.
+- Existing WAN: PPPoE through VLAN 835. Keep ISP credentials private.
+
+The supplied image and live router have matching hashes for `wl`,
+`libnvram.so`, `cfg_server`, and `dhd.ko`. The GPL's `cfg_server` matches
+the image. Matching version strings alone do not establish ABI compatibility.
+
+## Build isolation
+
+Use independent disposable copies for ASUS BQ16, Merlin GT-BE98, and
+the BQ16 port. Makefile evaluation creates configurations and symlinks,
+including with `make -n`. Do not run it in the donor or development tree.
+Use the fork's `bcm-hnd-ax-4.19be_soft.sh` toolchain environment.
+
+## Recovery preparation
+
+The ASUS procedure is documented at
+https://www.asus.com/us/support/faq/1000814/ . It is a starting procedure,
+not evidence that recovery has been exercised on this specific BQ16.
+
+Before the first custom flash:
+
+- Verify private configuration and JFFS backups and retain the stock image.
+- Prepare a recovery computer with wired Ethernet and the applicable ASUS
+  restoration utility or the unit's verified bootloader recovery interface.
+- Arrange alternative internet access and a maintenance window.
+- Verify rescue-mode reachability on this unit and record the actual
+  recovery interface, address, and stock-restoration procedure.
+- Confirm image verification requirements for bootloader 1.0.0.10.
+- Review the candidate hash and receive explicit approval to flash it.
+
+Use the normal BQ16 firmware updater. Do not write raw MTD partitions,
+erase factory data, or install loader-inclusive images. The standard
+pkgtb bootfs contains required ATF and U-Boot components; do not remove
+them merely because they are bootloader components.
+
+## Hardware acceptance
+
+Require working SSH/web administration, correct board selection,
+persistent settings, three reboot cycles, and a verified rollback path.
+Check PPPoE/VLAN 835, DHCP, DNS, IPv6 where configured, LAN switching,
+guest isolation, and WAN reconnects. Validate all logical wireless bands,
+EU regulatory settings, and MLO. Explain the stock unit's three visible
+wl interfaces before changing band/interface assignments.
+
+Test JFFS scripts, custom configuration hooks, DNSSEC/DNS privacy,
+WireGuard/OpenVPN, policy routing, and traffic monitoring. Test stock
+AiMesh nodes over wired and wireless backhaul, including onboarding,
+configuration sync, roaming, and reboot reconnects. Complete a 72-hour
+traffic test without unexpected reboot or kernel fault and compare
+throughput with stock firmware.
