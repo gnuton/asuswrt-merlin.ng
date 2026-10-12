@@ -1,0 +1,240 @@
+#!/usr/bin/env python3
+"""Check BQ16 FIT integrity, board selection, ELF dependencies, and module ABI.
+
+These checks do not establish bootloader acceptance or hardware functionality.
+"""
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import posixpath
+import re
+import struct
+import subprocess
+import sys
+import tempfile
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def string(value):
+    return value.rstrip(b"\0").decode("ascii")
+
+
+def integer(value):
+    require(len(value) in (4, 8), "invalid FIT integer")
+    return int.from_bytes(value, "big")
+
+
+def fdt(data):
+    require(len(data) >= 40, "truncated FDT header")
+    header = struct.unpack_from(">10I", data)
+    magic, size, structure, strings = header[:4]
+    require(magic == 0xD00DFEED and header[5] == 17, "not a version 17 FDT")
+    require(40 <= size <= len(data), "FDT size outside image")
+    end = structure + header[9]
+    require(40 <= structure <= end <= size, "FDT structure outside header")
+    require(40 <= strings <= strings + header[8] <= size, "FDT strings outside header")
+    names = data[strings:strings + header[8]]
+    nodes, stack = {}, []
+    index = structure
+    finished = False
+    while index < end:
+        require(index + 4 <= end, "truncated FDT token")
+        token = struct.unpack_from(">I", data, index)[0]
+        index += 4
+        if token == 1:
+            stop = data.find(b"\0", index, end)
+            require(stop >= 0, "unterminated FDT node")
+            stack.append(data[index:stop].decode("ascii"))
+            index = (stop + 4) & ~3
+            name = "/".join(stack)
+            require(name not in nodes, "duplicate FDT node")
+            nodes[name] = {}
+        elif token == 2:
+            require(bool(stack), "unbalanced FDT node")
+            stack.pop()
+        elif token == 3:
+            require(bool(stack) and index + 8 <= end, "property outside FDT node")
+            length, offset = struct.unpack_from(">II", data, index)
+            index += 8
+            require(index + length <= end, "FDT property outside structure")
+            stop = names.find(b"\0", offset)
+            require(0 <= offset < len(names) and stop >= offset, "invalid FDT property name")
+            name = names[offset:stop].decode("ascii")
+            props = nodes["/".join(stack)]
+            require(name not in props, "duplicate FDT property")
+            props[name] = data[index:index + length]
+            index = (index + length + 3) & ~3
+        elif token == 4:
+            continue
+        elif token == 9:
+            require(not stack and "" in nodes, "unclosed or missing FDT root")
+            finished = True
+            break
+        else:
+            raise ValueError("unknown FDT token")
+    require(finished, "missing FDT end token")
+    return size, nodes
+
+
+def fit_images(data):
+    size, nodes = fdt(data)
+    images = {}
+    for name, props in nodes.items():
+        if not name.startswith("/images/") or name.count("/") != 2:
+            continue
+        if "data" in props:
+            payload = props["data"]
+            offset = None
+        else:
+            count = integer(props["data-size"])
+            if "data-position" in props:
+                offset = integer(props["data-position"])
+            else:
+                offset = ((size + 3) & ~3) + integer(props["data-offset"])
+            require(offset >= size and offset + count <= len(data), "FIT payload outside bundle: " + name)
+            payload = data[offset:offset + count]
+        hashes = [p for n, p in nodes.items()
+                  if n.startswith(name + "/") and n.count("/") == 3 and "algo" in p]
+        require(bool(hashes), "missing payload hash: " + name)
+        for props_hash in hashes:
+            require(string(props_hash["algo"]) == "sha256", "payload needs a SHA-256 hash: " + name)
+            require(hashlib.sha256(payload).digest() == props_hash["value"], "payload hash mismatch: " + name)
+        images[name.split("/")[-1]] = (payload, offset)
+    require(bool(images), "FIT has no images")
+    return nodes, images
+
+
+def run(*args):
+    return subprocess.run(args, check=True, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE).stdout
+
+
+def check_filesystem(image, offset, kernel):
+    listing = run("unsquashfs", "-o", str(offset), "-ll", str(image)).decode()
+    entries = {}
+    for line in listing.splitlines():
+        if "squashfs-root/" not in line or not line.startswith(("-", "l")):
+            continue
+        path = line.split("squashfs-root/", 1)[1]
+        name, separator, target = path.partition(" -> ")
+        entries[name] = target if separator else None
+
+    def resolve(path):
+        for _ in range(20):
+            require(path in entries, "missing filesystem entry: " + path)
+            target = entries[path]
+            if target is None:
+                return path
+            path = posixpath.normpath(target.lstrip("/") if target.startswith("/")
+                                      else posixpath.join(posixpath.dirname(path), target))
+        raise ValueError("filesystem symlink loop")
+
+    def read(path):
+        return run("unsquashfs", "-o", str(offset), "-cat", str(image), resolve(path))
+
+    def identity(data, bits, machine, name):
+        require(len(data) >= 52 and data[:4] == b"\x7fELF", "not ELF: " + name)
+        require(data[4] == bits and data[5] == 1 and
+                struct.unpack_from("<H", data, 18)[0] == machine, "wrong ELF ABI: " + name)
+        if machine == 40:
+            require(not struct.unpack_from("<I", data, 36)[0] & 0x400, "hard-float ARM object: " + name)
+
+    required = ["sbin/rc", "usr/sbin/httpd", "usr/sbin/wl",
+                "usr/sbin/cfg_server", "usr/sbin/cfg_client", "lib/libnvram.so"]
+    queue, checked = list(required), {}
+    with tempfile.TemporaryDirectory(prefix="bq16-elf-") as temporary:
+        elf_path = Path(temporary) / "file.elf"
+        while queue:
+            path = resolve(queue.pop())
+            if path in checked:
+                continue
+            data = read(path)
+            identity(data, 1, 40, path)
+            elf_path.write_bytes(data)
+            dynamic = run("readelf", "-d", str(elf_path)).decode()
+            needed = re.findall(r"\(NEEDED\).*\[([^\]]+)\]", dynamic)
+            search = [posixpath.dirname(path), "lib", "usr/lib"]
+            for rpath in re.findall(r"\((?:RUNPATH|RPATH)\).*\[([^\]]+)\]", dynamic):
+                search.extend(p.replace("${ORIGIN}", posixpath.dirname(path))
+                              .replace("$ORIGIN", posixpath.dirname(path)).lstrip("/")
+                              for p in rpath.split(":"))
+            for library in needed:
+                matches = [posixpath.normpath(posixpath.join(directory, library)) for directory in search]
+                matches = [p for p in matches if p in entries]
+                require(bool(matches), "missing ELF dependency " + library + " for " + path)
+                queue.append(matches[0])
+            checked[path] = {"sha256": hashlib.sha256(data).hexdigest(), "needed": needed}
+        modules = {}
+        for path in sorted(entries):
+            if not path.startswith("lib/modules/") or not path.endswith(".ko"):
+                continue
+            require(path.startswith("lib/modules/" + kernel + "/"), "module installed for wrong kernel: " + path)
+            data = read(path)
+            identity(data, 2, 183, path)
+            vermagic = re.findall(rb"vermagic=([^\0]+)", data)
+            require(len(vermagic) == 1, "missing or ambiguous module vermagic: " + path)
+            value = vermagic[0].decode("ascii")
+            require(value.split()[0] == kernel and "aarch64" in value.split(), "module vermagic mismatch: " + path)
+            modules[path] = {"vermagic": value, "sha256": hashlib.sha256(data).hexdigest()}
+    require("lib/modules/" + kernel + "/extra/dhd.ko" in modules, "missing DHD module")
+    return {"elf": checked, "modules": modules}
+
+
+def verify(image, kernel="4.19.294"):
+    data = image.read_bytes()
+    outer, images = fit_images(data)
+    require(string(outer[""]["description"]) == "BQ16", "package is not BQ16")
+    require(string(outer[""]["asus"]) == "ASUSFLAG#1", "unexpected ASUS capability flag")
+    config_name = string(outer["/configurations"]["default"])
+    config = outer["/configurations/" + config_name]
+    compatible = dict(part.split("=", 1) for part in string(config["compatible"]).split(";"))
+    require(compatible.get("flash") == "nand" and compatible.get("chip") == "6813"
+            and compatible.get("fstype") == "squashfs", "wrong platform compatibility")
+    bootfs, _ = images[string(config["bootfs"])]
+    rootfs, rootfs_offset = images[string(config["rootfs"])]
+    require(rootfs_offset is not None and rootfs[:4] == b"hsqs", "missing external SquashFS payload")
+    inner, boot_images = fit_images(bootfs)
+    for board in ("BQ16_2556", "BQ16_2556_2"):
+        require("fdt_" + board in boot_images, "missing board DTB: " + board)
+        fdt(boot_images["fdt_" + board][0])
+        for prefix in ("conf_lx_", "conf_ub_"):
+            require(string(inner["/configurations/" + prefix + board]["fdt"]) == "fdt_" + board,
+                    "incorrect board selection: " + prefix + board)
+    require(all(name in boot_images for name in ("kernel", "uboot", "atf")), "incomplete bootfs")
+    report = {"sha256": hashlib.sha256(data).hexdigest(), "model": "BQ16",
+              "boards": ["BQ16_2556", "BQ16_2556_2"], "compatibility": compatible,
+              "outer_payloads": len(images), "bootfs_payloads": len(boot_images),
+              "signature_nodes": [name for name in outer if "signature" in name] +
+                                 [name for name in inner if "signature" in name],
+              "bootloader_acceptance_verified": False,
+              "hardware_tests_verified": False}
+    report.update(check_filesystem(image, rootfs_offset, kernel))
+    report["offline_checks_passed"] = True
+    return report
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("image", type=Path)
+    parser.add_argument("--report", type=Path)
+    args = parser.parse_args()
+    try:
+        report = verify(args.image)
+        if args.report:
+            args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        print("BQ16 offline checks passed: " + report["sha256"])
+        print("Bootloader acceptance and hardware tests remain unverified.")
+    except (OSError, ValueError, KeyError, UnicodeError, struct.error, subprocess.CalledProcessError) as error:
+        print("BQ16 verification failed: " + str(error), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
