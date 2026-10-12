@@ -168,16 +168,47 @@ def inventory(source, destination):
             "files": records}
 
 
+def verify_manifest(destination):
+    manifest = json.loads((destination / "docs/bq16/import-manifest.json").read_text())
+    require_model = manifest.get("model") == "BQ16" and bool(manifest.get("files"))
+    if not require_model:
+        raise ValueError("missing BQ16 import inventory")
+    for record in manifest["files"]:
+        relative = Path(record["destination"])
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError("invalid manifest destination")
+        path = destination / relative
+        if not within(path.resolve(), destination):
+            raise ValueError("imported path leaves repository: " + str(relative))
+        if "symlink" in record:
+            if not path.is_symlink() or os.readlink(path) != record["symlink"]:
+                raise ValueError("imported symlink differs: " + str(relative))
+        elif path.is_symlink() or not path.is_file() or sha256(path) != record["sha256"]:
+            raise ValueError("imported file differs: " + str(relative))
+    return manifest
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", type=Path, required=True)
+    parser.add_argument("--source", type=Path)
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--verify-manifest", action="store_true")
     args = parser.parse_args()
-    source, destination = args.source.resolve(), args.destination.resolve()
-    if within(source, destination) or within(destination, source):
-        parser.error("source and destination must be separate trees")
+    destination = args.destination.resolve()
+    if args.verify_manifest and args.dry_run:
+        parser.error("--verify-manifest and --dry-run are mutually exclusive")
+    if not args.verify_manifest:
+        if args.source is None:
+            parser.error("--source is required for import")
+        source = args.source.resolve()
+        if within(source, destination) or within(destination, source):
+            parser.error("source and destination must be separate trees")
     try:
+        if args.verify_manifest:
+            manifest = verify_manifest(destination)
+            print("Verified " + str(len(manifest["files"])) + " imported BQ16 files")
+            return 0
         manifest = inventory(source, destination)
         if not args.dry_run:
             for record in manifest["files"]:
@@ -195,7 +226,7 @@ def main():
             output.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         print(("Checked" if args.dry_run else "Imported") + " " +
               str(len(manifest["files"])) + " BQ16 files")
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, KeyError) as error:
         print("BQ16 import failed: " + str(error), file=sys.stderr)
         return 1
     return 0

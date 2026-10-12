@@ -5,6 +5,7 @@ These checks do not establish bootloader acceptance or hardware functionality.
 """
 
 import argparse
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -110,12 +111,12 @@ def fit_images(data):
     return nodes, images
 
 
-def run(*args):
+def run(*args, input=None):
     return subprocess.run(args, check=True, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE).stdout
+                          stderr=subprocess.PIPE, input=input).stdout
 
 
-def check_filesystem(image, offset, kernel):
+def check_filesystem(image, offset, kernel, expected_vermagic):
     listing = run("unsquashfs", "-o", str(offset), "-ll", str(image)).decode()
     entries = {}
     for line in listing.splitlines():
@@ -180,7 +181,7 @@ def check_filesystem(image, offset, kernel):
             vermagic = re.findall(rb"vermagic=([^\0]+)", data)
             require(len(vermagic) == 1, "missing or ambiguous module vermagic: " + path)
             value = vermagic[0].decode("ascii")
-            require(value.split()[0] == kernel and "aarch64" in value.split(), "module vermagic mismatch: " + path)
+            require(value.split() == expected_vermagic.split(), "module vermagic mismatch: " + path)
             modules[path] = {"vermagic": value, "sha256": hashlib.sha256(data).hexdigest()}
     require("lib/modules/" + kernel + "/extra/dhd.ko" in modules, "missing DHD module")
     return {"elf": checked, "modules": modules}
@@ -207,14 +208,34 @@ def verify(image, kernel="4.19.294"):
             require(string(inner["/configurations/" + prefix + board]["fdt"]) == "fdt_" + board,
                     "incorrect board selection: " + prefix + board)
     require(all(name in boot_images for name in ("kernel", "uboot", "atf")), "incomplete bootfs")
+    require(string(inner["/images/kernel"]["compression"]) == "lzo", "unexpected kernel compression")
+    decoded_kernel = run("lzop", "-dc", input=boot_images["kernel"][0])
+    banner = re.search(rb"Linux version ([^ ]+)", decoded_kernel)
+    require(banner is not None and banner.group(1).decode() == kernel, "kernel payload version mismatch")
+    start = decoded_kernel.find(b"IKCFG_ST")
+    end = decoded_kernel.find(b"IKCFG_ED", start + 8)
+    require(start >= 0 and end > start + 8, "kernel lacks embedded ABI configuration")
+    config_text = gzip.decompress(decoded_kernel[start + 8:end]).decode()
+    kernel_config = dict(line.split("=", 1) for line in config_text.splitlines()
+                         if line.startswith("CONFIG_") and "=" in line)
+    require(kernel_config.get("CONFIG_ARM64") == "y", "kernel is not AArch64")
+    # This pinned BSP uses no module CRCs. A versioned-module kernel needs a
+    # separate Module.symvers comparison rather than pretending vermagic suffices.
+    require(kernel_config.get("CONFIG_MODVERSIONS") != "y", "versioned modules need CRC verification")
+    flags = [name for key, name in (("CONFIG_SMP", "SMP"), ("CONFIG_PREEMPT", "preempt"),
+                                   ("CONFIG_MODULE_UNLOAD", "mod_unload"))
+             if kernel_config.get(key) == "y"]
+    expected_vermagic = " ".join([kernel] + flags + ["aarch64"])
     report = {"sha256": hashlib.sha256(data).hexdigest(), "model": "BQ16",
               "boards": ["BQ16_2556", "BQ16_2556_2"], "compatibility": compatible,
               "outer_payloads": len(images), "bootfs_payloads": len(boot_images),
               "signature_nodes": [name for name in outer if "signature" in name] +
                                  [name for name in inner if "signature" in name],
+              "kernel_payload_version": banner.group(1).decode(),
+              "expected_module_vermagic": expected_vermagic,
               "bootloader_acceptance_verified": False,
               "hardware_tests_verified": False}
-    report.update(check_filesystem(image, rootfs_offset, kernel))
+    report.update(check_filesystem(image, rootfs_offset, kernel, expected_vermagic))
     report["offline_checks_passed"] = True
     return report
 
