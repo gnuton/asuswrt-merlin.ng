@@ -5,21 +5,26 @@ jobs:
     build-job:
       name: Build
       runs-on: ubuntu-latest
+      defaults:
+        run:
+          shell: bash
       strategy:
         fail-fast: false
         matrix:
           cfg:
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: false }
+            - { model: "bq16",             sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
       container:
-        image: gnuton/asuswrt-merlin-toolchains-docker:latest
+        image: gnuton/asuswrt-merlin-toolchains-docker@sha256:8c9681987352d6eb8a38708126c9c39edd8dd28a7bf6c0cedc0e9534387f9ab3
         env:
-          MERLINUPDATE: "y"
+          MERLINUPDATE: ${{ matrix.cfg.model == 'bq16' && 'n' || 'y' }}
           MODEL: ${{ matrix.cfg.model }}
           SDK: ${{ matrix.cfg.sdk }}
           UI: ${{ matrix.cfg.ui }}
           SKIP_BUILD: ${{ matrix.cfg.skip }}
-          GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
+          GIT_REPO: "https://github.com/${{ github.repository }}.git"
+          BUILD_SHA: ${{ github.sha }}
           PROJECT_DIR: "/project/asuswrt-merlin.ng"
           ARTIFACTS_DIR: "/project/artifacts"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
@@ -40,32 +45,29 @@ jobs:
         - name: "Fetch code"
           if: matrix.cfg.skip == false
           run: |
-            cd /project
-            if [[ $GITHUB_REF_TYPE == "tag" ]]; then
-                export TAG="${GITHUB_REF#refs/tags/}"
-                echo "Fetching code from tag $TAG"
-            else
-                export BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
-                echo "Fetching code from branch $BRANCH"
+            [[ "$BUILD_SHA" =~ ^[0-9a-f]{40}$ ]]
+            git init "$PROJECT_DIR"
+            git -C "$PROJECT_DIR" remote add origin "$GIT_REPO"
+            git -C "$PROJECT_DIR" fetch --depth 1 origin "$BUILD_SHA"
+            git -C "$PROJECT_DIR" checkout --detach FETCH_HEAD
+            test "$(git -C "$PROJECT_DIR" rev-parse HEAD)" = "$BUILD_SHA"
+        - name: Check BQ16 tooling and import provenance
+          if: matrix.cfg.skip == false
+          run: |
+            cd "$PROJECT_DIR"
+            python3 -B -m unittest discover -s tools/tests -v
+            if [[ "$MODEL" == "bq16" ]]; then
+              python3 -B tools/import-bq16.py --destination . --verify-manifest
             fi
-
-            if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
-                echo "Code fetched successfully."
-            else
-                echo "Failed to fetch code. Check the repository and settings."
-                exit 1
-            fi
-
-            ls /home/docker
         - name: "Set version"
           if: matrix.cfg.skip == false
           run: |
-            cd ${PROJECT_DIR}
+            cd "${PROJECT_DIR}"
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
             if [[ $GITHUB_REF_TYPE == "branch" ]]; then
               echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
             else
-                TAG=$(echo ${CIRCLE_TAG} | sed 's/^[^.]*\.//')
+                TAG="${CIRCLE_TAG#*.}"
                 MAJOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
                 MINOR_VER=$(echo "${TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
                 sed -i "s/SERIALNO=.*/SERIALNO=${MAJOR_VER}/g" release/src-rt/version.conf
@@ -75,7 +77,7 @@ jobs:
         - name: Generate changelog
           if: matrix.cfg.skip == false && matrix.cfg.ui == 'default'
           run: |
-            cd ${PROJECT_DIR}
+            cd "${PROJECT_DIR}"
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
@@ -84,7 +86,7 @@ jobs:
             echo "----- Space available -----"
             df -h
             echo "----- I am: $(id) -----"
-            cd ${PROJECT_DIR}/release/${SDK}
+            cd "${PROJECT_DIR}/release/${SDK}"
             echo "----- Files in dir: $(pwd) -----"
             ls -alh
             echo "----- Setting toolchains for ${SDK} -----"
@@ -98,27 +100,29 @@ jobs:
               source /home/docker/envs/bcm-hnd-ax-4.19be_soft.sh
             else
               echo "SDK not supported"
-              exit -1
+              exit 1
             fi
             echo "----- hack-ish fix ---------"
             sudo ln -sf /home/docker/am-toolchains/brcm-arm-hnd /opt/toolchains
             echo "----- Check envs dir ---------"
 
             ls -alh /home/docker/envs/
-            echo "----- Debugging env vars -----"
-            env
             echo "------ Setting UI as $UI ---------"
             if [[ ${UI} == "tuf" ]]; then
               echo "Enabling TUF UI"
-              sed -i 's/TUF_UI=n/TUF_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
+              sed -i 's/TUF_UI=n/TUF_UI=y/' "${PROJECT_DIR}/release/src-rt/target.mak"
             fi
             if [[ ${UI} == "rog" ]]; then
               echo "Enabling ROG UI"
-              sed -i 's/ROG_UI=n/ROG_UI=y/' ${PROJECT_DIR}/release/src-rt/target.mak
+              sed -i 's/ROG_UI=n/ROG_UI=y/' "${PROJECT_DIR}/release/src-rt/target.mak"
             fi
 
             echo "----- BUILD ${MODEL}-----"
-            make "${MODEL}"
+            if [[ "$MODEL" == "bq16" ]]; then
+              make "$MODEL" PARALLEL_BUILD=-j4 EXTENDNO="bq16-alpha1-g${BUILD_SHA:0:8}" MERLINUPDATE=n
+            else
+              make "$MODEL" PARALLEL_BUILD=-j4
+            fi
             # #### Just for testing ####
             # mkdir -p "${PROJECT_DIR}/release/${SDK}/image/"
             # echo "TEST" > "${PROJECT_DIR}/release/${SDK}/image/${MODEL}_${UI}_puresqubi.w"
@@ -128,23 +132,34 @@ jobs:
           run: |
             mkdir -p "${ARTIFACTS_DIR}"
             export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
-            echo "Removing images with boot loader."
-            rm -rf ${IMAGE_PATH}/*cferom*
+            echo "Collecting standard firmware images."
 
             files=("${IMAGE_PATH}"/*squashfs.pkgtb "${IMAGE_PATH}"/*.w)
+            copied=0
 
             if [ ${#files[@]} -gt 0 ]; then
                 for f in "${files[@]}"; do
                     if [ -f "$f" ] && [ "${f##*.}" != "md5" ]; then
+                        [[ "${f##*/}" == *cferom* ]] && continue
                         echo "Creating MD5 signature for $f"
                         md5sum "$f" > "$f.md5"
                         echo "Copying image $f to workspace"
                         cp "$f" "${ARTIFACTS_DIR}"
                         cp "$f.md5" "${ARTIFACTS_DIR}"
+                        (cd "$(dirname "$f")" && sha256sum "$(basename "$f")") > "$f.sha256"
+                        cp "$f.sha256" "$ARTIFACTS_DIR"
+                        copied=$((copied + 1))
                     fi
                 done
             else
                 echo "No *.squashfs.pkgtb or *.w files found in ${IMAGE_PATH}"
+            fi
+            test "$copied" -gt 0
+            git -C "$PROJECT_DIR" rev-parse HEAD > "$ARTIFACTS_DIR/source-commit.txt"
+            cp "$PROJECT_DIR/docs/bq16/inputs.json" "$ARTIFACTS_DIR/build-inputs.json"
+            if [[ "$MODEL" == "bq16" ]]; then
+              cp "$PROJECT_DIR/docs/bq16/import-manifest.json" "$ARTIFACTS_DIR/import-manifest.json"
+              printf '%s\n' 'EXPERIMENTAL: bootloader acceptance and hardware tests are unverified.' > "$ARTIFACTS_DIR/STATUS.txt"
             fi
             
             # Changelogs are the same for each models since we are building from the same branch. We do use only the one generated by GT-BE98 for now.
@@ -159,21 +174,54 @@ jobs:
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
             path: "/project/artifacts"
-          continue-on-error: true
-    release-job:
-      name: Publish
+            if-no-files-found: error
+    bq16-validate:
+      name: Validate BQ16 firmware offline
       needs: build-job
       runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/')
+      container:
+        image: ubuntu@sha256:f610ab94648195aa356059f5b41d6085c9d4d903c072430cdd1af7bdb646106b
+      steps:
+        - name: Install validation tools
+          run: |
+            apt-get update
+            apt-get install -y --no-install-recommends git python3 binutils squashfs-tools lzop
+        - uses: actions/checkout@v4
+          with:
+            persist-credentials: false
+        - uses: actions/download-artifact@v4
+          with:
+            name: release-bq16-default
+            path: candidate
+        - name: Validate bundle and record tool versions
+          shell: bash
+          run: |
+            python3 -B -m unittest discover -s tools/tests -v
+            test "$(cat candidate/source-commit.txt)" = "$GITHUB_SHA"
+            shopt -s nullglob
+            images=(candidate/BQ16_*_nand_squashfs.pkgtb)
+            test "${#images[@]}" -eq 1
+            python3 -B tools/verify-bq16-image.py "${images[0]}" --report candidate/offline-report.json
+            dpkg-query -W python3 binutils squashfs-tools lzop > candidate/validation-tool-versions.txt
+        - uses: actions/upload-artifact@v4
+          with:
+            name: validated-bq16-experimental
+            path: candidate/
+            if-no-files-found: error
+    release-job:
+      name: Publish
+      needs: [build-job, bq16-validate]
+      runs-on: ubuntu-latest
+      if: github.repository == 'gnuton/asuswrt-merlin.ng' && startsWith(github.event.ref, 'refs/tags/')
       steps:
         - name: Download packages
           uses: actions/download-artifact@v4
         - name: Get release version
           run: |
-            echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-            echo "prerelease=$( [[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False )" >> $GITHUB_ENV
+            echo "version=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
+            echo "prerelease=$( [[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False )" >> "$GITHUB_ENV"
         - name: Publish archives and packages
-          uses: softprops/action-gh-release@v1
+          uses: softprops/action-gh-release@v3
           with:
             tag_name: ${{ env.version }}
             body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-gt-be98-default/CHANGELOG
@@ -186,9 +234,9 @@ jobs:
     
     manifest-job:
       name: Publish Manifest
-      needs: build-job
+      needs: [build-job, bq16-validate]
       runs-on: ubuntu-latest
-      if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
+      if: github.repository == 'gnuton/asuswrt-merlin.ng' && startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
       steps:
         - uses: actions/checkout@v4
           with:
@@ -211,9 +259,9 @@ jobs:
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
             echo "Generating manifest file..."
-            echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest_3006.txt
-            cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
+            echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> "${UPDATE_DIR}/manifest_3006.txt"
+            cp "${CHANGELOG_FILE}" "${UPDATE_DIR}/${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
-            git add ${UPDATE_DIR}
+            git add "${UPDATE_DIR}"
             git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
             git push origin
