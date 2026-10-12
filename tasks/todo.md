@@ -3,15 +3,15 @@
 - [x] Create the pinned port branch.
 - [x] Record hashes and verify private configuration/JFFS backups.
 - [x] Pin and verify the soft-float ARM and AArch64 toolchains.
-- [ ] Build the unmodified ASUS BQ16 control.
-- [ ] Build the unmodified Merlin GT-BE98 control.
-- [ ] Checkpoint: both independent control builds pass.
+- [x] Build the unmodified ASUS BQ16 control. Exit 0, NAND image and hashes recorded.
+- [x] Build the unmodified Merlin GT-BE98 control. Exit 0, NAND image and hashes recorded.
+- [x] Checkpoint: both independent control builds pass.
 - [x] Implement and verify the BQ16 proprietary importer.
-- [ ] Import BQ16 components with provenance and hashes.
-- [ ] Add BQ16 hardware profile, Merlin services, and web assets.
+- [x] Import BQ16 components with provenance and hashes. 1443 entries verified.
+- [x] Add BQ16 hardware profile, Merlin services, and web assets.
 - [ ] Checkpoint: BQ16 builds and GT-BE98 still builds.
 - [x] Implement offline FIT and ABI checks against stock, with corruption tests.
-- [ ] Fix fork/SHA selection in CI and add experimental BQ16 artifacts.
+- [x] Fix fork/SHA selection in CI and add experimental BQ16 artifacts. Actionlint passes.
 - [ ] Checkpoint: offline candidate validation passes.
 - [ ] Verify firmware acceptance and stock recovery on the actual unit.
 - [ ] Obtain approval for a specific candidate and maintenance window.

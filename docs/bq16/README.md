@@ -81,6 +81,14 @@ Before the first custom flash:
 - Confirm image verification requirements for bootloader 1.0.0.10.
 - Review the candidate hash and receive explicit approval to flash it.
 
+The router's `firmware_check` applet is not a read-only probe. The source
+in rc/services.c calls `fw_check_pre()` and changes the `firmware_check`
+NVRAM status. Its `check_imagefile()` implementation comes from a vendor
+object. Do not invoke it as an assumed harmless check on the live gateway.
+The BSP U-Boot configuration enables FIT signature support, while the
+stock bundles contain no signature nodes. That combination does not
+establish the factory loader's fuse state or enforcement policy.
+
 Use the normal BQ16 firmware updater. Do not write raw MTD partitions,
 erase factory data, or install loader-inclusive images. The standard
 pkgtb bootfs contains required ATF and U-Boot components; do not remove
