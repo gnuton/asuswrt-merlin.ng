@@ -29,6 +29,41 @@ the BQ16 port. Makefile evaluation creates configurations and symlinks,
 including with `make -n`. Do not run it in the donor or development tree.
 Use the fork's `bcm-hnd-ax-4.19be_soft.sh` toolchain environment.
 
+The pinned image and source hashes are in `inputs.json`. Start the
+top-level build with `make bq16 PARALLEL_BUILD=-j4`, not `make -j4 bq16`.
+The latter starts package configuration before prerequisite libraries
+are staged, as reproduced by the GT-BE98 control's Neon failure.
+
+Run `python3 -B tools/import-bq16.py --source /path/to/asuswrt
+--destination /path/to/merlin --dry-run` to check donor inputs without
+copying them. Run from the donor with `REPO=/path/to/merlin
+/path/to/merlin/tools/copy-prebuilt-be BQ16` to perform the import.
+
+Run `python3 -B tools/verify-bq16-image.py image.pkgtb --report report.json`
+for offline integrity and ABI checks, and `python3 -B -m unittest discover
+-s tools/tests -v` for corruption regression tests.
+
+Validation uses the separate Ubuntu 24.04 image pinned in `inputs.json`.
+Install `python3 binutils squashfs-tools lzop` there. The old compiler
+container's SquashFS utility lacks `-cat`; avoid extracting firmware
+contents onto the host as a workaround.
+
+The recorded UBI layout has 126976-byte logical eraseblocks, 192 free
+blocks, and 1140 blocks reserved for the two bootfs/rootfs pairs. The
+validator checks that two copies of the candidate fit this budget without
+shrinking metadata, data, defaults, or JFFS. This is a capacity check,
+not proof of the updater's resize behavior. Re-record the layout before
+validating a different unit or a unit whose UBI allocation changed.
+
+## Stock wireless limitation
+
+Before any custom firmware was installed, `/tmp/boot_dmesg.log` reported
+PCIe core 1 link down. Cores 0, 2, and 3 were up. Only wl0, wl1, and wl2
+were present, and the stock MLO mapping was `2 1 0 -1`. This explains why
+the stock unit exposes three wireless interfaces, but does not establish
+the reason for the PCIe link failure. Retain the complete board/radio
+definitions and investigate this separately before four-band acceptance.
+
 ## Recovery preparation
 
 The ASUS procedure is documented at

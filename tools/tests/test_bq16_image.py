@@ -38,6 +38,18 @@ def fixture(payload=b"firmware"):
 
 
 class FitSafetyTests(unittest.TestCase):
+    def test_dual_slot_capacity_preserves_other_volumes(self):
+        layout = {"leb_bytes": 126976, "available_lebs": 192,
+                  "image_volumes": {"bootfs1": 112, "rootfs1": 458, "bootfs2": 112, "rootfs2": 458}}
+        capacity = IMAGE.check_flash_capacity(13111268, 57012224, layout)
+        self.assertLessEqual(capacity["required_lebs"], capacity["budget_lebs"])
+
+    def test_oversized_dual_slot_image_is_rejected(self):
+        layout = {"leb_bytes": 126976, "available_lebs": 192,
+                  "image_volumes": {"bootfs1": 112, "rootfs1": 458, "bootfs2": 112, "rootfs2": 458}}
+        with self.assertRaisesRegex(ValueError, "protected volumes"):
+            IMAGE.check_flash_capacity(13111268, 100 * 1024 * 1024, layout)
+
     def test_valid_external_payload(self):
         _, images = IMAGE.fit_images(fixture())
         self.assertEqual(images["kernel"][0], b"firmware")

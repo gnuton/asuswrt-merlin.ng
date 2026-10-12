@@ -111,6 +111,17 @@ def fit_images(data):
     return nodes, images
 
 
+def check_flash_capacity(bootfs_bytes, rootfs_bytes, layout):
+    leb = layout["leb_bytes"]
+    budget = sum(layout["image_volumes"].values()) + layout["available_lebs"]
+    # Stock bootfs1 includes a four-byte boot-state trailer. Reserve it for both.
+    boot_lebs = (bootfs_bytes + 4 + leb - 1) // leb
+    root_lebs = (rootfs_bytes + leb - 1) // leb
+    required = 2 * (boot_lebs + root_lebs)
+    require(required <= budget, "dual firmware slots exceed recorded UBI capacity without shrinking protected volumes")
+    return {"required_lebs": required, "budget_lebs": budget, "leb_bytes": leb}
+
+
 def run(*args, input=None):
     return subprocess.run(args, check=True, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, input=input).stdout
@@ -194,12 +205,18 @@ def verify(image, kernel="4.19.294"):
     require(string(outer[""]["asus"]) == "ASUSFLAG#1", "unexpected ASUS capability flag")
     config_name = string(outer["/configurations"]["default"])
     config = outer["/configurations/" + config_name]
+    require(set(config) == {"description", "bootfs", "rootfs", "compatible"},
+            "unexpected package configuration fields")
     compatible = dict(part.split("=", 1) for part in string(config["compatible"]).split(";"))
     require(compatible.get("flash") == "nand" and compatible.get("chip") == "6813"
             and compatible.get("fstype") == "squashfs", "wrong platform compatibility")
     bootfs, _ = images[string(config["bootfs"])]
     rootfs, rootfs_offset = images[string(config["rootfs"])]
+    require(set(images) == {string(config["bootfs"]), string(config["rootfs"])},
+            "unexpected outer payloads, loader-inclusive packages are not accepted")
     require(rootfs_offset is not None and rootfs[:4] == b"hsqs", "missing external SquashFS payload")
+    inputs = json.loads((Path(__file__).resolve().parents[1] / "docs/bq16/inputs.json").read_text())
+    flash_capacity = check_flash_capacity(len(bootfs), len(rootfs), inputs["flash_layout"])
     inner, boot_images = fit_images(bootfs)
     for board in ("BQ16_2556", "BQ16_2556_2"):
         require("fdt_" + board in boot_images, "missing board DTB: " + board)
@@ -233,6 +250,7 @@ def verify(image, kernel="4.19.294"):
                                  [name for name in inner if "signature" in name],
               "kernel_payload_version": banner.group(1).decode(),
               "expected_module_vermagic": expected_vermagic,
+              "flash_capacity": flash_capacity,
               "bootloader_acceptance_verified": False,
               "hardware_tests_verified": False}
     report.update(check_filesystem(image, rootfs_offset, kernel, expected_vermagic))
@@ -246,6 +264,10 @@ def main():
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     try:
+        help_result = subprocess.run(["unsquashfs", "-help"], stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+        require(b"-cat" in help_result.stdout + help_result.stderr,
+                "unsquashfs must support -cat; use the pinned Ubuntu 24.04 validation environment")
         report = verify(args.image)
         if args.report:
             args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")

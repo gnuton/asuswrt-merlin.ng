@@ -9,5 +9,12 @@
   "board": "BQ16_2556_2",
   "territory": "EU/01",
   "bootloader": "1.0.0.10",
+  "flash_layout": {
+    "leb_bytes": 126976,
+    "available_lebs": 192,
+    "image_volumes": {"bootfs1": 112, "rootfs1": 458, "bootfs2": 112, "rootfs2": 458},
+    "protected_volumes": {"metadata1": 1, "metadata2": 1, "data": 166, "defaults": 67, "jffs2": 413}
+  },
+  "validation_image": "docker.io/library/ubuntu@sha256:f610ab94648195aa356059f5b41d6085c9d4d903c072430cdd1af7bdb646106b",
   "stock_cfg_server_sha256": "1fc28dcd27cc48dafed27b97c591391e738df721ee7751df303065e9ff07ebb3"
 }
