@@ -10,6 +10,14 @@
 BUILD_NAME=$(echo $1 | tr "[:lower:]" "[:upper:]")
 BUILD_NAME_LC=$(echo $BUILD_NAME | tr "[:upper:]" "[:lower:]")
 
+# BQ16 GPL 39256 has impl103 and places bootloader objects in the U-Boot tree.
+# Keep the legacy importer unchanged for existing models.
+if [ "$BUILD_NAME" = "BQ16" ]; then
+	: "${REPO:?Set REPO to the destination Merlin tree}"
+	exec python3 "$(dirname "$(readlink -f "$0")")/import-bq16.py" \
+		--source "$PWD" --destination "$REPO" "${@:2}"
+fi
+
 echo "REPO is $REPO"
 echo "*** Copying platform-specific files..."
 if [ "$BUILD_NAME" == "RT-AC88U" ] || [ "$BUILD_NAME" == "RT-AC3100" ] || [ "$BUILD_NAME" == "RT-AC5300" ]

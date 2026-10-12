@@ -1,0 +1,13 @@
+{
+  "merlin_base": "920b77f5f92db14717a27abd5c8e1b06ae6c8ec1",
+  "gpl_archive": "GPL_BQ16_3.0.0.6.102.39256-g4282d34_1529-gfdee1_BB0B.tgz",
+  "gpl_sha256": "6e221f4dc2b8bfca08f6b31afb73493127b228632f1f522f7005ab4bbff3d636",
+  "stock_sha256": "00c411ef8ec2c7be2fa071acc0a6fbfe66b6d59328a72c8ef6c1a2462cc7091a",
+  "toolchain_image": "docker.io/gnuton/asuswrt-merlin-toolchains-docker@sha256:8c9681987352d6eb8a38708126c9c39edd8dd28a7bf6c0cedc0e9534387f9ab3",
+  "toolchain_environment": "/home/docker/envs/bcm-hnd-ax-4.19be_soft.sh",
+  "kernel": "4.19.294",
+  "board": "BQ16_2556_2",
+  "territory": "EU/01",
+  "bootloader": "1.0.0.10",
+  "stock_cfg_server_sha256": "1fc28dcd27cc48dafed27b97c591391e738df721ee7751df303065e9ff07ebb3"
+}
