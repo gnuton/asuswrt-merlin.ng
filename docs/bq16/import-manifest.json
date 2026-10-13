@@ -10276,6 +10276,17 @@
       "source": "release/src/router/usbclient/prebuild/usbclient"
     },
     {
+      "bytes": 9760,
+      "destination": "release/src/router/vpmstats/prebuilt/BQ16/vpmstats",
+      "elf": {
+        "bits": 32,
+        "machine": 40,
+        "type": 2
+      },
+      "sha256": "8051bb9b21a853fcdb3f74acb22ae423a8fcc7ae5f3bb26f2719db22576710b8",
+      "source": "release/src/router/vpmstats/prebuilt/vpmstats"
+    },
+    {
       "bytes": 71780,
       "destination": "release/src/router/wb/prebuild/BQ16/libws.so",
       "elf": {

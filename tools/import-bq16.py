@@ -27,7 +27,7 @@ protect_srv/prebuild rc/prebuild sambaclient/prebuild shared/prebuild
 sw-hw-auth/prebuild sysstate/commands/prebuild sysstate/log_daemon/prebuild
 u2ec/prebuild usbclient/prebuild wb/prebuild webdav_client/prebuild
 wlc_nt/prebuild bsd/prebuilt dnsspoof/prebuilt eventd/prebuilt
-libbcm/prebuilt wlceventd/prebuilt
+libbcm/prebuilt wlceventd/prebuilt vpmstats/prebuilt
 """.split()
 BOOT_OBJECTS = """
 net/tftp.o net/ping.o net/net.o net/arp.o common/autoboot.o
