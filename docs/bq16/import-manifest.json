@@ -28,6 +28,28 @@
       "source": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt/acsd2"
     },
     {
+      "bytes": 14112,
+      "destination": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/prebuilt/BQ16/qm_cli",
+      "elf": {
+        "bits": 32,
+        "machine": 40,
+        "type": 2
+      },
+      "sha256": "877e62ce54fb676ba313a32896d37e5bc150410ef9c7cea3b8024644cfe3496a",
+      "source": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/qm_cli"
+    },
+    {
+      "bytes": 153580,
+      "destination": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/prebuilt/BQ16/qosmgmtd",
+      "elf": {
+        "bits": 32,
+        "machine": 40,
+        "type": 2
+      },
+      "sha256": "439b40190ab57911cf4d16da90b0934b1f4dd4c3eec7a34e7b8aa62d448d94cb",
+      "source": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt/qosmgmtd"
+    },
+    {
       "bytes": 1408716,
       "destination": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/BQ16/wl",
       "elf": {

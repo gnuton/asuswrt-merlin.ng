@@ -68,11 +68,16 @@ endif
 vpath %.c $(SRCBASE)/shared $(WLAN_ComponentSrcDirs)
 
 ifeq ($(wildcard $(SRCBASE)/router/wlc_nt/*.c),)
+ifeq ($(BUILD_NAME),BQ16)
+all:
+	cp -f prebuild/BQ16/wlc_nt prebuild/BQ16/wlc_monitor prebuild/BQ16/libwlc_nt_client.so ./
+else
 all:
 	-cp -f prebuild/$(BUILD_NAME)/wlc_nt ./
 	-cp -f prebuild/$(BUILD_NAME)/wlc_monitor ./
 	-cp -f prebuild/$(BUILD_NAME)/libwlc_nt_lib.so ./
 	-cp -f prebuild/$(BUILD_NAME)/libwlc_nt_client.so ./
+endif
 else
 all: wlc_nt wlc_monitor libwlc_nt_client.so
 endif
@@ -111,7 +116,9 @@ install: all
 	@install -m 755 wlc_monitor $(INSTALLDIR)/usr/sbin
 	@install -d $(INSTALLDIR)/usr/lib
 	@install -m 755 libwlc_nt_client.so $(INSTALLDIR)/usr/lib
+ifneq ($(BUILD_NAME),BQ16)
 	-@install -m 755 wlc_debug $(INSTALLDIR)/usr/sbin
+endif
 
 %.o: %.c
 	@echo " [wlc_nt] CC $@"

@@ -49,6 +49,13 @@ ASUS's 39256 web server excludes the unused `oauth_callback.cgi` handler
 and its binaries have no `do_oauth_callback_cgi` implementation. BQ16
 keeps that vendor exclusion. Other models retain their existing handler.
 
+BQ16 imports `qosmgmtd` and `qm_cli` from the donor's flat impl103
+directory into its model prebuilt directory. Wireless-monitor, wireless
+utility, and monitoring-binary copies fail if a required BQ16 input is
+missing. The donor supplies `wlc_nt`, `wlc_monitor`, and
+`libwlc_nt_client.so`; it supplies neither the unused `libwlc_nt_lib.so`
+nor `wlc_debug`, so BQ16 does not request those debug files.
+
 The pinned image and source hashes are in `inputs.json`. Start the
 top-level build with `make bq16 PARALLEL_BUILD=-j4`, not `make -j4 bq16`.
 The latter starts package configuration before prerequisite libraries

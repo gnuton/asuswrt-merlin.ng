@@ -136,6 +136,9 @@ def inventory(source, destination):
     add_tree(SDK / "hostTools/prebuilt", SDK / "hostTools/prebuilt/BQ16")
     add_tree(SDK / "bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt",
              SDK / "bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt/BQ16")
+    qos = SDK / "bcmdrivers/broadcom/net/wl/impl103/main/components/apps/qosmgmt"
+    for filename in ("qosmgmtd", "qm_cli"):
+        pairs.append((qos / filename, qos / "prebuilt/BQ16" / filename))
     add_tree(ROUTER / "www/sysdep/BQ16", ROUTER / "www/sysdep/BQ16")
     add_tree(ROUTER / "tuxera/broadcom_arm_be_6813",
              ROUTER / "tuxera/bq16/broadcom_arm_be_6813")

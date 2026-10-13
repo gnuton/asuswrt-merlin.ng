@@ -76,8 +76,12 @@ $(EXE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(CMS_LIB_PATH) $(LIBS)
 else
 $(EXE): 
+ifeq ($(BUILD_NAME),BQ16)
+	cp -f ./prebuilt/BQ16/vpmstats ./
+else
 	-cp -f ./prebuilt/$(BUILD_NAME)/vpmstats ./
 	-cp -f $(TOP)/$(shell pwd | sed 's/\(.*router\/\)//')/$(PRBM_DIR)/$@ ./
+endif
 endif
 
 
