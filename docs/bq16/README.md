@@ -29,6 +29,11 @@ the BQ16 port. Makefile evaluation creates configurations and symlinks,
 including with `make -n`. Do not run it in the donor or development tree.
 Use the fork's `bcm-hnd-ax-4.19be_soft.sh` toolchain environment.
 
+BQ16 leaves NFS file sharing disabled, following the working Wi-Fi 7
+profiles and the user's selected default. Enabling it currently selects
+BusyBox's legacy RPC mount code, whose headers are absent from this
+glibc 2.32 toolchain. Scripts, DNS services, VPN, and AiMesh remain enabled.
+
 The pinned image and source hashes are in `inputs.json`. Start the
 top-level build with `make bq16 PARALLEL_BUILD=-j4`, not `make -j4 bq16`.
 The latter starts package configuration before prerequisite libraries
