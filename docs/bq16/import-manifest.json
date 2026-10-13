@@ -3985,6 +3985,17 @@
       "source": "release/src/router/hnd_extra/prebuilt/bcmvlan.o"
     },
     {
+      "bytes": 452936,
+      "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/bdmf.o",
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "type": 1
+      },
+      "sha256": "5c28502ba4d866ecb796670280e5688015be74a6b4997cb8a2451f39d5f289bd",
+      "source": "release/src-rt-5.04behnd.4916/rdp/drivers/bdmf/bdmf.o"
+    },
+    {
       "bytes": 6064,
       "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/blxargs.o",
       "elf": {
@@ -4172,6 +4183,17 @@
       "source": "release/src/router/hnd_extra/prebuilt/pktrunner.o"
     },
     {
+      "bytes": 7185232,
+      "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/rdpa.o",
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "type": 1
+      },
+      "sha256": "1cd971aa2af5d79c4aa21ba88350b5af118152f1d942b9ff3a279316ffdef665",
+      "source": "release/src-rt-5.04behnd.4916/rdp/projects/BCM6813/target/rdpa/rdpa.o"
+    },
+    {
       "bytes": 67944,
       "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/rdpa_cmd.o",
       "elf": {
@@ -4181,6 +4203,17 @@
       },
       "sha256": "1fe26d3b497e00cd3b11f2e49c62c66d661fc7f7dd6b33f4b3e82acccd1923dd",
       "source": "release/src/router/hnd_extra/prebuilt/rdpa_cmd.o"
+    },
+    {
+      "bytes": 128072,
+      "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/rdpa_gpl.o",
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "type": 1
+      },
+      "sha256": "50abad16655005e5b011bb071c63a8082957d86c20ea28a419ff1abcaa24cc45",
+      "source": "release/src-rt-5.04behnd.4916/rdp/projects/BCM6813/target/rdpa_gpl/rdpa_gpl.o"
     },
     {
       "bytes": 6464,
@@ -4203,6 +4236,17 @@
       },
       "sha256": "c34b27bb24a6daa7665870ba693d00623f2d10e7fd1d98245aac484b566180bd",
       "source": "release/src/router/hnd_extra/prebuilt/rdpa_mw.o"
+    },
+    {
+      "bytes": 148496,
+      "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/rdpa_usr.o",
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "type": 1
+      },
+      "sha256": "d93f321d6ed9cb79f521e532d9cee4e540b1173827eebbc5bbf1e4164d0d6139",
+      "source": "release/src-rt-5.04behnd.4916/rdp/projects/BCM6813/target/rdpa_user/rdpa_usr.o"
     },
     {
       "bytes": 8448,

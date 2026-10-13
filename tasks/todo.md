@@ -7,7 +7,7 @@
 - [x] Build the unmodified Merlin GT-BE98 control. Exit 0, NAND image and hashes recorded.
 - [x] Checkpoint: both independent control builds pass.
 - [x] Implement and verify the BQ16 proprietary importer.
-- [x] Import BQ16 components with provenance and hashes. 1445 entries verified.
+- [x] Import BQ16 components with provenance and hashes. 1449 entries verified.
 - [x] Add BQ16 hardware profile, Merlin services, and web assets.
 - [ ] Checkpoint: BQ16 builds and GT-BE98 still builds.
 - [x] Implement offline FIT and ABI checks against stock, with corruption tests.
