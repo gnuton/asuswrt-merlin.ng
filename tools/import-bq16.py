@@ -34,6 +34,7 @@ net/tftp.o net/ping.o net/net.o net/arp.o common/autoboot.o
 board/broadcom/bcmbca/board_sdk.o board/broadcom/bcmbca/board.o
 drivers/net/bcmbca/phy/dt_parsing.o drivers/net/bcmbca/bcmbca_xrdp_eth.o
 """.split()
+KERNEL_OBJECTS = ("mpm/impl1/bcm_mpm.o", "pktrunner/impl2/pktrunner.o")
 
 
 def sha256(path):
@@ -76,6 +77,10 @@ def inventory(source, destination):
         path = source / SDK / "router-sysdep/hnd_extra/prebuilt" / name
         if not path.is_file() or elf_identity(path) != {"bits": 64, "machine": 183, "type": 1}:
             raise ValueError("required AArch64 wireless object missing or incompatible: " + name)
+    for relative in KERNEL_OBJECTS:
+        path = source / SDK / "bcmdrivers/broadcom/char" / relative
+        if not path.is_file() or elf_identity(path) != {"bits": 64, "machine": 183, "type": 1}:
+            raise ValueError("required AArch64 kernel object missing or incompatible: " + relative)
     if elf_identity(cfg_server) != {"bits": 32, "machine": 40, "type": 2}:
         raise ValueError("cfg_server must use the 32-bit ARM userspace ABI")
 
@@ -114,6 +119,9 @@ def inventory(source, destination):
              ("stress/Makefile", "wlc_types.h"))
     add_tree(ROUTER / "hnd_extra/prebuilt",
              SDK / "router-sysdep.bq16/hnd_extra/prebuilt", ("wlc_types.h",))
+    for relative in KERNEL_OBJECTS:
+        pairs.append((SDK / "bcmdrivers/broadcom/char" / relative,
+                      SDK / "router-sysdep.bq16/hnd_extra/prebuilt" / Path(relative).name))
     add_tree(SDK / "hostTools/prebuilt", SDK / "hostTools/prebuilt/BQ16")
     add_tree(SDK / "bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt",
              SDK / "bcmdrivers/broadcom/net/wl/impl103/main/components/apps/acsdv2/prebuilt/BQ16")

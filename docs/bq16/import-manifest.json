@@ -3930,6 +3930,17 @@
       "source": "release/src/router/hnd_extra/prebuilt/bcm_enet.o"
     },
     {
+      "bytes": 1179872,
+      "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/bcm_mpm.o",
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "type": 1
+      },
+      "sha256": "6da3012fad4181ddca17d80ec6632162ed6b075ec92f04316ecdbd5c21993888",
+      "source": "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/mpm/impl1/bcm_mpm.o"
+    },
+    {
       "bytes": 204720,
       "destination": "release/src-rt-5.04behnd.4916/router-sysdep.bq16/hnd_extra/prebuilt/bcm_pcie_hcd.o",
       "elf": {
