@@ -459,7 +459,7 @@ static int nvram_check_and_set(char *name, char *value);
 #endif
 static int nvram_check_and_set_for_prefix(char *name, char *tmp, char *value);
 #define wan_prefix(unit, prefix)	snprintf(prefix, sizeof(prefix), "wan%d_", unit)
-#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING) && !defined(BQ16)
 extern void do_oauth_callback_cgi(char *url, FILE *stream);
 #endif
 
@@ -28647,7 +28647,8 @@ struct mime_handler mime_handlers[] =
 	{ "upload_blacklist_config.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_upload_blacklist_config_cgi, do_auth },
 	{ "start_config_sync.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_start_config_sync_cgi, do_auth },
 	{ "save_all_profile.cgi*", "application/octet-stream", no_cache_IE7, do_html_post_and_get, do_save_all_profile_cgi, do_auth },
-#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
+#if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING) && !defined(BQ16)
+	/* BQ16 GPL 39256 excludes this unused callback and supplies no implementation. */
 	{ "oauth_callback.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_oauth_callback_cgi, do_auth },
 #endif
 #ifdef RTCONFIG_FBWIFI

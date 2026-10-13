@@ -119,6 +119,11 @@ DSTDIR = $(INSTALLDIR)/lib/modules/2.6.22.19/kernel/fs
 endif # RTCONFIG_BCMARM
 endif
 
+# Keep the BQ16 filesystem modules paired with its GPL kernel objects.
+ifeq ($(BUILD_NAME),BQ16)
+SRCFILE = bq16/broadcom_arm_be_6813
+endif
+
 #ifeq ($(BUILD_NAME),DSL-AC68U)
 #SRCFILE = broadcom_arm_dsl_ac68u
 #DSTDIR = $(INSTALLDIR)/lib/modules/2.6.36.4brcmarm/kernel/fs
