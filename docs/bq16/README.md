@@ -42,6 +42,10 @@ applets are excluded for BQ16 because neither symbol exists in its donor
 libraries. ASUS's BQ16 `rc.c` also omits them. Other models retain their
 existing header and applets.
 
+ASUS's 39256 web server excludes the unused `oauth_callback.cgi` handler
+and its binaries have no `do_oauth_callback_cgi` implementation. BQ16
+keeps that vendor exclusion. Other models retain their existing handler.
+
 The pinned image and source hashes are in `inputs.json`. Start the
 top-level build with `make bq16 PARALLEL_BUILD=-j4`, not `make -j4 bq16`.
 The latter starts package configuration before prerequisite libraries
