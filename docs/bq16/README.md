@@ -2,6 +2,7 @@
 
 This port is not yet approved for flashing or daily use. Test results are
 tracked in `tasks/todo.md`; unchecked hardware tests remain unverified.
+The candidate and control-build results are recorded in `validation.md`.
 
 ## Source and hardware baseline
 
@@ -92,9 +93,9 @@ validating a different unit or a unit whose UBI allocation changed.
 
 Before any custom firmware was installed, `/tmp/boot_dmesg.log` reported
 PCIe core 1 link down. Cores 0, 2, and 3 were up. Only wl0, wl1, and wl2
-were present, and the stock MLO mapping was `2 1 0 -1`. This explains why
-the stock unit exposes three wireless interfaces, but does not establish
-the reason for the PCIe link failure. Retain the complete board/radio
+were present, and the stock MLO mapping was `2 1 0 -1`. These observations
+are consistent with an absent radio link. They do not establish why the
+link is down or prove the expected band-to-interface mapping. Retain the complete board/radio
 definitions and investigate this separately before four-band acceptance.
 
 ## Recovery preparation
