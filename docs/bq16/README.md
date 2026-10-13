@@ -11,7 +11,10 @@ tracked in `tasks/todo.md`; unchecked hardware tests remain unverified.
 - Stock image SHA-256: `00c411ef8ec2c7be2fa071acc0a6fbfe66b6d59328a72c8ef6c1a2462cc7091a`.
 - Actual unit: BQ16, EU/01, board `BQ16_2556_2`, bootloader 1.0.0.10.
 - SDK: `src-rt-5.04behnd.4916`, profile `96813GW`, chip 6813, Wi-Fi impl103.
-- Kernel: 4.19.294, AArch64. Router programs: 32-bit ARM soft-float ABI.
+- Kernel: 4.19.294, AArch64. Core router programs: 32-bit ARM soft-float ABI.
+  Some vendor utilities and their libraries are AArch64. The stock offline
+  audit found 393 ARM32 and 11 AArch64 ELF files among programs and their
+  dependencies, including `tdts_rule_agent`, filesystem tools, and ebtables.
 - Wireless driver: 17.10.369.39012, BSP BB0B.
 - Vendor settings: BCM53134 switch, NVSIZE 128, MLO_CONFIG_556 and
   MLO_DEFAULT_ACTIVE. The kernel profile defaults to BQ16_2556, while
@@ -59,6 +62,12 @@ copying them. Run from the donor with `REPO=/path/to/merlin
 Run `python3 -B tools/verify-bq16-image.py image.pkgtb --report report.json`
 for offline integrity and ABI checks, and `python3 -B -m unittest discover
 -s tools/tests -v` for corruption regression tests.
+
+The verifier checks all ELF programs in the firmware's executable
+directories, their dynamic loaders and libraries, and every kernel
+module. It checks library architecture for each caller. Symlinks to
+generated runtime files, such as `/tmp/lld2d.conf`, appear separately in
+the report. These checks do not execute services or validate their behavior.
 
 Validation uses the separate Ubuntu 24.04 image pinned in `inputs.json`.
 Install `python3 binutils squashfs-tools lzop` there. The old compiler

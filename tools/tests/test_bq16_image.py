@@ -5,6 +5,7 @@ import importlib.util
 from pathlib import Path
 import struct
 import unittest
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "verify-bq16-image.py"
@@ -88,6 +89,88 @@ class FitSafetyTests(unittest.TestCase):
         data = fixture().replace(b"sha256\0", b"sha512\0", 1)
         with self.assertRaisesRegex(ValueError, "SHA-256"):
             IMAGE.fit_images(data)
+
+
+class ServiceDependencyTests(unittest.TestCase):
+    def setUp(self):
+        self.vermagic = "4.19.294 SMP preempt mod_unload aarch64"
+
+        def elf(path, bits=1, machine=40):
+            header = bytearray(64)
+            header[:6] = b"\x7fELF" + bytes((bits, 1))
+            struct.pack_into("<H", header, 18, machine)
+            return bytes(header) + path.encode()
+
+        self.elf = elf
+        names = ("sbin/rc", "usr/sbin/httpd", "usr/sbin/wl", "usr/sbin/cfg_server",
+                 "usr/sbin/cfg_client", "lib/libnvram.so", "usr/bin/stubby",
+                 "lib/libgetdns.so.10")
+        self.files = {name: elf(name) for name in names}
+        name = "lib/modules/4.19.294/extra/dhd.ko"
+        self.files[name] = elf(name, 2, 183) + b"\0vermagic=" + self.vermagic.encode() + b"\0"
+
+    def mock_tool(self, *args, **kwargs):
+        if args[0] == "unsquashfs" and "-ll" in args:
+            lines = ["-rwxr-xr-x squashfs-root/" + name for name in self.files]
+            lines.append("lrwxrwxrwx squashfs-root/sbin/lld2d.conf -> /tmp/lld2d.conf")
+            return "\n".join(lines).encode()
+        if args[0] == "unsquashfs" and "-cat" in args:
+            return self.files[args[-1]]
+        if args[0] == "readelf":
+            data = Path(args[-1]).read_bytes()
+            if "-d" in args and data.endswith(b"usr/bin/stubby"):
+                return b" (NEEDED) Shared library: [libgetdns.so.10]\n"
+            if data.endswith(b"usr/sbin/tdts_rule_agent"):
+                if "-d" in args:
+                    return b" (NEEDED) Shared library: [libc.so.6]\n"
+                return b" [Requesting program interpreter: /lib64/ld-linux-aarch64.so.1]\n"
+            return b""
+        raise AssertionError(args)
+
+    def check(self):
+        with patch.object(IMAGE, "run", self.mock_tool):
+            return IMAGE.check_filesystem(Path("fixture.pkgtb"), 0, "4.19.294", self.vermagic)
+
+    def test_service_outside_core_daemons_and_its_library_are_checked(self):
+        report = self.check()
+        self.assertIn("usr/bin/stubby", report["elf"])
+        self.assertIn("lib/libgetdns.so.10", report["elf"])
+        self.assertEqual(report["runtime_program_aliases"], ["sbin/lld2d.conf"])
+
+    def test_missing_service_library_is_rejected(self):
+        del self.files["lib/libgetdns.so.10"]
+        with self.assertRaisesRegex(ValueError, "missing ELF dependency libgetdns.so.10"):
+            self.check()
+
+    def add_aarch64_helper(self):
+        for name in ("usr/sbin/tdts_rule_agent", "lib64/libc.so.6",
+                     "lib64/ld-linux-aarch64.so.1"):
+            self.files[name] = self.elf(name, 2, 183)
+        self.files["lib/libc.so.6"] = self.elf("lib/libc.so.6")
+
+    def test_aarch64_helper_uses_aarch64_libraries_and_interpreter(self):
+        self.add_aarch64_helper()
+        report = self.check()
+        self.assertEqual(report["elf"]["usr/sbin/tdts_rule_agent"]["bits"], 64)
+        self.assertIn("lib64/libc.so.6", report["elf"])
+        self.assertIn("lib64/ld-linux-aarch64.so.1", report["elf"])
+
+    def test_aarch64_helper_cannot_load_arm32_library(self):
+        self.add_aarch64_helper()
+        self.files["lib64/libc.so.6"] = self.elf("lib64/libc.so.6")
+        with self.assertRaisesRegex(ValueError, "wrong ELF ABI: lib64/libc.so.6"):
+            self.check()
+
+    def test_missing_program_interpreter_is_rejected(self):
+        self.add_aarch64_helper()
+        del self.files["lib64/ld-linux-aarch64.so.1"]
+        with self.assertRaisesRegex(ValueError, "missing filesystem entry: lib64/ld-linux-aarch64.so.1"):
+            self.check()
+
+    def test_core_router_program_must_stay_arm32(self):
+        self.files["usr/sbin/httpd"] = self.elf("usr/sbin/httpd", 2, 183)
+        with self.assertRaisesRegex(ValueError, "wrong ELF ABI: usr/sbin/httpd"):
+            self.check()
 
 
 if __name__ == "__main__":

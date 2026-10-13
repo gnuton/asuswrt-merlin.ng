@@ -137,8 +137,10 @@ def check_filesystem(image, offset, kernel, expected_vermagic):
         name, separator, target = path.partition(" -> ")
         entries[name] = target if separator else None
 
-    def resolve(path):
+    def resolve(path, optional=False):
         for _ in range(20):
+            if optional and path not in entries:
+                return None
             require(path in entries, "missing filesystem entry: " + path)
             target = entries[path]
             if target is None:
@@ -147,8 +149,13 @@ def check_filesystem(image, offset, kernel, expected_vermagic):
                                       else posixpath.join(posixpath.dirname(path), target))
         raise ValueError("filesystem symlink loop")
 
+    contents = {}
+
     def read(path):
-        return run("unsquashfs", "-o", str(offset), "-cat", str(image), resolve(path))
+        path = resolve(path)
+        if path not in contents:
+            contents[path] = run("unsquashfs", "-o", str(offset), "-cat", str(image), path)
+        return contents[path]
 
     def identity(data, bits, machine, name):
         require(len(data) >= 52 and data[:4] == b"\x7fELF", "not ELF: " + name)
@@ -159,19 +166,40 @@ def check_filesystem(image, offset, kernel, expected_vermagic):
 
     required = ["sbin/rc", "usr/sbin/httpd", "usr/sbin/wl",
                 "usr/sbin/cfg_server", "usr/sbin/cfg_client", "lib/libnvram.so"]
-    queue, checked = list(required), {}
+    queue, checked = [(path, 1, 40) for path in required], {}
+    # Include enabled services and utilities, not only the router's core daemons.
+    # Resolve BusyBox aliases once and avoid treating radio firmware as programs.
+    program_entries = {path: resolve(path, optional=True) for path in entries
+                       if posixpath.dirname(path) in ("bin", "sbin", "usr/bin", "usr/sbin")}
+    programs = set(program_entries.values()) - {None}
+    for path in sorted(programs):
+        data = read(path)
+        if not data.startswith(b"\x7fELF"):
+            continue
+        require(len(data) >= 52, "truncated ELF program: " + path)
+        abi = (data[4], struct.unpack_from("<H", data, 18)[0])
+        require(abi in ((1, 40), (2, 183)), "unsupported program architecture: " + path)
+        queue.append((path, *abi))
     with tempfile.TemporaryDirectory(prefix="bq16-elf-") as temporary:
         elf_path = Path(temporary) / "file.elf"
         while queue:
-            path = resolve(queue.pop())
+            path, bits, machine = queue.pop()
+            path = resolve(path)
+            data = read(path)
+            identity(data, bits, machine, path)
             if path in checked:
                 continue
-            data = read(path)
-            identity(data, 1, 40, path)
             elf_path.write_bytes(data)
             dynamic = run("readelf", "-d", str(elf_path)).decode()
             needed = re.findall(r"\(NEEDED\).*\[([^\]]+)\]", dynamic)
-            search = [posixpath.dirname(path), "lib", "usr/lib"]
+            program_headers = run("readelf", "-l", str(elf_path)).decode()
+            interpreter = re.search(r"Requesting program interpreter: ([^\]]+)\]", program_headers)
+            if interpreter:
+                queue.append((interpreter.group(1).lstrip("/"), bits, machine))
+            search = [posixpath.dirname(path)]
+            if bits == 2:
+                search.extend(("lib64", "usr/lib64"))
+            search.extend(("lib", "usr/lib"))
             for rpath in re.findall(r"\((?:RUNPATH|RPATH)\).*\[([^\]]+)\]", dynamic):
                 search.extend(p.replace("${ORIGIN}", posixpath.dirname(path))
                               .replace("$ORIGIN", posixpath.dirname(path)).lstrip("/")
@@ -180,8 +208,10 @@ def check_filesystem(image, offset, kernel, expected_vermagic):
                 matches = [posixpath.normpath(posixpath.join(directory, library)) for directory in search]
                 matches = [p for p in matches if p in entries]
                 require(bool(matches), "missing ELF dependency " + library + " for " + path)
-                queue.append(matches[0])
-            checked[path] = {"sha256": hashlib.sha256(data).hexdigest(), "needed": needed}
+                queue.append((matches[0], bits, machine))
+            checked[path] = {"sha256": hashlib.sha256(data).hexdigest(), "needed": needed,
+                             "bits": 32 if bits == 1 else 64, "machine": machine,
+                             "interpreter": interpreter.group(1) if interpreter else None}
         modules = {}
         for path in sorted(entries):
             if not path.startswith("lib/modules/") or not path.endswith(".ko"):
@@ -195,7 +225,9 @@ def check_filesystem(image, offset, kernel, expected_vermagic):
             require(value.split() == expected_vermagic.split(), "module vermagic mismatch: " + path)
             modules[path] = {"vermagic": value, "sha256": hashlib.sha256(data).hexdigest()}
     require("lib/modules/" + kernel + "/extra/dhd.ko" in modules, "missing DHD module")
-    return {"elf": checked, "modules": modules}
+    return {"elf": checked, "modules": modules,
+            "runtime_program_aliases": sorted(path for path, target in program_entries.items()
+                                              if target is None)}
 
 
 def verify(image, kernel="4.19.294"):
