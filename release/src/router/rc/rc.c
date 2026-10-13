@@ -607,12 +607,15 @@ static int rctest_main(int argc, char *argv[])
 		}
 	}
 #endif
+#if !defined(BQ16)
+	/* These diagnostic entry points are absent from BQ16's 39256 libcfgmnt. */
 	else if (strcmp(argv[1], "apmx_apgx_to_wlxy") == 0) {
 		apmx_apgx_to_wlxy();
 	}
 	else if (strcmp(argv[1], "sync_apg_ifnames_to_jffs") == 0) {
 		sync_apg_ifnames_to_jffs();
 	}
+#endif
 	else if (strcmp(argv[1], "check_sdn_ifcap")==0) {
 		create_sdn_ifcap();
 		if (check_wifi_band_cap(argv[2]) == 0)

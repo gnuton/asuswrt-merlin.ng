@@ -8352,6 +8352,12 @@
       "source": "release/src/router/cfg_mnt/prebuild/cfg_client"
     },
     {
+      "bytes": 6229,
+      "destination": "release/src/router/cfg_mnt/prebuild/BQ16/cfg_mtlan.h",
+      "sha256": "585025e4be236dfefa9109c65ae8db12b61b5812c4165885834f19b81c8011c1",
+      "source": "release/src/router/cfg_mnt/cfg_mtlan.h"
+    },
+    {
       "bytes": 22052,
       "destination": "release/src/router/cfg_mnt/prebuild/BQ16/cfg_reportstatus",
       "elf": {

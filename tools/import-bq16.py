@@ -106,6 +106,10 @@ def inventory(source, destination):
     for directory in MODEL_DIRS:
         excluded = ("init-broadcom.o",) if directory == "rc/prebuild" else ()
         add_tree(ROUTER / directory, ROUTER / directory / "BQ16", excluded)
+    # cfg_mnt's opaque library changed its APG interface between BSP releases.
+    # Compile callers against the header shipped with this model's library.
+    pairs.append((ROUTER / "cfg_mnt/cfg_mtlan.h",
+                  ROUTER / "cfg_mnt/prebuild/BQ16/cfg_mtlan.h"))
     add_tree(SDK / "router-sysdep", SDK / "router-sysdep.bq16",
              ("stress/Makefile", "wlc_types.h"))
     add_tree(ROUTER / "hnd_extra/prebuilt",

@@ -1,3 +1,6 @@
+#if defined(BQ16)
+#include "prebuild/BQ16/cfg_mtlan.h"
+#else
 #ifndef CFG_MTLAN_H
 #define CFG_MTLAN_H
 #include <stdio.h>
@@ -103,3 +106,4 @@ extern int update_fh_smart_connect_x(int *retval);
 extern int save_cfg_param_to_json(json_object *in, char *param);
 extern char* get_apg_value(apg_rule_st* apg_rule, unsigned short wifi_band, char *item, char *ret_value, int ret_value_bsize);
 #endif
+#endif /* BQ16 */

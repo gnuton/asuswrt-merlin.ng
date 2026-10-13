@@ -34,6 +34,14 @@ profiles and the user's selected default. Enabling it currently selects
 BusyBox's legacy RPC mount code, whose headers are absent from this
 glibc 2.32 toolchain. Scripts, DNS services, VPN, and AiMesh remain enabled.
 
+The BQ16 import also supplies the donor's `cfg_mtlan.h`. The 39256
+`libcfgmnt.so` takes one argument for `_sync_apgx_to_wlunit`, while the
+fork's shared header declares two. BQ16 callers use the matching donor
+header. The `apmx_apgx_to_wlxy` and `sync_apg_ifnames_to_jffs` diagnostic
+applets are excluded for BQ16 because neither symbol exists in its donor
+libraries. ASUS's BQ16 `rc.c` also omits them. Other models retain their
+existing header and applets.
+
 The pinned image and source hashes are in `inputs.json`. Start the
 top-level build with `make bq16 PARALLEL_BUILD=-j4`, not `make -j4 bq16`.
 The latter starts package configuration before prerequisite libraries
