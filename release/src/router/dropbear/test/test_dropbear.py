@@ -38,8 +38,15 @@ def dropbear(request):
 	yield p
 	p.terminate()
 	print("Terminated dropbear. Flushing output:")
-	for l in p.stderr:
-		print(l.rstrip())
+	lines = [l.rstrip() for l in p.stderr]
+	for l in lines:
+		print(l)
+
+	for l in lines:
+		# Crude segfault detection to catch segfaults in server
+		# child processes.
+		assert "Aiee, segfault" not in l
+
 	print("Done")
 
 def dbclient(request, *args, **kwargs):
@@ -76,7 +83,7 @@ def own_venv_command():
 class HandleTcp(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 	# override TCPServer's default, avoids TIME_WAIT
-	allow_reuse_addr = True
+	allow_reuse_address = True
 
 	""" Listens for a single incoming request, sends a response if given,
 	and returns the inbound data.

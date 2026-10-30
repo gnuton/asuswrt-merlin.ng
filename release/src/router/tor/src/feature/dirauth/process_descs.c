@@ -228,6 +228,12 @@ dirserv_load_fingerprint_file(void)
         add_status = RTR_INVALID;
     }  else if (!strcasecmp(nickname, "!middleonly")) {
         add_status = RTR_MIDDLEONLY;
+    } else if (!strcasecmp(nickname, "!stripguard")) {
+        add_status = RTR_STRIPGUARD;
+    } else if (!strcasecmp(nickname, "!striphsdir")) {
+        add_status = RTR_STRIPHSDIR;
+    } else if (!strcasecmp(nickname, "!stripv2dir")) {
+        add_status = RTR_STRIPV2DIR;
     }
 
     /* Check if fingerprint is RSA or ed25519 by verifying it. */
@@ -404,8 +410,8 @@ dirserv_rejects_tor_version(const char *platform,
   static const char please_upgrade_string[] =
     "Tor version is insecure or unsupported. Please upgrade!";
 
-  /* Anything before 0.4.7.0 is unsupported. Reject them. */
-  if (!tor_version_as_new_as(platform,"0.4.7.0-alpha-dev")) {
+  if (!tor_version_as_new_as(platform,
+        dirauth_get_options()->MinimalAcceptedServerVersion)) {
     if (msg) {
       *msg = please_upgrade_string;
     }
@@ -627,6 +633,9 @@ dirserv_set_node_flags_from_authoritative_status(node_t *node,
   node->is_valid = (authstatus & RTR_INVALID) ? 0 : 1;
   node->is_bad_exit = (authstatus & RTR_BADEXIT) ? 1 : 0;
   node->is_middle_only = (authstatus & RTR_MIDDLEONLY) ? 1 : 0;
+  node->strip_guard = (authstatus & RTR_STRIPGUARD) ? 1 : 0;
+  node->strip_hsdir = (authstatus & RTR_STRIPHSDIR) ? 1 : 0;
+  node->strip_v2dir = (authstatus & RTR_STRIPV2DIR) ? 1 : 0;
 }
 
 /** True iff <b>a</b> is more severe than <b>b</b>. */
@@ -761,6 +770,16 @@ dirserv_add_descriptor(routerinfo_t *ri, const char **msg, const char *source)
 
   log_info(LD_DIR, "Assessing new descriptor: %s: %s",
            ri->nickname, ri->platform);
+
+  /* For now, TAP keys are still required. */
+  if (! ri->tap_onion_pkey) {
+    log_info(LD_DIRSERV, "Rejecting descriptor from %s (source: %s); "
+             "it has no TAP key.",
+             router_describe(ri), source);
+    *msg = "Missing TAP key in descriptor.";
+    r = ROUTER_AUTHDIR_REJECTS;
+    goto fail;
+  }
 
   /* Check whether this descriptor is semantically identical to the last one
    * from this server.  (We do this here and not in router_add_to_routerlist
@@ -964,6 +983,21 @@ directory_remove_invalid(void)
       log_info(LD_DIRSERV, "Router '%s' is now %smiddle-only", description,
                (r & RTR_MIDDLEONLY) ? "" : "not");
       node->is_middle_only = (r&RTR_MIDDLEONLY) ? 1: 0;
+    }
+    if (bool_neq((r & RTR_STRIPGUARD), node->strip_guard)) {
+      log_info(LD_DIRSERV, "Router '%s' is now %s guard", description,
+               (r & RTR_STRIPGUARD) ? "stripped of" : "not");
+      node->strip_guard = (r&RTR_STRIPGUARD) ? 1: 0;
+    }
+    if (bool_neq((r & RTR_STRIPHSDIR), node->strip_hsdir)) {
+      log_info(LD_DIRSERV, "Router '%s' is now %s hidden service directory",
+               description, (r & RTR_STRIPHSDIR) ? "stripped of" : "not");
+      node->strip_hsdir = (r&RTR_STRIPHSDIR) ? 1: 0;
+    }
+    if (bool_neq((r & RTR_STRIPV2DIR), node->strip_v2dir)) {
+      log_info(LD_DIRSERV, "Router '%s' is now %s v2 directory",
+               description, (r & RTR_STRIPV2DIR) ? "stripped of" : "not");
+      node->strip_v2dir = (r&RTR_STRIPV2DIR) ? 1: 0;
     }
   } SMARTLIST_FOREACH_END(node);
 

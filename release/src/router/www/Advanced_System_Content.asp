@@ -147,7 +147,7 @@ wifison = '<% nvram_get("wifison_ready"); %>';
 var orig_shell_timeout_x = Math.floor(parseInt("<% nvram_get("shell_timeout"); %>")/60);
 var orig_enable_acc_restriction = '<% nvram_get("enable_acc_restriction"); %>';
 var orig_restrict_rulelist_array = [];
-if((ntpd_support) && (isSwMode('rt')))
+if(ntpd_support && (isSwMode("RT") || isSwMode("WISP")))
 	var orig_ntpd_server_redir = '<% nvram_get("ntpd_server_redir"); %>';
 var restrict_rulelist_array = [];
 var accounts = [<% get_all_accounts(); %>][0];
@@ -238,6 +238,20 @@ var current_page = window.location.pathname.split("/").pop();
 var faq_index_tmp = get_faq_index(FAQ_List, current_page, 1);
 
 var secure_default = isSupport("secure_default");
+
+var get_s46_hgw_case_tmp = '<% nvram_get("wan0_s46_hgw_case"); %>';  //topology 2,3,6
+var s46_ports_check_flag_tmp = (get_s46_hgw_case_tmp == '3' || get_s46_hgw_case_tmp == '6');    //true for topology 3||6
+var get_ipv6_s46_ports_tmp = (Softwire46_support && (wan0_proto=="v6plus" || wan0_proto=="ocnvc" || wan0_proto=="v6opt"))? '<%nvram_get("ipv6_s46_ports");%>':'0';
+var array_ipv6_s46_ports_tmp = [];
+if(get_ipv6_s46_ports_tmp != "0" && get_ipv6_s46_ports_tmp != ""){
+    array_ipv6_s46_ports_tmp = get_ipv6_s46_ports_tmp.split(" ");
+}
+if (typeof s46_ports_check_flag === "undefined") {
+    s46_ports_check_flag = s46_ports_check_flag_tmp;
+}
+if (typeof array_ipv6_s46_ports === "undefined") {
+    array_ipv6_s46_ports = array_ipv6_s46_ports_tmp;
+}
 
 function initial(){	
 	//parse nvram to array
@@ -534,7 +548,7 @@ function initial(){
 			document.form.usb_idle_exclude_i.checked = true;
 	}
 
-	if ( (ntpd_support) && (isSwMode('rt')) )
+	if ( ntpd_support && (isSwMode("RT") || isSwMode("WISP")) )
 		showhide("ntpd_redir_tr", '<% nvram_get("ntpd_enable"); %>');
 	else {
 		showhide("ntpd_server_tr", 0);
@@ -3028,7 +3042,7 @@ function Get_Component_reboot_schedule_ui(config){
 				</tr>
 				<script>
 					var http_enable_default = httpApi.nvramDefaultGet(["http_enable"]).http_enable;
-					if(in_territory_code("AA") || in_territory_code("SG") && http_enable_default == "2"){
+					if((in_territory_code("AA") || in_territory_code("SG") || in_territory_code("HK")) && http_enable_default == "2"){
 						document.getElementById("http_enable").options[2].text = "<#Setting_factorydefault_value#>";
 					}
 				</script>

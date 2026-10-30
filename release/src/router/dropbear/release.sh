@@ -9,7 +9,7 @@ else
     TESTREL=0
 fi
 
-VERSION=$(echo '#include "src/default_options.h"\n#include "src/sysoptions.h"\necho DROPBEAR_VERSION' | cpp -DHAVE_CRYPT - | sh)
+VERSION=$(echo '#include "src/default_options.h"\n#include "src/sysoptions.h"\necho DROPBEAR_VERSION' | cpp -DHAVE_CRYPT -DHAVE_SETRESGID - | sh)
 
 if [ $TESTREL -eq 1 ]; then
     echo Making test tarball for "$VERSION" ...
@@ -63,7 +63,7 @@ chmod -R a+rX $RELDIR
 
 RELDATE=$(head -n1 CHANGES | cut -d - -f 2)
 # timezone keeps it consistent, choose a plausible release time
-RELTIME="22:30:00 +0800"
+RELTIME="19:00:00 +0800"
 
 # from https://reproducible-builds.org/docs/archives/
 TAROPTS="--sort=name --owner=0 --group=0 --numeric-owner"

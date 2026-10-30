@@ -1,8 +1,8 @@
-/* $Id: upnpsoap.c,v 1.165 2023/06/26 23:15:56 nanard Exp $ */
+/* $Id: upnpsoap.c,v 1.169 2025/04/06 22:30:26 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * MiniUPnP project
  * http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
- * (c) 2006-2024 Thomas Bernard
+ * (c) 2006-2026 Thomas Bernard
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution */
 
@@ -129,6 +129,12 @@ GetConnectionTypeInfo(struct upnphttp * h, const char * action, const char * ns)
 
 	bodylen = snprintf(body, sizeof(body), resp,
 	         action, ns, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -158,6 +164,12 @@ GetTotalBytesSent(struct upnphttp * h, const char * action, const char * ns)
 #else /* UPNP_STRICT */
              r<0?0:data.obytes, action);
 #endif /* UPNP_STRICT */
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -189,6 +201,12 @@ GetTotalBytesReceived(struct upnphttp * h, const char * action, const char * ns)
 #else /* UPNP_STRICT */
 	         r<0?0:data.ibytes, action);
 #endif /* UPNP_STRICT */
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -215,6 +233,12 @@ GetTotalPacketsSent(struct upnphttp * h, const char * action, const char * ns)
 #else /* UPNP_STRICT */
 	         r<0?0:data.opackets, action);
 #endif /* UPNP_STRICT */
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -241,6 +265,12 @@ GetTotalPacketsReceived(struct upnphttp * h, const char * action, const char * n
 #else /* UPNP_STRICT */
 	         r<0?0:data.ipackets, action);
 #endif /* UPNP_STRICT */
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -282,6 +312,12 @@ GetCommonLinkProperties(struct upnphttp * h, const char * action, const char * n
 	    wan_access_type,
 	    upstream_bitrate, downstream_bitrate,
 	    status, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -309,6 +345,12 @@ GetStatusInfo(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, ns, /*SERVICE_TYPE_WANIPC,*/
 		status, (long)uptime, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -343,6 +385,12 @@ GetNATRSIPStatus(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, ns, /*SERVICE_TYPE_WANIPC,*/
 		action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -376,8 +424,12 @@ GetExternalIPAddress(struct upnphttp * h, const char * action, const char * ns)
 				ext_if_name);
 			ext_ip_addr[0] = '\0';
 		} else if (addr_is_reserved(&addr)) {
-			syslog(LOG_NOTICE, "private/reserved address %s is not suitable for external IP", ext_ip_addr);
-			ext_ip_addr[0] = '\0';
+			if (GETFLAG(ALLOWPRIVATEIPV4MASK)) {
+				syslog(LOG_WARNING, "IGNORED : private/reserved address %s is not suitable for external IP", ext_ip_addr);
+			} else {
+				syslog(LOG_NOTICE, "private/reserved address %s is not suitable for external IP", ext_ip_addr);
+				ext_ip_addr[0] = '\0';
+			}
 		}
 	}
 #else
@@ -407,6 +459,12 @@ GetExternalIPAddress(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 	              action, ns, /*SERVICE_TYPE_WANIPC,*/
 				  ext_ip_addr, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -589,6 +647,12 @@ AddPortMapping(struct upnphttp * h, const char * action, const char * ns)
 	case 0:	/* success */
 		bodylen = snprintf(body, sizeof(body), resp,
 		                   action, ns/*SERVICE_TYPE_WANIPC*/);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+			return;
+		}
 		BuildSendAndCloseSoapResp(h, body, bodylen);
 		break;
 	case -4:
@@ -762,6 +826,12 @@ AddAnyPortMapping(struct upnphttp * h, const char * action, const char * ns)
 		bodylen = snprintf(body, sizeof(body), resp,
 		              action, ns, /*SERVICE_TYPE_WANIPC,*/
 					  eport, action);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+			return;
+		}
 		BuildSendAndCloseSoapResp(h, body, bodylen);
 		break;
 	case -2:	/* already redirected */
@@ -790,13 +860,13 @@ GetSpecificPortMappingEntry(struct upnphttp * h, const char * action, const char
 		"<NewLeaseDuration>%u</NewLeaseDuration>"
 		"</u:%sResponse>";
 
-	char body[1024];
+	char body[512+MINIUPNPD_DESC_SIZE];
 	int bodylen;
 	struct NameValueParserData data;
 	const char * r_host, * ext_port, * protocol;
 	unsigned short eport, iport;
 	char int_ip[32];
-	char desc[64];
+	char desc[MINIUPNPD_DESC_SIZE];
 	unsigned int leaseduration = 0;
 
 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
@@ -860,7 +930,13 @@ GetSpecificPortMappingEntry(struct upnphttp * h, const char * action, const char
 				action, ns/*SERVICE_TYPE_WANIPC*/,
 				(unsigned int)iport, int_ip, desc, leaseduration,
 				action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 
 	ClearNameValueList(&data);
@@ -970,7 +1046,13 @@ DeletePortMapping(struct upnphttp * h, const char * action, const char * ns)
 	{
 		bodylen = snprintf(body, sizeof(body), resp,
 		                   action, ns, action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 
 	ClearNameValueList(&data);
@@ -1047,7 +1129,13 @@ DeletePortMappingRange(struct upnphttp * h, const char * action, const char * ns
 	free(port_list);
 	bodylen = snprintf(body, sizeof(body), resp,
 	                   action, ns, action);
-	BuildSendAndCloseSoapResp(h, body, bodylen);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+	} else {
+		BuildSendAndCloseSoapResp(h, body, bodylen);
+	}
 
 	ClearNameValueList(&data);
 }
@@ -1075,7 +1163,7 @@ GetGenericPortMappingEntry(struct upnphttp * h, const char * action, const char 
 	const char * m_index;
 	char * endptr;
 	char protocol[8], iaddr[32];
-	char desc[64];
+	char desc[MINIUPNPD_DESC_SIZE];
 	char rhost[40];
 	unsigned int leaseduration = 0;
 	struct NameValueParserData data;
@@ -1122,7 +1210,7 @@ GetGenericPortMappingEntry(struct upnphttp * h, const char * action, const char 
 	else
 	{
 		int bodylen;
-		char body[2048];
+		char body[512+MINIUPNPD_DESC_SIZE];
 #ifdef ENABLE_PCP
 		hide_pcp_nonce(desc);
 #endif
@@ -1130,7 +1218,13 @@ GetGenericPortMappingEntry(struct upnphttp * h, const char * action, const char 
 			action, ns, /*SERVICE_TYPE_WANIPC,*/ rhost,
 			(unsigned int)eport, protocol, (unsigned int)iport, iaddr, desc,
 		    leaseduration, action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 
 	ClearNameValueList(&data);
@@ -1171,11 +1265,12 @@ GetListOfPortMappings(struct upnphttp * h, const char * action, const char * ns)
 	char * body;
 	size_t bodyalloc;
 	int bodylen;
+	int n;
 
 	int r = -1;
 	unsigned short iport;
 	char int_ip[32];
-	char desc[64];
+	char desc[MINIUPNPD_DESC_SIZE];
 	char rhost[64];
 	unsigned int leaseduration = 0;
 
@@ -1244,8 +1339,9 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 	}
 	bodylen = snprintf(body, bodyalloc, resp_start,
 	              action, ns/*SERVICE_TYPE_WANIPC*/);
-	if(bodylen < 0)
+	if(bodylen < 0 || bodylen >= (int)bodyalloc)
 	{
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, bodyalloc);
 		SoapError(h, 501, "Action Failed");
 		free(body);
 		return;
@@ -1258,8 +1354,8 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 	/* loop through port mappings */
 	for(i = 0; number > 0 && i < list_size; i++)
 	{
-		/* have a margin of 1024 bytes to store the new entry */
-		if((unsigned int)bodylen + 1024 > bodyalloc)
+		/* have a margin of 1024 bytes + MINIUPNPD_DESC_SIZE to store the new entry */
+		if((unsigned int)bodylen + 1024 + MINIUPNPD_DESC_SIZE > bodyalloc)
 		{
 			char * body_sav = body;
 			bodyalloc += 4096;
@@ -1285,10 +1381,16 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 #ifdef ENABLE_PCP
 			hide_pcp_nonce(desc);
 #endif
-			bodylen += snprintf(body+bodylen, bodyalloc-bodylen, entry,
-			                    rhost, port_list[i], protocol,
-			                    iport, int_ip, desc, leaseduration);
-			number--;
+			n = snprintf(body+bodylen, bodyalloc-bodylen, entry,
+			             rhost, port_list[i], protocol,
+			             iport, int_ip, desc, leaseduration);
+			if (n < 0 || n >= (int)(bodyalloc-bodylen)) {
+				/* ignore the error in the output */
+				syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", n, (bodyalloc-bodylen));
+			} else {
+				bodylen += n;
+				number--;
+			}
 		}
 	}
 	free(port_list);
@@ -1303,16 +1405,22 @@ http://www.upnp.org/schemas/gw/WANIPConnection-v2.xsd">
 		{
 			syslog(LOG_CRIT, "realloc(%p, %u) FAILED", body_sav, (unsigned)bodyalloc);
 			ClearNameValueList(&data);
-			SoapError(h, 501, "Action Failed");
+			SoapError(h, 501, "Action Failed");	/* TODO : use UDAP error 603 Out of Memory */
 			free(body_sav);
 			return;
 		}
 	}
 	memcpy(body+bodylen, list_end, sizeof(list_end));
 	bodylen += (sizeof(list_end) - 1);
-	bodylen += snprintf(body+bodylen, bodyalloc-bodylen, resp_end,
-	                    action);
-	BuildSendAndCloseSoapResp(h, body, bodylen);
+	n = snprintf(body+bodylen, bodyalloc-bodylen, resp_end,
+	             action);
+	if (n < 0 || n >= (int)(bodyalloc-bodylen)) {
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", n, bodyalloc-bodylen);
+		SoapError(h, 501, "Action Failed");
+	} else {
+		bodylen += n;
+		BuildSendAndCloseSoapResp(h, body, bodylen);
+	}
 	free(body);
 
 	ClearNameValueList(&data);
@@ -1353,7 +1461,13 @@ SetDefaultConnectionService(struct upnphttp * h, const char * action, const char
 			syslog(LOG_INFO, "%s(%s) : Ignored", action, p);
 			bodylen = snprintf(body, sizeof(body), resp,
 			                   action, ns, action);
-			BuildSendAndCloseSoapResp(h, body, bodylen);
+			if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+				/* snprintf() output was truncated */
+				syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+				SoapError(h, 501, "Action Failed");
+			} else {
+				BuildSendAndCloseSoapResp(h, body, bodylen);
+			}
 		}
 	} else {
 		/* missing argument */
@@ -1384,6 +1498,12 @@ GetDefaultConnectionService(struct upnphttp * h, const char * action, const char
 	/* namespace : urn:schemas-upnp-org:service:Layer3Forwarding:1 */
 	bodylen = snprintf(body, sizeof(body), resp,
 	                   action, ns, uuidvalue_wcd, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 #endif
@@ -1473,7 +1593,13 @@ QueryStateVariable(struct upnphttp * h, const char * action, const char * ns)
 		bodylen = snprintf(body, sizeof(body), resp,
                            action, ns,/*"urn:schemas-upnp-org:control-1-0",*/
 		                   status, action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 #if 0
 	/* not useful */
@@ -1496,7 +1622,13 @@ QueryStateVariable(struct upnphttp * h, const char * action, const char * ns)
 		bodylen = snprintf(body, sizeof(body), resp,
                            action, ns,/*"urn:schemas-upnp-org:control-1-0",*/
 		                   strn, action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 	else
 	{
@@ -1530,6 +1662,12 @@ GetFirewallStatus(struct upnphttp * h, const char * action, const char * ns)
 	    GETFLAG(IPV6FCFWDISABLEDMASK) ? 0 : 1,
 	    GETFLAG(IPV6FCINBOUNDDISALLOWEDMASK) ? 0 : 1,
 	    action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -1604,35 +1742,47 @@ static int connecthostport(const char * host, unsigned short port, char * result
 }
 #endif
 
-/* Check the security policy rights
- * Pinhole InternalClient address must correspond to the action sender
- * returns 1 if it passes.
- * call SoapError() and returns 0 if it fails
- * Side effect : if int_ip is a hostname, convert it to litteral ipv6 */
+/*! \brief Check the security policy rights for pinhole.
+ * Pinhole InternalClient address must match the action sender.
+ * if int_ip is a hostname, converts it to litteral ipv6 into int_ip_resolved
+ * \param[in] h upnphttp object
+ * \param[in] int_ip InternalClient argument or real internal client IP
+ * \param[in] int_port InternalPort argument
+ * \param[out] int_ip_resolved a INET6_ADDRSTRLEN long char buffer
+ * \return 1 if it passes, call SoapError() and returns 0 or -1 if it fails
+ */
 static int
-PinholeVerification(struct upnphttp * h, char * int_ip, unsigned short int_port)
+PinholeVerification(struct upnphttp * h, const char * int_ip, unsigned short int_port, char * int_ip_resolved)
 {
 	char clientaddr_str[INET6_ADDRSTRLEN];
 	struct in6_addr result_ip;
 
-	/* if ip not valid assume hostname and convert */
-	if (inet_pton(AF_INET6, int_ip, &result_ip) <= 0)
+	if (int_ip_resolved != NULL)
 	{
-		int r;
-		struct addrinfo hints, *ai, *p;
-
-		syslog(LOG_INFO, "%s: InternalClient %s is not an IPv6, assume hostname and convert",
-		       "PinholeVerification", int_ip);
-
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = 0; /* we may indicate which protocol IPPROTO_UDP / IPPROTO_TCP / IPPROTO_SCTP / IPPROTO_UDPLITE */
-
-		r = getaddrinfo(int_ip, NULL, &hints, &ai);
-		if (r == 0)
+		int_ip_resolved[0] = '\0';
+		/* if ip not valid assume hostname and convert */
+		if (inet_pton(AF_INET6, int_ip, &result_ip) <= 0)
 		{
+			int r;
+			struct addrinfo hints, *ai, *p;
 			int found = 0;
+
+			syslog(LOG_INFO, "%s: InternalClient %s is not an IPv6, assume hostname and convert",
+			       "PinholeVerification", int_ip);
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_socktype = SOCK_STREAM;
+			hints.ai_protocol = 0; /* we may indicate which protocol IPPROTO_UDP / IPPROTO_TCP / IPPROTO_SCTP / IPPROTO_UDPLITE */
+
+			r = getaddrinfo(int_ip, NULL, &hints, &ai);
+			if (r != 0)
+			{
+				syslog(LOG_WARNING, "%s: Failed to convert hostname '%s' to IP address : %s",
+				       "PinholeVerification", int_ip, gai_strerror(r));
+				SoapError(h, 402, "Invalid Args");
+				return -1;
+			}
 			for(p = ai; p; p = p->ai_next)
 			{
 				if(p->ai_family == AF_INET6)
@@ -1640,18 +1790,23 @@ PinholeVerification(struct upnphttp * h, char * int_ip, unsigned short int_port)
 					if (!found)
 					{
 						result_ip = ((struct sockaddr_in6 *)p->ai_addr)->sin6_addr;
-						if (inet_ntop(AF_INET6, &result_ip, int_ip, sizeof(struct in6_addr)) == NULL)
+
+						if (inet_ntop(AF_INET6, &result_ip, int_ip_resolved, INET6_ADDRSTRLEN) == NULL)
+						{
 							syslog(LOG_WARNING, "%s: inet_ntop(): %m", "PinholeVerification");
-						syslog(LOG_INFO, "%s: InternalClient resolved as %s",
-						       "PinholeVerification", int_ip);
+							SoapError(h, 501, "Action Failed");
+							return -1;
+						}
+						syslog(LOG_INFO, "%s: InternalClient \"%s\" resolved as %s",
+						       "PinholeVerification", int_ip, int_ip_resolved);
 						found = 1;
 					}
 					else
 					{
 						char tmp[48];
 						sockaddr_to_string(p->ai_addr, tmp, sizeof(tmp));
-						syslog(LOG_INFO, "%s: additionnal IPv6: %s",
-						       "PinholeVerification", tmp);
+						syslog(LOG_INFO, "%s: additional IPv6 for \"%s\" : %s",
+						       "PinholeVerification", int_ip, tmp);
 					}
 				}
 			}
@@ -1666,9 +1821,18 @@ PinholeVerification(struct upnphttp * h, char * int_ip, unsigned short int_port)
 		}
 		else
 		{
-			syslog(LOG_WARNING, "%s: Failed to convert hostname '%s' to IP address : %s",
-			       "PinholeVerification", int_ip, gai_strerror(r));
-			SoapError(h, 402, "Invalid Args");
+			/* it was already OK */
+			strncpy(int_ip_resolved, int_ip, INET6_ADDRSTRLEN);
+			int_ip_resolved[INET6_ADDRSTRLEN-1] = '\0';
+		}
+	}
+	else
+	{
+		/* no need to copy to int_ip_resolved, but we still need to fill result_ip up */
+		if (inet_pton(AF_INET6, int_ip, &result_ip) <= 0)
+		{
+			syslog(LOG_ERR, "inet_pton(%s)", int_ip);
+			SoapError(h, 501, "Action Failed");
 			return -1;
 		}
 	}
@@ -1682,7 +1846,7 @@ PinholeVerification(struct upnphttp * h, char * int_ip, unsigned short int_port)
 	if(memcmp(&h->clientaddr_v6, &result_ip, sizeof(struct in6_addr)) != 0)
 	{
 		syslog(LOG_INFO, "%s: Client %s tried to access pinhole for internal %s and is not authorized",
-		       "PinholeVerification", clientaddr_str, int_ip);
+		       "PinholeVerification", clientaddr_str, int_ip_resolved == NULL ? int_ip : int_ip_resolved);
 		SoapError(h, 606, "Action not authorized");
 		return 0;
 	}
@@ -1718,6 +1882,7 @@ AddPinhole(struct upnphttp * h, const char * action, const char * ns)
 	int bodylen;
 	struct NameValueParserData data;
 	char * rem_host, * rem_port, * int_ip, * int_port, * protocol, * leaseTime;
+	char int_ip_resolved[INET6_ADDRSTRLEN];
 	int uid = 0;
 	unsigned short iport, rport;
 	int ltime;
@@ -1839,19 +2004,19 @@ AddPinhole(struct upnphttp * h, const char * action, const char * ns)
 		goto clear_and_exit;
 	}
 
-	if(PinholeVerification(h, int_ip, iport) <= 0)
+	if(PinholeVerification(h, int_ip, iport, int_ip_resolved) <= 0)
 		goto clear_and_exit;
 
 	syslog(LOG_INFO, "%s: (inbound) from [%s]:%hu to [%s]:%hu with proto %ld during %d sec",
 	       action, rem_host?rem_host:"any",
-	       rport, int_ip, iport,
+	       rport, int_ip_resolved, iport,
 	       proto, ltime);
 
 	/* In cases where the RemoteHost, RemotePort, InternalPort,
 	 * InternalClient and Protocol are the same than an existing pinhole,
 	 * but LeaseTime is different, the device MUST extend the existing
 	 * pinhole's lease time and return the UniqueID of the existing pinhole. */
-	r = upnp_add_inboundpinhole(rem_host, rport, int_ip, iport, proto, "IGD2 pinhole", ltime, &uid);
+	r = upnp_add_inboundpinhole(rem_host, rport, int_ip_resolved, iport, proto, "IGD2 pinhole", ltime, &uid);
 
 	switch(r)
 	{
@@ -1860,7 +2025,13 @@ AddPinhole(struct upnphttp * h, const char * action, const char * ns)
 			                   resp, action,
 			                   ns/*"urn:schemas-upnp-org:service:WANIPv6FirewallControl:1"*/,
 			                   uid, action);
-			BuildSendAndCloseSoapResp(h, body, bodylen);
+			if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+				/* snprintf() output was truncated */
+				syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+				SoapError(h, 501, "Action Failed");
+			} else {
+				BuildSendAndCloseSoapResp(h, body, bodylen);
+			}
 			break;
 		case -1: 	/* not permitted */
 			SoapError(h, 701, "PinholeSpaceExhausted");
@@ -1929,7 +2100,7 @@ UpdatePinhole(struct upnphttp * h, const char * action, const char * ns)
 	                          NULL, NULL);
 	if (n >= 0)
 	{
-		if(PinholeVerification(h, iaddr, iport) <= 0)
+		if(PinholeVerification(h, iaddr, iport, NULL) <= 0)
 			return;
 	}
 	else if(n == -2)
@@ -1954,7 +2125,13 @@ UpdatePinhole(struct upnphttp * h, const char * action, const char * ns)
 	else {
 		bodylen = snprintf(body, sizeof(body), resp,
 		                   action, ns, action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 }
 
@@ -2012,7 +2189,13 @@ GetOutboundPinholeTimeout(struct upnphttp * h, const char * action, const char *
 			bodylen = snprintf(body, sizeof(body), resp,
 			                   action, ns/*"urn:schemas-upnp-org:service:WANIPv6FirewallControl:1"*/,
 			                   opt, action);
-			BuildSendAndCloseSoapResp(h, body, bodylen);
+			if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+				/* snprintf() output was truncated */
+				syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+				SoapError(h, 501, "Action Failed");
+			} else {
+				BuildSendAndCloseSoapResp(h, body, bodylen);
+			}
 			break;
 		case -5:	/* Protocol not supported */
 			SoapError(h, 705, "ProtocolNotSupported");
@@ -2071,7 +2254,7 @@ DeletePinhole(struct upnphttp * h, const char * action, const char * ns)
 	                          &leasetime, NULL);
 	if (n >= 0)
 	{
-		if(PinholeVerification(h, iaddr, iport) <= 0)
+		if(PinholeVerification(h, iaddr, iport, NULL) <= 0)
 			return;
 	}
 	else if(n == -2)
@@ -2097,6 +2280,12 @@ DeletePinhole(struct upnphttp * h, const char * action, const char * ns)
 	       action, uid);
 	bodylen = snprintf(body, sizeof(body), resp,
 	                   action, ns, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 
@@ -2142,8 +2331,8 @@ CheckPinholeWorking(struct upnphttp * h, const char * action, const char * ns)
 	                          NULL, &packets);
 	if (r >= 0)
 	{
-		if(PinholeVerification(h, iaddr, iport) <= 0)
-			return ;
+		if(PinholeVerification(h, iaddr, iport, NULL) <= 0)
+			return;
 		if(packets == 0)
 		{
 			SoapError(h, 709, "NoTrafficReceived");
@@ -2152,7 +2341,13 @@ CheckPinholeWorking(struct upnphttp * h, const char * action, const char * ns)
 		bodylen = snprintf(body, sizeof(body), resp,
 						action, ns/*"urn:schemas-upnp-org:service:WANIPv6FirewallControl:1"*/,
 						1, action);
-		BuildSendAndCloseSoapResp(h, body, bodylen);
+		if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+			/* snprintf() output was truncated */
+			syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+			SoapError(h, 501, "Action Failed");
+		} else {
+			BuildSendAndCloseSoapResp(h, body, bodylen);
+		}
 	}
 	else if(r == -2)
 		SoapError(h, 704, "NoSuchEntry");
@@ -2203,8 +2398,8 @@ GetPinholePackets(struct upnphttp * h, const char * action, const char * ns)
 	                          &leasetime, &packets);
 	if (n >= 0)
 	{
-		if(PinholeVerification(h, iaddr, iport)<=0)
-			return ;
+		if(PinholeVerification(h, iaddr, iport, NULL) <= 0)
+			return;
 	}
 #if 0
 	else if(r == -4 || r == -1)
@@ -2216,6 +2411,12 @@ GetPinholePackets(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 			action, ns/*"urn:schemas-upnp-org:service:WANIPv6FirewallControl:1"*/,
 			packets, action);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+		return;
+	}
 	BuildSendAndCloseSoapResp(h, body, bodylen);
 }
 #endif
@@ -2258,7 +2459,13 @@ SendSetupMessage(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 	                   action, ns/*"urn:schemas-upnp-org:service:DeviceProtection:1"*/,
 	                   OutMessage, action);
-	BuildSendAndCloseSoapResp(h, body, bodylen);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+	} else {
+		BuildSendAndCloseSoapResp(h, body, bodylen);
+	}
 	ClearNameValueList(&data);
 }
 
@@ -2285,7 +2492,13 @@ GetSupportedProtocols(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 	                   action, ns/*"urn:schemas-upnp-org:service:DeviceProtection:1"*/,
 	                   ProtocolList, action);
-	BuildSendAndCloseSoapResp(h, body, bodylen);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+	} else {
+		BuildSendAndCloseSoapResp(h, body, bodylen);
+	}
 }
 
 static void
@@ -2315,7 +2528,13 @@ GetAssignedRoles(struct upnphttp * h, const char * action, const char * ns)
 	bodylen = snprintf(body, sizeof(body), resp,
 	                   action, ns/*"urn:schemas-upnp-org:service:DeviceProtection:1"*/,
 	                   RoleList, action);
-	BuildSendAndCloseSoapResp(h, body, bodylen);
+	if (bodylen < 0 || bodylen >= (int)sizeof(body)) {
+		/* snprintf() output was truncated */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes were available", bodylen, sizeof(body));
+		SoapError(h, 501, "Action Failed");
+	} else {
+		BuildSendAndCloseSoapResp(h, body, bodylen);
+	}
 }
 #endif
 
@@ -3379,6 +3598,14 @@ SoapError(struct upnphttp * h, int errCode, const char * errDesc)
 
 	syslog(LOG_INFO, "Returning UPnPError %d: %s", errCode, errDesc);
 	bodylen = snprintf(body, sizeof(body), resp, errCode, errDesc);
+	if(bodylen < 0) {
+		syslog(LOG_ERR, "snprintf() returned %d", bodylen);
+		bodylen = 0;
+	} else if(bodylen >= (int)sizeof(body)) {
+		/* truncating */
+		syslog(LOG_WARNING, "snprintf() returned %d, %lu bytes available", bodylen, sizeof(body));
+		bodylen = sizeof(body) - 1;
+	}
 	BuildResp2_upnphttp(h, 500, "Internal Server Error", body, bodylen);
 	SendRespAndClose_upnphttp(h);
 }

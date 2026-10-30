@@ -150,12 +150,14 @@ InitSSL_upnphttp(struct upnphttp * h)
 	if(h->ssl == NULL) {
 		syslog(LOG_ERR, "SSL_new() failed");
 		syslogsslerr();
-		abort();
+		h->state = EToDelete;
+		return;
 	}
 	if(!SSL_set_fd(h->ssl, h->socket)) {
 		syslog(LOG_ERR, "SSL_set_fd() failed");
 		syslogsslerr();
-		abort();
+		h->state = EToDelete;
+		return;
 	}
 	r = SSL_accept(h->ssl); /* start the handshaking */
 	if(r < 0) {
@@ -165,7 +167,8 @@ InitSSL_upnphttp(struct upnphttp * h)
 		if(err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
 			syslog(LOG_ERR, "SSL_accept() failed");
 			syslogsslerr();
-			abort();
+			h->state = EToDelete;
+			return;
 		}
 	}
 }
@@ -262,9 +265,10 @@ ParseHttpHeaders(struct upnphttp * h)
 					p++;
 				while(p[n]>=' ')
 					n++;
-				if((p[0] == '"' && p[n-1] == '"')
-				  || (p[0] == '\'' && p[n-1] == '\''))
+				if((n >= 2) && ((p[0] == '"' && p[n-1] == '"')
+				             || (p[0] == '\'' && p[n-1] == '\'')))
 				{
+					/* remove the quotes */
 					p++; n -= 2;
 				}
 				h->req_soapActionOff = p - h->req_buf;
@@ -1226,7 +1230,7 @@ BuildResp2_upnphttp(struct upnphttp * h, int respcode,
                     const char * body, int bodylen)
 {
 	int r = BuildHeader_upnphttp(h, respcode, respmsg, bodylen);
-	if(body && (r >= 0)) {
+	if(body && (bodylen > 0) && (r >= 0)) {
 		memcpy(h->res_buf + h->res_buflen, body, bodylen);
 		h->res_buflen += bodylen;
 	}

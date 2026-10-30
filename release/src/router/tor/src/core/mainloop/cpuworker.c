@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2021, The Tor Project, Inc. */
+ * Copyright (c) 2007-2024, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -74,7 +74,6 @@ worker_state_free_void(void *arg)
   worker_state_free_(arg);
 }
 
-static replyqueue_t *replyqueue = NULL;
 static threadpool_t *threadpool = NULL;
 
 static uint32_t total_pending_tasks = 0;
@@ -114,35 +113,42 @@ cpuworker_consensus_has_changed(const networkstatus_t *ns)
   set_max_pending_tasks(ns);
 }
 
-/** Initialize the cpuworker subsystem. It is OK to call this more than once
- * during Tor's lifetime.
- */
-void
+/** Initialize the cpuworker subsystem. */
+int
 cpuworker_init(void)
 {
-  if (!replyqueue) {
-    replyqueue = replyqueue_new(0);
-  }
+  /*
+    In our threadpool implementation, half the threads are permissive and
+    half are strict (when it comes to running lower-priority tasks). So we
+    always make sure we have at least two threads, so that there will be at
+    least one thread of each kind.
+  */
+  const int n_threads = MAX(get_num_cpus(get_options()), 2);
+  threadpool = threadpool_new(n_threads,
+                              replyqueue_new(0),
+                              worker_state_new,
+                              worker_state_free_void,
+                              NULL);
+
   if (!threadpool) {
-    /*
-      In our threadpool implementation, half the threads are permissive and
-      half are strict (when it comes to running lower-priority tasks). So we
-      always make sure we have at least two threads, so that there will be at
-      least one thread of each kind.
-    */
-    const int n_threads = MAX(get_num_cpus(get_options()), 2);
-    threadpool = threadpool_new(n_threads,
-                                replyqueue,
-                                worker_state_new,
-                                worker_state_free_void,
-                                NULL);
-
-    int r = threadpool_register_reply_event(threadpool, NULL);
-
-    tor_assert(r == 0);
+    log_err(LD_GENERAL, "Can't create worker thread pool");
+    return -1;
   }
+
+  int r = threadpool_register_reply_event(threadpool, NULL);
+
+  tor_assert(r == 0);
 
   set_max_pending_tasks(NULL);
+
+  return 0;
+}
+
+/** Free all resources allocated by cpuworker. */
+void
+cpuworker_free_all(void)
+{
+  threadpool_free(threadpool);
 }
 
 /** Return the number of threads configured for our CPU worker. */
@@ -207,7 +213,9 @@ typedef struct cpuworker_reply_t {
   /** The created cell to send back. */
   created_cell_t created_cell;
   /** The keys to use on this circuit. */
-  uint8_t keys[CPATH_KEY_MATERIAL_LEN];
+  uint8_t keys[MAX_RELAY_KEY_MATERIAL_LEN];
+  /** Length of the generated key material. */
+  size_t keys_len;
   /** Input to use for authenticating introduce1 cells. */
   uint8_t rend_auth_material[DIGEST_LEN];
   /** Negotiated circuit parameters. */
@@ -445,9 +453,12 @@ cpuworker_onion_handshake_replyfn(void *work_)
     }
   }
 
+  circ->relay_cell_format = rpl.circ_params.cell_fmt;
+
   if (onionskin_answer(circ,
                        &rpl.created_cell,
-                       (const char*)rpl.keys, sizeof(rpl.keys),
+                       rpl.circ_params.crypto_alg,
+                       (const char*)rpl.keys, rpl.keys_len,
                        rpl.rend_auth_material) < 0) {
     log_warn(LD_OR,"onionskin_answer failed. Closing.");
     circuit_mark_for_close(TO_CIRCUIT(circ), END_CIRC_REASON_INTERNAL);
@@ -489,15 +500,17 @@ cpuworker_onion_handshake_threadfn(void *state_, void *work_)
   rpl.handshake_type = cc->handshake_type;
   if (req.timed)
     tor_gettimeofday(&tv_start);
+  rpl.keys_len = sizeof(rpl.keys);
   n = onion_skin_server_handshake(cc->handshake_type,
                                   cc->onionskin, cc->handshake_len,
                                   onion_keys,
                                   &req.circ_ns_params,
                                   cell_out->reply,
                                   sizeof(cell_out->reply),
-                                  rpl.keys, CPATH_KEY_MATERIAL_LEN,
+                                  rpl.keys, &rpl.keys_len,
                                   rpl.rend_auth_material,
                                   &rpl.circ_params);
+
   if (n < 0) {
     /* failure */
     log_debug(LD_OR,"onion_skin_server_handshake failed.");
@@ -537,7 +550,7 @@ cpuworker_onion_handshake_threadfn(void *state_, void *work_)
   memcpy(&job->u.reply, &rpl, sizeof(rpl));
 
   memwipe(&req, 0, sizeof(req));
-  memwipe(&rpl, 0, sizeof(req));
+  memwipe(&rpl, 0, sizeof(rpl));
   return WQ_RPL_REPLY;
 }
 

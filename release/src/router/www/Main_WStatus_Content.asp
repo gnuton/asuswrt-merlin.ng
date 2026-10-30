@@ -23,16 +23,17 @@ p{
 	font-weight: bolder;
 }
 
-.contentM_details{
-        position:absolute;
-        -webkit-border-radius: 5px;
-        -moz-border-radius: 5px;
-        border-radius: 5px;
-        z-index:500;
-        display:none;
-        margin-left: 18%;
-        top: 250px;
-        width:945px;
+#details_window{
+	position:absolute;
+	border-radius: 6px;
+	z-index: 200;
+	display: none;
+	width: 945px !important;
+	height: auto;
+	top: 250px;
+	margin-left: 18%;
+	box-shadow: 1px 5px 10px #000;
+	font-size: 12px;
 }
 </style>
 
@@ -112,6 +113,12 @@ function initial(){
 		document.getElementById("flags_mumimo_div").style.display = "";
 		document.getElementById("flags_div").style.display = "none";
 	}
+
+	if (isSupport("UI4")){
+		document.getElementById("details_window").className = "details_window clientlist_viewlist";
+	} else {
+		document.getElementById("details_window").className = "details_window pop_div_bg";
+	}
 }
 
 
@@ -181,6 +188,7 @@ function generate_clients(clientsarray) {
 	var nmapentry;
 	var guestheader = "";
 	var popupHandler;
+	var mainBSS = 0;
 
 	if (isSupport("UI4")){
 		var guestBackgroundColor = "background-color: #EEEEEE;";
@@ -208,15 +216,19 @@ function generate_clients(clientsarray) {
 			// Display a new Guest header?
 			if (client[12] != "" && client[12] != guestheader) {
 				guestheader = client[12];
-				if (sw_mode == "2") {
-					code += `<tr><th colspan="6" style="height:20px; ${guestBackgroundColor}"><span class="hint-color" style="font-weight:bolder;">Local Clients: </span> ${guestheader}`;
+				if (client[12] == "Main BSS") {
+					code += `<tr><th colspan="6" style="height:20px; ${guestBackgroundColor}"><span class="hint-color" style="font-weight:bolder;">Link</span>`;
+					mainBSS = 1;
 				} else {
 					code += `<tr><th colspan="6" style="height:20px; ${guestBackgroundColor}"><span class="hint-color" style="font-weight:bolder;">Guest Network: </span> ${guestheader}`;
-					if (client[13] != "") {
-						code += '<span style="float:right;"><span class="hint-color" style="font-weight:bolder;">VLAN: </span> ' + client[13] + '</span>';
-					}
+				}
+				if (client[13] != "") {
+					code += '<span style="float:right;"><span class="hint-color" style="font-weight:bolder;">VLAN: </span> ' + client[13] + '</span>';
 				}
 				code += '</th></tr>';
+			} else if (client[12] == "" && mainBSS == 1) {
+				code += `<tr><th colspan="6" style="height:20px; ${guestBackgroundColor}"><span class="hint-color" style="font-weight:bolder;">Local Clients</span>`;
+				mainBSS = 0;
 			}
 			code += '<tr>';
 
@@ -317,8 +329,8 @@ function generate_header(dataarray, title, dfs_statusarray) {
 		code += '<td><span class="hint-color">SNR: </span>' + dataarray[2] +' dB</td>';
 	if (dataarray[3] != 0)
 		code += '<td><span class="hint-color">Noise: </span>' + dataarray[3] + ' dBm</td>';
-        if (dataarray[6] != -1)
-                code += '<td><span class="hint-color">Utilization: </span>'+ dataarray[6] + '%</td>';
+	if (dataarray[6] != -1)
+		code += '<td><span class="hint-color">Utilization: </span>'+ dataarray[6] + '%</td>';
 	code += '</tr>';
 
 	if (dfs_statusarray.length > 1) {
@@ -461,8 +473,8 @@ function hide_details_window(){
 <div id="footer"></div>
 </form>
 
-<div id="details_window"  class="contentM_details  pop_div_bg">
-	<div style="margin-top:15px;margin-left:15px;float:left;font-size:15px;color:#93A9B1;">Detailed wireless log</div>
+<div id="details_window" class="details_window">
+	<div style="margin-top:15px;margin-left:15px;float:left;font-size:15px;">Detailed Wireless Log</div>
 	<div style="float:right;"><img src="/images/button-close.gif" style="width:30px;cursor:pointer" onclick="hide_details_window();"></div>
 	<div style="margin: 15px;">
 		<textarea id="wl_log" cols="63" rows="30" class="textarea_ssh_table" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;" readonly="readonly" wrap="off"></textarea>

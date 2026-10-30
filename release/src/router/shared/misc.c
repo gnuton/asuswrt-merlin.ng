@@ -3576,7 +3576,7 @@ void logmessage_normal(char *logheader, char *fmt, ...){
   strlcpy(logheader2, logheader, sizeof (logheader2));
   replace_char(logheader2, ' ', '_');
   openlog(logheader2, 0, 0);
-  syslog(level, buf);
+  syslog(level, "%s", buf);
   closelog();
   va_end(args);
 }
@@ -3769,7 +3769,12 @@ int is_psta(int unit)
 	if (sw_mode() == SW_MODE_ROUTER) {
 		foreach (word, nvram_safe_get("wl_ifnames"), next) {
 			snprintf(tmp, sizeof(tmp), "wl%d_nband", idx);
-			if (nvram_get_int(tmp) == WLC_BAND_2G
+			if (
+#ifdef RTCONFIG_AMAS_5G_ONBOARDING
+				(unit == nvram_get_int("wps_band_x"))
+#else
+				nvram_get_int(tmp) == WLC_BAND_2G
+#endif
 			    && unit == idx
 			    && !nvram_get_int("x_Setting")
 			    && nvram_get_int("amesh_wps_enr"))
@@ -3914,34 +3919,44 @@ int set_crt_parsed(const char *name, char *file_path)
 #else
 	FILE *fp=fopen(file_path, "r");
 	char buffer[8000] = {0};
-	char buffer2[256] = {0};
+	char line[256] = {0};
 	char *p = buffer;
+	int used = 0, len;
 
-	if(fp) {
-		while(fgets(buffer, sizeof(buffer), fp)) {
-			if(!strncmp(buffer, "-----BEGIN", 10))
-				break;
-		}
-		if(feof(fp)) {
-			fclose(fp);
-			return -EINVAL;
-		}
-		p += strlen(buffer);
-		//if( *(p-1) == '\n' )
-			//*(p-1) = '>';
-		while(fgets(buffer2, sizeof(buffer2), fp)) {
-			strncpy(p, buffer2, strlen(buffer2));
-			p += strlen(buffer2);
-			//if( *(p-1) == '\n' )
-				//*(p-1) = '>';
-		}
-		*p = '\0';
-		nvram_set(name, buffer);
-		fclose(fp);
-		return 0;
-	}
-	else
+	if (!fp)
 		return -ENOENT;
+
+	while(fgets(line, sizeof(line), fp)) {
+		if(!strncmp(line, "-----BEGIN", 10))
+			break;
+	}
+	if(feof(fp)) {
+		fclose(fp);
+		return -EINVAL;
+	}
+
+	len = strlen(line);
+	memcpy(p, line, len);
+	p += len;
+	used += len;
+
+	while(fgets(line, sizeof(line), fp)) {
+		len = strlen(line);
+		if (used + len + 1 > sizeof(buffer)) {
+			fclose(fp);
+			return -E2BIG;
+		}
+		memcpy(p, line, len);
+		used += len;
+		p += len;
+	}
+	*p = '\0';
+	nvram_set(name, buffer);
+
+	fclose(fp);
+	return 0;
+}
+
 #endif
 }
 #endif
@@ -5760,12 +5775,19 @@ int check_re_in_macfilter(int unit, char *mac)
 	char *nv, *nvp, *b;
 	int exist = 0;
 
-#ifdef RTCONFIG_AMAS
-	if (nvram_get_int("re_mode") == 1)
-		snprintf(prefix, sizeof(prefix), "wl%d.1_", unit);
+	if (get_fh_if_prefix_by_unit(unit, prefix, sizeof(prefix))) {
+		trim_space(prefix);
+		strncat(prefix, "_", 1);
+	}
 	else
+	{
+#ifdef RTCONFIG_AMAS
+		if (nvram_get_int("re_mode") == 1)
+			snprintf(prefix, sizeof(prefix), "wl%d.1_", unit);
+		else
 #endif
-		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	}
 
 	nv = nvp = strdup(nvram_safe_get(strlcat_r(prefix, "maclist_x", tmp, sizeof(tmp))));
 	if (nv) {
@@ -7592,7 +7614,7 @@ int guest_mark_calc(int guest_mark)
 	return mark;
 }
 
-#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(TUFAX6000) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000AI) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GTBE96_AI) || defined(RTCONFIG_AURALED)
+#if defined(RTAX82U) || defined(DSL_AX82U) || defined(GSAX3000) || defined(GSAX5400) || defined(TUFAX5400) || defined(GTAX11000_PRO) || defined(GTAXE16000) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTAX6000) || defined(GT10) || defined(RTAX82U_V2) || defined(TUFAX5400_V2) || defined(TUFAX6000) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000AI) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GS7_PRO_MAX) || defined(GTBE96_AI) || defined(RTCONFIG_AURALED)
 int switch_ledg(int action)
 {
 	switch(action) {

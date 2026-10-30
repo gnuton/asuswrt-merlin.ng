@@ -39,7 +39,7 @@ config.status: patch-stamp configure
 
 build: deb-checkdir build-stamp
 build-stamp: config.status
-	$(MAKE) CC='$(CC)' LD='$(CC)'
+	$(MAKE)
 	touch build-stamp
 
 clean: deb-checkdir deb-checkuid

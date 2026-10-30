@@ -2876,8 +2876,8 @@ test_util_decompress_dos_impl(compress_method_t method)
   size_t szr, szr2;
   int r;
 
-  const size_t big = 1024*1024;
-  /* one megabyte of 0s. */
+  const size_t big = 5*1024*1024;
+  /* five megabytes of 0s. */
   input = tor_malloc_zero(big);
 
   /* Compress it into "result": it should fail. */
@@ -2926,6 +2926,79 @@ test_util_decompress_dos(void *arg)
   ;
 }
 
+/* Regression test for the concatenated-stream compression bomb bypass. */
+static void
+test_util_decompress_dos_concat_impl(compress_method_t method)
+{
+  /* Three 3 MB zero chunks are used: each decompresses to just under
+   * CHECK_FOR_COMPRESSION_BOMB_AFTER (5 MB), so the per-sub-stream inner
+   * check never fires on its own.  But after two sub-streams the cumulative
+   * output crosses 5 MB at a ratio far above MAX_UNCOMPRESSION_FACTOR,
+   * which the fix detects at the sub-stream boundary before reinitializing
+   * for the third member. */
+  const size_t chunk_size = 3 * 1024 * 1024;
+  char *input = tor_malloc_zero(chunk_size);
+  char *c1 = NULL, *c2 = NULL, *c3 = NULL, *cat = NULL, *result = NULL;
+  size_t sz1, sz2, sz3, szcat, szr;
+  int r;
+
+  /* Compress each chunk with bomb detection suppressed so we can actually
+   * produce the highly-compressible streams. */
+  MOCK(tor_compress_is_compression_bomb, mock_is_never_compression_bomb);
+  r = tor_compress(&c1, &sz1, input, chunk_size, method);
+  tt_int_op(r, OP_EQ, 0);
+  r = tor_compress(&c2, &sz2, input, chunk_size, method);
+  tt_int_op(r, OP_EQ, 0);
+  r = tor_compress(&c3, &sz3, input, chunk_size, method);
+  tt_int_op(r, OP_EQ, 0);
+  UNMOCK(tor_compress_is_compression_bomb);
+
+  /* Concatenate the three compressed members into one buffer. */
+  szcat = sz1 + sz2 + sz3;
+  cat = tor_malloc(szcat);
+  memcpy(cat,             c1, sz1);
+  memcpy(cat + sz1,       c2, sz2);
+  memcpy(cat + sz1 + sz2, c3, sz3);
+
+  /* Decompression must fail: cumulative output after two sub-streams
+   * crosses CHECK_FOR_COMPRESSION_BOMB_AFTER at a ratio far above
+   * MAX_UNCOMPRESSION_FACTOR.  Before the fix the per-sub-stream counters
+   * were reset on each reinit so this went undetected. */
+  setup_capture_of_logs(LOG_WARN);
+  r = tor_uncompress(&result, &szr, cat, szcat, method, 0, LOG_WARN);
+  tt_int_op(r, OP_EQ, -1);
+  expect_log_msg_containing(
+        "Possible compression bomb across concatenated streams; abandoning"
+  );
+
+ done:
+  teardown_capture_of_logs();
+  UNMOCK(tor_compress_is_compression_bomb);
+  tor_free(input);
+  tor_free(c1);
+  tor_free(c2);
+  tor_free(c3);
+  tor_free(cat);
+  tor_free(result);
+}
+
+static void
+test_util_decompress_dos_concat(void *arg)
+{
+  const char *methodname = arg;
+  tt_assert(methodname);
+
+  compress_method_t method = compression_method_get_by_name(methodname);
+  tt_int_op(method, OP_NE, UNKNOWN_METHOD);
+  if (! tor_compress_supports_method(method)) {
+    tt_skip();
+  }
+
+  test_util_decompress_dos_concat_impl(method);
+ done:
+  ;
+}
+
 static void
 test_util_gzip_compression_bomb(void *arg)
 {
@@ -2934,8 +3007,8 @@ test_util_gzip_compression_bomb(void *arg)
    * In Tor we try not to generate them, and we don't accept them.
    */
   (void) arg;
-  size_t one_million = 1<<20;
-  char *one_mb = tor_malloc_zero(one_million);
+  size_t six_megabytes = 6 * 1024 * 1024;
+  char *buffer = tor_malloc_zero(six_megabytes);
   char *result = NULL;
   size_t result_len = 0;
   tor_compress_state_t *state = NULL;
@@ -2943,7 +3016,7 @@ test_util_gzip_compression_bomb(void *arg)
   /* Make sure we can't produce a compression bomb */
   setup_full_capture_of_logs(LOG_WARN);
   tt_int_op(-1, OP_EQ, tor_compress(&result, &result_len,
-                                    one_mb, one_million,
+                                    buffer, six_megabytes,
                                     ZLIB_METHOD));
   expect_log_msg_containing(
          "We compressed something and got an insanely high "
@@ -2952,20 +3025,20 @@ test_util_gzip_compression_bomb(void *arg)
   teardown_capture_of_logs();
 
   /* Here's a compression bomb that we made manually. */
-  const char compression_bomb[1039] =
-    { 0x78, 0xDA, 0xED, 0xC1, 0x31, 0x01, 0x00, 0x00, 0x00, 0xC2,
-      0xA0, 0xF5, 0x4F, 0x6D, 0x08, 0x5F, 0xA0 /* .... */ };
+  #include "test/compression_bomb.h"
+
   tt_int_op(-1, OP_EQ, tor_uncompress(&result, &result_len,
-                                      compression_bomb, 1039,
-                                      ZLIB_METHOD, 0, LOG_WARN));
+                                      compression_bomb_gzip,
+                                      compression_bomb_gzip_len,
+                                      GZIP_METHOD, 0, LOG_WARN));
 
   /* Now try streaming that. */
-  state = tor_compress_new(0, ZLIB_METHOD, HIGH_COMPRESSION);
+  state = tor_compress_new(0, GZIP_METHOD, HIGH_COMPRESSION);
   tor_compress_output_t r;
-  const char *inp = compression_bomb;
-  size_t inlen = 1039;
+  const char *inp = compression_bomb_gzip;
+  size_t inlen = compression_bomb_gzip_len;
   do {
-    char *outp = one_mb;
+    char *outp = buffer;
     size_t outleft = 4096; /* small on purpose */
     r = tor_compress_process(state, &outp, &outleft, &inp, &inlen, 0);
     tt_int_op(inlen, OP_NE, 0);
@@ -2974,7 +3047,7 @@ test_util_gzip_compression_bomb(void *arg)
   tt_int_op(r, OP_EQ, TOR_COMPRESS_ERROR);
 
  done:
-  tor_free(one_mb);
+  tor_free(buffer);
   tor_compress_free(state);
 }
 
@@ -4173,11 +4246,11 @@ test_util_find_str_at_start_of_line(void *ptr)
     "howdy world. how are you? i hope it's fine.\n"
     "hello kitty\n"
     "third line";
-  char *line2 = strchr(long_string,'\n')+1;
-  char *line3 = strchr(line2,'\n')+1;
+  const char *line2 = strchr(long_string,'\n')+1;
+  const char *line3 = strchr(line2,'\n')+1;
   const char *short_string = "hello kitty\n"
     "second line\n";
-  char *short_line2 = strchr(short_string,'\n')+1;
+  const char *short_line2 = strchr(short_string,'\n')+1;
 
   (void)ptr;
 
@@ -6939,6 +7012,11 @@ test_util_map_anon_nofork(void *arg)
     &compress_setup,                                                    \
     (char*)(identifier) }
 
+#define COMPRESS_DOS_CONCAT(name, identifier)                           \
+  { ("compress_dos_concat/" #name), test_util_decompress_dos_concat, 0, \
+    &compress_setup,                                                    \
+    (char*)(identifier) }
+
 #ifdef _WIN32
 #define UTIL_TEST_WIN_ONLY(n, f) UTIL_TEST(n, (f))
 #else
@@ -6987,6 +7065,8 @@ struct testcase_t util_tests[] = {
   COMPRESS_DOS(lzma, "x-tor-lzma"),
   COMPRESS_DOS(zstd, "x-zstd"),
   COMPRESS_DOS(zstd_nostatic, "x-zstd:nostatic"),
+  COMPRESS_DOS_CONCAT(zlib, "deflate"),
+  COMPRESS_DOS_CONCAT(gzip, "gzip"),
   UTIL_TEST(gzip_compression_bomb, TT_FORK),
   UTIL_LEGACY(datadir),
   UTIL_LEGACY(memarea),

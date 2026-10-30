@@ -40,6 +40,9 @@ endif
 
 ifeq ($(RTCONFIG_AMAS),y)
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+ifeq ($(RTCONFIG_OPENSSL35),y)
+LDFLAGS += -L$(TOP)/openssl11-compat -l:libcrypto.so.1.1 -l:libssl.so.1.1
+endif
 LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
 ifeq ($(RTCONFIG_LLDPD_1_0_11),y)
 LLDPD_DIR = $(TOP)/lldpd-1.0.11
@@ -59,7 +62,7 @@ ifeq ($(HND_ROUTER_AX), y)
 CFLAGS += -I$(SRCBASE)/../components/proto/include -I$(SRCBASE)/../components/wlioctl/include
 endif
 
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-BE82M GS-BE18000 GS-BE12000 GS7_PRO GT7))
+ifeq ($(RTCONFIG_MXL_826XX),y)
 LDFLAGS += -L$(TOP)/libhostapi -lhostapi
 endif
 

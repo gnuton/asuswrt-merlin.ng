@@ -101,7 +101,7 @@ dir_conn_purpose_to_string(int purpose)
     case DIR_PURPOSE_UPLOAD_DIR:
       return "server descriptor upload";
     case DIR_PURPOSE_UPLOAD_VOTE:
-      return "server vote upload";
+      return "consensus vote upload";
     case DIR_PURPOSE_UPLOAD_SIGNATURES:
       return "consensus signature upload";
     case DIR_PURPOSE_FETCH_SERVERDESC:
@@ -688,7 +688,6 @@ directory_choose_address_routerstatus(const routerstatus_t *status,
   /* We rejected all addresses in the relay's status. This means we can't
    * connect to it. */
   if (!have_or && !have_dir) {
-    static int logged_backtrace = 0;
     char *ipv6_str = tor_addr_to_str_dup(&status->ipv6_addr);
     log_info(LD_BUG, "Rejected all OR and Dir addresses from %s when "
              "launching an outgoing directory connection to: IPv4 %s OR %d "
@@ -697,10 +696,7 @@ directory_choose_address_routerstatus(const routerstatus_t *status,
              status->ipv4_dirport, ipv6_str, status->ipv6_orport,
              status->ipv4_dirport);
     tor_free(ipv6_str);
-    if (!logged_backtrace) {
-      log_backtrace(LOG_INFO, LD_BUG, "Addresses came from");
-      logged_backtrace = 1;
-    }
+    log_backtrace_once(LOG_INFO, LD_BUG, "Addresses came from");
     return -1;
   }
 
@@ -763,6 +759,11 @@ connection_dir_client_request_failed(dir_connection_t *conn)
              "directory server at %s; will retry",
              connection_describe_peer(TO_CONN(conn)));
     connection_dir_download_routerdesc_failed(conn);
+  } else if (conn->base_.purpose == DIR_PURPOSE_UPLOAD_VOTE ||
+             conn->base_.purpose == DIR_PURPOSE_UPLOAD_SIGNATURES) {
+    log_warn(LD_DIR, "Failed to post %s to %s.",
+             dir_conn_purpose_to_string(conn->base_.purpose),
+             connection_describe_peer(TO_CONN(conn)));
   }
 }
 
@@ -1320,15 +1321,11 @@ directory_initiate_request,(directory_request_t *request))
 
   /* Make sure that the destination addr and port we picked is viable. */
   if (!port || tor_addr_is_null(&addr)) {
-    static int logged_backtrace = 0;
     log_warn(LD_DIR,
              "Cannot make an outgoing %sconnection without a remote %sPort.",
              use_begindir ? "begindir " : "",
              use_begindir ? "OR" : "Dir");
-    if (!logged_backtrace) {
-      log_backtrace(LOG_INFO, LD_BUG, "Address came from");
-      logged_backtrace = 1;
-    }
+    log_backtrace_once(LOG_INFO, LD_BUG, "Address came from");
     return;
   }
 

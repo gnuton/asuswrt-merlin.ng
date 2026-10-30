@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2025 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2026 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -165,6 +165,13 @@ int iface_enumerate(int family, void *parm, callback_t callback)
     struct rtgenmsg g; 
   } req;
 
+  /* The netlink socket is not available in child processes. */
+  if (daemon->pipe_to_parent != -1)
+    {
+      my_syslog(LOG_ERR, _("BUG: called iface_enumerate() in child process"));
+      return 0;
+    }
+  
   memset(&req, 0, sizeof(req));
   memset(&addr, 0, sizeof(addr));
 

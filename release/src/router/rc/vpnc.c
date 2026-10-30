@@ -185,7 +185,8 @@ start_vpnc(void)
 				fprintf(fp, "tx_only ");
 			fprintf(fp, "demand\n");
 		}
-		fprintf(fp, "persist\n");
+		else
+			fprintf(fp, "persist\n");
 	}
 
 	fprintf(fp, "holdoff %d\n", nvram_get_int(strcat_r(prefix, "pppoe_holdoff", tmp)) ? : 10);
@@ -332,7 +333,7 @@ vpnc_ppp_linkunit(char *linkname)
 		return -1;
 	if (!isdigit(linkname[3]))
 		return -1;
-	return atoi(&linkname[3]);
+	return safe_atoi(&linkname[3]);
 }
 
 void update_vpnc_state(char *prefix, int state, int reason)

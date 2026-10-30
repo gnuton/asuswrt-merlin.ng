@@ -50,12 +50,12 @@ TOR_UTIL_LIBS = \
 	src/lib/libtor-sandbox.a \
 	src/lib/libtor-container.a \
 	src/lib/libtor-net.a \
-	src/lib/libtor-thread.a \
 	src/lib/libtor-memarea.a \
 	src/lib/libtor-math.a \
 	src/lib/libtor-meminfo.a \
 	src/lib/libtor-osinfo.a \
 	src/lib/libtor-log.a \
+	src/lib/libtor-thread.a \
 	src/lib/libtor-lock.a \
 	src/lib/libtor-fdio.a \
 	src/lib/libtor-string.a \
@@ -86,13 +86,13 @@ TOR_UTIL_TESTING_LIBS = \
 	src/lib/libtor-sandbox-testing.a \
 	src/lib/libtor-container-testing.a \
 	src/lib/libtor-net-testing.a \
-	src/lib/libtor-thread-testing.a \
 	src/lib/libtor-memarea-testing.a \
 	src/lib/libtor-math-testing.a \
 	src/lib/libtor-meminfo-testing.a \
 	src/lib/libtor-osinfo-testing.a \
 	src/lib/libtor-term-testing.a \
 	src/lib/libtor-log-testing.a \
+	src/lib/libtor-thread-testing.a \
 	src/lib/libtor-lock-testing.a \
 	src/lib/libtor-fdio-testing.a \
 	src/lib/libtor-string-testing.a \
@@ -112,7 +112,8 @@ TOR_CRYPTO_LIBS = \
 	src/lib/libtor-tls.a \
 	src/lib/libtor-crypt-ops.a \
 	$(LIBKECCAK_TINY) \
-	$(LIBDONNA)
+	$(LIBDONNA) \
+        $(LIBPOLYVAL)
 
 if BUILD_MODULE_POW
 TOR_CRYPTO_LIBS += $(EQUIX_LIBS)
@@ -126,6 +127,7 @@ TOR_CRYPTO_TESTING_LIBS = \
 	src/lib/libtor-crypt-ops-testing.a \
 	$(LIBKECCAK_TINY) \
 	$(LIBDONNA) \
+        $(LIBPOLYVAL) \
 	$(EQUIX_LIBS)
 endif
 
@@ -380,10 +382,9 @@ test-network-clean:
 #
 # Run the IPv4 tests in $(ipv4_flavors), unconditionally
 #   - tor relays and directory authorities require IPv4.
-# Run the IPv6 tests in $(ipv6_flavors), if IPv6 is available
-#   - only run IPv6 tests if we can ping6 or ping -6 ::1 (localhost)
-#     we try the syntax for BSD ping6, Linux ping6, and Linux ping -6,
-#     because they're incompatible
+# Run the IPv6 tests in $(ipv6_flavors), unconditionally
+#   - clients don't technically require IPv6, but it's not worth
+#     supporting running this test suite on such systems.
 #   - some IPv6 tests may fail without an IPv6 DNS server
 #     (see #16971 and #17011)
 # Run the mixed tests in $(mixed_flavors), if a tor-stable binary is available
@@ -400,25 +401,9 @@ test-network-run: need-chutney-path test-driver $(TESTING_TOR_BINARY) src/tools/
 		echo "Running IPv4 flavors: $(ipv4_flavors)."; \
 		flavors="$$flavors $(ipv4_flavors)"; \
 	fi; \
-	test_network_ipv6=false; \
-	if test -n "$(ipv6_flavors)" || \
-	   test -n "$(ipv6_mixed_flavors)"; then \
-		if ping6 -q -c 1 -o   ::1 >/dev/null 2>&1 || \
-		   ping6 -q -c 1 -W 1 ::1 >/dev/null 2>&1 || \
-		   ping  -6 -c 1 -W 1 ::1 >/dev/null 2>&1; then \
-			test_network_ipv6=true; \
-		fi; \
-	fi; \
 	if test -n "$(ipv6_flavors)"; then \
-		if test "$$test_network_ipv6" = "true"; then \
-			echo "ping6 ::1 or ping ::1 succeeded, running IPv6" \
-			  "flavors: $(ipv6_flavors)."; \
-			flavors="$$flavors $(ipv6_flavors)"; \
-		else \
-			echo "ping6 ::1 and ping ::1 failed, skipping IPv6" \
-			  "flavors: $(ipv6_flavors)."; \
-			skip_flavors="$$skip_flavors $(ipv6_flavors)"; \
-		fi; \
+		echo "Running IPv6 flavors: $(ipv6_flavors)."; \
+		flavors="$$flavors $(ipv6_flavors)"; \
 	fi; \
 	test_network_mixed=false; \
 	if test -n "$(mixed_flavors)" || \
@@ -439,8 +424,7 @@ test-network-run: need-chutney-path test-driver $(TESTING_TOR_BINARY) src/tools/
 		fi; \
 	fi; \
 	if test -n "$(ipv6_mixed_flavors)"; then \
-		if test "$$test_network_ipv6" = "true" && \
-		   test "$$test_network_mixed" = "true"; then \
+		if test "$$test_network_mixed" = "true"; then \
 			echo "Running IPv6 mixed flavors:" \
 			  "$(ipv6_mixed_flavors)."; \
 			flavors="$$flavors $(ipv6_mixed_flavors)"; \

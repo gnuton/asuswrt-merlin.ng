@@ -5,7 +5,7 @@
  *             packet encryption, packet authentication, and
  *             packet compression.
  *
- *  Copyright (C) 2002-2024 OpenVPN Inc <sales@openvpn.net>
+ *  Copyright (C) 2002-2026 OpenVPN Inc <sales@openvpn.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -17,8 +17,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
 /*
@@ -44,6 +43,73 @@ wide_string(const char *utf8, struct gc_arena *gc)
     WCHAR *ucs16 = gc_malloc(n * sizeof(WCHAR), false, gc);
     MultiByteToWideChar(CP_UTF8, 0, utf8, -1, ucs16, n);
     return ucs16;
+}
+
+/* special to cmd.exe, which CreateProcess() uses to run .bat/.cmd (VU#123335) */
+#define CMD_QUOTE_TRIGGERS " &|<>^%()!"
+
+static bool
+argv_element_needs_quotes(const char *str)
+{
+    for (const char *c = str; *c != '\0'; ++c)
+    {
+        if (strchr(CMD_QUOTE_TRIGGERS, *c) != NULL)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+WCHAR *
+wide_cmd_line(const struct argv *a, struct gc_arena *gc)
+{
+    size_t nchars = 1;
+    size_t maxlen = 0;
+    size_t i;
+    struct buffer buf;
+    char *work = NULL;
+
+    if (!a)
+    {
+        return NULL;
+    }
+
+    for (i = 0; i < a->argc; ++i)
+    {
+        const char *arg = a->argv[i];
+        const size_t len = strlen(arg);
+        nchars += len + 3;
+        if (len > maxlen)
+        {
+            maxlen = len;
+        }
+    }
+
+    work = gc_malloc(maxlen + 1, false, gc);
+    check_malloc_return(work);
+    buf = alloc_buf_gc(nchars, gc);
+
+    for (i = 0; i < a->argc; ++i)
+    {
+        const char *arg = a->argv[i];
+        strcpy(work, arg);
+        string_mod(work, CC_PRINT, CC_DOUBLE_QUOTE | CC_CRLF, '_');
+        if (i)
+        {
+            buf_printf(&buf, " ");
+        }
+        if (argv_element_needs_quotes(work))
+        {
+            buf_printf(&buf, "\"%s\"", work);
+        }
+        else
+        {
+            buf_printf(&buf, "%s", work);
+        }
+    }
+
+    return wide_string(BSTR(&buf), gc);
 }
 
 char *
@@ -146,4 +212,53 @@ win_safe_filename(const char *fn)
     }
     return true;
 }
+
+const char *
+win_get_tempdir(void)
+{
+    static char tmpdir[MAX_PATH];
+    WCHAR wtmpdir[MAX_PATH];
+
+    if (!GetTempPathW(_countof(wtmpdir), wtmpdir))
+    {
+        return NULL;
+    }
+
+    if (WideCharToMultiByte(CP_UTF8, 0, wtmpdir, -1, NULL, 0, NULL, NULL) > sizeof(tmpdir))
+    {
+        msg(M_WARN, "Could not get temporary directory. Path is too long."
+                    "  Consider using --tmp-dir");
+        return NULL;
+    }
+
+    WideCharToMultiByte(CP_UTF8, 0, wtmpdir, -1, tmpdir, sizeof(tmpdir), NULL, NULL);
+    return tmpdir;
+}
+
+bool
+win_path_in_dir(const WCHAR *path, const WCHAR *dir)
+{
+    size_t dir_len = wcslen(dir);
+    /* dir_len <= 1 guards the dir[dir_len - 1] access below and rejects a
+     * degenerate single-character directory (a normalized absolute path is
+     * always longer). */
+    if (dir_len <= 1 || wcsnicmp(dir, path, dir_len) != 0)
+    {
+        return false;
+    }
+
+    /* A plain prefix match is not sufficient: if dir is "C:\foo" then
+     * "C:\foo_evil\bar.dll" shares the prefix but is not inside "C:\foo".
+     * Require that the matched prefix ends on a path separator, i.e. either
+     * dir already ends with a separator or the character following the prefix
+     * in path is one. */
+    if (dir[dir_len - 1] == L'\\' || dir[dir_len - 1] == L'/')
+    {
+        return true;
+    }
+
+    WCHAR next = path[dir_len];
+    return next == L'\\' || next == L'/';
+}
+
 #endif /* _WIN32 */

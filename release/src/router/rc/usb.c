@@ -167,6 +167,9 @@ start_u2ec()
 	if (!nvram_get_int("usb_printer"))
 		return;
 
+	if (re_mode())
+		return;
+
 	if (!pids("u2ec"))
 	{
 		unlink("/var/run/u2ec.pid");
@@ -335,7 +338,7 @@ void add_usb_host_modules(void)
 
 #ifdef RTCONFIG_HND_ROUTER_AX
 	eval("insmod",
-#if defined(BCM4912) || defined(BCM6756) || defined(BCM6855) || defined(BCM6813) || defined(BCM6765) || defined(BCM6766) || defined(RTBE58_GO) || defined(RTBE58U_V2) || defined(TUFBE3600_V2)
+#if defined(BCM4912) || defined(BCM6756) || defined(BCM6855) || defined(BCM6813) || defined(BCM6765) || defined(BCM6766) || defined(BCM6764)
 		"bcm_bca_usb"
 #else
 		"bcm_usb"
@@ -362,7 +365,7 @@ void add_usb_host_modules(void)
 #elif defined(RTCONFIG_ALPINE)
 	modprobe(USB30_MOD);
 #else
-#if !defined(BCM4912) && !defined(BCM6756) && !defined(BCM6855) && !defined(BCM4906_504) && !defined(BCM6813) && !defined(BCM6765) && !defined(BCM6766)
+#if !defined(BCM4912) && !defined(BCM6756) && !defined(BCM6855) && !defined(BCM4906_504) && !defined(BCM6813) && !defined(BCM6765) && !defined(BCM6766) && !defined(BCM6764)
 	if (nvram_get_int("usb_usb3") == 1)
 #endif
 	{
@@ -837,6 +840,17 @@ void start_usb(int mode)
 			modprobe(USBSTORAGE_MOD);
 			MODPROBE__UAS;
 
+#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)
+#if defined(WIFI7_SDK_20250506) || defined(WIFI8_SDK_20251126) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GS7_PRO_MAX)
+			/* before installing tntfs, thfsplus, tfat */
+			if(nvram_get_int("usb_fs_ntfs") == 1 ||
+				nvram_get_int("usb_fs_fat") == 1 ||
+				nvram_get_int("usb_fs_hfs") == 1){
+					modprobe("tfs_linux");
+			}
+#endif
+#endif
+
 			if (nvram_get_int("usb_fs_ext3")) {
 #ifdef LINUX26
 				modprobe("mbcache");	// used by ext2/ext3
@@ -896,6 +910,9 @@ void start_usb(int mode)
 					modprobe("hfsplus");
 				}
 				else
+#endif
+#if (defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)) && (defined(WIFI7_SDK_20250506) || defined(WIFI8_SDK_20251126))
+				modprobe("cdrom");
 #endif
 				modprobe("thfsplus");
 #elif defined(RTCONFIG_PARAGON_HFS)
@@ -1069,6 +1086,16 @@ void remove_usb_storage_module(void)
 	modprobe_r(SCSI_WAIT_MOD);
 #endif
 	modprobe_r(SCSI_MOD);
+#endif
+#if defined(RTCONFIG_TFAT) || defined(RTCONFIG_TUXERA_NTFS) || defined(RTCONFIG_TUXERA_HFS)
+#if defined(WIFI7_SDK_20250506) || defined(WIFI8_SDK_20251126) || defined(GSBE18000) || defined(GSBE12000) || defined(GS7_PRO) || defined(GT7) || defined(GS7_PRO_MAX)
+	/* after removing tntfs, thfsplus, tfat */
+	if(nvram_get_int("usb_fs_ntfs") == 1 ||
+		nvram_get_int("usb_fs_fat") == 1 ||
+		nvram_get_int("usb_fs_hfs") == 1){
+		modprobe_r("tfs_linux");
+	}
+#endif
 #endif
 }
 
@@ -1913,7 +1940,7 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 			foreach_62(word, b, next_word){
 				switch(count){
 					case 0: // type
-						type = atoi(word);
+						type = safe_atoi(word);
 						break;
 				}
 				++count;
@@ -1932,7 +1959,7 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 							strncpy(sync_dir, next_word, PATH_MAX);
 							break;
 						case 6: // enable
-							enable = atoi(next_word);
+							enable = safe_atoi(next_word);
 							break;
 					}
 				}
@@ -2406,7 +2433,7 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 				foreach_62(word, b, next_word){
 					switch(count){
 						case 0: // type
-							type = atoi(word);
+							type = safe_atoi(word);
 							break;
 					}
 					++count;
@@ -2425,7 +2452,7 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 					for(count = 0, next_word = strsep(&b_bak, ">"); next_word != NULL; ++count, next_word = strsep(&b_bak, ">")){
 						switch(count){
 							case 0: // type
-								type = atoi(next_word);
+								type = safe_atoi(next_word);
 								break;
 							case 1: // username
 								memset(username, 0, 64);
@@ -2440,14 +2467,14 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 								strncpy(url, next_word, PATH_MAX);
 								break;
 							case 4: // rule
-								rule = atoi(next_word);
+								rule = safe_atoi(next_word);
 								break;
 							case 5: // dir
 								memset(sync_dir, 0, PATH_MAX);
 								strncpy(sync_dir, next_word, PATH_MAX);
 								break;
 							case 6: // enable
-								enable = atoi(next_word);
+								enable = safe_atoi(next_word);
 								break;
 						}
 					}
@@ -2960,8 +2987,8 @@ void write_ftpd_conf()
 		}
 	}
 	fprintf(fp, "tcp_wrappers=NO\n");
-	strcpy(maxuser, nvram_safe_get("st_max_user"));
-	if ((atoi(maxuser)) > 0)
+	snprintf(maxuser, sizeof(maxuser), "%s", nvram_safe_get("st_max_user"));
+	if ((safe_atoi(maxuser)) > 0)
 		fprintf(fp, "max_clients=%s\n", maxuser);
 	else
 		fprintf(fp, "max_clients=%s\n", "10");
@@ -3981,7 +4008,7 @@ void start_dms(void)
 
 			nv = nvram_safe_get("dms_sort");
 			if (!*nv || isdigit(*nv))
-				nv = (!*nv || atoi(nv)) ? "+upnp:class,+upnp:originalTrackNumber,+dc:title" : NULL;
+				nv = (!*nv || safe_atoi(nv)) ? "+upnp:class,+upnp:originalTrackNumber,+dc:title" : NULL;
 			if (nv)
 				fprintf(f, "force_sort_criteria=%s\n", nv);
 
@@ -4426,218 +4453,342 @@ void stop_all_webdav(void)
 //#ifdef RTCONFIG_CLOUDSYNC
 void start_cloudsync(int fromUI)
 {
-	char word[PATH_MAX], *next_word;
-	char *b, *nvp, *nv;
-	int type = 0, enable = 0;
-	char username[64], sync_dir[PATH_MAX];
-	int count;
-	char cloud_token[PATH_MAX];
-	char mounted_path[PATH_MAX], *ptr, *other_path;
-	int pid, s = 3;
-	char *cmd1_argv[] = { "nice", "-n", "10", "inotify", NULL };
-	char *cmd2_argv[] = { "nice", "-n", "10", "asuswebstorage", NULL };
-	char *cmd3_argv[] = { "touch", cloud_token, NULL };
-	char *cmd4_argv[] = { "nice", "-n", "10", "webdav_client", NULL };
-	char *cmd5_argv[] = { "nice", "-n", "10", "dropbox_client", NULL };
-	char *cmd6_argv[] = { "nice", "-n", "10", "ftpclient", NULL};
-	char *cmd7_argv[] = { "nice", "-n", "10", "sambaclient", NULL};
-	char *cmd8_argv[] = { "nice", "-n", "10", "usbclient", NULL};
+    char *b, *nvp, *nv;
+    int type = 0, enable = 0;
+    char username[64], sync_dir[PATH_MAX];
+    int count;
+    char cloud_token[PATH_MAX];
+    char mounted_path[PATH_MAX], *ptr, *other_path;
+    int pid, s = 3;
+    char *cmd1_argv[] = { "nice", "-n", "10", "inotify", NULL };
+    char *cmd2_argv[] = { "nice", "-n", "10", "asuswebstorage", NULL };
+    char *cmd3_argv[] = { "touch", NULL, NULL };
+    char *cmd4_argv[] = { "nice", "-n", "10", "webdav_client", NULL };
+    char *cmd5_argv[] = { "nice", "-n", "10", "dropbox_client", NULL };
+    char *cmd6_argv[] = { "nice", "-n", "10", "ftpclient", NULL};
+    char *cmd7_argv[] = { "nice", "-n", "10", "sambaclient", NULL};
+    char *cmd8_argv[] = { "nice", "-n", "10", "usbclient", NULL};
     char *cmd9_argv[] = { "nice", "-n", "10", "google_client", NULL };
-	char buf[32];
+    char buf[32];
+    int ret;
+    char *b_bak = NULL, *ptr_b_bak = NULL;
+    char *saveptr = NULL;
+    char *token = NULL;
+    FILE *fp = NULL;
+    char check_target[PATH_MAX];
+    char line[PATH_MAX];
+    int got_mount = 0;
+    size_t strlcpy_ret;
 
-	memset(buf, 0, 32);
-	sprintf(buf, "start_cloudsync %d", fromUI);
+    memset(buf, 0, sizeof(buf));
+    memset(username, 0, sizeof(username));
+    memset(sync_dir, 0, sizeof(sync_dir));
+    memset(cloud_token, 0, sizeof(cloud_token));
+    memset(mounted_path, 0, sizeof(mounted_path));
+    memset(check_target, 0, sizeof(check_target));
+    memset(line, 0, sizeof(line));
+    
+    ret = snprintf(buf, sizeof(buf), "start_cloudsync %d", fromUI);
+    if (ret < 0 || ret >= (int)sizeof(buf)) {
+        logmessage("Cloudsync client", "Failed to format buffer or buffer too small");
+        return;
+    }
 
-	if(getpid()!=1) {
-		notify_rc(buf);
-		return;
-	}
+    if(getpid() != 1) {
+        notify_rc(buf);
+        return;
+    }
 
-	if(nvram_match("enable_cloudsync", "0")){
-		logmessage("Cloudsync client", "manually disabled all rules");
-		return;
-	}
+    if(nvram_match("enable_cloudsync", "0")){
+        logmessage("Cloudsync client", "manually disabled all rules");
+        return;
+    }
 
-	/* If total memory size < 200MB, reduce priority of inotify, asuswebstorage, webdavclient, etc. */
-	if (get_meminfo_item("MemTotal") < 200*1024)
-		s = 0;
+    if (get_meminfo_item("MemTotal") < 200*1024)
+        s = 0;
 
-	nv = nvp = strdup(nvram_safe_get("cloud_sync"));
-	if(nv){
-		while((b = strsep(&nvp, "<")) != NULL){
-			count = 0;
-			foreach_62(word, b, next_word){
-				switch(count){
-					case 0: // type
-						type = atoi(word);
-						break;
-				}
-				++count;
-			}
+    nv = nvp = strdup(nvram_safe_get("cloud_sync"));
+    if(nv == NULL) {
+        logmessage("Cloudsync client", "Failed to allocate memory for cloud_sync");
+        return;
+    }
 
-			if(type == 1){
-				if(!pids("inotify"))
-					_eval(&cmd1_argv[s], NULL, 0, &pid);
+    while((b = strsep(&nvp, "<")) != NULL){
+        char *original_b = strdup(b);
+        if (original_b == NULL) {
+            logmessage("Cloudsync client", "Failed to allocate memory for string copy");
+            continue;
+        }
+        
+        char *type_saveptr = NULL;
+        char *type_token = strtok_r(original_b, ">", &type_saveptr);
+        if (type_token == NULL) {
+            logmessage("Cloudsync client", "Missing type field");
+            free(original_b);
+            continue;
+        }
+        
+        type = safe_atoi(type_token);
+        
+        if (type < 0 || type > 6) {
+            logmessage("Cloudsync client", "Invalid type value: %d", type);
+            free(original_b);
+            continue;
+        }
 
-				if(!pids("webdav_client")){
-					_eval(&cmd4_argv[s], NULL, 0, &pid);
-					sleep(2); // wait webdav_client.
-				}
-
-				if(pids("inotify") && pids("webdav_client"))
-					logmessage("Webdav client", "daemon is started");
-			}
-			else if(type == 3){
-				if(!pids("inotify"))
-					_eval(cmd1_argv, NULL, 0, &pid);
-
-				if(!pids("dropbox_client")){
-					_eval(cmd5_argv, NULL, 0, &pid);
-					sleep(2); // wait dropbox_client.
-				}
-
-				if(pids("inotify") && pids("dropbox_client"))
-					logmessage("dropbox client", "daemon is started");
-			}
-			else if(type == 2){
-				if(!pids("inotify"))
-					_eval(cmd1_argv, NULL, 0, &pid);
-
-				if(!pids("ftpclient")){
-					_eval(cmd6_argv, NULL, 0, &pid);
-					sleep(2); // wait ftpclient.
-				}
-
-				if(pids("inotify") && pids("ftpclient"))
-					logmessage("ftp client", "daemon is started");
-			}
-			else if(type == 4){
-				if(!pids("inotify"))
-					_eval(cmd1_argv, NULL, 0, &pid);
-
-				if(!pids("sambaclient")){
-					_eval(cmd7_argv, NULL, 0, &pid);
-					sleep(2); // wait sambaclient.
-				}
-
-				if(pids("inotify") && pids("sambaclient"))
-					logmessage("sambaclient", "daemon is started");
-			}
-			else if(type == 5){
-				if(!pids("inotify"))
-					_eval(cmd1_argv, NULL, 0, &pid);
-
-				if(!pids("usbclient")){
-					_eval(cmd8_argv, NULL, 0, &pid);
-					sleep(2); // wait usbclient.
-				}
-
-				if(pids("inotify") && pids("usbclient"))
-					logmessage("usbclient", "daemon is started");
-			}
-	          else if(type == 6){
-                if(!pids("inotify"))
-                    _eval(cmd1_argv, NULL, 0, &pid);
-
-                if(!pids("google_client")){
-                    _eval(cmd9_argv, NULL, 0, &pid);
-                    sleep(2); // wait google_client.
+        if (type >= 1 && type <= 6) {
+            switch(type) {
+                case 1: // WebDAV
+                    if(!pids("inotify"))
+                        _eval(&cmd1_argv[s], NULL, 0, &pid);
+                    if(!pids("webdav_client")){
+                        _eval(&cmd4_argv[s], NULL, 0, &pid);
+                        sleep(2);
+                    }
+                    if(pids("inotify") && pids("webdav_client"))
+                        logmessage("Webdav client", "daemon is started");
+                    break;
+                    
+                case 2: // FTP
+                    if(!pids("inotify"))
+                        _eval(cmd1_argv, NULL, 0, &pid);
+                    if(!pids("ftpclient")){
+                        _eval(cmd6_argv, NULL, 0, &pid);
+                        sleep(2);
+                    }
+                    if(pids("inotify") && pids("ftpclient"))
+                        logmessage("ftp client", "daemon is started");
+                    break;
+                    
+                case 3: // Dropbox
+                    if(!pids("inotify"))
+                        _eval(cmd1_argv, NULL, 0, &pid);
+                    if(!pids("dropbox_client")){
+                        _eval(cmd5_argv, NULL, 0, &pid);
+                        sleep(2);
+                    }
+                    if(pids("inotify") && pids("dropbox_client"))
+                        logmessage("dropbox client", "daemon is started");
+                    break;
+                    
+                case 4: // Samba
+                    if(!pids("inotify"))
+                        _eval(cmd1_argv, NULL, 0, &pid);
+                    if(!pids("sambaclient")){
+                        _eval(cmd7_argv, NULL, 0, &pid);
+                        sleep(2);
+                    }
+                    if(pids("inotify") && pids("sambaclient"))
+                        logmessage("sambaclient", "daemon is started");
+                    break;
+                    
+                case 5: // USB
+                    if(!pids("inotify"))
+                        _eval(cmd1_argv, NULL, 0, &pid);
+                    if(!pids("usbclient")){
+                        _eval(cmd8_argv, NULL, 0, &pid);
+                        sleep(2);
+                    }
+                    if(pids("inotify") && pids("usbclient"))
+                        logmessage("usbclient", "daemon is started");
+                    break;
+                    
+                case 6: // Google
+                    if(!pids("inotify"))
+                        _eval(cmd1_argv, NULL, 0, &pid);
+                    if(!pids("google_client")){
+                        _eval(cmd9_argv, NULL, 0, &pid);
+                        sleep(2);
+                    }
+                    if(pids("inotify") && pids("google_client"))
+                        logmessage("google client", "daemon is started");
+                    break;
+            }
+            
+            free(original_b);
+            continue;
+        }
+        
+        if (type == 0) {
+            free(original_b);
+            ptr_b_bak = b_bak = strdup(b);
+            if (b_bak == NULL) {
+                logmessage("Cloudsync client", "Failed to allocate memory for detailed parsing");
+                continue;
+            }
+            
+            memset(username, 0, sizeof(username));
+            memset(sync_dir, 0, sizeof(sync_dir));
+            enable = 0;
+            type = 0;
+            
+            count = 0;
+            saveptr = NULL;
+            token = strtok_r(b_bak, ">", &saveptr);
+            
+            while (token != NULL && count < 7) {
+                switch(count) {
+                    case 0: // type
+                        type = safe_atoi(token);
+                        break;
+                        
+                    case 1: // username
+                        strlcpy_ret = strlcpy(username, token, sizeof(username));
+                        if (strlcpy_ret >= sizeof(username)) {
+                            logmessage("Cloudsync client", "Username too long, truncated");
+                        }
+                        break;
+                        
+                    case 2: // password (skip)
+                    case 3: // (skip)
+                    case 4: // (skip)
+                        break;
+                        
+                    case 5: // sync directory
+                        strlcpy_ret = strlcpy(sync_dir, token, sizeof(sync_dir));
+                        if (strlcpy_ret >= sizeof(sync_dir)) {
+                            logmessage("Cloudsync client", "Sync directory path too long, truncated");
+                        }
+                        break;
+                        
+                    case 6: // enable flag
+                        enable = safe_atoi(token);
+                        break;
                 }
-                if(pids("inotify") && pids("google_client"))
-                {
-                    logmessage("google client", "daemon is started");
+                
+                ++count;
+                token = strtok_r(NULL, ">", &saveptr);
+            }
+            
+            if (ptr_b_bak != NULL) {
+                free(ptr_b_bak);
+                ptr_b_bak = NULL;
+                b_bak = NULL;
+            }
+            
+            if (type != 0) {
+                logmessage("Cloudsync client", "Type should be 0 for ASUS WebStorage, got %d", type);
+                continue;
+            }
+            
+            if (username[0] == '\0') {
+                logmessage("Cloudsync client", "Username is empty");
+                continue;
+            }
+            
+            if (sync_dir[0] == '\0') {
+                logmessage("Cloudsync client", "Sync directory is empty");
+                continue;
+            }
+            
+            if (!enable) {
+                logmessage("Cloudsync client", "manually disabled");
+                continue;
+            }
+            
+            if (strncmp(sync_dir, POOL_MOUNT_ROOT, strlen(POOL_MOUNT_ROOT)) != 0) {
+                logmessage("Cloudsync client", "Sync directory does not start with %s", POOL_MOUNT_ROOT);
+                continue;
+            }
+            
+            size_t pool_len = strlen(POOL_MOUNT_ROOT);
+            if (strlen(sync_dir) < pool_len + 1) {
+                logmessage("Cloudsync client", "Invalid sync directory path");
+                continue;
+            }
+            
+            ptr = sync_dir + pool_len;
+            if (*ptr == '/') {
+                ptr++;
+            }
+            
+            other_path = strchr(ptr, '/');
+            if(other_path != NULL){
+                size_t mount_len = other_path - sync_dir;
+                if (mount_len >= sizeof(mounted_path)) {
+                    logmessage("Cloudsync client", "Mounted path too long");
+                    continue;
+                }
+                strncpy(mounted_path, sync_dir, mount_len);
+                mounted_path[mount_len] = '\0';
+            } else {
+                if (strlen(sync_dir) >= sizeof(mounted_path)) {
+                    logmessage("Cloudsync client", "Mounted path too long");
+                    continue;
+                }
+                strlcpy(mounted_path, sync_dir, sizeof(mounted_path));
+            }
+            
+            if (strlen(mounted_path) + 3 >= sizeof(check_target)) {
+                logmessage("Cloudsync client", "Check target path too long");
+                continue;
+            }
+            
+            ret = snprintf(check_target, sizeof(check_target), " %s ", mounted_path);
+            if (ret < 0 || ret >= (int)sizeof(check_target)) {
+                logmessage("Cloudsync client", "Failed to format check target");
+                continue;
+            }
+            
+            fp = fopen(MOUNT_FILE, "r");
+            if(fp == NULL){
+                logmessage("Cloudsync client", "Could not open mount file: %s", strerror(errno));
+                continue;
+            }
+            
+            got_mount = 0;
+            while(fgets(line, sizeof(line), fp) != NULL){
+                line[sizeof(line) - 1] = '\0';
+                char *newline = strchr(line, '\n');
+                if (newline) *newline = '\0';
+                
+                if(strstr(line, check_target)){
+                    got_mount = 1;
+                    break;
                 }
             }
-			else if(type == 0){
-				char *b_bak, *ptr_b_bak;
-				ptr_b_bak = b_bak = strdup(b);
-				for(count = 0, next_word = strsep(&b_bak, ">"); next_word != NULL; ++count, next_word = strsep(&b_bak, ">")){
-					switch(count){
-						case 0: // type
-							type = atoi(next_word);
-							break;
-						case 1: // username
-							memset(username, 0, 64);
-							strncpy(username, next_word, 64);
-							break;
-						case 5: // dir
-							memset(sync_dir, 0, PATH_MAX);
-							strncpy(sync_dir, next_word, PATH_MAX);
-							break;
-						case 6: // enable
-							enable = atoi(next_word);
-							break;
-					}
-				}
-				free(ptr_b_bak);
-
-				if(!enable){
-					logmessage("Cloudsync client", "manually disabled");
-					continue;
-				}
-
-				ptr = sync_dir+strlen(POOL_MOUNT_ROOT)+1;
-				if((other_path = strchr(ptr, '/')) != NULL){
-					ptr = other_path;
-					++other_path;
-				}
-				else
-					ptr = "";
-
-				memset(mounted_path, 0, PATH_MAX);
-				strncpy(mounted_path, sync_dir, (strlen(sync_dir)-strlen(ptr)));
-
-				FILE *fp;
-				char check_target[PATH_MAX], line[PATH_MAX];
-				int got_mount = 0;
-
-				memset(check_target, 0, PATH_MAX);
-				snprintf(check_target, sizeof(check_target), " %s ", mounted_path);
-
-				if((fp = fopen(MOUNT_FILE, "r")) == NULL){
-					logmessage("Cloudsync client", "Could read the disk's data");
-					return;
-				}
-
-				while(fgets(line, sizeof(line), fp) != NULL){
-					if(strstr(line, check_target)){
-						got_mount = 1;
-						break;
-					}
-				}
-				fclose(fp);
-
-				if(!got_mount){
-					logmessage("Cloudsync client", "The specific disk isn't existed");
-					continue;
-				}
-
-				if(strlen(sync_dir))
-					mkdir_if_none(sync_dir);
-
-				memset(cloud_token, 0, PATH_MAX);
-				snprintf(cloud_token, PATH_MAX, "%s/.__cloudsync_%d_%s.txt", mounted_path, type, username);
-				if(!fromUI && !check_if_file_exist(cloud_token)){
-_dprintf("start_cloudsync: No token file.\n");
-					continue;
-				}
-
-				_eval(cmd3_argv, NULL, 0, NULL);
-
-				if(!pids("inotify"))
-					_eval(&cmd1_argv[s], NULL, 0, &pid);
-
-				if(!pids("asuswebstorage")){
-					_eval(&cmd2_argv[s], NULL, 0, &pid);
-					sleep(2); // wait asuswebstorage.
-				}
-
-				if(pids("inotify") && pids("asuswebstorage"))
-					logmessage("Cloudsync client", "daemon is started");
-			}
-		}
-		free(nv);
-	}
+            fclose(fp);
+            fp = NULL;
+            
+            if(!got_mount){
+                logmessage("Cloudsync client", "The specific disk doesn't exist");
+                continue;
+            }
+            
+            if(sync_dir[0])
+                mkdir_if_none(sync_dir);
+            
+            ret = snprintf(cloud_token, sizeof(cloud_token), "%s/.__cloudsync_%d_%s.txt", mounted_path, type, username);
+            if (ret < 0 || ret >= (int)sizeof(cloud_token)) {
+                logmessage("Cloudsync client", "Cloud token path too long");
+                continue;
+            }
+            
+            if(!fromUI && !check_if_file_exist(cloud_token)){
+                _dprintf("start_cloudsync: No token file.\n");
+                continue;
+            }
+            
+            cmd3_argv[1] = cloud_token;
+            _eval(cmd3_argv, NULL, 0, NULL);
+            
+            if(!pids("inotify"))
+                _eval(&cmd1_argv[s], NULL, 0, &pid);
+            
+            if(!pids("asuswebstorage")){
+                _eval(&cmd2_argv[s], NULL, 0, &pid);
+                sleep(2); 
+            }
+            
+            if(pids("inotify") && pids("asuswebstorage"))
+                logmessage("Cloudsync client", "daemon is started");
+        }
+    }
+    
+    if (nv != NULL) {
+        free(nv);
+        nv = NULL;
+    }
 }
 
 void stop_cloudsync(int type)
@@ -5033,7 +5184,7 @@ int __ejusb_main(const char *port_path, int unplug)
 		return -1;
 	}
 
-	all_disk = (atoi(port_path) == -1)? 1 : 0;
+	all_disk = (safe_atoi(port_path) == -1)? 1 : 0;
 	for(disk_info = disk_list; disk_info != NULL; disk_info = disk_info->next){
 		/* If hub port number is not specified in port_path,
 		 * don't compare it with hub port number in disk_info->port.
@@ -5086,13 +5237,13 @@ int ejusb_main(int argc, char *argv[])
 	}
 
 	ports_str = argv[1];
-	ports = atoi(argv[1]);
+	ports = safe_atoi(argv[1]);
 	if(ports != -1 && (ports < 1 || ports > 3)) {
 		ejusb_usage();
 		return -1;
 	}
 	if (argc == 3 && isdigit(*argv[2])) {
-		restart_nasapps = atoi(argv[2]);
+		restart_nasapps = safe_atoi(argv[2]);
 		argc -= 2;
 		argv += 2;
 	} else {
@@ -5103,7 +5254,7 @@ int ejusb_main(int argc, char *argv[])
 	while ((opt = getopt(argc, argv, "u:")) != -1) {
 		switch (opt) {
 		case 'u':
-			unplug = !!atoi(optarg);
+			unplug = !!safe_atoi(optarg);
 			break;
 		}
 	}
@@ -5177,7 +5328,7 @@ static void start_diskformat(char *port_path)
 	strlcpy(disk_label, nvram_safe_get("diskformat_label"), sizeof(disk_label));
 	strlcpy(usbport, nvram_safe_get("diskmon_usbport"), sizeof(usbport));
 
-	if(atoi(port_path) == -1)
+	if(safe_atoi(port_path) == -1)
 		ptr_path = usbport;
 	else
 		ptr_path = port_path;
@@ -5351,7 +5502,7 @@ static void start_diskscan(char *port_path)
 	snprintf(monpart, sizeof(monpart), "%s", nvram_safe_get("diskmon_part"));
 	snprintf(usbport, sizeof(usbport), "%s", nvram_safe_get("diskmon_usbport"));
 
-	if(atoi(port_path) == -1)
+	if(safe_atoi(port_path) == -1)
 		ptr_path = usbport;
 	else
 		ptr_path = port_path;
@@ -5561,11 +5712,11 @@ int diskmon_main(int argc, char *argv[])
 			continue;
 		}
 
-		val_hour[port_num] = atoi(set_hour);
+		val_hour[port_num] = safe_atoi(set_hour);
 		if(diskmon_freq == DISKMON_FREQ_MONTH)
-			val_day[port_num] = atoi(set_day);
+			val_day[port_num] = safe_atoi(set_day);
 		else if(diskmon_freq == DISKMON_FREQ_WEEK)
-			val_day[port_num] = atoi(set_week);
+			val_day[port_num] = safe_atoi(set_week);
 		else if(diskmon_freq == DISKMON_FREQ_DAY)
 			val_day[port_num] = -1;
 cprintf("disk_monitor: Port %d: val_day=%d, val_hour=%d.\n", port_num, val_day[port_num], val_hour[port_num]);
@@ -5821,7 +5972,7 @@ void usb_notify(){
 
 		f_read_string(target, buf, 16);
 
-		killall(entry->d_name, atoi(buf));
+		killall(entry->d_name, safe_atoi(buf));
 	}
 	closedir(dp);
 }
@@ -5845,7 +5996,7 @@ int find_webdav_right(char *account)
 			if((vstrsep(b, ">", &acc, &right) != 2)) continue;
 
 			if(strcmp(acc, account)==0) {
-				ret = atoi(right);
+				ret = safe_atoi(right);
 				break;
 			}
 		}

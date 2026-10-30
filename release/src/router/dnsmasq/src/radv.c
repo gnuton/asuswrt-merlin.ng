@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2025 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2026 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -222,11 +222,8 @@ void icmp6_packet(time_t now)
 	  if (opt_sz == 0 || opt_sz > rem)
 	    return; /* Bad packet */
 	  
-	  if (p[0] == ICMP6_OPT_SOURCE_MAC && ((opt_sz - 2) * 3 - 1 < MAXDNAME))
-	    {
-	      print_mac(daemon->namebuff, &p[2], opt_sz - 2);
-	      mac = daemon->namebuff;
-	    }
+	  if (p[0] == ICMP6_OPT_SOURCE_MAC)
+	    mac = print_mac(&p[2], opt_sz - 2);
 	}
       
       if (!option_bool(OPT_QUIET_RA))
@@ -430,7 +427,7 @@ RESEND:
   if (!old_prefix && !parm.found_context)
     return; 
   
-  /* If we're sending router address instead of prefix in at least on prefix,
+  /* If we're sending router address instead of prefix in at least one prefix,
      include the advertisement interval option. */
   if (parm.adv_router)
     {
@@ -454,7 +451,7 @@ RESEND:
       sprintf(daemon->namebuff, "/proc/sys/net/ipv6/conf/%s/mtu", mtu_name ? mtu_name : iface_name);
       if ((f = fopen(daemon->namebuff, "r")))
         {
-          if (fgets(daemon->namebuff, MAXDNAME, f))
+          if (fgets(daemon->namebuff, MAXDNAMESTR, f))
             mtu = atoi(daemon->namebuff);
           fclose(f);
         }
@@ -908,10 +905,10 @@ time_t periodic_ra(time_t now)
 	}
       else if (iface_enumerate(AF_INET6, &param, (callback_t){.af_inet6=iface_search}))
 	/* There's a context overdue, but we can't find an interface
-	   associated with it, because it's for a subnet we dont 
+	   associated with it, because it's for a subnet we don't
 	   have an interface on. Probably we're doing DHCP on
 	   a remote subnet via a relay. Zero the timer, since we won't
-	   ever be able to send ra's and satisfy it. */
+	   ever be able to send RAs to satisfy it. */
 	context->ra_time = 0;
       
       if (param.iface != 0 &&

@@ -75,11 +75,12 @@
 }
 
 #autowan_hint_div{
-	position: absolute;
+	position: fixed;
 	z-index: 1000;
 	width: 600px;
 	height: 550px;
-	margin-left: 40%;
+	top: 100px;
+	margin-left: 35%;
 	background-color: #232629;
 	box-shadow: 3px 3px 10px #000;
 	border-radius: 4px;
@@ -101,6 +102,12 @@
 	height: 330px;
 	background: url('images/wanport_plugin.png') no-repeat center;
 	background-size: contain;
+}
+
+@media screen and (max-height: 720px) {
+	#autowan_hint_div{
+		top: 30px;
+	}
 }
 </style>
 <script type="text/javascript" src="/js/jquery.js"></script>
@@ -324,11 +331,6 @@ function initial(){
 		showhide("dnssec_strict_tr", "<% nvram_get("dnssec_enable"); %>" == "1" ? 1 : 0);
 	}
 
-	if(dnssec_support){
-		document.getElementById("dnssec_tr").style.display = "";
-		showhide("dnssec_strict_tr", "<% nvram_get("dnssec_enable"); %>" == "1" ? 1 : 0);
-	}
-
 	change_nat(<% nvram_get("wan_nat_x"); %>);
 
 	if(yadns_support){
@@ -417,6 +419,7 @@ function initial(){
 		showhide("ppp_conn_tr",1);
 	}
 
+/*
 	$.getJSON("/ajax/dns_db.json",
 		function(data){
 			var dns_db_translation_mapping = [
@@ -473,6 +476,7 @@ function initial(){
 		$(".dns_pull_arrow").attr("src","/images/unfold_more.svg");
 		$(".dns_server_list_dropdown").hide();
 	});
+*/
 
 	if(dslite_support){
 		showaftrList();
@@ -750,6 +754,14 @@ function applyRule(){
 						conflict_functions = `<#WANAggregation#>`;
 					else
 						conflict_functions += `, <#WANAggregation#>`;
+				}
+
+				if(document.form.wan_dot1q.value == "1"){
+					autowan_conflict = true;
+					if(conflict_functions.length == 0)
+						conflict_functions = `802.1Q`;
+					else
+						conflict_functions += `, 802.1Q`;
 				}
 
 				if(document.form.wan_hwaddr_x.value.length > 0){
@@ -2172,7 +2184,7 @@ function updatDNSListOnline(){
 				return local_data[e];
 		});
 		Update_DNS_status();
-
+/*
 		$.getJSON("https://nw-dlcdnet.asus.com/plugin/js/DNS_List.json",
 			function(cloud_data){
 				if(JSON.stringify(local_data) != JSON.stringify(cloud_data)){
@@ -2185,6 +2197,7 @@ function updatDNSListOnline(){
 				}
 			}
 		);
+*/
 	});
 }
 
@@ -2194,7 +2207,7 @@ function Update_DNS_status(){
 	$("#DNS_status").empty();
 
 	if(document.form.wan_dnsenable_x.value == 1){
-		DSN_status_info=`<b><#IPConnection_x_DefaultStatus#> :</b> <#IPConnection_x_DNSServer_auto#>`;
+		DSN_status_info=`<b><#IPConnection_x_DefaultStatus#>:</b> <#IPConnection_x_DNSServer_auto#>`;
 	}
 	else{
 		DNS_list_index=DNSList_match(document.form.wan_dns1_x.value, document.form.wan_dns2_x.value);
@@ -2534,7 +2547,7 @@ function get_default_wan_name(){
 								<td align="left">
 									<div style="display: flex; align-items: center;">
 									<select id="wan_proto_menu" class="input_option" name="wan_proto" onchange="change_wan_type(this.value);fixed_change_wan_type(this.value);">
-										<option value="dhcp" <% nvram_match("wan_proto", "dhcp", "selected"); %>><#BOP_ctype_title1#></option>
+										<option value="dhcp" <% nvram_match("wan_proto", "dhcp", "selected"); %>><#BOP_ctype_dhcp_title1#></option>
 										<option value="static" <% nvram_match("wan_proto", "static", "selected"); %>><#BOP_ctype_title5#></option>
 										<option value="pppoe" <% nvram_match("wan_proto", "pppoe", "selected"); %>>PPPoE</option>
 										<option value="pptp" <% nvram_match("wan_proto", "pptp", "selected"); %>>PPTP</option>
@@ -2974,7 +2987,7 @@ function get_default_wan_name(){
 					</td>
 				</tr>
 				<tr style="display:none">
-					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,6);"><#WANPPPAuthText#></a></th>
+					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,29);"><#WANPPPAuthText#></a></th>
 					<td align="left">
 						<select class="input_option" name="wan_pppoe_auth">
 						<option value="" <% nvram_match("wan_pppoe_auth", "", "selected"); %>><#Auto#></option>

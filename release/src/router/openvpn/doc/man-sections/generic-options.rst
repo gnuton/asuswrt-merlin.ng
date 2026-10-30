@@ -43,11 +43,11 @@ which mode OpenVPN is configured as.
   however complications can result when scripts or restarts are executed
   after the chroot operation.
 
-  Note: The SSL library will probably need /dev/urandom to be available
+  Note: The SSL library will probably need ``/dev/urandom`` to be available
   inside the chroot directory ``dir``. This is because SSL libraries
   occasionally need to collect fresh randomness. Newer linux kernels and some
   BSDs implement a getrandom() or getentropy() syscall that removes the
-  need for /dev/urandom to be available.
+  need for ``/dev/urandom`` to be available.
 
 --compat-mode version
   This option provides a convenient way to alter the defaults of OpenVPN
@@ -170,22 +170,11 @@ which mode OpenVPN is configured as.
   Note: as soon as OpenVPN has daemonized, it can not ask for usernames,
   passwords, or key pass phrases anymore. This has certain consequences,
   namely that using a password-protected private key will fail unless the
-  ``--askpass`` option is used to tell OpenVPN to ask for the pass phrase
-  (this requirement is new in v2.3.7, and is a consequence of calling
-  daemon() before initializing the crypto layer).
+  ``--askpass`` option is used to tell OpenVPN to ask for the pass phrase.
 
   Further, using ``--daemon`` together with ``--auth-user-pass`` (entered
   on console) and ``--auth-nocache`` will fail as soon as key
   renegotiation (and reauthentication) occurs.
-
---disable-dco
-  Disable "data channel offload" (DCO).
-
-  On Linux don't use the ovpn-dco device driver, but rather rely on the
-  legacy tun module.
-
-  You may want to use this option if your server needs to allow clients
-  older than version 2.4 to connect.
 
 --disable-occ
   **DEPRECATED** Disable "options consistency check" (OCC) in configurations
@@ -211,18 +200,6 @@ which mode OpenVPN is configured as.
   ``--show-engines`` standalone option to list the crypto engines which
   are supported by OpenSSL.
 
---fast-io
-  Optimize TUN/TAP/UDP I/O writes by avoiding a call to
-  poll/epoll/select prior to the write operation. The purpose of such a
-  call would normally be to block until the device or socket is ready to
-  accept the write. Such blocking is unnecessary on some platforms which
-  don't support write blocking on UDP sockets or TUN/TAP devices. In such
-  cases, one can optimize the event loop by avoiding the poll/epoll/select
-  call, improving CPU efficiency by 5% to 10%.
-
-  This option can only be used on non-Windows systems, when ``--proto
-  udp`` is specified, and when ``--shaper`` is *NOT* specified.
-
 --group group
   Similar to the ``--user`` option, this option changes the group ID of
   the OpenVPN process to ``group`` after initialization.
@@ -231,7 +208,7 @@ which mode OpenVPN is configured as.
   Valid syntax:
   ::
 
-     ignore-unknown-options opt1 opt2 opt3 ... optN
+     ignore-unknown-option opt1 opt2 opt3 ... optN
 
   When one of options ``opt1 ... optN`` is encountered in the configuration
   file the configuration file parsing does not fail if this OpenVPN version
@@ -299,17 +276,6 @@ which mode OpenVPN is configured as.
   Change process priority after initialization (``n`` greater than 0 is
   lower priority, ``n`` less than zero is higher priority).
 
---persist-key
-  Don't re-read key files across :code:`SIGUSR1` or ``--ping-restart``.
-
-  This option can be combined with ``--user`` to allow restarts
-  triggered by the :code:`SIGUSR1` signal. Normally if you drop root
-  privileges in OpenVPN, the daemon cannot be restarted since it will now
-  be unable to re-read protected key files.
-
-  This option solves the problem by persisting keys across :code:`SIGUSR1`
-  resets, so they don't need to be re-read.
-
 --providers providers
   Load the list of (OpenSSL) providers. This is mainly useful for using an
   external provider for key management like tpm2-openssl or to load the
@@ -353,32 +319,22 @@ which mode OpenVPN is configured as.
   OpenVPN releases before v2.3 also supported a ``method`` flag which
   indicated how OpenVPN should call external commands and scripts. This
   could be either :code:`execve` or :code:`system`. As of OpenVPN 2.3, this
-  flag is no longer accepted. In most \*nix environments the execve()
-  approach has been used without any issues.
+  flag is no longer accepted.
 
   Some directives such as ``--up`` allow options to be passed to the
   external script. In these cases make sure the script name does not
   contain any spaces or the configuration parser will choke because it
   can't determine where the script name ends and script options start.
 
-  To run scripts in Windows in earlier OpenVPN versions you needed to
-  either add a full path to the script interpreter which can parse the
-  script or use the ``system`` flag to run these scripts. As of OpenVPN
-  2.3 it is now a strict requirement to have full path to the script
+  On Windoes it is a strict requirement to have the full path to the script
   interpreter when running non-executables files. This is not needed for
   executable files, such as .exe, .com, .bat or .cmd files. For example,
-  if you have a Visual Basic script, you must use this syntax now:
-
-  ::
+  if you have a Visual Basic script, you must use this syntax::
 
      --up 'C:\\Windows\\System32\\wscript.exe C:\\Program\ Files\\OpenVPN\\config\\my-up-script.vbs'
 
   Please note the single quote marks and the escaping of the backslashes
-  (\\) and the space character.
-
-  The reason the support for the :code:`system` flag was removed is due to
-  the security implications with shell expansions when executing scripts
-  via the :code:`system()` call.
+  (``\\``) and the space character.
 
 --setcon context
   Apply SELinux ``context`` after initialization. This essentially
@@ -399,7 +355,7 @@ which mode OpenVPN is configured as.
 
   Like with chroot, complications can result when scripts or restarts are
   executed after the setcon operation, which is why you should really
-  consider using the ``--persist-key`` and ``--persist-tun`` options.
+  consider using the ``--persist-tun`` option.
 
 --status args
   Write operational status to ``file`` every ``n`` seconds. ``n`` defaults
@@ -450,19 +406,23 @@ which mode OpenVPN is configured as.
   The typical usage of ``--test-crypto`` would be something like this:
   ::
 
-     openvpn --test-crypto --secret key
+     openvpn --test-crypto
 
   or
 
   ::
 
-     openvpn --test-crypto --secret key --verb 9
+     openvpn --test-crypto --verb 9
 
   This option is very useful to test OpenVPN after it has been ported to a
   new platform, or to isolate problems in the compiler, OpenSSL crypto
   library, or OpenVPN's crypto code. Since it is a self-test mode,
   problems with encryption and authentication can be debugged
   independently of network and tunnel issues.
+
+  Older versions of OpenVPN used the ``--secret`` argument to specify a
+  static key for this test. Newer version generate a random key for the
+  test.
 
 --tmp-dir dir
   Specify a directory ``dir`` for temporary files instead of the default

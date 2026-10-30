@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2021, The Tor Project, Inc. */
+/* Copyright (c) 2010-2025, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -24,6 +24,7 @@
 #include "feature/relay/router.h"
 #include "feature/relay/routermode.h"
 #include "core/or/circuitlist.h"
+#include "core/or/channelpadding.h"
 #include "core/mainloop/mainloop.h"
 #include "feature/stats/rephist.h"
 #include "feature/hibernate/hibernate.h"
@@ -221,10 +222,11 @@ log_heartbeat(time_t now)
   }
 
   double fullness_pct = 100;
+  // TODO CGO: This is slightly wrong?
   if (stats_n_data_cells_packaged && !hibernating) {
     fullness_pct =
       100*(((double)stats_n_data_bytes_packaged) /
-           ((double)stats_n_data_cells_packaged*RELAY_PAYLOAD_SIZE));
+           ((double)stats_n_data_cells_packaged*RELAY_PAYLOAD_SIZE_MAX));
   }
   const double overhead_pct = ( r - 1.0 ) * 100.0;
 
@@ -243,6 +245,7 @@ log_heartbeat(time_t now)
     rep_hist_log_circuit_handshake_stats(now);
     rep_hist_log_link_protocol_counts();
     dos_log_heartbeat();
+    channelpadding_log_heartbeat();
   }
 
   circuit_log_ancient_one_hop_circuits(1800);

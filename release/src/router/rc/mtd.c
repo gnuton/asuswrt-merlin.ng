@@ -468,10 +468,10 @@ int mtd_write_main(int argc, char *argv[])
 			dev = optarg;
 			break;
 		case 's':
-			skip_bytes = atoi(optarg);
+			skip_bytes = safe_atoi(optarg);
 			break;
 		case 'c':
-			count_bytes = atoi(optarg);
+			count_bytes = safe_atoi(optarg);
 			break;
 		}
 	}
@@ -955,7 +955,7 @@ wget(int method, const char *server, char *buf, size_t count, off_t offset)
 	}
 	if ((s = strchr(host, ':'))) {
 		*s++ = '\0';
-		port = atoi(s);
+		port = safe_atoi(s);
 	}
 
 	/* Open socket */
@@ -995,7 +995,7 @@ wget(int method, const char *server, char *buf, size_t count, off_t offset)
 		_dprintf("%s", line);
 		for (s = line; *s && !isspace((int)*s); s++);
 		for (; isspace((int)*s); s++);
-		switch (atoi(s)) {
+		switch (safe_atoi(s)) {
 		case 200: if (offset) goto done; else break;
 		case 206: if (offset) break; else goto done;
 		default: goto done;
@@ -1010,7 +1010,7 @@ wget(int method, const char *server, char *buf, size_t count, off_t offset)
 		if (!strncasecmp(s, "Content-Length:", 15)) {
 			for (s += 15; isblank(*s); s++);
 			chomp(s);
-			len = atoi(s);
+			len = safe_atoi(s);
 		}
 		else if (!strncasecmp(s, "Transfer-Encoding:", 18)) {
 			for (s += 18; isblank(*s); s++);
@@ -1188,7 +1188,11 @@ fail:
 #endif
 
 #ifdef HND_ROUTER
+#if defined(WIFI7_SDK_20250506) || defined(WIFI8_SDK_20251126)
+#include <bcm_flashutil.h>
+#else
 #include <bcm_hwdefs.h>
+#endif /* defined(WIFI7_SDK_20250506) || defined(WIFI8_SDK_20251126) */
 
 #define TEMP_KERNEL_NVRM_FILE "/var/.temp.kernel.nvram"
 #define PRE_COMMIT_KERNEL_NVRM_FILE "/var/.kernel_nvram.setting.prec"
@@ -1280,6 +1284,8 @@ CmsImageFormat parseImgHdr(UINT8 *bufP, UINT32 bufLen)
  *  The communication between HTTPD (parent) and bca_sys_upgrade is hold via pipe.
  *****************************************************************************/
 
+#define BCM_FLASHER_STD_BUFFSIZE  1024
+
 int
 bca_sys_upgrade(const char *path)
 {
@@ -1293,7 +1299,7 @@ bca_sys_upgrade(const char *path)
 	char *buf = NULL;
 	imgif_flash_info_t flash_info;
 	uint blknum = 0;
-	uint bufsz = 0;
+	uint bufsz = BCM_FLASHER_STD_BUFFSIZE;
 	pid_t pid = getpid();
 
 #ifdef RTCONFIG_PIPEFW
@@ -1365,16 +1371,21 @@ bca_sys_upgrade(const char *path)
 	}
 #endif
 
+	_dprintf("(hnd-write) Flash type 0x%x, flash size 0x%x, block size 0x%x\n", flash_info.flashType, flash_info.flashSize, flash_info.eraseSize);
+
 	/* evaluate image size */
 	if (((imgsz + CMS_IMAGE_OVERHEAD) > flash_info.flashSize) ||
 	    (imgsz < CMS_IMAGE_MIN_LEN)) {
 		ret = EINVAL;
 		goto fail;
 	}
+	_dprintf("(hnd-write) File size 0x%x (%d)\n", imgsz, imgsz);
 
 	/* setting image upload buf size equals to flash block size */
-	bufsz = flash_info.eraseSize;
+	if (flash_info.eraseSize)
+		bufsz = flash_info.eraseSize;
 
+	_dprintf("(hnd-wriet) : bufsz is %d\n", bufsz);
 	/* Allocating image upload buffer */
 	if ((buf = malloc(bufsz)) == NULL) {
 		ret = errno;
@@ -1383,7 +1394,7 @@ bca_sys_upgrade(const char *path)
 		goto fail;
 	}
 
-	printf("\nUpgrading: ");
+	_dprintf("\nUpgrading: ");
 	/* uploading entire image by chunks */
 	for (ulimgsz = 0, blknum = 1; ulimgsz < imgsz; ulimgsz += r_count, blknum++) {
 		r_count = safe_fread((void*)buf, 1, bufsz, fp);

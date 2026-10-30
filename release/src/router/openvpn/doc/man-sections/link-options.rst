@@ -12,7 +12,9 @@ the local and the remote host.
 
 --float
   Allow remote peer to change its IP address and/or port number, such as
-  due to DHCP (this is the default if ``--remote`` is not used).
+  due to DHCP or NAT mappings changing. ``--float`` only works when
+  using UDP transport.
+
   ``--float`` when specified with ``--remote`` allows an OpenVPN session
   to initially connect to a peer at a known address, however if packets
   arrive from a new address and pass all authentication tests, the new
@@ -72,7 +74,9 @@ the local and the remote host.
      keepalive interval timeout
 
   Send ping once every ``interval`` seconds, restart if ping is not received
-  for ``timeout`` seconds.
+  for ``timeout`` seconds. Both values are limited to 86400 seconds. Since the
+  server-side timeout is doubled, ``timeout`` is limited to 43200 seconds in
+  server mode.
 
   This option can be used on both client and server side, but it is enough
   to add this on the server side as it will push appropriate ``--ping``
@@ -106,14 +110,31 @@ the local and the remote host.
   is not reliable. It is recommended to set tun-mtu with enough headroom
   instead.
 
---local host
-  Local host name or IP address for bind. If specified, OpenVPN will bind
-  to this address only. If unspecified, OpenVPN will bind to all
-  interfaces.
+--local args
+
+  Valid syntax:
+  ::
+
+     local host|* [port] [protocol]
+
+  Local host name or IP address and port for bind. If specified, OpenVPN will bind
+  to this address. If unspecified, OpenVPN will bind to all interfaces.
+  '*' can be used as hostname and means 'any host' (OpenVPN will listen on what
+  is returned by the OS).
+  On a client, or in point-to-point mode, this can only be specified once (1 socket).
+
+  On an OpenVPN setup running as ``--server``, this can be specified multiple times
+  to open multiple listening sockets on different addresses and/or different ports.
+  In order to specify multiple listen ports without specifying an address, use '*'
+  to signal "use what the operating system gives you as default", for
+  "all IPv4 addresses" use "0.0.0.0", for "all IPv6 addresses" use '::'.
+  ``--local`` implies ``--bind``.
 
 --lport port
-  Set local TCP/UDP port number or name. Cannot be used together with
-  ``--nobind`` option.
+  Set default TCP/UDP port number. Cannot be used together with
+  ``--nobind`` option.  A port number of ``0`` is only honoured to
+  achieve "bind() to a random assigned port number" if a bind-to IP
+  address is specified with ``--local``.
 
 --mark value
   Mark encrypted packets being sent with ``value``. The mark value can be
@@ -226,10 +247,9 @@ the local and the remote host.
   Ping remote over the TCP/UDP control channel if no packets have been
   sent for at least ``n`` seconds (specify ``--ping`` on both peers to
   cause ping packets to be sent in both directions since OpenVPN ping
-  packets are not echoed like IP ping packets). When used in one of
-  OpenVPN's secure modes (where ``--secret``, ``--tls-server`` or
-  ``--tls-client`` is specified), the ping packet will be
-  cryptographically secure.
+  packets are not echoed like IP ping packets).
+
+  The maximum value for ``n`` is 86400 seconds.
 
   This option has two intended uses:
 
@@ -248,6 +268,8 @@ the local and the remote host.
   ``--inactive``, ``--ping`` and ``--ping-exit`` to create a two-tiered
   inactivity disconnect.
 
+  The maximum value for ``n`` is 86400 seconds.
+
   For example,
   ::
 
@@ -261,6 +283,8 @@ the local and the remote host.
   Similar to ``--ping-exit``, but trigger a :code:`SIGUSR1` restart after
   ``n`` seconds pass without reception of a ping or other packet from
   remote.
+
+  The maximum value for ``n`` is 86400 seconds.
 
   This option is useful in cases where the remote peer has a dynamic IP
   address and a low-TTL DNS name is used to track the IP address using a
@@ -286,7 +310,7 @@ the local and the remote host.
   See the signals section below for more information on :code:`SIGUSR1`.
 
   Note that the behavior of ``SIGUSR1`` can be modified by the
-  ``--persist-tun``, ``--persist-key``, ``--persist-local-ip`` and
+  ``--persist-tun``, ``--persist-local-ip`` and
   ``--persist-remote-ip`` options.
 
   Also note that ``--ping-exit`` and ``--ping-restart`` are mutually
@@ -366,8 +390,7 @@ the local and the remote host.
   order they were received to the TCP/IP protocol stack, provided they
   satisfy several constraints.
 
-  (a)   The packet cannot be a replay (unless ``--no-replay`` is
-        specified, which disables replay protection altogether).
+  (a)   The packet cannot be a replay.
 
   (b)   If a packet arrives out of order, it will only be accepted if
         the difference between its sequence number and the highest sequence
@@ -428,8 +451,7 @@ the local and the remote host.
   received by the prior session.
 
   This option only makes sense when replay protection is enabled (the
-  default) and you are using either ``--secret`` (shared-secret key mode)
-  or TLS mode with ``--tls-auth``.
+  default) and you are using TLS mode with ``--tls-auth``.
 
 --session-timeout n
   Raises :code:`SIGTERM` for the client instance after ``n`` seconds since
@@ -451,23 +473,20 @@ the local and the remote host.
   trying to group several smaller packets into a larger packet.  This can
   result in a considerably improvement in latency.
 
-  This option is pushable from server to client, and should be used on
-  both client and server for maximum effect.
+  Since OpenVPN 2.7.6 :code:`TCP_NODELAY` is enabled by default on every TCP
+  socket, so specifying it here is no longer necessary.
 
 --tcp-nodelay
-  This macro sets the :code:`TCP_NODELAY` socket flag on the server as well
-  as pushes it to connecting clients. The :code:`TCP_NODELAY` flag disables
-  the Nagle algorithm on TCP sockets causing packets to be transmitted
-  immediately with low latency, rather than waiting a short period of time
-  in order to aggregate several packets into a larger containing packet.
-  In VPN applications over TCP, :code:`TCP_NODELAY` is generally a good
-  latency optimization.
+  :code:`TCP_NODELAY` is enabled by default on every TCP socket. In
+  ``--mode server`` this option additionally pushes
+  ``socket-flags TCP_NODELAY`` to connecting clients, so that clients older
+  than 2.7.6 get it too. The option can be removed once such clients are no
+  longer in use.
 
   The macro expands as follows:
   ::
 
      if mode server:
-         socket-flags TCP_NODELAY
          push "socket-flags TCP_NODELAY"
 
 --max-packet-size size

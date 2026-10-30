@@ -12,7 +12,6 @@
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="css/confirm_block.css">
-<link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <style>
 .FormTable{
  	margin-top:10px;	
@@ -77,9 +76,7 @@
  	hlbr:expression(this.onFocus=this.blur()); /* for IE */
 }
 .current_fw_release_note {
-		color: #FC0;
-        text-decoration: underline;
-        cursor: pointer;
+	color: #FC0;
 }
 
 #rbk_Block{
@@ -113,7 +110,7 @@
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script language="JavaScript" type="text/javascript" src="/replaceisp.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js?v=4"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js?v=5"></script>
 <!-- script language="JavaScript" type="text/javascript" src="/ajax/get_rbk_info.asp"></script -->
 <script>
 
@@ -160,6 +157,7 @@ var dpi_engine_status = <%bwdpi_engine_status();%>;
 var sig_ver = '<% nvram_get("bwdpi_sig_ver"); %>';
 var sig_ver_ori = '<% nvram_get("bwdpi_sig_ver"); %>';
 var sig_update_t = '<% nvram_get("sig_update_t"); %>';
+var sig_type = '<% nvram_get("sig_type"); %>';
 if(cfg_sync_support){
 	var cfg_check = '<% nvram_get("cfg_check"); %>';
 	var cfg_upgrade = '<% nvram_get("cfg_upgrade"); %>';
@@ -361,7 +359,9 @@ function initial(){
 	$("#FWString").append("<span class='current_fw_release_note'>"+FWString+"</span>");	//Untranslated
 
 	if(afwupg_support && webs_update_enable_orig == 1){
-		$(".current_fw_release_note").click({"model_name": "<#Web_Title2#>", "fwver": FWString}, show_current_release_note);		
+		$(".current_fw_release_note").css("cursor", "pointer")
+						.css("text-decoration", "underline")
+						.click({"model_name": "<#Web_Title2#>", "fwver": FWString}, show_current_release_note);
 	}
 
 	if(revertfw_support && RevertFWver != ""){
@@ -1120,7 +1120,7 @@ function sig_version_check(){
 }
 
 var sdead=0;
-var sig_chk_count=60;
+var sig_chk_count=(sig_type=="HNS")? 150:60;
 function sig_check_status(){
 	$.ajax({
     	url: '/detect_firmware.asp',
@@ -1150,8 +1150,18 @@ function sig_check_status(){
 					document.getElementById("sig_check").disabled = false;
 				}
 				else{
-					if(sig_state_flag == 1 && sig_state_update == 0 && sig_state_upgrade == 1){		//update complete
-						update_sig_ver();
+					if(sig_state_update == 0 && sig_state_upgrade == 1){		//upgrade complete
+						document.getElementById("sig_update_date").innerHTML = "";
+						if(sig_ver == sig_ver_ori){
+							$("#sig_status").html("<#sig_updating#>");
+							setTimeout("sig_check_status();", 1000);
+						}
+						else{
+							document.getElementById("sig_update_scan").style.display = "none";
+							document.getElementById("sig_check").disabled = false;
+							$("#sig_status").html("<#sig_completed#>");
+							$("#sig_ver_word").html(sig_ver);
+						}
 					}
 					else{		//updating
 						if(sig_chk_count < 1){
@@ -1168,30 +1178,6 @@ function sig_check_status(){
 			}
   		}
   	});
-}
-
-function update_sig_ver(){
-	$.ajax({
-    	url: '/detect_firmware.asp',
-    	dataType: 'script',
-		timeout: 3000,
-    	error:	function(xhr){
-    		setTimeout('update_sig_ver();', 1000);
-    	},
-    	success: function(){
-		if(sig_ver == sig_ver_ori){
-			setTimeout("update_sig_ver();", 1000);
-		}
-		else{
-			document.getElementById("sig_update_date").innerHTML = "";
-			document.getElementById("sig_update_scan").style.display = "none";
-			document.getElementById("sig_check").disabled = false;
-			$("#sig_status").html("<#sig_completed#>");
-			$("#sig_ver_word").html(sig_ver);
-		}
-	}
-  	
-	});
 }
 
 function hide_upgrade_opt(flag){
@@ -2017,28 +2003,28 @@ function get_mobile_fw_upgrade_status(){
 					<script type="text/javascript">
 						$('#switch_webs_update_enable').iphoneSwitch('<% nvram_get("webs_update_enable"); %>',
 								function () {
-									const policyStatus = PolicyStatus()
-											.then(data => {
-												if (data.PP == 0 || data.PP_time == "") {
-													const policyModal = new PolicyModalComponent({
-														policy: "PP",
-														policyStatus: data,
-														agreeCallback: () => {
-															hide_upgrade_opt(1);
-															save_update_enable('on');
-														},
-														knowRiskCallback: () => {
-															alert(`<#ASUS_POLICY_Function_Confirm#>`);
-															location.reload();
-														}
-													});
-													policyModal.show();
-													return false;
-												} else {
-													hide_upgrade_opt(1);
-													save_update_enable('on');
-												}
-											});
+									PolicyStatus()
+                                        .then(data => {
+                                            if (data.PP < 1) {
+                                                const policyModal = new PolicyModalComponent({
+                                                    policy: "PP",
+                                                    policyStatus: data,
+                                                    agreeCallback: () => {
+                                                        hide_upgrade_opt(1);
+                                                        save_update_enable('on');
+                                                    },
+                                                    knowRiskCallback: () => {
+                                                        alert(`<#ASUS_POLICY_Function_Confirm#>`);
+                                                        location.reload();
+                                                    }
+                                                });
+                                                policyModal.show();
+                                                return false;
+                                            } else {
+                                                hide_upgrade_opt(1);
+                                                save_update_enable('on');
+                                            }
+                                        });
 								},
 								function () {
 									hide_upgrade_opt(0);
@@ -2079,26 +2065,26 @@ function get_mobile_fw_upgrade_status(){
 						$('#switch_security_update_enable').iphoneSwitch(httpApi.securityUpdate.get(),
 								function () {
 									//on
-									const policyStatus = PolicyStatus()
-											.then(data => {
-												if (data.PP == 0 || data.PP_time == "") {
-													const policyModal = new PolicyModalComponent({
-														policy: "PP",
-														policyStatus: data,
-														agreeCallback: () => {
-															httpApi.securityUpdate.set(1);
-														},
-														knowRiskCallback: () => {
-															alert(`<#ASUS_POLICY_Function_Confirm#>`);
-															location.reload();
-														}
-													});
-													policyModal.show();
-													return false;
-												} else {
-													httpApi.securityUpdate.set(1);
-												}
-											});
+									PolicyStatus()
+                                        .then(data => {
+                                            if (data.PP < 1) {
+                                                const policyModal = new PolicyModalComponent({
+                                                    policy: "PP",
+                                                    policyStatus: data,
+                                                    agreeCallback: () => {
+                                                        httpApi.securityUpdate.set(1);
+                                                    },
+                                                    knowRiskCallback: () => {
+                                                        alert(`<#ASUS_POLICY_Function_Confirm#>`);
+                                                        location.reload();
+                                                    }
+                                                });
+                                                policyModal.show();
+                                                return false;
+                                            } else {
+                                                httpApi.securityUpdate.set(1);
+                                            }
+                                        });
 								},
 								function () {
 									//off

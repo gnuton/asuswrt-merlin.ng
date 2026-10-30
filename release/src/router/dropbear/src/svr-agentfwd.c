@@ -60,28 +60,37 @@ int svr_agentreq(struct ChanSess * chansess) {
 		return DROPBEAR_FAILURE;
 	}
 
-	/* create listening socket */
-	fd = socket(PF_UNIX, SOCK_STREAM, 0);
-	if (fd < 0) {
-		goto fail;
+#if DROPBEAR_FUZZ
+	if (fuzz.fuzzing) {
+		fd = wrapfd_new_dummy();
 	}
+	else
+#endif
+	{
+		/* create listening socket */
+		fd = socket(PF_UNIX, SOCK_STREAM, 0);
+		if (fd < 0) {
+			goto fail;
+		}
 
-	/* create the unix socket dir and file */
-	if (bindagent(fd, chansess) == DROPBEAR_FAILURE) {
-		goto fail;
-	}
+		/* create the unix socket dir and file */
+		if (bindagent(fd, chansess) == DROPBEAR_FAILURE) {
+			goto fail;
+		}
 
-	/* listen */
-	if (listen(fd, 20) < 0) {
-		goto fail;
+		/* listen */
+		if (listen(fd, 20) < 0) {
+			goto fail;
+		}
 	}
 
 	/* set non-blocking */
 	setnonblocking(fd);
 
 	/* pass if off to listener */
-	chansess->agentlistener = new_listener( &fd, 1, 0, chansess, 
-								agentaccept, NULL);
+	chansess->agentlistener = new_listener( &fd, 1,
+		LISTENER_TYPE_DEFAULT, chansess,
+		agentaccept, NULL);
 
 	if (chansess->agentlistener == NULL) {
 		goto fail;
@@ -151,7 +160,7 @@ void svr_agentcleanup(struct ChanSess * chansess) {
 
 	if (chansess->agentfile != NULL && chansess->agentdir != NULL) {
 
-#if DROPBEAR_SVR_MULTIUSER
+#if !DROPBEAR_SVR_DROP_PRIVS
 		/* Remove the dir as the user. That way they can't cause problems except
 		 * for themselves */
 		uid = getuid();
@@ -160,6 +169,9 @@ void svr_agentcleanup(struct ChanSess * chansess) {
 			(seteuid(ses.authstate.pw_uid)) < 0) {
 			dropbear_exit("Failed to set euid");
 		}
+#else
+		(void)uid;
+		(void)gid;
 #endif
 
 		/* 2 for "/" and "\0" */
@@ -172,7 +184,7 @@ void svr_agentcleanup(struct ChanSess * chansess) {
 
 		rmdir(chansess->agentdir);
 
-#if DROPBEAR_SVR_MULTIUSER
+#if !DROPBEAR_SVR_DROP_PRIVS
 		if ((seteuid(uid)) < 0 ||
 			(setegid(gid)) < 0) {
 			dropbear_exit("Failed to revert euid");
@@ -219,7 +231,7 @@ static int bindagent(int fd, struct ChanSess * chansess) {
 	gid_t gid;
 	int ret = DROPBEAR_FAILURE;
 
-#if DROPBEAR_SVR_MULTIUSER
+#if !DROPBEAR_SVR_DROP_PRIVS
 	/* drop to user privs to make the dir/file */
 	uid = getuid();
 	gid = getgid();
@@ -227,6 +239,9 @@ static int bindagent(int fd, struct ChanSess * chansess) {
 		(seteuid(ses.authstate.pw_uid)) < 0) {
 		dropbear_exit("Failed to set euid");
 	}
+#else
+		(void)uid;
+		(void)gid;
 #endif
 
 	memset((void*)&addr, 0x0, sizeof(addr));
@@ -267,7 +282,7 @@ bindsocket:
 
 
 out:
-#if DROPBEAR_SVR_MULTIUSER
+#if !DROPBEAR_SVR_DROP_PRIVS
 	if ((seteuid(uid)) < 0 ||
 		(setegid(gid)) < 0) {
 		dropbear_exit("Failed to revert euid");

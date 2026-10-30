@@ -1,10 +1,10 @@
-/* $Id: nftnlrdr_misc.c,v 1.19 2024/03/11 23:28:21 nanard Exp $ */
+/* $Id: nftnlrdr_misc.c,v 1.22 2025/04/21 22:02:43 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * MiniUPnP project
  * http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
  * (c) 2015 Tomofumi Hayashi
  * (c) 2019 Paul Chambers
- * (c) 2019-2024 Thomas Bernard
+ * (c) 2019-2026 Thomas Bernard
  *
  * This software is subject to the conditions detailed
  * in the LICENCE file provided within the distribution.
@@ -59,6 +59,12 @@
 #define log_debug(args...)	syslog(LOG_DEBUG, args)
 #endif
 
+#ifndef MIN
+#define MIN(x,y) (((x)<(y))?(x):(y))
+#endif
+
+/* maximum length of USERDATA, used for description */
+#define NFTNL_RULE_USERDATA_MAX_LEN 256
 
 #define RULE_CACHE_INVALID  0
 #define RULE_CACHE_VALID    1
@@ -741,9 +747,11 @@ refresh_nft_cache(struct rule_list *head, const char *table, const char *chain, 
 		} else if (n == 0) {
 			break;
 		}
+		/* https://git.netfilter.org/libmnl/tree/src/callback.c#n48 */
+		errno = 0;
 		ret = mnl_cb_run(buf, n, mnl_seq, mnl_portid, table_cb, &data);
 		if (ret <= -1 /*== MNL_CB_ERROR*/) {
-			syslog(LOG_ERR, "%s: mnl_cb_run returned %d",
+			syslog(LOG_ERR, "%s: mnl_cb_run returned %d: %m",
 			       "refresh_nft_cache", ret);
 			return -1;
 		}
@@ -791,6 +799,22 @@ expr_add_cmp(struct nftnl_rule *r, uint32_t sreg, uint32_t op,
 
 	nftnl_rule_add_expr(r, e);
 }
+
+#ifdef ENABLE_NFT_RULE_COUNTER
+static void
+expr_add_counter(struct nftnl_rule *r)
+{
+	struct nftnl_expr *e;
+
+	e = nftnl_expr_alloc("counter");
+	if (e == NULL) {
+		log_error("nftnl_expr_alloc(\"%s\") FAILED", "counter");
+		return;
+	}
+
+	nftnl_rule_add_expr(r, e);
+}
+#endif
 
 static void
 expr_add_meta(struct nftnl_rule *r, uint32_t meta_key, uint32_t dreg)
@@ -902,8 +926,9 @@ rule_set_snat(uint8_t family, uint8_t proto,
 	nftnl_rule_set_str(r, NFTNL_RULE_CHAIN, nft_postrouting_chain);
 
 	if (descr != NULL && *descr != '\0') {
+		uint32_t len = strlen(descr);
 		nftnl_rule_set_data(r, NFTNL_RULE_USERDATA,
-							descr, strlen(descr));
+							descr, MIN(len, NFTNL_RULE_USERDATA_MAX_LEN));
 	}
 
 	/* Destination IP */
@@ -978,8 +1003,9 @@ rule_set_dnat(uint8_t family, const char * ifname, uint8_t proto,
 	nftnl_rule_set_str(r, NFTNL_RULE_CHAIN, nft_prerouting_chain);
 
 	if (descr != NULL && *descr != '\0') {
+		uint32_t len = strlen(descr);
 		nftnl_rule_set_data(r, NFTNL_RULE_USERDATA,
-							descr, strlen(descr));
+							descr, MIN(len, NFTNL_RULE_USERDATA_MAX_LEN));
 	}
 
 	if (handle != NULL) {
@@ -987,12 +1013,14 @@ rule_set_dnat(uint8_t family, const char * ifname, uint8_t proto,
 		nftnl_rule_set_u64(r, NFTNL_RULE_POSITION, handle_num);
 	}
 
+#ifdef USE_IFNAME_IN_RULES
 	if (ifname != NULL) {
 		if_idx = (uint32_t)if_nametoindex(ifname);
 		expr_add_meta(r, NFT_META_IIF, NFT_REG_1);
 		expr_add_cmp(r, NFT_REG_1, NFT_CMP_EQ, &if_idx,
 			     sizeof(uint32_t));
 	}
+#endif
 
 	/* Source IP */
 	if (rhost != 0) {
@@ -1017,6 +1045,11 @@ rule_set_dnat(uint8_t family, const char * ifname, uint8_t proto,
 		                 offsetof(struct udphdr, dest), sizeof(uint16_t));
 		expr_add_cmp(r, NFT_REG_1, NFT_CMP_EQ, &dport, sizeof(uint16_t));
 	}
+
+#ifdef ENABLE_NFT_RULE_COUNTER
+	/* Counter */
+	expr_add_counter(r);
+#endif
 
 	expr_add_nat(r, NFT_NAT_DNAT, NFPROTO_IPV4, ihost, htons(iport), 0);
 
@@ -1134,8 +1167,9 @@ rule_set_filter_common(struct nftnl_rule *r, uint8_t family, const char * ifname
 	nftnl_rule_set_str(r, NFTNL_RULE_CHAIN, nft_forward_chain);
 
 	if (descr != NULL && *descr != '\0') {
+		uint32_t len = strlen(descr);
 		nftnl_rule_set_data(r, NFTNL_RULE_USERDATA,
-							descr, strlen(descr));
+							descr, MIN(len, NFTNL_RULE_USERDATA_MAX_LEN));
 	}
 
 	if (handle != NULL) {
@@ -1143,12 +1177,14 @@ rule_set_filter_common(struct nftnl_rule *r, uint8_t family, const char * ifname
 		nftnl_rule_set_u64(r, NFTNL_RULE_POSITION, handle_num);
 	}
 
+#ifdef USE_IFNAME_IN_RULES
 	if (ifname != NULL) {
 		if_idx = (uint32_t)if_nametoindex(ifname);
 		expr_add_meta(r, NFT_META_IIF, NFT_REG_1);
 		expr_add_cmp(r, NFT_REG_1, NFT_CMP_EQ, &if_idx,
 			     sizeof(uint32_t));
 	}
+#endif
 
 	/* Destination Port */
 	dport = htons(iport);
@@ -1373,20 +1409,23 @@ struct mnl_nlmsg_batch *
 start_batch(char *buf, size_t buf_size)
 {
 	struct mnl_nlmsg_batch *result;
-	mnl_seq = time(NULL);
 
 	if (mnl_sock == NULL) {
 		log_error("netlink not connected");
-		result = NULL;
-	} else {
-		result = mnl_nlmsg_batch_start(buf, buf_size);
-		if (result != NULL) {
-			nft_mnl_batch_put(mnl_nlmsg_batch_current(result),
-							  NFNL_MSG_BATCH_BEGIN, mnl_seq++);
-			mnl_nlmsg_batch_next(result);
-		}
+		return NULL;
 	}
-
+	mnl_seq = time(NULL);
+	result = mnl_nlmsg_batch_start(buf, buf_size);
+	if (result == NULL) {
+		syslog(LOG_ERR, "%s: mnl_nlmsg_batch_start(%p, %lu) returned NULL",
+		       "start_batch", buf, (unsigned long)buf_size);
+		return NULL;
+	}
+	nft_mnl_batch_put(mnl_nlmsg_batch_current(result),
+					  NFNL_MSG_BATCH_BEGIN, mnl_seq++);
+	if (!mnl_nlmsg_batch_next(result)) {
+		syslog(LOG_ERR, "%s: mnl_nlmsg_batch_next returned false", "start_batch");
+	}
 	return result;
 }
 
@@ -1431,9 +1470,11 @@ send_batch(struct mnl_nlmsg_batch *batch)
 		} else if (n == 0) {
 			break;
 		}
+		/* https://git.netfilter.org/libmnl/tree/src/callback.c#n48 */
+		errno = 0;
 		ret = mnl_cb_run(buf, n, 0, mnl_portid, NULL, NULL);
 		if (ret <= -1 /*== MNL_CB_ERROR*/) {
-			syslog(LOG_ERR, "%s: mnl_cb_run returned %d",
+			syslog(LOG_ERR, "%s: mnl_cb_run returned %d: %m",
 			       "send_batch", ret);
 			return -4;
 		}

@@ -34,7 +34,7 @@
 #include "queue.h"
 #include "listener.h"
 #include "packet.h"
-#include "tcpfwd.h"
+#include "forward.h"
 #include "chansession.h"
 #include "dbutil.h"
 #include "netio.h"
@@ -66,7 +66,6 @@ void cli_session(int sock_in, int sock_out, struct dropbear_progress_connection 
 void cli_connected(int result, int sock, void* userdata, const char *errstring);
 void cli_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 void cli_dropbear_log(int priority, const char* format, va_list param);
-void cleantext(char* dirtytext);
 void kill_proxy_command(void);
 
 /* crypto parameters that are stored individually for transmit and receive */
@@ -106,9 +105,6 @@ struct key_context {
 	const struct dropbear_kex *algo_kex;
 	enum signkey_type algo_hostkey; /* server key type */
 	enum signature_type algo_signature; /* server signature type */
-
-	int allow_compress; /* whether compression has started (useful in 
-							zlib@openssh.com delayed compression case) */
 };
 
 struct packetlist;
@@ -209,6 +205,7 @@ struct sshsession {
 	/* a list of queued replies that should be sent after a KEX has
 	   concluded (ie, while dataallowed was unset)*/
 	struct packetlist *reply_queue_head, *reply_queue_tail;
+	size_t reply_queue_len;
 
 	void(*remoteclosed)(void); /* A callback to handle closure of the
 									  remote connection */
@@ -280,6 +277,12 @@ struct serversession {
 
 	/* The instance created by the plugin_new function */
 	struct PluginInstance *plugin_instance;
+#endif
+
+#if DROPBEAR_SVR_DROP_PRIVS
+	/* Set to 1 when utmp_gid is valid */
+	int have_utmp_gid;
+	gid_t utmp_gid;
 #endif
 };
 

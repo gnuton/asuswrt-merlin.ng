@@ -29,7 +29,7 @@
 #include "kex.h"
 #include "ssh.h"
 #include "packet.h"
-#include "tcpfwd.h"
+#include "forward.h"
 #include "channel.h"
 #include "dbrandom.h"
 #include "service.h"
@@ -376,8 +376,6 @@ static void cli_finished() {
 	TRACE(("cli_finished()"))
 
 	session_cleanup();
-	fprintf(stderr, "Connection to %s@%s:%s closed.\n", cli_opts.username,
-			cli_opts.remotehost, cli_opts.remoteport);
 	exit(cli_ses.retval);
 }
 
@@ -392,28 +390,6 @@ static void cli_remoteclosed() {
 	ses.sock_in = -1;
 	ses.sock_out = -1;
 	dropbear_exit("Remote closed the connection");
-}
-
-/* Operates in-place turning dirty (untrusted potentially containing control
- * characters) text into clean text. 
- * Note: this is safe only with ascii - other charsets could have problems. */
-void cleantext(char* dirtytext) {
-
-	unsigned int i, j;
-	char c;
-
-	j = 0;
-	for (i = 0; dirtytext[i] != '\0'; i++) {
-
-		c = dirtytext[i];
-		/* We can ignore '\r's */
-		if ( (c >= ' ' && c <= '~') || c == '\n' || c == '\t') {
-			dirtytext[j] = c;
-			j++;
-		}
-	}
-	/* Null terminate */
-	dirtytext[j] = '\0';
 }
 
 static void recv_msg_global_request_cli(void) {
@@ -444,10 +420,17 @@ void cli_dropbear_exit(int exitcode, const char* format, va_list param) {
 	if (!ses.init_done) {
 		snprintf(fullmsg, sizeof(fullmsg), "Exited: %s", exitmsg);
 	} else {
-		snprintf(fullmsg, sizeof(fullmsg), 
+		if (strchr(cli_opts.remotehost, ':') != NULL) {
+			snprintf(fullmsg, sizeof(fullmsg), 
+				"Connection to %s@[%s]:%s exited: %s", 
+				cli_opts.username, cli_opts.remotehost, 
+				cli_opts.remoteport, exitmsg);
+		} else {
+			snprintf(fullmsg, sizeof(fullmsg), 
 				"Connection to %s@%s:%s exited: %s", 
 				cli_opts.username, cli_opts.remotehost, 
 				cli_opts.remoteport, exitmsg);
+		}
 	}
 
 	/* Do the cleanup first, since then the terminal will be reset */

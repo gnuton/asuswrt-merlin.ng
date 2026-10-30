@@ -19,11 +19,18 @@
 
 #include "test/test.h"
 
-static const char KEY_MATERIAL[3][CPATH_KEY_MATERIAL_LEN] = {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+NONSTRING static const char KEY_MATERIAL[3][CPATH_KEY_MATERIAL_LEN] = {
   "    'My public key is in this signed x509 object', said Tom assertively.",
   "'Let's chart the pedal phlanges in the tomb', said Tom cryptographically",
   "     'Segmentation fault bugs don't _just happen_', said Tom seethingly.",
 };
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 typedef struct testing_circuitset_t {
   or_circuit_t *or_circ[3];
@@ -42,17 +49,18 @@ testing_circuitset_setup(const struct testcase_t *testcase)
   for (i=0; i<3; ++i) {
     cs->or_circ[i] = or_circuit_new(0, NULL);
     tt_int_op(0, OP_EQ,
-              relay_crypto_init(&cs->or_circ[i]->crypto,
-                                KEY_MATERIAL[i], sizeof(KEY_MATERIAL[i]),
-                                0, 0));
+              relay_crypto_init(RELAY_CRYPTO_ALG_TOR1,
+                                &cs->or_circ[i]->crypto,
+                                KEY_MATERIAL[i], sizeof(KEY_MATERIAL[i])));
   }
 
   cs->origin_circ = origin_circuit_new();
   cs->origin_circ->base_.purpose = CIRCUIT_PURPOSE_C_GENERAL;
   for (i=0; i<3; ++i) {
     crypt_path_t *hop = tor_malloc_zero(sizeof(*hop));
-    relay_crypto_init(&hop->pvt_crypto, KEY_MATERIAL[i],
-                      sizeof(KEY_MATERIAL[i]), 0, 0);
+    relay_crypto_init(RELAY_CRYPTO_ALG_TOR1,
+                      &hop->pvt_crypto, KEY_MATERIAL[i],
+                      sizeof(KEY_MATERIAL[i]));
     hop->state = CPATH_STATE_OPEN;
     cpath_extend_linked_list(&cs->origin_circ->cpath, hop);
     tt_ptr_op(hop, OP_EQ, cs->origin_circ->cpath->prev);
@@ -189,4 +197,3 @@ struct testcase_t relaycrypt_tests[] = {
   TEST(inbound),
   END_OF_TESTCASES
 };
-

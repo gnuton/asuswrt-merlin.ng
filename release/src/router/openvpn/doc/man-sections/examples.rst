@@ -63,6 +63,10 @@ you will get a weird feedback loop.
 Example 1: A simple tunnel without security (not recommended)
 -------------------------------------------------------------
 
+Since :code:`tun` is the default device type, ``--dev`` is optional; when it
+is omitted OpenVPN creates a dynamically-named ``tunX`` device. The examples
+below still name the device (``--dev tun1``) explicitly for clarity.
+
 On bob::
 
    openvpn --remote alice.example.com --dev tun1 \
@@ -132,7 +136,7 @@ On alice::
 
    ping 10.4.0.1
 
-Note: This example use a elliptic curve (`secp384`), which allows
+Note: This example use a elliptic curve (``secp384``), which allows
 ``--dh`` to be set to ``none``.
 
 Example 3: A tunnel with full PKI and TLS-based security

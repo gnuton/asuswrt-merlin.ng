@@ -68,7 +68,9 @@ configuration.
       auth-user-pass up
 
   If ``up`` is present, it must be a file containing username/password on 2
-  lines. If the password line is missing, OpenVPN will prompt for one.
+  lines or a flag named :code:`username-only` to indicate no password
+  should be prompted for. In the former case, if the password line is missing
+  in the file, OpenVPN will prompt for one.
 
   If ``up`` is omitted, username/password will be prompted from the
   console.
@@ -83,6 +85,20 @@ configuration.
 
   where password is optional, and will be prompted from the console if
   missing.
+
+  The :code:`username-only` flag is meant to be used with SSO authentication.
+  In this case the user will be asked for a username but not password. Instead,
+  a dummy password :code:`[[BLANK]]` is generated internally and submitted to
+  the server. See management-notes.txt for how this option affects username/password
+  prompt via the management interface. For the console, it simply eliminates
+  the password prompt.
+
+  The :code:`username-only` flag cannot be used along with embedding username and/or
+  password in the config file, or while reading them from an external file. In
+  such cases, if only username is relevant and no password prompt is desired, a
+  dummy password like 'no_passsword' should be embedded as well. This flag is also
+  incompatible with the ``--static-challenge`` option and legacy ``dynamic challenge``
+  protocol.
 
   The server configuration must specify an ``--auth-user-pass-verify``
   script to verify the username/password provided by the client.
@@ -132,16 +148,21 @@ configuration.
   ifconfig settings pushed to the client would create an IP numbering
   conflict.
 
+  Valid syntax:
+  ::
+
+      client-nat snat|dnat network netmask alias
+
   Examples:
   ::
 
-      client-nat snat 192.168.0.0/255.255.0.0
-      client-nat dnat 10.64.0.0/255.255.0.0
+      client-nat snat 192.168.0.0 255.255.0.0 10.64.0.0
+      client-nat dnat 10.64.0.0 255.255.0.0 192.168.0.0
 
-  ``network/netmask`` (for example :code:`192.168.0.0/255.255.0.0`) defines
-  the local view of a resource from the client perspective, while
-  ``alias/netmask`` (for example :code:`10.64.0.0/255.255.0.0`) defines the
-  remote view from the server perspective.
+  ``network`` and ``netmask`` (for example :code:`192.168.0.0
+  255.255.0.0`) define the local view of a resource from the client
+  perspective, while ``alias`` (for example :code:`10.64.0.0`) defines the
+  remote view from the server perspective using the same netmask.
 
   Use :code:`snat` (source NAT) for resources owned by the client and
   :code:`dnat` (destination NAT) for remote resources.
@@ -195,7 +216,8 @@ configuration.
   DNS server options it must be between 0 and 127. The server id is used
   to group options and also for ordering the list of configured DNS servers;
   lower numbers come first. DNS servers being pushed to a client replace
-  already configured DNS servers with the same server id.
+  already configured DNS servers with the same server id. Only the group of
+  options corresponding to the lowest server id is applied.
 
   The ``address`` option configures the IPv4 and / or IPv6 address(es) of
   the DNS server. Up to eight addresses can be specified per DNS server.
@@ -227,6 +249,19 @@ configuration.
   Until then it will replace configuration at the places ``--dhcp-option`` puts it,
   so that ``--dns`` overrides ``--dhcp-option``. Thus, ``--dns`` can be used today
   to migrate from ``--dhcp-option``.
+
+  Windows only:
+
+  #. If tap-windows6 is in use, dns servers are set by DHCP by default.
+     In this case only ``--dns search-domains`` and ``--dns server n address ..``
+     with the lowest value of ``n`` are interpreted. All other ``--dns`` options
+     are ignored. Use of the dco driver is the recommended way to make use of these
+     new features.
+
+  #. If ``--dns server n resolve-domains`` is in use, the DNS server addresses
+     corresponding to ``n`` are set on the interface only if ``search-domains`` is
+     also specified.  Otherwise these DNS addresses are used only for NRPT rules for
+     split-DNS.
 
 --explicit-exit-notify n
   In UDP client mode or point-to-point mode, send server/peer an exit
@@ -273,6 +308,11 @@ configuration.
   and TLS control packets are not considered "activity", nor are they
   counted as traffic, as they are used internally by OpenVPN and are not
   an indication of actual user activity.
+
+  NOTE: on FreeBSD with DCO, due to platform limits, the previous paragraph
+  is not correct.  In that case, encapsulation overhead and keepalives are
+  counted, so using this feature needs a sufficiently-high ``bytes`` value to
+  take these extra numbers into account.
 
 --proto-force p
   When iterating through connection profiles, only consider profiles using
@@ -340,6 +380,11 @@ configuration.
   next remote succeeds. To silently ignore an option pushed by the server,
   use :code:`ignore`.
 
+  *Warning:* ``pull-filter`` cannot be relied upon as a security measure to
+  protect against offending options pushed by a server. For example, the
+  filter could be defeated by pushing options with extra spaces between
+  tokens or other formatting variations.
+
 --push-peer-info
   Push additional information about the client to server. The following
   data is always pushed to the server:
@@ -367,6 +412,7 @@ configuration.
     - bit 7: The client is capable of sending exit notification via control channel using ``EXIT`` message. Also, the client is accepting the protocol-flags pushed option for the EKM capability
     - bit 8: The client is capable of accepting ``AUTH_FAILED,TEMP`` messages
     - bit 9: The client is capable of dynamic tls-crypt
+    - bit 10: The client is capable of data epoch keys
 
   :code:`IV_NCP=2`
         Negotiable ciphers, client supports ``--cipher`` pushed by
@@ -431,8 +477,8 @@ configuration.
         This may be set by the client UI/GUI using ``--setenv``.
         On Windows systems it is automatically determined by openvpn
         itself.  On other platforms OpenVPN will default to sending
-        the information returned by the `uname()` system call in
-        the `release` field, which is usually the currently running
+        the information returned by the ``uname()`` system call in
+        the ``release`` field, which is usually the currently running
         kernel version.  This is highly system specific, though.
 
   :code:`UV_<name>=<value>`
@@ -522,6 +568,17 @@ configuration.
   By default, ``--resolv-retry infinite`` is enabled. You can disable by
   setting n=0.
 
+--preresolve
+  Resolve configured ``--remote``, ``--local``, ``--http-proxy``, and
+  ``--socks-proxy`` hostnames at startup before opening the connection.
+
+  The resolved addresses are cached and reused for reconnects, so OpenVPN
+  will not re-resolve these hostnames after the initial connection attempt.
+  This can help configurations where DNS is unavailable while the VPN is
+  down, but can be counter-productive for dynamic DNS names or when roaming
+  between networks where address family availability changes, such as
+  DNS64/NAT64.
+
 --single-session
   After initially connecting to a remote peer, disallow any new
   connections. Using this option means that a remote peer cannot connect,
@@ -544,12 +601,15 @@ configuration.
   Valid syntax:
   ::
 
-     static-challenge text echo
+     static-challenge text echo [format]
 
   The ``text`` challenge text is presented to the user which describes what
   information is requested.  The ``echo`` flag indicates if the user's
   input should be echoed on the screen.  Valid ``echo`` values are
-  :code:`0` or :code:`1`.
+  :code:`0` or :code:`1`. The optional ``format`` indicates whether
+  the password and response should be combined using the SCRV1 protocol
+  (``format`` = :code:`scrv1`) or simply concatenated (``format`` = :code:`concat`).
+  :code:`scrv1` is the default.
 
   See management-notes.txt in the OpenVPN distribution for a description of
   the OpenVPN challenge/response protocol.

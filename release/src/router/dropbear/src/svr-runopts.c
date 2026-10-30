@@ -38,7 +38,7 @@ static void printhelp(const char * progname);
 static void addportandaddress(const char* spec);
 static void loadhostkey(const char *keyfile, int fatal_duplicate);
 static void addhostkey(const char *keyfile);
-static void load_banner();
+static void load_banner(void);
 
 static void printhelp(const char * progname) {
 
@@ -89,13 +89,15 @@ static void printhelp(const char * progname) {
 #endif
 					"-T		Maximum authentication tries (default %d)\n"
 #if DROPBEAR_SVR_LOCALANYFWD
-					"-j		Disable local port forwarding\n"
+					"-j		Disable local port/stream forwarding\n"
+#endif
+#if DROPBEAR_SVR_REMOTEANYFWD
+					"-k		Disable remote port/stream forwarding\n"
 #endif
 #if DROPBEAR_SVR_REMOTETCPFWD
-					"-k		Disable remote port forwarding\n"
 					"-a		Allow connections to forwarded ports from any host\n"
-					"-c command	Force executed command\n"
 #endif
+					"-c command	Force executed command\n"
 					"-p [address:]port\n"
 					"		Listen on specified tcp port (and optionally address),\n"
 					"		up to %d can be specified\n"
@@ -112,11 +114,13 @@ static void printhelp(const char * progname) {
 					"-W <receive_window_buffer> (default %d, larger may be faster, max 10MB)\n"
 					"-K <keepalive>  (0 is never, default %d, in seconds)\n"
 					"-I <idle_timeout>  (0 is never, default %d, in seconds)\n"
+					"-M <max_duration>  (0 is off, default %d, in seconds)\n"
 					"-z    disable QoS\n"
 #if DROPBEAR_PLUGIN
                                         "-A <authplugin>[,<options>]\n"
                                         "               Enable external public key auth through <authplugin>\n"
 #endif
+					"-Q    <algo>   Print supported algorithms, or -Q help\n"
 					"-V    Version\n"
 #if DEBUG_TRACE
 					"-v    verbose (repeat for more verbose)\n"
@@ -136,7 +140,8 @@ static void printhelp(const char * progname) {
 #endif
 					MAX_AUTH_TRIES,
 					DROPBEAR_MAX_PORTS, DROPBEAR_DEFPORT, DROPBEAR_PIDFILE,
-					DEFAULT_RECV_WINDOW, DEFAULT_KEEPALIVE, DEFAULT_IDLE_TIMEOUT);
+					DEFAULT_RECV_WINDOW, DEFAULT_KEEPALIVE, DEFAULT_IDLE_TIMEOUT,
+					DEFAULT_MAX_DURATION);
 }
 
 void svr_getopts(int argc, char ** argv) {
@@ -147,9 +152,11 @@ void svr_getopts(int argc, char ** argv) {
 	char* recv_window_arg = NULL;
 	char* keepalive_arg = NULL;
 	char* idle_timeout_arg = NULL;
+	char* max_duration_arg = NULL;
 	char* maxauthtries_arg = NULL;
 	char* reexec_fd_arg = NULL;
 	char* keyfile = NULL;
+	char *algo_print_arg = NULL;
 	char c;
 #if DROPBEAR_PLUGIN
         char* pubkey_plugin = NULL;
@@ -180,8 +187,8 @@ void svr_getopts(int argc, char ** argv) {
 #if DROPBEAR_SVR_LOCALANYFWD
 	svr_opts.nolocaltcp = 0;
 #endif
-#if DROPBEAR_SVR_REMOTETCPFWD
-	svr_opts.noremotetcp = 0;
+#if DROPBEAR_SVR_REMOTEANYFWD
+	svr_opts.noremotefwd = 0;
 #endif
 #if DROPBEAR_PLUGIN
         svr_opts.pubkey_plugin = NULL;
@@ -191,7 +198,7 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.reexec_childpipe = -1;
 
 #ifndef DISABLE_ZLIB
-	opts.allow_compress = 1;
+	opts.compression = 1;
 #endif 
 
 	/* not yet
@@ -207,7 +214,8 @@ void svr_getopts(int argc, char ** argv) {
 	opts.recv_window = DEFAULT_RECV_WINDOW;
 	opts.keepalive_secs = DEFAULT_KEEPALIVE;
 	opts.idle_timeout_secs = DEFAULT_IDLE_TIMEOUT;
-	
+	opts.max_duration_secs = DEFAULT_MAX_DURATION;
+
 #if DROPBEAR_SVR_REMOTETCPFWD
 	opts.listen_fwd_all = 0;
 #endif
@@ -253,11 +261,21 @@ void svr_getopts(int argc, char ** argv) {
 				case 'j':
 					svr_opts.nolocaltcp = 1;
 					break;
+#else
+				case 'j':
+					/* Ignore the flag */
+					break;
+#endif
+#if DROPBEAR_SVR_REMOTEANYFWD
+				case 'k':
+					svr_opts.noremotefwd = 1;
+					break;
+#else
+				case 'k':
+					/* Ignore the flag */
+					break;
 #endif
 #if DROPBEAR_SVR_REMOTETCPFWD
-				case 'k':
-					svr_opts.noremotetcp = 1;
-					break;
 				case 'a':
 					opts.listen_fwd_all = 1;
 					break;
@@ -289,6 +307,9 @@ void svr_getopts(int argc, char ** argv) {
 				case 'm':
 					svr_opts.domotd = 0;
 					break;
+#else
+				case 'm':
+					break;
 #endif
 				case 'w':
 					svr_opts.norootlogin = 1;
@@ -307,6 +328,9 @@ void svr_getopts(int argc, char ** argv) {
 				case 'I':
 					next = &idle_timeout_arg;
 					break;
+				case 'M':
+					next = &max_duration_arg;
+					break;
 				case 'T':
 					next = &maxauthtries_arg;
 					break;
@@ -323,7 +347,14 @@ void svr_getopts(int argc, char ** argv) {
 				case 't':
 					svr_opts.multiauthmethod = 1;
 					break;
+#else
+				case 's':
+				case 'g':
+					break;
 #endif
+				case 'Q':
+					next = &algo_print_arg;
+					break;
 				case 'h':
 					printhelp(argv[0]);
 					exit(EXIT_SUCCESS);
@@ -413,8 +444,7 @@ void svr_getopts(int argc, char ** argv) {
 
 	if (maxauthtries_arg) {
 		unsigned int val = 0;
-		if (m_str_to_uint(maxauthtries_arg, &val) == DROPBEAR_FAILURE 
-			|| val == 0) {
+		if (m_str_to_uint(maxauthtries_arg, &val) == DROPBEAR_FAILURE) {
 			dropbear_exit("Bad maxauthtries '%s'", maxauthtries_arg);
 		}
 		svr_opts.maxauthtries = val;
@@ -437,6 +467,14 @@ void svr_getopts(int argc, char ** argv) {
 		opts.idle_timeout_secs = val;
 	}
 
+	if (max_duration_arg) {
+		unsigned int val;
+		if (m_str_to_uint(max_duration_arg, &val) == DROPBEAR_FAILURE) {
+			dropbear_exit("Bad max_duration '%s'", max_duration_arg);
+		}
+		opts.max_duration_secs = val;
+	}
+
 	if (svr_opts.forced_command) {
 		dropbear_log(LOG_INFO, "Forced command set to '%s'", svr_opts.forced_command);
 	}
@@ -455,6 +493,9 @@ void svr_getopts(int argc, char ** argv) {
 	if (svr_opts.multiauthmethod && svr_opts.noauthpass) {
 		dropbear_exit("-t and -s are incompatible");
 	}
+	if (svr_opts.multiauthmethod && svr_opts.allowblankpass) {
+		dropbear_exit("-t and -B are incompatible");
+	}
 
 	if (strlen(svr_opts.authorized_keys_dir) == 0) {
 		dropbear_exit("Bad -D");
@@ -462,6 +503,10 @@ void svr_getopts(int argc, char ** argv) {
 
 #if DROPBEAR_PLUGIN
 	if (pubkey_plugin) {
+		if (svr_opts.multiauthmethod) {
+			dropbear_exit("-t and plugins are incompatible");
+		}
+
 		svr_opts.pubkey_plugin = m_strdup(pubkey_plugin);
 		char *args = strchr(svr_opts.pubkey_plugin, ',');
 		if (args) {
@@ -471,6 +516,10 @@ void svr_getopts(int argc, char ** argv) {
 		svr_opts.pubkey_plugin_options = args;
 	}
 #endif
+	if (algo_print_arg) {
+		print_algos(algo_print_arg);
+		/* No return */
+	}
 }
 
 static void addportandaddress(const char* spec) {
@@ -511,6 +560,17 @@ static void disablekey(enum signature_type type) {
 		if ((int)sigalgs[i].val == (int)type) {
 			sigalgs[i].usable = 0;
 			break;
+		}
+	}
+}
+
+void disable_sig_except(enum signature_type allow_type) {
+	int i;
+	TRACE(("Disabling other sigs except %d", allow_type));
+	for (i = 0; sigalgs[i].name != NULL; i++) {
+		enum signature_type sig_type = sigalgs[i].val;
+		if (sig_type != allow_type) {
+			sigalgs[i].usable = 0;
 		}
 	}
 }
@@ -706,7 +766,7 @@ void load_all_hostkeys() {
 	}
 }
 
-static void load_banner() {
+static void load_banner(void) {
 	struct stat buf;
 	if (stat(svr_opts.bannerfile, &buf) != 0) {
 		dropbear_log(LOG_WARNING, "Error opening banner file '%s'",

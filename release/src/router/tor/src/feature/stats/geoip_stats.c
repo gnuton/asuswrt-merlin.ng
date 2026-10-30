@@ -305,6 +305,7 @@ geoip_lookup_client(const tor_addr_t *addr, const char *transport_name,
                     geoip_client_action_t action)
 {
   clientmap_entry_t lookup;
+  memset(&lookup, 0, sizeof(lookup));
 
   tor_assert(addr);
 
@@ -389,8 +390,8 @@ geoip_client_cache_total_allocation(void)
  * statuses? */
 static uint32_t ns_v3_responses[GEOIP_NS_RESPONSE_NUM];
 
-/** Note that we've rejected a client's request for a v3 network status
- * for reason <b>reason</b> at time <b>now</b>. */
+/** Note how we have handled a client's request for a v3 network status:
+ * with <b>reason</b> at time <b>now</b>. */
 void
 geoip_note_ns_response(geoip_ns_response_t response)
 {
@@ -996,7 +997,8 @@ geoip_format_dirreq_stats(time_t now)
   tor_asprintf(&result, "dirreq-stats-end %s (%d s)\n"
               "dirreq-v3-ips %s\n"
               "dirreq-v3-reqs %s\n"
-              "dirreq-v3-resp ok=%u,not-enough-sigs=%u,unavailable=%u,"
+              "dirreq-v3-resp "
+                   "served=%u,ok=%u,not-enough-sigs=%u,unavailable=%u,"
                    "not-found=%u,not-modified=%u,busy=%u\n"
               "dirreq-v3-direct-dl %s\n"
               "dirreq-v3-tunneled-dl %s\n",
@@ -1004,6 +1006,7 @@ geoip_format_dirreq_stats(time_t now)
               (unsigned) (now - start_of_dirreq_stats_interval),
               v3_ips_string ? v3_ips_string : "",
               v3_reqs_string ? v3_reqs_string : "",
+              ns_v3_responses[GEOIP_SERVED],
               ns_v3_responses[GEOIP_SUCCESS],
               ns_v3_responses[GEOIP_REJECT_NOT_ENOUGH_SIGS],
               ns_v3_responses[GEOIP_REJECT_UNAVAILABLE],

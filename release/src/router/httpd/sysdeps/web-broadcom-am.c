@@ -294,14 +294,29 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
 	char *name;
 
-	snprintf(prefix, sizeof(prefix), "wl%d.1_", unit);
+	if (repeater_mode()
+#ifdef RTCONFIG_PROXYSTA
+	    || is_psr(unit)
+	    || dpsr_mode()
+	    || is_psta(unit)
+	    || rp_mode()
+#ifdef RTCONFIG_DPSTA
+	    || dpsta_mode()
+#endif
+#endif
+	) {
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	} else {
+		snprintf(prefix, sizeof(prefix), "wl%d.1_", unit);
+	}
+
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
 	if ((ret = wl_ioctl(name, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN)) == 0) {
 		/* The adapter is associated. */
 		*(uint32*)buf = htod32(WLC_IOCTL_MAXLEN);
 		if ((ret = wl_ioctl(name, WLC_GET_BSS_INFO, buf, WLC_IOCTL_MAXLEN)) < 0) {
-			retval += websWrite(wp, "\"?\",\"?\",\"?\",\"?\",\"?\",\"?\",");
+			retval += websWrite(wp, "\"?\",\"0\",\"0\",\"0\",\"0\",\"?\",\"-1\",");
 			return retval;
 		}
 #ifdef RTCONFIG_HND_ROUTER_AX
@@ -314,12 +329,12 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		    dtoh32(bi->version) == LEGACY_WL_BSS_INFO_VERSION)
 			retval += dump_bss_info_array(eid, wp, argc, argv, bi, name);
 		else
-			retval += websWrite(wp, "\"<error>\",\"\",\"\",\"\",\"\",\"\",");
+			retval += websWrite(wp, "\"<error>\",\"0\",\"0\",\"0\",\"0\",\"\",\"-1\",");
 	} else {
 		retval += websWrite(wp, "\"Not associated. Last with ");
 
 		if ((ret = wl_ioctl(name, WLC_GET_SSID, &ssid, sizeof(wlc_ssid_t))) < 0) {
-			retval += websWrite(wp, "<unknown>\",\"\",\"\",\"\",\"\",\"\",");
+			retval += websWrite(wp, "<unknown>\",\"0\",\"0\",\"0\",\"0\",\"\",\"-1\",");
 			return 0;
 		}
 
@@ -328,7 +343,7 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (str_escape_quotes(ssidbuf, ssidbuftmp, sizeof(ssidbuf)) == 0 )
 			strlcpy(ssidbuf, ssidbuftmp, sizeof(ssidbuf));
 
-		retval += websWrite(wp, "%s\",\"\",\"\",\"\",\"\",\"\",", ssidbuf);
+		retval += websWrite(wp, "%s\",\"0\",\"0\",\"0\",\"0\",\"\",\"-1\",", ssidbuf);
 	}
 
 	return retval;
@@ -337,7 +352,7 @@ wl_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 int
 ej_wl_unit_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 {
-	char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+	char tmp[128], prefix[] = "wlXXXXXXXXXX_", prefix2[] = "wlXXXXXXXXXX_";
 	char *name;
 	char name_vif[] = "wlX.Y_XXXXXXXXXX";
 	struct maclist *auth;
@@ -370,13 +385,23 @@ ej_wl_unit_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	size_t mtl_sz = 0;
 	char leasefile_path[128] = {0};
 #endif
+#ifdef RTCONFIG_MULTILAN_MWL
+	char fh_prefix[] = "wlXXXXXXXXXX_";
+#endif
 
 #ifdef RTCONFIG_PROXYSTA
 	if (psta_exist_except(unit))
 		return ret;
 #endif
 
-	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+#ifdef RTCONFIG_MULTILAN_MWL
+	if (get_fh_if_prefix_by_unit(unit, fh_prefix, sizeof(fh_prefix)) != 0)
+		snprintf(prefix, sizeof(prefix), "%s_", fh_prefix);
+	else
+#endif
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	snprintf(prefix2, sizeof(prefix2), "wl%d_", unit);
 	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 
 	wl_ioctl(name, WLC_GET_RADIO, &val, sizeof(val));
@@ -388,7 +413,7 @@ ej_wl_unit_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	ret += websWrite(wp, "dataarray%d = [", unit);
 
 	if (nvram_match(strcat_r(prefix, "mode", tmp), "wds"))
-		ret += websWrite(wp, "\"\",\"\",\"\",\"\",\"%d\",\"\",", wl_control_channel(unit));
+		ret += websWrite(wp, "\"\",\"0\",\"0\",\"0\",\"%d\",\"\",", wl_control_channel(unit));
 	else
 		ret += wl_status_array(eid, wp, argc, argv, unit);
 
@@ -397,7 +422,8 @@ ej_wl_unit_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		if (nvram_match(strcat_r(prefix, "lazywds", tmp), "1") ||
 			nvram_invmatch(strcat_r(prefix, "wds", tmp), ""))
 			ret += websWrite(wp, "\"Hybrid\"");
-		else	ret += websWrite(wp, "\"AP\"");
+		else
+			ret += websWrite(wp, "\"AP\"");
 	}
 	else if (nvram_match(strcat_r(prefix, "mode", tmp), "wds"))
 	{
@@ -409,31 +435,29 @@ ej_wl_unit_status_array(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		ret += websWrite(wp, "\"Stations\"");
 		noclients = 1;
 	}
-	else if (nvram_match(strcat_r(prefix, "mode", tmp), "wet"))
-	{
-#ifdef RTCONFIG_WIRELESSREPEATER
-		if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
-			&& (nvram_get_int("wlc_band") == unit))
-			sprintf(prefix, "wl%d.%d_", unit, 1);
-#endif
-		ret += websWrite(wp, "\"Repeater ( SSID local: %s )\"", nvram_safe_get(strcat_r(prefix, "ssid", tmp)));
-	}
 #ifdef RTCONFIG_PROXYSTA
-	else if (nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
+	else if ((sw_mode() == SW_MODE_AP) &&
+		     (nvram_get_int("wlc_psta") == 1) &&
+		     (nvram_get_int("wlc_band") == unit))
 	{
-		if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
-			(nvram_get_int("wlc_psta") == 1) &&
-			(nvram_get_int("wlc_band") == unit))
 		ret += websWrite(wp, "\"Media Bridge\"");
 	}
 #endif
+	else if (nvram_match(strcat_r(prefix, "mode", tmp), "wet"))
+	{
+		if (nvram_get_int("wlc_band") == unit)
+			sprintf(prefix, "wl%d.%d_", unit, 1);
+
+		ret += websWrite(wp, "\"Repeater ( SSID local: %s )\"", nvram_safe_get(strlcat_r(prefix, "ssid", tmp, sizeof(tmp))));
+	}
+
 
 // Close dataarray
 	ret += websWrite(wp, "];\n");
 
 // DFS status
 #ifdef RTCONFIG_BCMWL6
-	if (!nvram_match(strlcat_r(prefix, "reg_mode", tmp, sizeof(tmp)), "h"))
+	if (!nvram_match(strlcat_r(prefix2, "reg_mode", tmp, sizeof(tmp)), "h"))
 		goto sta_list;
 
 	memset(buf, 0, sizeof(buf));
@@ -486,7 +510,7 @@ sta_list:
 	   cases where a device uses a static IP rather than DHCP */
 #ifdef RTCONFIG_MULTILAN_CFG
 	/* Merge all SDN lease files into one */
-	doSystem("cp /var/lib/misc/dnsmasq.leases %s", MERGED_LEASE_FILE);
+	eval("cp", "/var/lib/misc/dnsmasq.leases", MERGED_LEASE_FILE);
 	pmtl = (MTLAN_T *)INIT_MTLAN(sizeof(MTLAN_T));
 	if (pmtl) {
 		get_mtlan(pmtl, &mtl_sz);
@@ -514,22 +538,29 @@ sta_list:
 #endif
 
 
-/*** Do all subunit client lists - subunit 1 = main interface ***/
+/*** Do all subunit client lists - subunit 0 = repeater/WISP link on main BSS, subunit 1 = main interface ***/
 
 	maxunit = wl_max_no_vifs(unit);
-	for (subunit = 1; subunit < maxunit; subunit++) {
+	for (subunit = 0; subunit < maxunit; subunit++) {
 #ifdef RTCONFIG_WIRELESSREPEATER
 		if ((nvram_get_int("sw_mode") == SW_MODE_REPEATER)
 			&& (unit == nvram_get_int("wlc_band")) && (subunit == 1))
 			break;
 #endif
-		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+		if (subunit == 0)
+			snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+		else
+			snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+
 		if (nvram_match(strcat_r(prefix, "bss_enabled", tmp), "1"))
 		{
-			snprintf(name_vif, sizeof(name_vif), "wl%d.%d", unit, subunit);
+			if (subunit == 0)	// Main BSS
+				snprintf(name_vif, sizeof(name_vif), "wl%d", unit);
+			else
+				snprintf(name_vif, sizeof(name_vif), "wl%d.%d", unit, subunit);
 
 // Not primary interface - retrieve ssid and VLAN
-			if (subunit != 1) {
+			if (subunit > 1) {
 				strlcpy(guestssid, nvram_pf_safe_get(prefix, "ssid"), sizeof(guestssid));
 #ifdef RTCONFIG_MULTILAN_CFG
 				guestvlan = get_apg_vid_by_ifname(name_vif);
@@ -712,7 +743,9 @@ sta_list:
 
 // If not a Guest Network then don't push SSID and VLAN in client list
 				if (subunit == 1)
-			                ret += websWrite(wp, "\"\",\"\"],");
+					ret += websWrite(wp, "\"\",\"\"],");
+				else if (subunit == 0)	// identify Main BSS
+					ret += websWrite(wp, "\"Main BSS\",\"\"],");
 				else {
 // SSID (for Guest Networks identification)
 					ret += websWrite(wp, "\"%s\",", guestssid);

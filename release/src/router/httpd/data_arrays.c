@@ -651,8 +651,8 @@ ej_lan_ipv6_network_array(int eid, webs_t wp, int argc, char_t **argv)
 	ret += websWrite(wp, "[\"WAN IPv6 Gateway\",\"%s\"],",
 			 ipv6_gateway_address() ? : "");
 
-	ret += websWrite(wp, "[\"LAN IPv6 Address\",\"%s/%d\"],",
-			 nvram_safe_get("ipv6_rtr_addr"), nvram_get_int("ipv6_prefix_length"));
+	ret += websWrite(wp, "[\"LAN IPv6 Address\",\"%s\"],",
+			 getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_PREFIXLEN) ? : "");
 
 	ret += websWrite(wp, "[\"LAN IPv6 Link-Local Address\",\"%s\"],",
 			 getifaddr(nvram_safe_get("lan_ifname"), AF_INET6, GIF_LINKLOCAL | GIF_PREFIXLEN) ? : "");
@@ -1043,7 +1043,7 @@ int ej_connlist_array(int eid, webs_t wp, int argc, char **argv) {
 		if (strchr(line, '[')) {
 			parsed = sscanf(line,
 			         "%3s "
-                     "[%47[^]]]:%d "
+			         "[%47[^]]]:%d "
 			         "[%47[^]]]:%d"
 			         "%14s%*[ \t]",
 			         proto, address, &port1, dest, &port2, state);

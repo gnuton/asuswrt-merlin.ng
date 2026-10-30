@@ -9,13 +9,17 @@ Standalone Debug Options
   ::
 
      --show-gateway
+     --show-gateway IPv4-target
      --show-gateway IPv6-target
 
+  For IPv4 it looks for a 0.0.0.0/0 route, or the specified IPv4 address
+  if the target can be parsed as an IPv4 address.
   For IPv6 this queries the route towards ::/128, or the specified IPv6
-  target address if passed as argument.
-  For IPv4 on Linux, Windows, MacOS and BSD it looks for a 0.0.0.0/0 route.
-  If there are more specific routes, the result will not always be matching
-  the route of the IPv4 packets to the VPN gateway.
+  target address if the argument is an IPv6 address.
+
+  Adding a target is helpful for diagnostics to see if OpenVPN will do
+  the right thing if there are more specific IPv4/IPv6 routes to a
+  VPN server.
 
 
 Advanced Expert Options
@@ -32,7 +36,8 @@ used when debugging or testing out special usage scenarios.
 
      hash-size r v
 
-  By default, both tables are sized at 256 buckets.
+  By default, both tables are sized at 4 times ``--max-clients`` buckets.
+  With the default of 1024 of ``--max-clients`` this gives 4096 buckets.
 
 --bcast-buffers n
   Allocate ``n`` buffers for broadcast datagrams (default :code:`256`).
@@ -98,7 +103,9 @@ used when debugging or testing out special usage scenarios.
 
   Data channel offload currently requires data-ciphers to only contain
   AEAD ciphers (AES-GCM and Chacha20-Poly1305) and Linux with the
-  ovpn-dco module.
+  ovpn module. The ovpn module has been integrated into the Linux kernel
+  since 6.16 or is available as backport from
+  https://github.com/OpenVPN/ovpn-backports.
 
   Note that some options have no effect or cannot be used when DCO mode
   is enabled.

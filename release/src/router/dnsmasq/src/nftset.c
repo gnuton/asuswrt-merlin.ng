@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2025 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2026 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 #include "dnsmasq.h"
 
-#if defined (HAVE_NFTSET) && defined (HAVE_LINUX_NETWORK)
+#if defined (HAVE_NFTSET)
 
 #include <nftables/libnftables.h>
 

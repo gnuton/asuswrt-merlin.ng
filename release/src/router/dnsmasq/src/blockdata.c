@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2025 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2026 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ int blockdata_expand(struct blockdata *block, size_t oldlen, char *data, size_t 
   /* find size of current final block */
   for (b = block; oldlen > KEYBLOCK_LEN && b;  b = b->next, oldlen -= KEYBLOCK_LEN);
 
-  /* chain to short for length, something is broken */
+  /* chain too short for length, something is broken */
   if (oldlen > KEYBLOCK_LEN)
     {
       blockdata_free(block);
@@ -193,20 +193,22 @@ void *blockdata_retrieve(struct blockdata *block, size_t len, void *data)
 {
   size_t blen;
   struct  blockdata *b;
-  uint8_t *new, *d;
+  uint8_t *d;
   
-  static unsigned int buff_len = 0;
-  static unsigned char *buff = NULL;
-   
   if (!data)
     {
+      static unsigned int buff_len = 0;
+      static unsigned char *buff = NULL;
+      uint8_t *new;
+      
       if (len > buff_len)
 	{
-	  if (!(new = whine_malloc(len)))
+	  blen = len + 1024;
+	  if (!(new = whine_realloc(buff, blen)))
 	    return NULL;
-	  if (buff)
-	    free(buff);
+
 	  buff = new;
+	  buff_len = blen;
 	}
       data = buff;
     }

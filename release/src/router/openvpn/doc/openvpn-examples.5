@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.3 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -27,13 +28,13 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "OPENVPN EXAMPLES" 5 "" "" "Configuration files"
-.SH NAME
+.TH "openvpn examples" "5" "" "" "Configuration files"
+.SH Name
 openvpn examples \- Secure IP tunnel daemon
 .SH INTRODUCTION
 .sp
 This man page gives a few simple examples to create OpenVPN setups and configuration files.
-.SH SMALL OPENVPN SETUP WITH PEER-FINGERPRINT
+.SH Small OpenVPN setup with peer-fingerprint
 .sp
 This section consists of instructions how to build a small OpenVPN setup with the
 \fBpeer\-fingerprint\fP option. This has the advantage of being easy to setup
@@ -47,18 +48,16 @@ setup.
 .IP 1. 3
 Install openvpn
 .sp
-Compile from source\-code (see \fIINSTALL\fP file) or install via a distribution (apt/yum/ports)
+Compile from source\-code (see \fBINSTALL\fP file) or install via a distribution (apt/yum/ports)
 or via installer (Windows).
 .IP 2. 3
 Generate a self\-signed certificate for the server:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
-openssl req \-x509 \-newkey ec:<(openssl ecparam \-name secp384r1) \-keyout server.key \-out server.crt \-nodes \-sha256 \-days 3650 \-subj \(aq/CN=server\(aq
-.ft P
-.fi
+.EX
+openssl req \-x509 \-newkey ec \-pkeyopt ec_paramgen_curve:secp384r1 \-keyout server.key \-out server.crt \-nodes \-sha256 \-days 3650 \-subj \(aq/CN=server\(aq
+.EE
 .UNINDENT
 .UNINDENT
 .IP 3. 3
@@ -69,32 +68,27 @@ created certificate:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openssl x509 \-fingerprint \-sha256 \-in server.crt \-noout
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-This output something similar to:
+This outputs something similar to:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 SHA256 Fingerprint=00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .IP 4. 3
-Write a server configuration (\fIserver.conf\fP):
+Write a server configuration (\fBserver.conf\fP):
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 # The server certificate we created in step 1
 cert server.crt
 key server.key
@@ -122,8 +116,13 @@ explicit\-exit\-notify 1
 
 # Ping every 60s, restart if no data received for 5 minutes
 keepalive 60 300
-.ft P
-.fi
+
+# Uncomment the line below if you want to have persistent IP addresses
+# ifconfig\-pool\-persist  /etc/openvpn/server/ipp.txt
+
+# Uncomment the line below to push a DNS server to clients
+# push \(dqdhcp\-option DNS 1.1.1.1\(dq
+.EE
 .UNINDENT
 .UNINDENT
 .IP 5. 3
@@ -134,18 +133,16 @@ Add at least one client as described in the client section.
 .B Start the server.
 .INDENT 7.0
 .IP \(bu 2
-On systemd based distributions move \fIserver.crt\fP, \fIserver.key\fP and
-\fIserver.conf\fP to \fB/etc/openvpn/server\fP and start it via systemctl
+On systemd based distributions move \fBserver.crt\fP, \fBserver.key\fP and
+\fBserver.conf\fP to \fB/etc/openvpn/server\fP and start it via systemctl:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 sudo mv server.conf server.key server.crt /etc/openvpn/server
 
 sudo systemctl start openvpn\-server@server
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -162,11 +159,9 @@ different name for each client.
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
-openssl req \-x509 \-newkey ec:<(openssl ecparam \-name secp384r1) \-nodes \-sha256 \-days 3650 \-subj \(aq/CN=alice\(aq
-.ft P
-.fi
+.EX
+openssl req \-x509 \-newkey ec \-pkeyopt ec_paramgen_curve:secp384r1 \-keyout \- \-nodes \-sha256 \-days 3650 \-subj \(aq/CN=alice\(aq
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -175,8 +170,7 @@ something like this:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 \-\-\-\-\-BEGIN PRIVATE KEY\-\-\-\-\-
 [base64 content]
 \-\-\-\-\-END PRIVATE KEY\-\-\-\-\-
@@ -184,18 +178,16 @@ something like this:
 \-\-\-\-\-BEGIN CERTIFICATE\-\-\-\-\-
 [base 64 content]
 \-\-\-\-\-END CERTIFICATE\-\-\-\-\-
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .IP 3. 3
 Create a new client configuration file. In this example we will name the file
-\fIalice.ovpn\fP:
+\fBalice.ovpn\fP:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 # The name of your server to connect to
 remote yourserver.example.net
 client
@@ -227,8 +219,7 @@ peer\-fingerprint 00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33:44
 # The tun\-mtu of the client should match the server MTU
 tun\-mtu 1400
 dev tun
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .IP 4. 3
@@ -238,27 +229,23 @@ ignore anything that is not between the begin and end markers of the certificate
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openssl x509 \-fingerprint \-sha256 \-noout \-in alice.ovpn
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-This will again output something like
+This will again output something like:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 SHA256 Fingerprint=ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00:ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .IP 5. 3
-Edit the \fIserver.conf\fP configuration file and add this new client
+Edit the \fBserver.conf\fP configuration file and add this new client
 fingerprint as additional line  between \fB<peer\-fingerprint>\fP
 and \fB</peer\-fingerprint>\fP
 .sp
@@ -266,31 +253,28 @@ After adding \fItwo\fP clients the part of configuration would look like this:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 <peer\-fingerprint>
 ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00:ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00
 99:88:77:66:55:44:33:22:11:00:ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00:88:77:66:55:44:33
-</peer\-fingperint>
-.ft P
-.fi
+</peer\-fingerprint>
+.EE
 .UNINDENT
 .UNINDENT
 .IP 6. 3
 (optional) if the client is an older client that does not support the
 \fBpeer\-fingerprint\fP (e.g. OpenVPN 2.5 and older, OpenVPN Connect 3.3
-and older), the client config \fIalice.ovpn\fP can be modified to still work with
+and older), the client config \fBalice.ovpn\fP can be modified to still work with
 these clients.
 .sp
 Remove the line starting with \fBpeer\-fingerprint\fP\&. Then
 add a new \fB<ca>\fP section at the end of the configuration file
 with the contents of the \fBserver.crt\fP created in step 2 of the
-server setup. The end of \fIalice.ovpn\fP file should like:
+server setup. The end of \fBalice.ovpn\fP file should look like:
 .INDENT 3.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 [...]  # Beginning of the file skipped
 </cert>
 
@@ -301,8 +285,7 @@ dev tun
 <ca>
 [contents of the server.crt]
 </ca>
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -368,16 +351,18 @@ that is part of your local subnet for either of the tunnel endpoints,
 you will get a weird feedback loop.
 .SS Example 1: A simple tunnel without security (not recommended)
 .sp
+Since \fBtun\fP is the default device type, \fB\-\-dev\fP is optional; when it
+is omitted OpenVPN creates a dynamically\-named \fBtunX\fP device. The examples
+below still name the device (\fB\-\-dev tun1\fP) explicitly for clarity.
+.sp
 On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openvpn \-\-remote alice.example.com \-\-dev tun1 \e
          \-\-ifconfig 10.4.0.1 10.4.0.2 \-\-verb 9
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -385,12 +370,10 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openvpn \-\-remote bob.example.com \-\-dev tun1 \e
          \-\-ifconfig 10.4.0.2 10.4.0.1 \-\-verb 9
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -400,11 +383,9 @@ On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ping 10.4.0.2
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -412,11 +393,9 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ping 10.4.0.1
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -429,12 +408,10 @@ First build a self\-signed certificate on bob and display its fingerprint.
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openssl req \-x509 \-newkey ec:<(openssl ecparam \-name secp384r1) \-keyout bob.pem \-out bob.pem \-nodes \-sha256 \-days 3650 \-subj \(aq/CN=bob\(aq
 openssl x509 \-noout \-sha256 \-fingerprint \-in bob.pem
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -442,12 +419,10 @@ and the same on alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openssl req \-x509 \-newkey ec:<(openssl ecparam \-name secp384r1) \-keyout alice.pem \-out alice.pem \-nodes \-sha256 \-days 3650 \-subj \(aq/CN=alice\(aq
 openssl x509 \-noout \-sha256 \-fingerprint \-in alice.pem
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -460,13 +435,11 @@ On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openvpn \-\-ifconfig 10.4.0.1 10.4.0.2 \-\-tls\-server \-\-dev tun \-\-dh none \e
         \-\-cert bob.pem \-\-key bob.pem \-\-cipher AES\-256\-GCM \e
         \-\-peer\-fingerprint \(dq$fingerprint_of_alices_cert\(dq
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -474,14 +447,12 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openvpn \-\-remote bob.example.com \-\-tls\-client \-\-dev tun1   \e
         \-\-ifconfig 10.4.0.2 10.4.0.1 \-\-cipher AES\-256\-GCM  \e
         \-\-cert alice.pem \-\-key alice.pem                   \e
         \-\-peer\-fingerprint \(dq$fingerprint_of_bobs_cert\(dq
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -491,11 +462,9 @@ On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ping 10.4.0.2
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -503,15 +472,13 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ping 10.4.0.1
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
-Note: This example use a elliptic curve (\fIsecp384\fP), which allows
+Note: This example use a elliptic curve (\fBsecp384\fP), which allows
 \fB\-\-dh\fP to be set to \fBnone\fP\&.
 .SS Example 3: A tunnel with full PKI and TLS\-based security
 .sp
@@ -547,15 +514,13 @@ On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openvpn \-\-remote alice.example.com \-\-dev tun1    \e
         \-\-ifconfig 10.4.0.1 10.4.0.2             \e
         \-\-tls\-client \-\-ca ca.crt                 \e
         \-\-cert client.crt \-\-key client.key       \e
         \-\-reneg\-sec 60 \-\-verb 5
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -563,15 +528,13 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 openvpn \-\-remote bob.example.com \-\-dev tun1      \e
         \-\-ifconfig 10.4.0.2 10.4.0.1             \e
         \-\-tls\-server \-\-dh dh1024.pem \-\-ca ca.crt \e
         \-\-cert server.crt \-\-key server.key       \e
         \-\-reneg\-sec 60 \-\-verb 5
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -581,11 +544,9 @@ On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ping 10.4.0.2
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -593,11 +554,9 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 ping 10.4.0.1
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -623,11 +582,9 @@ enable routing:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 echo 1 > /proc/sys/net/ipv4/ip_forward
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -644,11 +601,9 @@ On bob:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 route add \-net 10.0.1.0 netmask 255.255.255.0 gw 10.4.0.2
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -656,11 +611,9 @@ On alice:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 route add \-net 10.0.0.0 netmask 255.255.255.0 gw 10.4.0.1
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -669,5 +622,4 @@ Now any machine on the \fI10.0.0.0/24\fP subnet can access any machine on the
 .sp
 In a production environment, you could put the route command(s) in a
 script and execute with the \fB\-\-up\fP option.
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

@@ -326,7 +326,11 @@ static void cleanupchansess(const struct Channel *channel) {
 	if (chansess->tty) {
 		/* write the utmp/wtmp login record */
 		li = chansess_login_alloc(chansess);
+
+		svr_raise_gid_utmp();
 		login_logout(li);
+		svr_restore_gid();
+
 		login_free_entry(li);
 
 		pty_release(chansess->tty);
@@ -431,6 +435,16 @@ static int sessionsignal(const struct ChanSess *chansess) {
 	if (chansess->pid == 0) {
 		TRACE(("sessionsignal: done no pid"))
 		/* haven't got a process pid yet */
+		return DROPBEAR_FAILURE;
+	}
+
+	if (svr_opts.forced_command || svr_pubkey_has_forced_command()) {
+		TRACE(("disallowed signal for forced_command"));
+		return DROPBEAR_FAILURE;
+	}
+
+	if (DROPBEAR_SVR_MULTIUSER && !DROPBEAR_SVR_DROP_PRIVS) {
+		TRACE(("disallow signal without drop privs"));
 		return DROPBEAR_FAILURE;
 	}
 
@@ -847,7 +861,11 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		 * terminal used for stdout with the dup2 above, otherwise
 		 * the wtmp login will not be recorded */
 		li = chansess_login_alloc(chansess);
+
+		svr_raise_gid_utmp();
 		login_login(li);
+		svr_restore_gid();
+
 		login_free_entry(li);
 
 		/* Can now dup2 stderr. Messages from login_login() have gone
@@ -980,30 +998,8 @@ static void execchild(const void *user_data) {
 #endif /* DEBUG_VALGRIND */
 	}
 
-#if DROPBEAR_SVR_MULTIUSER
-	/* We can only change uid/gid as root ... */
-	if (getuid() == 0) {
-
-		if ((setgid(ses.authstate.pw_gid) < 0) ||
-			(initgroups(ses.authstate.pw_name, 
-						ses.authstate.pw_gid) < 0)) {
-			dropbear_exit("Error changing user group");
-		}
-		if (setuid(ses.authstate.pw_uid) < 0) {
-			dropbear_exit("Error changing user");
-		}
-	} else {
-		/* ... but if the daemon is the same uid as the requested uid, we don't
-		 * need to */
-
-		/* XXX - there is a minor issue here, in that if there are multiple
-		 * usernames with the same uid, but differing groups, then the
-		 * differing groups won't be set (as with initgroups()). The solution
-		 * is for the sysadmin not to give out the UID twice */
-		if (getuid() != ses.authstate.pw_uid) {
-			dropbear_exit("Couldn't	change user as non-root");
-		}
-	}
+#if !DROPBEAR_SVR_DROP_PRIVS
+	svr_switch_user();
 #endif
 
 	/* set env vars */
@@ -1040,8 +1036,9 @@ static void execchild(const void *user_data) {
 		addnewvar("SSH_ORIGINAL_COMMAND", chansess->original_command);
 	}
 #if DROPBEAR_SVR_PUBKEY_OPTIONS_BUILT
-	if (ses.authstate.pubkey_info != NULL) {
-		addnewvar("SSH_PUBKEYINFO", ses.authstate.pubkey_info);
+	if (ses.authstate.pubkey_options
+		&& ses.authstate.pubkey_options->info_env) {
+		addnewvar("SSH_PUBKEYINFO", ses.authstate.pubkey_options->info_env);
 	}
 #endif
 

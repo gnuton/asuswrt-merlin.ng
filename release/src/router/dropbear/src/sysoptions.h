@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2025.88"
+#define DROPBEAR_VERSION "2026.94"
 #endif
 
 #ifndef LOCAL_IDENT
@@ -163,9 +163,15 @@
 #define LTM_DESC
 #endif
 
+#ifndef DROPBEAR_ECC_256
 #define DROPBEAR_ECC_256 (DROPBEAR_ECC)
+#endif
+#ifndef DROPBEAR_ECC_384
 #define DROPBEAR_ECC_384 (DROPBEAR_ECC)
+#endif
+#ifndef DROPBEAR_ECC_521
 #define DROPBEAR_ECC_521 (DROPBEAR_ECC)
+#endif
 
 /* Only include necessary ECC curves building libtomcrypt */
 #define LTC_NO_CURVES
@@ -209,7 +215,7 @@
 /* LTC SHA384 depends on SHA512 */
 #define DROPBEAR_SHA512 ((DROPBEAR_SHA2_512_HMAC) || (DROPBEAR_ECC_521) \
 			|| (DROPBEAR_SHA384) || (DROPBEAR_DH_GROUP16) \
-			|| (DROPBEAR_ED25519))
+			|| (DROPBEAR_ED25519) || (DROPBEAR_SNTRUP761))
 
 #define DROPBEAR_DH_GROUP14 ((DROPBEAR_DH_GROUP14_SHA256) || (DROPBEAR_DH_GROUP14_SHA1))
 
@@ -245,9 +251,6 @@
 #define RECV_MAX_PACKET_LEN (MAX(35000, ((RECV_MAX_PAYLOAD_LEN)+100)))
 
 /* for channel code */
-#define TRANS_MAX_WINDOW 500000000 /* 500MB is sufficient, stopping overflow */
-#define TRANS_MAX_WIN_INCR 500000000 /* overflow prevention */
-
 #define RECV_WINDOWEXTEND (opts.recv_window / 3) /* We send a "window extend" every
 								RECV_WINDOWEXTEND bytes */
 #define MAX_RECV_WINDOW (10*1024*1024) /* 10 MB should be enough */
@@ -258,6 +261,10 @@
 #define MAX_STRING_LEN (MAX(MAX_CMD_LEN, 2400)) /* Sun SSH needs 2400 for algos,
                                                    MAX_CMD_LEN is usually longer */
 
+/* Count of packets to enqueue deferring while a KEX is in progress.
+ * We wouldn't expect to be anywhere near one-per-channel in normal
+ * operation, this is an upper bound. */
+#define MAX_DEFER_REPLY_QUEUE MAX_CHANNELS
 
 /* Key type sizes are ordered large to small, all are
  determined empirically, and rounded up */
@@ -271,7 +278,7 @@
 #else
 /* 521 bit ecdsa key */
 #define MAX_PUBKEY_SIZE 200
-#define MAX_PRIVKEY_SIZE 200
+#define MAX_PRIVKEY_SIZE 250
 #endif
 
 /* For kex hash buffer, worst case size for Q_C || Q_S || K */
@@ -288,7 +295,7 @@
 #define MAX_KEX_PARTS 1000
 #endif
 
-#define MAX_HOSTKEYS 4
+#define MAX_HOSTKEYS 6
 
 /* The maximum size of the bignum portion of the kexhash buffer */
 /* K_S + Q_C + Q_S + K */
@@ -314,10 +321,11 @@
 
 /* TCP and stream local fwds share the same restrictions */
 #define DROPBEAR_SVR_LOCALANYFWD ((DROPBEAR_SVR_LOCALTCPFWD) || (DROPBEAR_SVR_LOCALSTREAMFWD))
+#define DROPBEAR_SVR_REMOTEANYFWD ((DROPBEAR_SVR_REMOTETCPFWD) || (DROPBEAR_SVR_REMOTESTREAMFWD))
 
 #define DROPBEAR_LISTENERS \
    ((DROPBEAR_CLI_REMOTETCPFWD) || (DROPBEAR_CLI_LOCALTCPFWD) || \
-	(DROPBEAR_SVR_REMOTETCPFWD) || (DROPBEAR_SVR_LOCALANYFWD) || \
+	(DROPBEAR_SVR_REMOTEANYFWD) || (DROPBEAR_SVR_LOCALANYFWD) || \
 	(DROPBEAR_SVR_AGENTFWD) || (DROPBEAR_X11FWD))
 
 #define DROPBEAR_CLI_MULTIHOP ((DROPBEAR_CLI_NETCAT) && (DROPBEAR_CLI_PROXYCMD))
@@ -337,7 +345,7 @@
 
 /* PAM requires ./configure --enable-pam */
 #if !defined(HAVE_LIBPAM) && DROPBEAR_SVR_PAM_AUTH
-#error "DROPBEAR_SVR_PATM_AUTH requires PAM headers. Perhaps ./configure --enable-pam ?"
+#error "DROPBEAR_SVR_PAM_AUTH requires PAM headers. Perhaps ./configure --enable-pam ?"
 #endif
 
 #if DROPBEAR_SVR_PASSWORD_AUTH && !HAVE_CRYPT
@@ -352,12 +360,20 @@
 	#error "You must define DROPBEAR_SVR_PUBKEY_AUTH in order to use plugins"
 #endif
 
+#if (DROPBEAR_PLUGIN && !DROPBEAR_SVR_PUBKEY_OPTIONS_BUILT)
+	#error "DROPBEAR_PLUGIN requires DROPBEAR_SVR_PUBKEY_OPTIONS"
+#endif
+
 #if !(DROPBEAR_AES128 || DROPBEAR_3DES || DROPBEAR_AES256 || DROPBEAR_CHACHA20POLY1305)
 	#error "At least one encryption algorithm must be enabled. AES128 is recommended."
 #endif
 
 #if !(DROPBEAR_RSA || DROPBEAR_DSS || DROPBEAR_ECDSA || DROPBEAR_ED25519)
 	#error "At least one hostkey or public-key algorithm must be enabled; RSA is recommended."
+#endif
+
+#if DROPBEAR_SVR_DROP_PRIVS && !defined(HAVE_SETRESGID)
+	#error "DROPBEAR_SVR_DROP_PRIVS requires setresgid()."
 #endif
 
 /* Source for randomness. This must be able to provide hundreds of bytes per SSH
@@ -447,6 +463,19 @@
 
 #ifndef DROPBEAR_MULTI
 #define DROPBEAR_MULTI 0
+#endif
+
+/* To avoid denial of service */
+#define DROPBEAR_MAX_LINE_LENGTH 10000
+#define MAX_AUTHKEYS_LINE_COUNT 300
+
+#if !DROPBEAR_SVR_MULTIUSER && DROPBEAR_SVR_DROP_PRIVS
+#error DROPBEAR_SVR_DROP_PRIVS needs DROPBEAR_SVR_MULTIUSER
+#endif
+
+#if !(DROPBEAR_SVR_DROP_PRIVS || !DROPBEAR_SVR_MULTIUSER) \
+   && (DROPBEAR_SVR_LOCALSTREAMFWD || DROPBEAR_SVR_LOCALSTREAMFWD)
+#error stream forwarding requires DROPBEAR_SVR_DROP_PRIVS or !DROPBEAR_SVR_MULTIUSER
 #endif
 
 /* Fuzzing expects all key types to be enabled */

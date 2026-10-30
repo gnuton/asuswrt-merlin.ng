@@ -1640,9 +1640,9 @@ __attribute__((unused))
 static inline
 int crypto_int64_ones_num(crypto_int64 crypto_int64_x) {
   crypto_int64_unsigned crypto_int64_y = crypto_int64_x;
-  const crypto_int64 C0 = 0x5555555555555555;
-  const crypto_int64 C1 = 0x3333333333333333;
-  const crypto_int64 C2 = 0x0f0f0f0f0f0f0f0f;
+  const crypto_int64 C0 = INT64_C(0x5555555555555555);
+  const crypto_int64 C1 = INT64_C(0x3333333333333333);
+  const crypto_int64 C2 = INT64_C(0x0f0f0f0f0f0f0f0f);
   crypto_int64_y -= ((crypto_int64_y >> 1) & C0);
   crypto_int64_y = (crypto_int64_y & C1) + ((crypto_int64_y >> 2) & C1);
   crypto_int64_y = (crypto_int64_y + (crypto_int64_y >> 4)) & C2;

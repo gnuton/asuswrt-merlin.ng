@@ -112,8 +112,7 @@ dirserv_thinks_router_is_unreliable(time_t now,
 }
 
 /** Return 1 if <b>ri</b>'s descriptor is "active" -- running, valid,
- * not hibernating, having observed bw greater 0, and not too old. Else
- * return 0.
+ * not hibernating, and not too old. Else return 0.
  */
 static int
 router_is_active(const routerinfo_t *ri, const node_t *node, time_t now)
@@ -124,20 +123,6 @@ router_is_active(const routerinfo_t *ri, const node_t *node, time_t now)
   }
   if (!node->is_running || !node->is_valid || ri->is_hibernating) {
     return 0;
-  }
-  /* Only require bandwidth capacity in non-test networks, or
-   * if TestingTorNetwork, and TestingMinExitFlagThreshold is non-zero */
-  if (!ri->bandwidthcapacity) {
-    if (get_options()->TestingTorNetwork) {
-      if (dirauth_get_options()->TestingMinExitFlagThreshold > 0) {
-        /* If we're in a TestingTorNetwork, and TestingMinExitFlagThreshold is,
-         * then require bandwidthcapacity */
-        return 0;
-      }
-    } else {
-      /* If we're not in a TestingTorNetwork, then require bandwidthcapacity */
-      return 0;
-    }
   }
   return 1;
 }
@@ -623,6 +608,17 @@ dirauth_set_routerstatus_from_routerinfo(routerstatus_t *rs,
     if (listbadexits)
       rs->is_bad_exit = 1;
     rs->is_exit = rs->is_possible_guard = rs->is_hs_dir = rs->is_v2_dir = 0;
+  }
+
+  /* Strip rs flags based on node flags. */
+  if (node->strip_guard) {
+    rs->is_possible_guard = 0;
+  }
+  if (node->strip_hsdir) {
+    rs->is_hs_dir = 0;
+  }
+  if (node->strip_v2dir) {
+    rs->is_v2_dir = 0;
   }
 
   /* Set rs->is_staledesc. */

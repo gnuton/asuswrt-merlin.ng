@@ -69,6 +69,7 @@ int connect_unix(const char* addr);
 #endif
 int buf_readfile(buffer* buf, const char* filename);
 int buf_getline(buffer * line, FILE * authfile);
+int buf_writefile(buffer * buf, const char * filename, int skip_exist);
 
 void m_close(int fd);
 void setnonblocking(int fd);
@@ -76,6 +77,7 @@ void disallow_core(void);
 int m_str_to_uint(const char* str, unsigned int *val);
 /* The same as snprintf() but exits rather than returning negative */
 int m_snprintf(char *str, size_t size, const char *format, ...);
+void cleantext(char* dirtytext, int allow_whitespace);
 
 /* Used to force mp_ints to be initialised */
 #define DEF_MP_INT(X) mp_int X = {0, 0, 0, NULL}
@@ -98,6 +100,7 @@ char * expand_homedir_path_home(const char *inpath, const char *homedir);
 void fsync_parent_dir(const char* fn);
 
 int fd_read_pending(int fd);
+void dropbear_fd_set(int fd, fd_set *set);
 
 #if DROPBEAR_MSAN
 /* FD_ZERO seems to leave some memory uninitialized. clear it to avoid false positives */
@@ -114,6 +117,5 @@ int dropbearconvert_main(int argc, char ** argv);
 int scp_main(int argc, char ** argv);
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
 
 #endif /* DROPBEAR_DBUTIL_H_ */

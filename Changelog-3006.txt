@@ -1,6 +1,207 @@
 Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
+3006.102.9 (23-Sept-2026)
+  - NEW: Migrated all devices to OpenSSL 3.5 (except GT-BE19000AI,
+         which was already on that version).
+         For closed source components linked against
+         OpenSSL 1.1.1, a shim was developped to pretend being
+         the openssl 1.1.1 library, redirecting calls to the
+         actual 3.5.x library.  A similar shim for 1.0.0 was
+         also implemented for the RT-BE58_Go's Trend Micro
+         HNS engine.  (RSDNTWK)
+
+  - NEW: Hardware-accelerated AQM QoS implemented, using
+         Broadcom's traffic manager.  Wifi 6 devices will
+         use the WRED algo, while Wifi 7 uses PI2.
+         This is not compatible with BCM676x devices,
+         like the RT-BE92U or RT-BE58_Go.
+
+         AQM helps reducing bufferbloat through improved queue
+         management.  This will only affect the Upload, as
+         Asus is already applying queue management on the
+         downstream using another Broadcom engine.
+
+         It is recommended to set your upload speed to around
+         95% of your real upload speed.
+
+         It only works for dhcp/static mode (so, no PPPoE).
+
+  - NEW: Wireless Log will now report infos for Repeater,
+         Media Bridge and WISP upstream link
+  - NEW: IPv6 support in Tor.  Previously, any IPv6 traffic
+         would leak outside of the proxy.  (Claude)
+  - UPDATED: amtm to 7.0.  (decoderman)
+  - UPDATED: tor to 0.4.9.11.
+  - UPDATED: OpenSSL 3.5 to 3.5.8.
+  - UPDATED: OpenVPN 2.7.7.
+  - UPDATED: zoneinfo data to 2026c.
+  - CHANGED: Kernel backports to mark the B53-based CPUs as not
+             being vulnerable to Spectre V2 and Meltdown.
+             This tells the kernel to skip software mitigation,
+             avoiding their associated performance
+             penalties.  (leonpano2006)
+  - CHANGED: Tweaks to OpenVPN Server and Tor pages.  Use
+             the new CSS radio switcher instead of old
+             switcherplugin.
+  - CHANGED: Stop forcing FTP TLS to be (re-)enabled after
+             a firmware upgrade.
+  - FIXED: Wireless Log not working while in WISP mode.
+  - FIXED: Wireless Log issues while in Repeater and
+           Media Bridge modes.
+  - FIXED: Interface selection missing from Speed Test
+           (GT-BE19000AI)
+  - FIXED: AdaptiveQoS Bandwidth Monitor shwowing the
+           wrong traffic rates (patch from Asus)
+
+
+3006.102.8_4 (20-Aug-2026)
+  - UPDATED: OpenVPN to 2.7.6.
+  - UPDATED: miniupnpd to 2.3.11.
+  - CHANGED: When downgrading an OVPN server from TLS Encrypt V2
+             mode to tls auth mode, the V2 key will be replaced
+             with an appropriate V1 key.
+  - CHANGED: IPv6 address provided as second argumnet to ddns-start
+             script (aligns with 3004.388)
+  - FIXED: Cannot connect to gaming servers if a game forwards
+           a port through UPnP (3006.102.8 regression)
+  - FIXED: A couple of potential security issues in httpd and
+           ipsec cert handling
+  - FIXED: netstat-nat would return an empty list if no option
+           is selected on the Netool webui interface
+
+
+3006.102.8_2 (28-July-2026)
+  - UPDATED: dropbear to 2026.94.
+  - UPDATED: miniupnpd to 2.3.10-g91eeeae.
+  - CHANGED: Tweaks to temperature and last 24 traffic charts
+             (Joel Samson)
+  - FIXED: IPSEC server failing to start.
+  - FIXED: IPv6 DDNS update would repeat when using a custom
+           script (dave14305)
+
+
+3006.102.8 (8-July-2026)
+  - NOTE: There has been important changes to OpenVPN, some
+          necessary with the update to OpenVPN 2.7.  Make
+          sure you read the details below, especially if
+          running an OpenVPN server with deprecated features
+          that have now been removed.
+
+  - NEW: Added tls-crypt V2 authentication support to OpenVPN
+         servers.  Don't forget to generate a client key for
+         each client that will connect to you.  The keys can
+         be generated from the webui, after you have started
+         the server with TLS control set to "Encrypt Channel
+         V2".  A new button will appear that can generate
+         a new client key each time you click on it.
+  - NEW: CSV Import/Export feature on DHCP reservation page
+         (backported from Asuswrt 6.0 to other WIfi 6/7
+         models).
+  - UPDATED: Merged with GPL 102_37538 (Wifi 6)
+  - UPDATED: Merged with GPL 102_39127 (RT-BE58_Go)
+  - UPDATED: Merged with GPL 102_41424 (GT-BE19000AI)
+  - UPDATED: Merged with GPL 102_39995 (Other wifi 7 models).
+  - UPDATED: OpenVPN to 2.7.5.
+  - UPDATED: OpenSSL to 3.5.7 (GT-BE19000AI)
+  - UPDATED: dropbear to 2026.91.
+  - UPDATED: dnsmasq to 2.93 + some backports.
+  - UPDATED: miniupnpd to 2.3.10-64ef08a.
+  - UPDATED: haveged to 1.9.22.
+  - CHANGED: VPN Status page can now detect running but
+             non-connected WireGuard client tunnels, and
+             report them as being in an error state.
+  - CHANGED: Include two separate miniupnpd builds - with,
+             and without IGDv2 support.  Run the appropriate
+             version based on whether the user enables IGDv2
+             or not.  This is to improve compatibility, as
+             IGDv2 support is still problematic for some
+             clients, and cannot be fully disabled at
+             run time.
+  - CHANGED: dhcpc-event script will now be run after the event
+             occured rather than before, allowing it to modify
+             what was applied to the router configuration.
+  - FIXED: Some webui pages may fail to properly show recent
+           changes after clicking on Apply (an outdated
+           cached version would be shown instead).  Fixed by
+           disabling ETag support for all .asp files.
+  - FIXED: Cannot disable wifi 6 mode on Wifi 6 models (upstream
+           issue)
+  - FIXED: Multiple CVEs for OpenSSL 1.1: CVE-2026-28387,
+           CVE-2026-28388, CVE-2026-28389, CVE-2026-28390,
+           CVE-2026-7383, CVE-2026-9076, CVE-2026-34180,
+           CVE-2026-42766 and CVE-2026-45447 (backports by RSDNTWK)
+  - FIXED: UPnP port forwards not working if port forwarding
+           or NAT weren't already enabled (patch from Asus)
+  - FIXED: ntpd stops answering after a few days (workaround
+           by restarting it every 24 hours)
+  - FIXED: Connectivity issues when using QoE (GT-BE19000AI,
+           patch from Asus).
+  - FIXED: Client list would redraw every few seconds on
+           Firefox (patch from Asus).
+  - FIXED: If you had a /56 IPv6 prefix, Guest Networks wouldn't
+           allocate a /64 subnet out of it when enabling IPv6 on
+           them.
+  - REMOVED: Support for secret static key authentication
+             from both OpenVPN clients and servers.  Deprecated
+             since 2.7.0, and considered outdated in terms of
+             security.
+  - REMOVED: Compression support from OpenVPN server.  Update
+             your client configs if you were using it.
+             Client support is still available for backward
+             compatibility with old remote server setups,
+             but expect it to be removed from OpenVPN 2.8.
+             If for some reason you absolutely need it for
+             your server (despite the security implications),
+             you can still enable it through the Custom settings.
+  - REMOVED: Some obsolete/non-working OpenVPN settings such
+             as fast-io (no longer working with 2.7) or data
+             cipher (were replaced with NCP a few years ago).
+
+
+3006.102.7_2 (24-Mar-2026)
+  - NEW: Added Cake support for GT-BE19000AI (implemented the
+         missing webui to configure it).
+  - UPDATED: Merged GPL 102_39848 (RT-BE92U only).
+  - UPDATED: curl to 8.17 (backport from 102_39848).
+  - UPDATED: wget to 1.25 (backport from 102_39848).
+  - FIXED: Security issue on the Site Survey page
+           (reported by Sasha Romijn).
+  - FIXED: dnsmasq log noise for IPv6 on Guest Network Pro.
+  - FIXED: NTPD settings missing on Wifi 6 models.
+
+
+3006.102.7 (22-Feb-2026)
+  - NOTE: AiCloud has been removed from Asuswrt-Merlin due
+          to its poor security track record.  This also includes
+          cloud syncing features such as Asuswebstorage or
+          Dropbox syncing with USB folder.  Use a VPN if you
+          need secure remote access to your data.
+
+  - UPDATED: Merged GPL 102_40399 (GT-BE19000AI only)
+  - UPDATED: OpenVPN to 2.6.19.
+  - UPDATED: Dropbear to 2025.89.
+  - UPDATED: nettle to 3.10.2.
+  - UPDATED: dnsmasq to 2.93-test2 (includes a couple of DNSSEC
+             fixes over 2.92)
+  - UPDATED: openssl-3.0 to 3.0.19 (GT-BE19000AI only)
+  - UPDATED: tor to 0.4.8.22.
+  - CHANGED: Added new 2024 DNSSEC trust anchor, which will
+             start being used in October 2026.
+  - FIXED: IPv6 blocking of DoT servers (dave14305)
+  - FIXED: Multiple minor CVE for OpenSSL 1.1: CVE-2025-68160,
+           CVE-2025-69418, CVE-2025-69419, CVE-2025-69420,
+           CVE-2025-69421, CVE-2026-22795 and CVE-2026-22796
+           (backports by RSDNTWK)
+  - FIXED: Missing UPnP settings on models with multiservice
+           WAN support.
+  - FIXED: ntpd options missing when operating in WISP mode.
+  - FIXED: TrendMicro signatures not updating on RT-BE58_Go.
+  - FIXED: Starting a client through VPNDirector would fail to
+           update routing rules.
+  - REMOVED: AiCloud support, due to security reasons.
+
+
 3006.102.6_1-gnuton1 (26-Dec-2025)
   - UPDATED: Merged GPL 39099 (RT-BE98)
 

@@ -163,36 +163,17 @@ error:
 static int dropbear_write(const char*filename, sign_key * key) {
 
 	buffer * buf;
-	FILE*fp;
-	int len;
 	int ret;
 
 	buf = buf_new(MAX_PRIVKEY_SIZE);
 	buf_put_priv_key(buf, key, key->type);
-
-	fp = fopen(filename, "w");
-	if (!fp) {
-		ret = 0;
-		goto out;
-	}
-
 	buf_setpos(buf, 0);
-	do {
-		len = fwrite(buf_getptr(buf, buf->len - buf->pos),
-				1, buf->len - buf->pos, fp);
-		buf_incrpos(buf, len);
-	} while (len > 0 && buf->len != buf->pos);
-
-	fclose(fp);
-
-	if (buf->pos != buf->len) {
-		ret = 0;
-	} else {
-		ret = 1;
-	}
-out:
+	ret = buf_writefile(buf, filename, 0);
 	buf_free(buf);
-	return ret;
+	if (ret == DROPBEAR_SUCCESS) {
+		return 1;
+	}
+	return 0;
 }
 
 
@@ -402,10 +383,8 @@ static struct openssh_key *load_openssh_key(const char *filename)
 		errmsg = "Unable to open key file";
 		goto error;
 	}
-	if (!fgets(buffer, sizeof(buffer), fp) ||
-		0 != strncmp(buffer, "-----BEGIN ", 11) ||
-		0 != strcmp(buffer+strlen(buffer)-17, "PRIVATE KEY-----\n")) {
-		errmsg = "File does not begin with OpenSSH key header";
+	if (!fgets(buffer, sizeof(buffer), fp)) {
+		errmsg = "Short input";
 		goto error;
 	}
 	if (!strcmp(buffer, "-----BEGIN RSA PRIVATE KEY-----\n"))
@@ -428,16 +407,16 @@ static struct openssh_key *load_openssh_key(const char *filename)
 			errmsg = "Unexpected end of file";
 			goto error;
 		}
-		if (0 == strncmp(buffer, "-----END ", 9) &&
-			0 == strcmp(buffer+strlen(buffer)-17, "PRIVATE KEY-----\n"))
+		if (0 == strncmp(buffer, "-----END ", 9)) {
 			break;					   /* done */
+		}
 		if ((p = strchr(buffer, ':')) != NULL) {
 			if (headers_done) {
 				errmsg = "Header found in body of key data";
 				goto error;
 			}
 			*p++ = '\0';
-			while (*p && isspace((unsigned char)*p)) p++;
+			while (*p && ascii_isspace(*p)) p++;
 			if (!strcmp(buffer, "Proc-Type")) {
 				if (p[0] != '4' || p[1] != ',') {
 					errmsg = "Proc-Type is not 4 (only 4 is supported)";
@@ -834,7 +813,7 @@ ossh_error:
 		p += ret;
 		/* id==3 for bit string */
 		if (ret < 0 || id != 3 || len < 0 ||
-			key->keyblob+key->keyblob_len-p < len) {
+			key->keyblob+key->keyblob_len-p < len || len == 0) {
 			errmsg = "ASN.1 decoding failure";
 			goto error;
 		}
@@ -904,7 +883,7 @@ static int openssh_write(const char *filename, sign_key *key,
 	int pos = 0, len = 0, i;
 	char *header = NULL, *footer = NULL;
 	int ret = 0;
-	FILE *fp;
+	FILE *fp = NULL;
 
 #if DROPBEAR_DSS
 	if (key->type == DROPBEAR_SIGNKEY_DSS) {
@@ -1096,10 +1075,15 @@ static int openssh_write(const char *filename, sign_key *key,
 	if (strlen(filename) == 1 && filename[0] == '-') {
 		fp = stdout;
 	} else {
-		fp = fopen(filename, "wb");	  /* ensure Unix line endings */
+		int fd = open(filename, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW,
+			S_IRUSR | S_IWUSR);
+		fp = NULL;
+		if (fd >= 0) {
+			fp = fdopen(fd, "wb"); /* ensure Unix line endings */
+		}
 	}
 	if (!fp) {
-		fprintf(stderr, "Failed opening output file\n");
+		fprintf(stderr, "Failed opening output file: %s\n", strerror(errno));
 		goto error;
 	}
 	fputs(header, fp);

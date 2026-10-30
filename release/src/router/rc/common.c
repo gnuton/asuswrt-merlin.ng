@@ -547,7 +547,7 @@ static unsigned int read_ct_timeout(const char *type, const char *name)
 		d_exists("/proc/sys/net/ipv4/netfilter") ? "ipv4/netfilter/ip_conntrack" : "netfilter/nf_conntrack",
 		type, (name && name[0]) ? "_" : "", name ? name : "");
 	if (f_read_string((const char *) buf, v, sizeof(v)) > 0)
-		val = atoi(v);
+		val = safe_atoi(v);
 
 	return val;
 }
@@ -732,44 +732,44 @@ void setup_conntrack(void)
 
 #ifdef LINUX26
 	snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_hashsize"));
-	i = atoi(p);
+	i = safe_atoi(p);
 	if (i >= 127) {
 		f_write_string("/sys/module/nf_conntrack/parameters/hashsize", p, 0, 0);
 	}
 	else if (f_read_string("/sys/module/nf_conntrack/parameters/hashsize", buf, sizeof(buf)) > 0) {
 		if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
-		if (atoi(buf) > 0) nvram_set("ct_hashsize", buf);
+		if (safe_atoi(buf) > 0) nvram_set("ct_hashsize", buf);
 	}
 #endif
 #ifdef LINUX26
 	snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_max"));
-	i = atoi(p);
+	i = safe_atoi(p);
 	if (i >= 128) {
 		f_write_string("/proc/sys/net/nf_conntrack_max", p, 0, 0);
 	}
 	else if (f_read_string("/proc/sys/net/nf_conntrack_max", buf, sizeof(buf)) > 0) {
-		if (atoi(buf) > 0) nvram_set("ct_max", buf);
+		if (safe_atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
 #else
 	snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_max"));
-	i = atoi(p);
+	i = safe_atoi(p);
 	if (i >= 128) {
 		f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", p, 0, 0);
 	}
 	else if (f_read_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_max", buf, sizeof(buf)) > 0) {
 		if (buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0';
-		if (atoi(buf) > 0) nvram_set("ct_max", buf);
+		if (safe_atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
 #endif
 #ifdef LINUX26
 	if (f_exists("/proc/sys/net/netfilter/nf_conntrack_expect_max")) {
 		snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_expect_max"));
-		i = atoi(p);
+		i = safe_atoi(p);
 		if (i >= 1) {
 			f_write_string("/proc/sys/net/netfilter/nf_conntrack_expect_max", p, 0, 0);
 		}
 		else if (f_read_string("/proc/sys/net/netfilter/nf_conntrack_expect_max", buf, sizeof(buf)) > 0) {
-			if (atoi(buf) > 0) nvram_set("ct_expect_max", buf);
+			if (safe_atoi(buf) > 0) nvram_set("ct_expect_max", buf);
 		}
 	}
 #endif
@@ -1220,7 +1220,7 @@ const zoneinfo_t tz_list[] = {
         {"GMT0_2",      "Africa/Monrovia"},	// (GMT+00:00) Monrovia
         {"UTC-1DST_1",  "Europe/Belgrade"},	// (GMT+01:00) Belgrade, Bratislava, Budapest
         {"UTC-1DST_1_1","Europe/Ljubljana"},	// (GMT+01:00) Ljubljana, Prague
-        {"UTC-1_2",     "Europe/Sarajevo"},	// (GMT+01:00) Sarajevo, Skopje
+		{"UTC-1DST_1_2","Europe/Sarajevo"},	// (GMT+01:00) Sarajevo, Skopje
         {"UTC-1DST_2",  "Europe/Warsaw"},	// (GMT+01:00) Warsaw, Zagreb
 	{"MET-1DST",    "Europe/Copenhagen"},	// (GMT+01:00) Copenhagen, Stockholm, Oslo
         {"MET-1DST_1",  "Europe/Madrid"},	// (GMT+01:00) Madrid, Paris
@@ -1257,10 +1257,10 @@ const zoneinfo_t tz_list[] = {
         {"UTC-5.30",    "Asia/Calcutta"},	// (GMT+05:30) Sri Jayawardenepura
 	{"UTC-5.45",    "Asia/Kathmandu"},	// (GMT+05:45) Kathmandu
         {"UTC-6",       "Asia/Dhaka"},		// (GMT+06:00) Dhaka
-        {"UTC-6_2",     "Asia/Novosibirsk"},	// (GMT+06:00) Novosibirsk
         {"UTC-6.30",    "Asia/Yangon"},		// (GMT+06:30) Yangon
         {"UTC-7",       "Asia/Bangkok"},	// (GMT+07:00) Bangkok, Hanoi, Jakarta
         {"UTC-7_2",     "Asia/Krasnoyarsk"},	// (GMT+07:00) Krasnoyarsk
+		{"UTC-7_3",		"Asia/Novosibirsk"},    // (GMT+07:00) Novosibirsk
         {"CST-8",       "Asia/Shanghai"},	// (GMT+08:00) Beijing, Hong Kong 
         {"CST-8_1",     "Asia/Chongqing"},	// (GMT+08:00) Chongqing, Urumqi
         {"SST-8",       "Asia/Kuala_Lumpur"},	// (GMT+08:00) Kuala_Lumpur, Singapore

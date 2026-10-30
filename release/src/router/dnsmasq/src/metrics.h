@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2025 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2026 Simon Kelley
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -42,6 +42,10 @@ enum {
   METRIC_LEASES_ALLOCATED_6,
   METRIC_LEASES_PRUNED_6,
   METRIC_TCP_CONNECTIONS,
+  METRIC_DHCPLEASEQUERY,
+  METRIC_DHCPLEASEUNASSIGNED,
+  METRIC_DHCPLEASEACTIVE,
+  METRIC_DHCPLEASEUNKNOWN,
   
   __METRIC_MAX,
 };

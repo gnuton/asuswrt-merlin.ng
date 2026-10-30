@@ -438,7 +438,7 @@ void printhex(const char * label, const unsigned char * buf, int len) {
 		fprintf(stderr, "  ");
 		for (i = 0; i < linelen; i++) {
 			char c = buf[j+i];
-			if (!isprint(c)) {
+			if (!ascii_isprint(c)) {
 				c = '.';
 			}
 			fputc(c, stderr);
@@ -520,46 +520,96 @@ out:
 	return ret;
 }
 
-/* get a line from the file into buffer in the style expected for an
+/* Get a line from the file into buffer in the style expected for an
  * authkeys file.
- * Will return DROPBEAR_SUCCESS if data is read, or DROPBEAR_FAILURE on EOF.*/
-/* Only used for ~/.ssh/known_hosts and ~/.ssh/authorized_keys */
-#if DROPBEAR_CLIENT || DROPBEAR_SVR_PUBKEY_AUTH
+ * Will return DROPBEAR_SUCCESS if data is read, or DROPBEAR_FAILURE on EOF/error.*/
+/* Returns failure if lines are longer than DROPBEAR_MAX_LINE_LENGTH.
+ * A line that doesn't fit in the buffer returns DROPBEAR_SUCCESS with an empty buffer */
 int buf_getline(buffer * line, FILE * authfile) {
 
 	int c = EOF;
+	unsigned int pos;
+	int truncated = 0;
 
-	buf_setpos(line, 0);
 	buf_setlen(line, 0);
 
-	while (line->pos < line->size) {
-
+	for (pos = 0; pos < DROPBEAR_MAX_LINE_LENGTH; pos++) {
 		c = fgetc(authfile); /*getc() is weird with some uClibc systems*/
 		if (c == EOF || c == '\n' || c == '\r') {
-			goto out;
+			break;
 		}
 
-		buf_putbyte(line, (unsigned char)c);
+		if (!truncated && line->len < line->size) {
+			buf_putbyte(line, (unsigned char)c);
+		} else {
+			/* buffer is full, read to EOL and return an empty buffer */
+			truncated = 1;
+			buf_setlen(line, 0);
+		}
 	}
 
-	TRACE(("leave getauthline: line too long"))
-	/* We return success, but the line length will be zeroed - ie we just
-	 * ignore that line */
-	buf_setlen(line, 0);
+	if (pos >= DROPBEAR_MAX_LINE_LENGTH) {
+		/* Didn't reach end of line, the caller shouldn't continue since
+		 * it will still be mid-line */
+		return DROPBEAR_FAILURE;
+	}
+
+	if (c == EOF && line->pos == 0) {
+		/* Reached EOF, no buffer data */
+		return DROPBEAR_FAILURE;
+	}
+
+	buf_setpos(line, 0);
+	return DROPBEAR_SUCCESS;
+}	
+
+/* Returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
+int buf_writefile(buffer * buf, const char * filename, int skip_exist) {
+	int ret = DROPBEAR_FAILURE;
+	int fd = -1;
+
+	fd = open(filename, O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW,
+		S_IRUSR | S_IWUSR);
+	if (fd < 0) {
+		/* If generating keys on connection (skip_exist) it's OK to get EEXIST
+		- we probably just lost a race with another connection to generate the key */
+		if (skip_exist && errno == EEXIST) {
+			ret = DROPBEAR_SUCCESS;
+		} else {
+			dropbear_log(LOG_ERR, "Couldn't create new file %s: %s",
+				filename, strerror(errno));
+		}
+
+		goto out;
+	}
+
+	/* write the file now */
+	while (buf->pos != buf->len) {
+		int len = write(fd, buf_getptr(buf, buf->len - buf->pos),
+				buf->len - buf->pos);
+		if (len == -1 && errno == EINTR) {
+			continue;
+		}
+		if (len <= 0) {
+			dropbear_log(LOG_ERR, "Failed writing file %s: %s",
+				filename, strerror(errno));
+			goto out;
+		}
+		buf_incrpos(buf, len);
+	}
+
+	ret = DROPBEAR_SUCCESS;
 
 out:
-
-
-	/* if we didn't read anything before EOF or error, exit */
-	if (c == EOF && line->pos == 0) {
-		return DROPBEAR_FAILURE;
-	} else {
-		buf_setpos(line, 0);
-		return DROPBEAR_SUCCESS;
+	if (fd >= 0) {
+		if (fsync(fd) != 0) {
+			dropbear_log(LOG_ERR, "fsync of %s failed: %s", filename, strerror(errno));
+		}
+		m_close(fd);
 	}
+	return ret;
+}
 
-}	
-#endif
 
 /* make sure that the socket closes */
 void m_close(int fd) {
@@ -769,7 +819,7 @@ int fd_read_pending(int fd) {
 	struct timeval timeout;
 
 	DROPBEAR_FD_ZERO(&fds);
-	FD_SET(fd, &fds);
+	dropbear_fd_set(fd, &fds);
 	while (1) {
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
@@ -783,6 +833,17 @@ int fd_read_pending(int fd) {
 	}
 }
 
+/* FD_SET() wrapper with an overflow check */
+void dropbear_fd_set(int fd, fd_set *set) {
+	if (fd < 0) {
+		return;
+	}
+	if (fd >= FD_SETSIZE) {
+		dropbear_exit("fd limit %d", fd);
+	}
+	FD_SET(fd, set);
+}
+
 int m_snprintf(char *str, size_t size, const char *format, ...) {
 	va_list param;
 	int ret;
@@ -794,4 +855,27 @@ int m_snprintf(char *str, size_t size, const char *format, ...) {
 		dropbear_exit("snprintf failed");
 	}
 	return ret;
+}
+
+/* Operates in-place turning dirty text (untrusted potentially containing control
+ * characters) into clean text.
+ * Only ascii (7 bit) characters are allowed.
+ * Set allow_whitespace to allow \n and \t. */
+void cleantext(char* dirtytext, int allow_whitespace) {
+
+	unsigned int i, j;
+	unsigned char c;
+
+	j = 0;
+	for (i = 0; dirtytext[i] != '\0'; i++) {
+
+		c = (unsigned char)dirtytext[i];
+		/* We can ignore '\r's */
+		if ((c >= ' ' && c <= '~') || (allow_whitespace && (c == '\n' || c == '\t'))) {
+			dirtytext[j] = c;
+			j++;
+		}
+	}
+	/* Null terminate */
+	dirtytext[j] = '\0';
 }

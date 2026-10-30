@@ -20,7 +20,7 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="/js/httpApi.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js?v=4"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_policy.js?v=5"></script>
 <style>
 .weakness{
 	width:650px;
@@ -149,7 +149,13 @@ var getUrlParameter = function getUrlParameter(param){
     }
     return "";
 };
-var theme = getUrlParameter("current_theme").toUpperCase();
+function getSafeTheme(paramName, allowedValues = ['WHITE', 'ROG', 'TUF', '']) {
+	let rawValue = getUrlParameter(paramName);
+	if (!rawValue) return "";
+	let safePrefix = rawValue.toUpperCase().match(/^[A-Z0-9_]*/)[0];
+	return allowedValues.includes(safePrefix) ? safePrefix : "";
+}
+var theme = getSafeTheme("current_theme").toUpperCase();
 
 function eventBind() {
 document.querySelectorAll(".alert_preference").forEach((element) => {

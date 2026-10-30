@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2025 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2026 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ void poll_listen(int fd, short event)
      {
        if (arrsize == nfds)
 	 {
-	   /* Array too small, extend. */
+	   /* Array too small. Extend. */
 	   struct pollfd *new;
 
 	   arrsize = (arrsize == 0) ? 64 : arrsize * 2;

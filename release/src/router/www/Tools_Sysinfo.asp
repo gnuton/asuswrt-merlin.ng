@@ -148,7 +148,7 @@ var wifi51data = [];
 var wifi52data = [];
 var wifi6data = [];
 var wifi62data = [];
-
+var tempchartOffset = 0;
 
 function draw_mem_charts(){
 /* Memory */
@@ -278,6 +278,13 @@ function draw_mem_charts(){
 
 
 function draw_temps_charts(){
+	if (cpudata.length > 20 ||
+	    wifi24data.length > 20 ||
+	    wifi51data.length > 20 ||
+	    wifi52data.length > 20 ||
+	    wifi6data.length > 20 ||
+	    wifi62data.length > 20)
+		tempchartOffset += 3;
 	if (cpudata.length > 20)
 		cpudata.shift();
 	if (wifi24data.length > 20)
@@ -411,6 +418,15 @@ function draw_temps_charts(){
 					labels: [0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57],
 					ticks: {
 						color: ticksColor,
+						callback: function(value) {
+							var seconds = Number(this.getLabelForValue(value)) + tempchartOffset;
+
+							if (seconds < 60)
+								return seconds;
+
+							return Math.floor(seconds / 60) + ":" +
+								String(seconds % 60).padStart(2, "0");
+						}
 					}
 				},
 				y: {
@@ -874,7 +890,7 @@ function show_aiboard_info() {
 									<span class="memlabel" style="color: #FFCC00;">Total Swap :</span>
 									<span class="memvalue" id="mem_swap_total_div"></span>
 								</div>
-								<div class="mewrow" id="swap_div">
+								<div class="memrow" id="swap_div">
 									<span class="memlabel" style="color: #FFCC00;">Used Swap :</span>
 									<span class="memvalue" id="mem_swap_used_div"></span>
 								</div>
