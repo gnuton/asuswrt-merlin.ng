@@ -43,8 +43,10 @@ EXTRA_CFLAGS += $(INC_RDP_FLAGS) $(EXTRA_INCLUDES) -I$(INC_BRCMDRIVER_PRIV_PATH)
 
 -include $(TOPDIR)/Rules.make
 
+GDX_HW_PREBUILT := $(src)/prebuilt/$(BRCM_CHIP)/gdx_hw.o
+
 $(obj)/gdx_hw.o:
-	cp $(obj)/prebuilt/gdx_hw.o $(obj)/gdx_hw.o
+	cp $(if $(wildcard $(GDX_HW_PREBUILT)),$(GDX_HW_PREBUILT),$(src)/prebuilt/gdx_hw.o) $(obj)/gdx_hw.o
 
 clean:
 	rm -f core *.o *.a *.s .*.cmd *.ko

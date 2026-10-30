@@ -161,6 +161,14 @@ then
         ARCH="_arm"
         HND="_behnd"
 
+	# Chip mapping for architecture-specific kernel/U-Boot objects
+	case "$BUILD_NAME" in
+		GT-BE98|GT-BE98_PRO|RT-BE96U) MODEL_CHIP=6813 ;;
+		RT-BE58U|RT-BE92U|RT-BE95U|TUF-BE3600) MODEL_CHIP=6765 ;;
+		RT-BE82U|RT-BE82M|GT7|GS7_PRO*) MODEL_CHIP=6766 ;;
+		*) MODEL_CHIP="" ;;
+	esac
+
 	# Create model-specific output directories for newly imported models
 	for d in \
 		release/src/router/lighttpd-1.4.39/prebuild \
@@ -297,18 +305,19 @@ then
 			"$REPO/release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o"
 	fi
 
-	# BP3 fsaux prebuilt (used by models without a .o_saved variant)
-	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" ]
+	# BP3 fsaux prebuilt, kept as a per-chip .o_saved variant
+	if [ -n "$MODEL_CHIP" ] && [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" ]
 	then
 		cp "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" \
-			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o"
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.${MODEL_CHIP}.o_saved"
 	fi
 
-	# GDX hardware prebuilt
-	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o" ]
+	# GDX hardware prebuilt, per-chip directory
+	if [ -n "$MODEL_CHIP" ] && [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o" ]
 	then
+		mkdir -p "$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/$MODEL_CHIP"
 		cp "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o" \
-			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o"
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/$MODEL_CHIP/gdx_hw.o"
 	fi
 
 	# Some GPLs omit vlanctl prebuilts; reuse the BE4916 reference model
@@ -376,7 +385,18 @@ then
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/ubus/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/ubus/
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/rng/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/rng/
 
-		rsync -a --del release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1/ $REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1
+		# Archer prebuilts are kept as per-chip .o_saved variants
+		ARCHER_SRC="release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1"
+		ARCHER_DST="$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1"
+		if [ -n "$MODEL_CHIP" ]; then
+			find "$ARCHER_DST" -name '*.o' -delete
+			find "$ARCHER_SRC" -name '*.o' | while read -r f; do
+				rel=${f#$ARCHER_SRC/}
+				base=${rel%.o}
+				mkdir -p "$(dirname "$ARCHER_DST/${base}.${MODEL_CHIP}.o_saved")"
+				cp -p "$f" "$ARCHER_DST/${base}.${MODEL_CHIP}.o_saved"
+			done
+		fi
 		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/cmdlist/impl1/cmdlist.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/vlan/impl1/bcmvlan.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bpm/impl1/bcm_bpm.o  $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
