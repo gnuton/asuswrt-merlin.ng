@@ -72,39 +72,6 @@ static int check_mount_point_icase(const disk_info_t *d_info, const partition_in
 	return v;
 }
 
-/* For NETBIOS name,
- * 1. NetBIOS names are a sequence of alphanumeric characters.
- * 2. The hyphen ("-") and full-stop (".") characters may also be used
- *     in the NetBIOS name, but not as the first or last character.
- * 3. The NetBIOS name is 16 ASCII characters, however Microsoft limits
- *     the host name to 15 characters and reserves the 16th character
- *     as a NetBIOS Suffix
- */
-int
-is_valid_netbios_name(const char *name)
-{
-	int i, valid = 1;
-	size_t len;
-
-	if(!name)
-		return 0;
-
-	len = strlen(name);
-	if(!len || len > 15)
-		return 0;
-
-	for(i = 0; valid && i < len; ++i){
-		if(isalnum(name[i]))
-			continue;
-		else if((name[i] == '-' || name[i] == '.') && (i > 0 && i < (len - 1)))
-			continue;
-
-		valid = 0;
-	}
-
-	return valid;
-}
-
 int check_existed_share(const char *string)
 {
 	FILE *tp;

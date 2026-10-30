@@ -78,6 +78,10 @@
 #include "vpn_utils.h"
 #endif
 
+#if defined(RTCONFIG_OOKLA) || defined(RTCONFIG_OOKLA_LITE)
+#include "ookla_common.h"
+#endif
+
 #if defined(RTCONFIG_PTHSAFE_POPEN)
 #if defined(RTCONFIG_QCA)
 #define	popen	PS_popen
@@ -3985,6 +3989,7 @@ extern int isValidEnableOption(const char* option, int range);
 extern int isValid_digit_string(const char *string);
 extern int is_valid_hostname(const char *name);
 extern int is_valid_domainname(const char *name);
+extern int is_valid_netbios_name(const char *name);
 extern char *get_ddns_hostname(void);
 extern int get_ispctrl();
 extern unsigned short get_extend_cap();

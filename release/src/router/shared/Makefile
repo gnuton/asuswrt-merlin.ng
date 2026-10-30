@@ -246,6 +246,9 @@ ifeq ($(RTCONFIG_RGBLED),y)
 OBJS += $(if $(wildcard aura_rgb.c),aura_rgb.o,prebuild/aura_rgb.o)
 endif
 OBJS += timer_utils.o
+ifeq ($(or $(RTCONFIG_OOKLA),$(RTCONFIG_OOKLA_LITE)),y)
+OBJS += ookla_utils.o
+endif
 ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
 OBJS += tld_utils.o
 endif
