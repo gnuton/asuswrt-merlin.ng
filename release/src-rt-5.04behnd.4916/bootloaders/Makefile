@@ -309,6 +309,7 @@ fix_all_defconfig:
 	   echo $$op; \
 	   $(MAKE) OPTIONS=$$op fixdefconfig ; $(MAKE) clean ; done;
 
+spl: uboot_phy_prebuilts
 spl: configure_spl $(splobjdir)/include/generated/hashtable.h
 	$(MAKE) -C $(UB) O=$(splobjdir) spl/u-boot-spl.bin CROSS_COMPILE=$(UBOOT_CROSS_COMPILE) HOSTCC="$(HOSTCC)" BUILD_TAG=$(LOADER_BUILD_TAG) $(KCFL) BLD_COMMON=n
 	$(OBJDUMP) -d $(splobjdir)/spl/u-boot-spl > $(splobjdir)/spl/u-boot-spl.dis
@@ -323,10 +324,12 @@ cmm: spl | uboot
 	build/work/generate_cmm.sh $(objdir) $(BRCM_CHIP) $(UBOOT_CROSS_COMPILE) $(splobjdir)/spl/
 	build/work/generate_cmm_legacy.py $(objdir) $(BRCM_CHIP) $(UBOOT_CROSS_COMPILE) $(splobjdir)/spl/
 
+tpl: uboot_phy_prebuilts
 tpl: configure
 	$(MAKE) -C $(UB) O=$(ubootobjdir) tpl/u-boot-tpl.bin CROSS_COMPILE=$(UBOOT_CROSS_COMPILE) HOSTCC="$(HOSTCC)" BUILD_TAG=$(LOADER_BUILD_TAG) $(KCFL)
 	$(OBJDUMP) -d $(ubootobjdir)/tpl/u-boot-tpl > $(ubootobjdir)/tpl/u-boot-tpl.dis
 
+uboot: uboot_phy_prebuilts
 uboot: configure 
 	$(MAKE) -C $(UB) O=$(ubootobjdir) u-boot.bin CROSS_COMPILE=$(UBOOT_CROSS_COMPILE) HOSTCC="$(HOSTCC)" BUILD_TAG=$(UBOOT_BUILD_TAG) $(KCFL)
 	$(OBJDUMP) -d $(ubootobjdir)/u-boot > $(ubootobjdir)/u-boot.dis
@@ -459,6 +462,31 @@ endif
 # Setup build configurations
 BINARIES = $(wildcard $(objdir)/binaries/*.bin_headered) 
 PROFILE  = $(shell cat ../.last_profile)
+
+# Model-specific U-Boot PHY prebuilts (GT-BE98 vs RT-BE58U)
+UBOOT_PHY_PREBUILT_DIR := $(mdir)/$(UB)/drivers/net/bcmbca/phy/prebuilt
+ifneq (,$(filter GT-BE98,$(BUILD_NAME)))
+UBOOT_PHY_VARIANT := GT-BE98
+else ifneq (,$(filter RT-BE58U,$(BUILD_NAME)))
+UBOOT_PHY_VARIANT := RT-BE58U
+else ifeq ($(PROFILE),96813GW)
+UBOOT_PHY_VARIANT := GT-BE98
+else ifeq ($(PROFILE),96765GW)
+UBOOT_PHY_VARIANT := RT-BE58U
+endif
+
+.PHONY: uboot_phy_prebuilts
+uboot_phy_prebuilts:
+ifneq ($(UBOOT_PHY_VARIANT),)
+	@if [ -d "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)" ]; then \
+		echo "Using U-Boot PHY prebuilts for $(UBOOT_PHY_VARIANT)"; \
+		for f in "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)"/*.o; do \
+			[ -e "$$f" ] || continue; \
+			cp -f "$$f" "$(UBOOT_PHY_PREBUILT_DIR)/../$$(basename $$f)"; \
+		done; \
+	fi
+endif
+
 bcm_uboot_env ?= env_placeholder.conf
 bcm_uboot_envsize ?= 16384
 bcm_uboot_image_offset ?= 1M

@@ -9,9 +9,8 @@ jobs:
         fail-fast: false
         matrix:
           cfg:
-            # GT-BE98 builds temporarily disabled while enabling RT-BE58U
-            # - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
-            # - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: false }
+            - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
+            - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: false }
             - { model: "rt-be58u",         sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest

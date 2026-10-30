@@ -213,7 +213,8 @@ then
 		release/src/router/vpmstats/prebuilt \
 		release/src/router/asus_rbd/prebuild \
 		release/src/router/bsd/prebuilt \
-		release/src/router/dhd/prebuilt
+		release/src/router/dhd/prebuilt \
+		release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/prebuilt
 	do
 		mkdir -p "$REPO/$d/$BUILD_NAME"
 	done
@@ -262,6 +263,8 @@ then
 	for f in $phy_prebuilts; do
 		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" ]
 		then
+			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
+				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/prebuilt/$BUILD_NAME/$f"
 			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
 				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f"
 		fi
