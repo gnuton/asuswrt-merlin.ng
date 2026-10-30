@@ -33668,38 +33668,6 @@ ej_dns_wanStat_detail(int eid, webs_t wp, int argc, char_t **argv)
 #endif
 
 #if defined(RTCONFIG_OOKLA) || defined(RTCONFIG_OOKLA_LITE)
-/* define */
-#if defined(RTCONFIG_OOKLA_LITE)
-#define OOKLA_FOLDER      "/tmp/OOKLA/"
-#else
-#define OOKLA_FOLDER      "/jffs/.sys/OOKLA/"
-#endif
-#define OOKLA_RESULT      OOKLA_FOLDER"ookla_result"
-#define OOKLA_HISTORY     OOKLA_FOLDER"ookla_history"
-#define OOKLA_HISTORY_T   OOKLA_FOLDER"ookla_history_t"
-#define OOKLA_SERVERS     OOKLA_FOLDER"ookla_servers"
-#define OOKLA_HISTORY_MAX 49
-#if defined(RTCONFIG_ETH_MONITOR)
-#define ETH_MONITOR_RESULT      OOKLA_FOLDER"ookla_data"
-#endif
-
-enum{
-		OOKLA_STATE_IDLE = 0,
-		OOKLA_STATE_RUN,
-		OOKLA_STATE_ERR_DISCON,
-		OOKLA_STATE_ERR_TIMEOUT,
-		OOKLA_STATE_ERR_TERMINATE,
-		OOKLA_STATE_ERR_UNKNOWN
-};
-
-
-/* debug */
-#define OOKLA_DEBUG       "/tmp/OOKLA_DEBUG"
-#define OOKLA_DBG(fmt,args...) \
-	if(f_exists(OOKLA_DEBUG) > 0) { \
-		dbg("[OOKLA][%s:(%d)]"fmt, __FUNCTION__, __LINE__, ##args); \
-	}
-
 static int
 ookla_exec(char *type, char *id, char *iface)
 {
