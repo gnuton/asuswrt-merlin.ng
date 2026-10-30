@@ -488,7 +488,6 @@ extern void do_set_ASUS_privacy_policy_cgi(char *url, FILE *stream);
 extern void do_get_ASUS_privacy_policy_cgi(char *url, FILE *stream);
 
 extern void do_get_nonce_cgi(char *url, FILE *stream);
-extern void do_register_app_cnonce_cgi(char *url, FILE *stream);
 extern int validate_httpd_auth_v2(char *authorization_t, char *id, char *cnonce);
 #ifdef RTCONFIG_BCM_AFC
 extern void do_send_afc_location_cgi(char *url, FILE *stream);
@@ -13473,10 +13472,6 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 #endif			
 			sys_script("syscmd.sh");
 
-		}
-		else if(!strcmp(current_url, "Main_AdmStatus_Content.asp"))
-		{
-			system_cmd_test(system_cmd, SystemCmd, sizeof(SystemCmd));
 		}
 		else if(!strcmp(current_url, "Main_ConnStatus_Content.asp") &&
 			(strncasecmp(system_cmd, "netstat-nat", 11) == 0)){
@@ -28515,7 +28510,6 @@ struct mime_handler mime_handlers[] =
 	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
 	{ "login_v2.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_v2_cgi, NULL },
 	{ "get_Nonce.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_get_nonce_cgi, NULL },
-	{ "register_app_cnonce.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_register_app_cnonce_cgi, NULL },
 	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "update_networkmapd.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "update_customList.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },

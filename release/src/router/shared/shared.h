@@ -3990,6 +3990,7 @@ extern int isValid_digit_string(const char *string);
 extern int is_valid_hostname(const char *name);
 extern int is_valid_domainname(const char *name);
 extern int is_valid_netbios_name(const char *name);
+extern int is_valid_ifname(const char *name);
 extern char *get_ddns_hostname(void);
 extern int get_ispctrl();
 extern unsigned short get_extend_cap();

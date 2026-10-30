@@ -6249,6 +6249,39 @@ is_valid_netbios_name(const char *name)
 	return valid;
 }
 
+/*
+ * Validate a string is a safe Linux network interface name.
+ *
+ * Combines the kernel's structural rules (dev_valid_name() in
+ * net/core/dev.c) with a strict character whitelist:
+ *   - not empty
+ *   - length < IFNAMSIZ (kernel copies into a fixed IFNAMSIZ buffer)
+ *   - not "." or ".." (reserved by sysfs/procfs path handling)
+ *   - characters restricted to [A-Za-z0-9._-] via is_valid_domainname()
+ *
+ * The kernel itself only rejects '/', ':' and whitespace, which still
+ * permits shell metacharacters (';', '`', '$', '|', ...). Reusing the
+ * is_valid_domainname() whitelist closes that gap so the result is safe
+ * to pass to a shell command, while still accepting every legitimate
+ * interface name (e.g. "wl0.1", "eth6.501", "br-lan").
+ *
+ * @name:	pointer to a string.
+ * Returns non-zero (the name length) when valid, 0 otherwise.
+ */
+int is_valid_ifname(const char *name)
+{
+	if (!name || *name == '\0')
+		return 0;
+
+	if (strnlen(name, IFNAMSIZ) >= IFNAMSIZ)
+		return 0;
+
+	if (!strcmp(name, ".") || !strcmp(name, ".."))
+		return 0;
+
+	return is_valid_domainname(name);
+}
+
 int get_discovery_ssid(char *ssid_g, int size)
 {
 #if defined(RTCONFIG_WIRELESSREPEATER) || defined(RTCONFIG_PROXYSTA)
