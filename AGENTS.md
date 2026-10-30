@@ -11,7 +11,7 @@ This repository is a fork of AsusWrt-Merlin designed to support additional route
 - **Version Format**: Versions in changelogs follow the pattern `3004.388.11_1-gnuton1`.
 
 ## Supported Models (via GitHub Actions)
-- **Version 3006**: `GT-BE98`.
+- **Version 3006**: `GT-BE98`, `RT-BE58U`, `RT-BE82U`.
 - **Version 3004**: `rt-ax92u`, `dsl-ax82u`, `tuf-ax5400`, `tuf-ax3000`, `rt-ax82u`, `rt-ax95q`, `rt-axe95q`, `rt-ax82u_v2`, `rt-ax5400`, `tuf-ax3000_v2`, `rt-ax58u_v2`.
 
 ## Architecture & Structure
@@ -48,7 +48,7 @@ This repository is a fork of AsusWrt-Merlin designed to support additional route
 - **Version Format**: Versions in changelogs follow the pattern `3004.388.11_1-gnuton1`.
 
 ## Supported Models (via GitHub Actions)
-- **Version 3006**: `GT-BE98`.
+- **Version 3006**: `GT-BE98`, `RT-BE58U`, `RT-BE82U`.
 - **Version 3004**: `rt-ax92u`, `dsl-ax82u`, `tuf-ax5400`, `tuf-ax3000`, `rt-ax82u`, `rt-ax95q`, `rt-axe95q`, `rt-ax82u_v2`, `rt-ax5400`, `tuf-ax3000_v2`, `rt-ax58u_v2`.
 
 ## Architecture & Structure

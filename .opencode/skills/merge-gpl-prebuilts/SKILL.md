@@ -197,12 +197,13 @@ but the GT-BE98 `rtl8372/Makefile` still requires it:
 obj-y += RTL_OBJS.o
 ```
 
-Fix: copy `RTL_OBJS.o` from the model's GPL into the same repo path, then
-commit it:
+Fix: copy `RTL_OBJS.o` from the model's GPL into the **per-model** U-Boot
+prebuilt tree, not the shared source path:
 
 ```bash
+mkdir -p release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/prebuilt/<MODEL>/drivers/net/bcmbca/rtl8372
 cp "$GPL/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/rtl8372/RTL_OBJS.o" \
-   release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/rtl8372/
+   release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/prebuilt/<MODEL>/drivers/net/bcmbca/rtl8372/
 ```
 
 ### Architecture mismatch in U-Boot/kernel prebuilts
