@@ -463,8 +463,8 @@ endif
 BINARIES = $(wildcard $(objdir)/binaries/*.bin_headered) 
 PROFILE  = $(shell cat ../.last_profile)
 
-# Model-specific U-Boot PHY prebuilts (GT-BE98 vs RT-BE58U)
-UBOOT_PHY_PREBUILT_DIR := $(mdir)/$(UB)/drivers/net/bcmbca/phy/prebuilt
+# Model-specific U-Boot prebuilts (GT-BE98 / RT-BE58U / RT-BE82U)
+UBOOT_PHY_PREBUILT_DIR := $(mdir)/$(UB)/prebuilt
 ifneq (,$(filter GT-BE98,$(BUILD_NAME)))
 UBOOT_PHY_VARIANT := GT-BE98
 else ifneq (,$(filter RT-BE58U,$(BUILD_NAME)))
@@ -483,8 +483,8 @@ endif
 uboot_phy_prebuilts:
 ifneq ($(UBOOT_PHY_VARIANT),)
 	@if [ -d "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)" ]; then \
-		echo "Using U-Boot PHY prebuilts for $(UBOOT_PHY_VARIANT)"; \
-		cp -a "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)/." "$(UBOOT_PHY_PREBUILT_DIR)/../"; \
+		echo "Using U-Boot prebuilts for $(UBOOT_PHY_VARIANT)"; \
+		cp -a "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)/." "$(mdir)/$(UB)/"; \
 	fi
 endif
 

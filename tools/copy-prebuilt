@@ -214,7 +214,7 @@ then
 		release/src/router/asus_rbd/prebuild \
 		release/src/router/bsd/prebuilt \
 		release/src/router/dhd/prebuilt \
-		release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/prebuilt
+		release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/prebuilt
 	do
 		mkdir -p "$REPO/$d/$BUILD_NAME"
 	done
@@ -248,30 +248,45 @@ then
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/common/autoboot.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/common/
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/board/broadcom/bcmbca/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca/
 
-	# U-Boot PHY prebuilts (architecture/model-specific)
-	PHY_SRC="release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy"
-	PHY_DST="$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy"
-	PHY_MODEL_DST="$PHY_DST/prebuilt/$BUILD_NAME"
-	if [ -d "$PHY_SRC" ]; then
-		mkdir -p "$PHY_MODEL_DST"
-		find "$PHY_SRC" -maxdepth 1 -name '*.o' -exec cp -p {} "$PHY_MODEL_DST/" \;
-		find "$PHY_SRC" -maxdepth 1 -name '*.o' -exec cp -p {} "$PHY_DST/" \;
-		for d in merlin_shortfin Serdes146Class merlin_shasta merlin_mptwo; do
-			if [ -d "$PHY_SRC/$d" ]; then
-				mkdir -p "$PHY_MODEL_DST/$d"
-				cp -a "$PHY_SRC/$d/." "$PHY_MODEL_DST/$d/"
-				find "$PHY_MODEL_DST/$d" -type f ! -name '*.o' -delete
-				find "$PHY_MODEL_DST/$d" -type d -empty -delete
-			fi
-		done
-	fi
+	# U-Boot model-specific prebuilts (architecture-specific objects)
+	UBOOT_SRC="release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07"
+	UBOOT_DST="$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07"
+	UBOOT_MODEL_DST="$UBOOT_DST/prebuilt/$BUILD_NAME"
+	mkdir -p "$UBOOT_MODEL_DST/net" "$UBOOT_MODEL_DST/common" \
+		"$UBOOT_MODEL_DST/board/broadcom/bcmbca" \
+		"$UBOOT_MODEL_DST/arch/arm/mach-bcmbca/ubus" \
+		"$UBOOT_MODEL_DST/arch/arm/mach-bcmbca/rng" \
+		"$UBOOT_MODEL_DST/drivers/net/bcmbca/phy" \
+		"$UBOOT_MODEL_DST/drivers/net/bcmbca/rtk" \
+		"$UBOOT_MODEL_DST/drivers/net/bcmbca/rtl8372"
 
-	# Switch/port prebuilts (RTK/SF2 for BCM676x, RTL8372 for GT-BE98)
-	for f in rtk/RTK_OBJS.o rtl8372/RTL_OBJS.o bcmbca_sysport_v2.o; do
-		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/$f" ]
-		then
-			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/$f" \
-				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/$f"
+	for f in net/arp.o net/net.o net/ping.o net/tftp.o; do
+		[ -f "$UBOOT_SRC/$f" ] && cp -p "$UBOOT_SRC/$f" "$UBOOT_MODEL_DST/$f"
+	done
+	[ -f "$UBOOT_SRC/common/autoboot.o" ] && cp -p "$UBOOT_SRC/common/autoboot.o" "$UBOOT_MODEL_DST/common/"
+	cp -p "$UBOOT_SRC"/board/broadcom/bcmbca/*.o "$UBOOT_MODEL_DST/board/broadcom/bcmbca/"
+	cp -p "$UBOOT_SRC"/arch/arm/mach-bcmbca/ubus/*.o "$UBOOT_MODEL_DST/arch/arm/mach-bcmbca/ubus/" 2>/dev/null || true
+	cp -p "$UBOOT_SRC"/arch/arm/mach-bcmbca/rng/*.o "$UBOOT_MODEL_DST/arch/arm/mach-bcmbca/rng/" 2>/dev/null || true
+
+	# PHY prebuilts, including serdes subdirectories
+	PHY_SRC="$UBOOT_SRC/drivers/net/bcmbca/phy"
+	PHY_MODEL_DST="$UBOOT_MODEL_DST/drivers/net/bcmbca/phy"
+	find "$PHY_SRC" -maxdepth 1 -name '*.o' -exec cp -p {} "$PHY_MODEL_DST/" \;
+	for d in merlin_shortfin Serdes146Class merlin_shasta merlin_mptwo; do
+		if [ -d "$PHY_SRC/$d" ]; then
+			mkdir -p "$PHY_MODEL_DST/$d"
+			cp -a "$PHY_SRC/$d/." "$PHY_MODEL_DST/$d/"
+			find "$PHY_MODEL_DST/$d" -type f ! -name '*.o' -delete
+			find "$PHY_MODEL_DST/$d" -type d -empty -delete
+		fi
+	done
+
+	# Switch/port prebuilts
+	for f in rtk/RTK_OBJS.o rtl8372/RTL_OBJS.o bcmbca_sysport_v2.o bcmbca_xrdp_eth.o; do
+		if [ -f "$UBOOT_SRC/drivers/net/bcmbca/$f" ]; then
+			mkdir -p "$(dirname "$UBOOT_MODEL_DST/drivers/net/bcmbca/$f")"
+			cp -p "$UBOOT_SRC/drivers/net/bcmbca/$f" "$UBOOT_MODEL_DST/drivers/net/bcmbca/$f"
+			cp -p "$UBOOT_SRC/drivers/net/bcmbca/$f" "$UBOOT_DST/drivers/net/bcmbca/$f"
 		fi
 	done
 
