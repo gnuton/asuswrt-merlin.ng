@@ -256,6 +256,15 @@ then
 		fi
 	done
 
+	# Switch prebuilts (RTK for BCM676x, RTL8372 for GT-BE98)
+	for f in rtk/RTK_OBJS.o rtl8372/RTL_OBJS.o; do
+		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/$f" ]
+		then
+			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/$f" \
+				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/$f"
+		fi
+	done
+
 	# Recent GPL don't have it in the SDK, but the wlexe/ version seem to usually be the same anyway
 	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/wl" ]
 	then
