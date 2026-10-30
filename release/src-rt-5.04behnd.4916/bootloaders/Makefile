@@ -469,10 +469,14 @@ ifneq (,$(filter GT-BE98,$(BUILD_NAME)))
 UBOOT_PHY_VARIANT := GT-BE98
 else ifneq (,$(filter RT-BE58U,$(BUILD_NAME)))
 UBOOT_PHY_VARIANT := RT-BE58U
+else ifneq (,$(filter RT-BE82U,$(BUILD_NAME)))
+UBOOT_PHY_VARIANT := RT-BE82U
 else ifeq ($(PROFILE),96813GW)
 UBOOT_PHY_VARIANT := GT-BE98
 else ifeq ($(PROFILE),96765GW)
 UBOOT_PHY_VARIANT := RT-BE58U
+else ifeq ($(PROFILE),96766GW)
+UBOOT_PHY_VARIANT := RT-BE82U
 endif
 
 .PHONY: uboot_phy_prebuilts
