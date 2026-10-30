@@ -265,6 +265,13 @@ then
 		fi
 	done
 
+	# RTL8367S switch kernel module prebuilt
+	if [ -f "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o" ]
+	then
+		cp "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o" \
+			"$REPO/release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o"
+	fi
+
 	# Recent GPL don't have it in the SDK, but the wlexe/ version seem to usually be the same anyway
 	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/wl" ]
 	then
