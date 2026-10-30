@@ -114,6 +114,29 @@ Known example for GT-BE98:
 that package to the prebuilt path. Only restore it if `PREBUILT_BCMBIN` is not
 used for the target.
 
+### 4b. Use per-model U-Boot/kernel prebuilt trees
+
+U-Boot and kernel objects differ by model and CPU architecture. Do not copy
+one model's objects into the shared source tree and expect all models to
+build. Store a complete tree per model:
+
+```text
+release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/prebuilt/<MODEL>/
+```
+
+with `net/`, `common/`, `board/`, `arch/.../ubus`, `arch/.../rng`, the full
+`drivers/net/bcmbca/phy/` set (including serdes subdirectories), and switch
+objects. `bootloaders/Makefile` selects it by `BUILD_NAME`/`PROFILE`.
+
+Architecture examples:
+
+- GT-BE98 / RT-BE58U U-Boot: AArch64
+- RT-BE82U U-Boot: 32-bit ARM
+
+Kernel prebuilts without a `.<chip>.o_saved` fallback also need the model
+architecture, for example `bp3/impl1/fsaux.o` and
+`gdx/impl1/prebuilt/gdx_hw.o` for RT-BE82U.
+
 ### 5. Commit and push (only when asked)
 
 Keep commits focused and use the model and GPL version in the message:
@@ -181,6 +204,21 @@ commit it:
 cp "$GPL/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/rtl8372/RTL_OBJS.o" \
    release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/rtl8372/
 ```
+
+### Architecture mismatch in U-Boot/kernel prebuilts
+
+Symptom:
+
+```
+net/arp_preb.o: file not recognized: file format not recognized
+fsaux.o: file not recognized: file format not recognized
+gdx_hw.o: file not recognized: file format not recognized
+```
+
+The shared objects are for another CPU architecture (for example AArch64)
+while the model being built is 32-bit ARM. Use the complete per-model
+`u-boot-2019.07/prebuilt/<MODEL>/` tree and copy kernel objects such as
+`bp3/impl1/fsaux.o` and `gdx/impl1/prebuilt/gdx_hw.o` from the model GPL.
 
 ### New `libwebapi` symbols
 

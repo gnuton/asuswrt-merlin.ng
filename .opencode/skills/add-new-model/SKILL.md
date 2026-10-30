@@ -165,24 +165,45 @@ xargs -r git add -f < /tmp/<model>-ignored.txt
 Check for missing `protect_srv`, `libbcm`, `httpd`, `rc`, `shared`,
 `lighttpd`, `networkmap`, `nt_center`, `rc`, `wlc_nt`, etc.
 
-## 7. Handle shared U-Boot PHY objects
+## 7. Handle architecture-specific U-Boot and kernel prebuilts
 
-Some U-Boot prebuilts differ per model (for example GT-BE98 uses
-unimac/xport, RT-BE58U uses SF2). Do not overwrite one model's object with the
-other's.
-
-Store variants under:
+U-Boot and kernel prebuilts are architecture- and model-specific. Never
+overwrite the shared tree with one model's objects; store a complete per-model
+tree instead:
 
 ```text
-release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/prebuilt/<MODEL>/
+release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/prebuilt/<MODEL>/
+├── net/                       # arp.o, net.o, ping.o, tftp.o
+├── common/                    # autoboot.o
+├── board/broadcom/bcmbca/     # board.o, board_sdk.o
+├── arch/arm/mach-bcmbca/      # ubus/*.o, rng/*.o
+└── drivers/net/bcmbca/        # phy/*.o (+ merlin_shortfin, Serdes146Class)
+                               # rtk/RTK_OBJS.o, rtl8372/RTL_OBJS.o,
+                               # bcmbca_sysport_v2.o, bcmbca_xrdp_eth.o
 ```
 
-`release/src-rt-5.04behnd.4916/bootloaders/Makefile` selects the variant by
-`BUILD_NAME`, with a `PROFILE` fallback (`96813GW` -> GT-BE98,
-`96765GW` -> RT-BE58U), and copies it before `spl`, `tpl`, and `uboot`.
+`release/src-rt-5.04behnd.4916/bootloaders/Makefile` selects the tree by
+`BUILD_NAME` and copies the whole tree into the U-Boot source before `spl`,
+`tpl`, and `uboot`. Profile fallbacks currently map:
 
-If adding another model with divergent PHY objects, add its `prebuilt/<MODEL>`
-directory and extend the selector.
+- `96813GW` -> `GT-BE98`
+- `96765GW` -> `RT-BE58U`
+- `96766GW` -> `RT-BE82U`
+
+Architecture matters:
+
+- GT-BE98 and RT-BE58U U-Boot is AArch64.
+- RT-BE82U U-Boot is 32-bit ARM (`PROFILE_ARCH=armsfp`).
+- Mixing them produces `file format not recognized` for PHY serdes objects,
+  `net/arp.o`, or kernel objects.
+
+Kernel prebuilts without a `.<chip>.o_saved` variant also need the model's
+architecture. For RT-BE82U this includes:
+
+- `bcmdrivers/broadcom/char/bp3/impl1/fsaux.o`
+- `bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o`
+
+Copy those from the exact model GPL.
 
 ## 8. Commit and push
 
@@ -196,7 +217,9 @@ RT-BE58U: import prebuilts from GPL 102.40585
 RT-BE58U: force-add ignored prebuilt binaries
 ```
 
-Push the model branch and let CI build it.
+Push the model branch and let CI build it. Before merging the model branch,
+re-enable any CI rows that were temporarily commented out and run the full
+matrix once.
 
 ## 9. CI iteration
 
@@ -232,6 +255,8 @@ is followed by a fatal error.
 | U-Boot `No rule to make target ..._preb.o` | Copy the missing source `.o` from the model GPL into the same U-Boot source path and add it to `copy-prebuilt`. GT-BE98 needs `rtl8372/RTL_OBJS.o`; RT-BE58U needs `rtk/RTK_OBJS.o`, SF2 PHY objects, and `bcmbca_sysport_v2.o`. |
 | U-Boot undefined `mac_drv_unimac` / `mac_drv_xport` / `bus_drv_mdio_v1` | Wrong generic `mac_drv.o`/`bus_drv.o` variant. Use the model-specific PHY prebuilt set. |
 | Kernel `No rule to make target .../rtl8367s_preb.o` | Copy `kernel/linux-4.19/drivers/char/rtk/rtl8367s.o` from the GPL. |
+| `file format not recognized` for `fsaux.o`, `gdx_hw.o`, `net/arp.o`, or PHY serdes | Wrong architecture (AArch64 vs ARM32). Copy the model GPL's object or use a complete per-model prebuilt tree. |
+| U-Boot/net or kernel link pulls AArch64 objects into an ARM32 build | Populate `u-boot-2019.07/prebuilt/<MODEL>/` and select it in `bootloaders/Makefile`. |
 | `protect_srv` or other prebuilt missing in CI | The file is ignored by `.gitignore`; force-add it. |
 | `prebuilt/vlanctl` missing | Reuse `router-sysdep.rt-be92u/{vlanctl,vlanctl_lib}/prebuilt`, or add the GPL's own files if present. |
 | `libwebapi.so` undefined `ookla_eos_support` / `is_valid_netbios_name` | Backport the shared/ookla helpers; see `merge-gpl-prebuilts`. |
@@ -245,7 +270,7 @@ is followed by a fatal error.
 - [ ] target profile file exists
 - [ ] CI matrix has the model
 - [ ] `copy-prebuilt` handles the model and its SDK
-- [ ] model-specific U-Boot PHY prebuilts exist in `phy/prebuilt/<MODEL>`
+- [ ] complete model-specific U-Boot prebuilts exist in `u-boot-2019.07/prebuilt/<MODEL>`
 - [ ] ignored prebuilts force-added
 - [ ] `git status` clean
 - [ ] CI run succeeds
