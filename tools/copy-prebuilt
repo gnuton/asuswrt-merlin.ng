@@ -168,6 +168,12 @@ then
 		RT-BE82U|RT-BE82M|GT7|GS7_PRO*) MODEL_CHIP=6766 ;;
 		*) MODEL_CHIP="" ;;
 	esac
+	case "$BUILD_NAME" in
+		GT-BE98|GT-BE98_PRO|RT-BE96U) ARCHER_CHIP=6813 ;;
+		RT-BE58U|RT-BE92U|RT-BE95U|TUF-BE3600) ARCHER_CHIP=6764L ;;
+		RT-BE82U|RT-BE82M|GT7|GS7_PRO*) ARCHER_CHIP=6766 ;;
+		*) ARCHER_CHIP="$MODEL_CHIP" ;;
+	esac
 
 	# Create model-specific output directories for newly imported models
 	for d in \
@@ -388,13 +394,13 @@ then
 		# Archer prebuilts are kept as per-chip .o_saved variants
 		ARCHER_SRC="release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1"
 		ARCHER_DST="$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/archer/impl1"
-		if [ -n "$MODEL_CHIP" ]; then
+		if [ -n "$ARCHER_CHIP" ]; then
 			find "$ARCHER_DST" -name '*.o' -delete
 			find "$ARCHER_SRC" -name '*.o' | while read -r f; do
 				rel=${f#$ARCHER_SRC/}
 				base=${rel%.o}
-				mkdir -p "$(dirname "$ARCHER_DST/${base}.${MODEL_CHIP}.o_saved")"
-				cp -p "$f" "$ARCHER_DST/${base}.${MODEL_CHIP}.o_saved"
+				mkdir -p "$(dirname "$ARCHER_DST/${base}.${ARCHER_CHIP}.o_saved")"
+				cp -p "$f" "$ARCHER_DST/${base}.${ARCHER_CHIP}.o_saved"
 			done
 		fi
 		cp release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/cmdlist/impl1/cmdlist.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
