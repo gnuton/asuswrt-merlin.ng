@@ -28,7 +28,7 @@ ifeq ($(RTCONFIG_AMAS),y)
 LIBS += -L$(TOP)/json-c/.libs -ljson-c
 endif
 
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-BE82M GS-BE18000 GS-BE12000 GS7_PRO GT7))
+ifeq ($(RTCONFIG_MXL_826XX),y)
 LIBS += -L$(TOP)/libhostapi -lhostapi
 endif
 
@@ -179,7 +179,7 @@ libnvram:
 	cp -f ./prebuilt/libnvram.so .
 else
 libnvram: nvram_shared.o brcm_generic_lock.o $(WLCSM_LIB)
-	$(LD) -shared -soname libnvram.so -o libnvram.so nvram_shared.o brcm_generic_lock.o  -L$(LIBDIR) $(WLCSM_LIB) -lc -lpthread
+	$(LD) -shared -soname libnvram.so -o libnvram.so nvram_shared.o brcm_generic_lock.o  -L$(LIBDIR) $(WLCSM_LIB) -lc -lpthread -L$(TOP)/shared -lshared
 	install -m 755 libnvram.so $(INSTALL_DIR)/lib
 endif
 
