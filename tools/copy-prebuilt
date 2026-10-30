@@ -304,6 +304,13 @@ then
 			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o"
 	fi
 
+	# GDX hardware prebuilt
+	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o" ]
+	then
+		cp "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o" \
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/gdx/impl1/prebuilt/gdx_hw.o"
+	fi
+
 	# Some GPLs omit vlanctl prebuilts; reuse the BE4916 reference model
 	for d in vlanctl vlanctl_lib; do
 		dst="$REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/$d/prebuilt"
