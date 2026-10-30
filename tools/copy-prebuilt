@@ -297,6 +297,13 @@ then
 			"$REPO/release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o"
 	fi
 
+	# BP3 fsaux prebuilt (used by models without a .o_saved variant)
+	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" ]
+	then
+		cp "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" \
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o"
+	fi
+
 	# Some GPLs omit vlanctl prebuilts; reuse the BE4916 reference model
 	for d in vlanctl vlanctl_lib; do
 		dst="$REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/$d/prebuilt"
