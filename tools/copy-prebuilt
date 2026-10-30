@@ -272,6 +272,17 @@ then
 			"$REPO/release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o"
 	fi
 
+	# Some GPLs omit vlanctl prebuilts; reuse the BE4916 reference model
+	for d in vlanctl vlanctl_lib; do
+		dst="$REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/$d/prebuilt"
+		ref="$REPO/release/src-rt-5.04behnd.4916/router-sysdep.rt-be92u/$d/prebuilt"
+		if [ ! -d "$dst" ] && [ -d "$ref" ]
+		then
+			mkdir -p "$(dirname "$dst")"
+			cp -a "$ref" "$dst"
+		fi
+	done
+
 	# Recent GPL don't have it in the SDK, but the wlexe/ version seem to usually be the same anyway
 	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/wl" ]
 	then
