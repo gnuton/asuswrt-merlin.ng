@@ -248,7 +248,7 @@ then
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/board/broadcom/bcmbca/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca/
 
 	# BCM676x PHY prebuilts
-	for f in mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o; do
+	for f in mac_drv.o bus_drv.o mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o; do
 		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" ]
 		then
 			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
