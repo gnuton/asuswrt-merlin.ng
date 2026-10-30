@@ -155,12 +155,85 @@ then
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/pktrunner/impl2/pktrunner.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 
-elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "GT-BE19000AI" ] || [ "$BUILD_NAME" == "GT-BE98" ]
+elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "GT-BE19000AI" ] || [ "$BUILD_NAME" == "GT-BE98" ]
 then
         SDK="_4916hnd"
         ARCH="_arm"
         HND="_behnd"
-	
+
+	# Create model-specific output directories for newly imported models
+	for d in \
+		release/src/router/lighttpd-1.4.39/prebuild \
+		release/src/router/dropbox_client/prebuild \
+		release/src/router/ftpclient/prebuild \
+		release/src/router/sambaclient/prebuild \
+		release/src/router/u2ec/prebuild \
+		release/src/router/webdav_client/prebuild \
+		release/src/router/usbclient/prebuild \
+		release/src/router/asuswebstorage/prebuild \
+		release/src/router/inotify/prebuild \
+		release/src/router/dns_ping/prebuild \
+		release/src/router/fsmd/prebuild \
+		release/src/router/dnsqd/prebuild \
+		release/src/router/httpd/prebuild \
+		release/src/router/rc/prebuild \
+		release/src/router/shared/prebuild \
+		release/src/router/sw-hw-auth/prebuild \
+		release/src/router/bwdpi_source/asus/prebuild \
+		release/src/router/bwdpi_source/asus_sql/prebuild \
+		release/src/router/bwdpi_source/prebuild \
+		release/src/router/protect_srv/prebuild \
+		release/src/router/protect_srv/lib/prebuild \
+		release/src/router/wlc_nt/prebuild \
+		release/src/router/networkmap/prebuild \
+		release/src/router/nmp-api/networkmap/prebuild \
+		release/src/router/nt_center/prebuild \
+		release/src/router/nt_center/lib/prebuild \
+		release/src/router/libletsencrypt/prebuild \
+		release/src/router/libbcm/prebuilt \
+		release/src/router/infosvr/prebuild \
+		release/src/router/libwebapi/prebuild \
+		release/src/router/wlceventd/prebuilt \
+		release/src/router/dblog/daemon/prebuild \
+		release/src/router/dblog/commands/prebuild \
+		release/src/router/ahs/prebuild \
+		release/src/router/asd/prebuild \
+		release/src/router/asd2.1/prebuild \
+		release/src/router/libasc/prebuild \
+		release/src/router/amas-utils/prebuild \
+		release/src/router/cfg_mnt/prebuild \
+		release/src/router/aaews/prebuild \
+		release/src/router/asusnatnl/natnl/prebuild \
+		release/src/router/libasuslog/prebuild \
+		release/src/router/sysstate/log_daemon/prebuild \
+		release/src/router/sysstate/commands/prebuild \
+		release/src/router/wb/prebuild \
+		release/src/router/eventd/prebuilt \
+		release/src/router/dnsspoof/prebuilt \
+		release/src/router/vpmstats/prebuilt \
+		release/src/router/asus_rbd/prebuild \
+		release/src/router/bsd/prebuilt \
+		release/src/router/dhd/prebuilt
+	do
+		mkdir -p "$REPO/$d/$BUILD_NAME"
+	done
+
+	mkdir -p "$REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt" \
+		"$REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/net" \
+		"$REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/common" \
+		"$REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca" \
+		"$REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/drivers/net/bcmbca" \
+		"$REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/ubus" \
+		"$REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/rng" \
+		"$REPO/release/src-rt-5.04behnd.4916/hostTools/prebuilt/$BUILD_NAME"
+
+	for impl in impl103 impl105; do
+		mkdir -p "$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/$impl/main/src/wl/exe/prebuilt" \
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/$impl/main/components/apps/acsdv2/prebuilt/$BUILD_NAME" \
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/$impl/main/components/apps/qosmgmt/prebuilt/$BUILD_NAME" \
+			"$REPO/release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/$impl/sys/src/dongle/sysdeps/$BUILD_NAME/6726b0"
+	done
+
 	# Must be done first, since we will add hnd_extra files later on
 	rsync -a --del release/src-rt-5.04behnd.4916/router-sysdep/ $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC --exclude "stress/Makefile" --exclude "wlc_types.h" --exclude "*.orig"
 
@@ -223,7 +296,7 @@ then
 		cp release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtl8372/rtl8372.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	fi
 
-	if [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ]
+	if [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ]
 	then
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/ubus/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/ubus/
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/rng/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/rng/
@@ -367,7 +440,7 @@ then
 elif [ "$BUILD_NAME" == "GT-AC2900" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "GT-AXE11000" ] || [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ]
 then
     cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
-elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ]
+elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ]
 then
 	cp release/src/router/nmp-api/networkmap/prebuild/* $REPO/release/src/router/nmp-api/networkmap/prebuild/$BUILD_NAME/
 fi
