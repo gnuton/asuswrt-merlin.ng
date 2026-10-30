@@ -247,6 +247,15 @@ then
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/common/autoboot.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/common/
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/board/broadcom/bcmbca/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca/
 
+	# BCM676x PHY prebuilts
+	for f in mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o; do
+		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" ]
+		then
+			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
+				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f"
+		fi
+	done
+
 	# Recent GPL don't have it in the SDK, but the wlexe/ version seem to usually be the same anyway
 	if [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/net/wl/impl103/main/src/wl/exe/prebuilt/wl" ]
 	then
