@@ -248,27 +248,23 @@ then
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/common/autoboot.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/common/
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/board/broadcom/bcmbca/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca/
 
-	# U-Boot PHY prebuilts (model-specific variants)
-	case "$BUILD_NAME" in
-		GT-BE98)
-			phy_prebuilts="mac_drv.o bus_drv.o mdio_drv_v1.o bus_drv_mdio_v1.o mac_drv_unimac.o mac_drv_xport.o unimac_drv_impl2.o"
-			;;
-		RT-BE58U|RT-BE82U)
-			phy_prebuilts="mac_drv.o bus_drv.o mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o"
-			;;
-		*)
-			phy_prebuilts="mac_drv.o bus_drv.o mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o"
-			;;
-	esac
-	for f in $phy_prebuilts; do
-		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" ]
-		then
-			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
-				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/prebuilt/$BUILD_NAME/$f"
-			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
-				"$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f"
-		fi
-	done
+	# U-Boot PHY prebuilts (architecture/model-specific)
+	PHY_SRC="release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy"
+	PHY_DST="$REPO/release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy"
+	PHY_MODEL_DST="$PHY_DST/prebuilt/$BUILD_NAME"
+	if [ -d "$PHY_SRC" ]; then
+		mkdir -p "$PHY_MODEL_DST"
+		find "$PHY_SRC" -maxdepth 1 -name '*.o' -exec cp -p {} "$PHY_MODEL_DST/" \;
+		find "$PHY_SRC" -maxdepth 1 -name '*.o' -exec cp -p {} "$PHY_DST/" \;
+		for d in merlin_shortfin Serdes146Class merlin_shasta merlin_mptwo; do
+			if [ -d "$PHY_SRC/$d" ]; then
+				mkdir -p "$PHY_MODEL_DST/$d"
+				cp -a "$PHY_SRC/$d/." "$PHY_MODEL_DST/$d/"
+				find "$PHY_MODEL_DST/$d" -type f ! -name '*.o' -delete
+				find "$PHY_MODEL_DST/$d" -type d -empty -delete
+			fi
+		done
+	fi
 
 	# Switch/port prebuilts (RTK/SF2 for BCM676x, RTL8372 for GT-BE98)
 	for f in rtk/RTK_OBJS.o rtl8372/RTL_OBJS.o bcmbca_sysport_v2.o; do

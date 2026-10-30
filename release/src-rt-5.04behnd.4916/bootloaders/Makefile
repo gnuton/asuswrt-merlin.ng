@@ -484,10 +484,7 @@ uboot_phy_prebuilts:
 ifneq ($(UBOOT_PHY_VARIANT),)
 	@if [ -d "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)" ]; then \
 		echo "Using U-Boot PHY prebuilts for $(UBOOT_PHY_VARIANT)"; \
-		for f in "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)"/*.o; do \
-			[ -e "$$f" ] || continue; \
-			cp -f "$$f" "$(UBOOT_PHY_PREBUILT_DIR)/../$$(basename $$f)"; \
-		done; \
+		cp -a "$(UBOOT_PHY_PREBUILT_DIR)/$(UBOOT_PHY_VARIANT)/." "$(UBOOT_PHY_PREBUILT_DIR)/../"; \
 	fi
 endif
 
