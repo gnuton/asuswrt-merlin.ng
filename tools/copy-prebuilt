@@ -247,8 +247,19 @@ then
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/common/autoboot.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/common/
 	cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/board/broadcom/bcmbca/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/board/broadcom/bcmbca/
 
-	# BCM676x PHY prebuilts
-	for f in mac_drv.o bus_drv.o mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o; do
+	# U-Boot PHY prebuilts (model-specific variants)
+	case "$BUILD_NAME" in
+		GT-BE98)
+			phy_prebuilts="mac_drv.o bus_drv.o mdio_drv_v1.o bus_drv_mdio_v1.o mac_drv_unimac.o mac_drv_xport.o unimac_drv_impl2.o"
+			;;
+		RT-BE58U)
+			phy_prebuilts="mac_drv.o bus_drv.o mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o"
+			;;
+		*)
+			phy_prebuilts="mac_drv.o bus_drv.o mdio_drv_sf2.o bus_drv_sf2.o mac_drv_sf2.o"
+			;;
+	esac
+	for f in $phy_prebuilts; do
 		if [ -f "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" ]
 		then
 			cp "release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/drivers/net/bcmbca/phy/$f" \
