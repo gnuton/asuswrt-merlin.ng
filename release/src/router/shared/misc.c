@@ -3560,6 +3560,36 @@ _dprintf("%s: Finish.\n", __FUNCTION__);
 	return 0;
 }
 
+#ifndef RTCONFIG_AVOID_TZ_ENV
+/* Refresh the calling process's timezone from nvram before syslog().
+ * syslogd keeps the timestamp embedded by the sender's libc syslog(), and
+ * glibc caches TZ on first use, so a long-running daemon keeps logging
+ * with the timezone inherited at fork time.  That goes stale when the
+ * timezone is (re)configured at run time (QIS apply / restart_time only
+ * restarts syslogd/klogd), making its timestamps differ from kernel log
+ * timestamps by the UTC offset.  Same idiom as rfctime() in this file,
+ * but with a cached compare to keep the hot path cheap.
+ * Exported so daemons that call syslog(3) directly (not via logmessage)
+ * can refresh their timezone at their own logging points.
+ */
+void refresh_tz_env(void)
+{
+	static char cached_tz[64] = {0};
+	char *tz = nvram_safe_get("time_zone_x");
+
+	if (strcmp(cached_tz, tz) != 0) {
+		snprintf(cached_tz, sizeof(cached_tz), "%s", tz);
+		if (setenv("TZ", tz, 1) == 0)
+			tzset();
+	}
+}
+#else
+void refresh_tz_env(void)
+{
+	/* libc reads timezone from /etc/TZ on this profile; nothing to do */
+}
+#endif
+
 void logmessage_normal(char *logheader, char *fmt, ...){
   va_list args;
   char buf[512];
@@ -3569,6 +3599,8 @@ void logmessage_normal(char *logheader, char *fmt, ...){
   va_start(args, fmt);
 
   vsnprintf(buf, sizeof(buf), fmt, args);
+
+  refresh_tz_env();
 
   level = nvram_get_int("message_loglevel");
   if (level > 7) level = 7;

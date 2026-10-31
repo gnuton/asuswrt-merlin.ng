@@ -3709,6 +3709,7 @@ extern void ipt_account(FILE *fp, char *interface);
 #endif
 extern char *get_productid(void);
 extern char *get_lan_hostname(void);
+extern void refresh_tz_env(void);
 extern void logmessage_normal(char *logheader, char *fmt, ...);
 extern char *get_logfile_path(void);
 extern char *get_syslog_fname(unsigned int idx);
