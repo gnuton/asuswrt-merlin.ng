@@ -1,0 +1,21 @@
+/* Sample Theme Stylesheet: Blue Theme (Theme 1) */
+
+body {
+    background-color: #0b192c !important;
+    color: #e0e6ed !important;
+}
+
+.FormTable {
+    background-color: #112240 !important;
+    border-color: #1e3a8a !important;
+}
+
+.button_gen {
+    background-color: #1d4ed8 !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.button_gen:hover {
+    background-color: #2563eb !important;
+}
