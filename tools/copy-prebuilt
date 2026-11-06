@@ -155,7 +155,7 @@ then
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/pktrunner/impl2/pktrunner.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	cp release/src-rt-5.04axhnd.675x/bcmdrivers/broadcom/char/wlcsm_ext/impl1/wlcsm.o $REPO/release/src-rt-5.04axhnd.675x/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 
-elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE82U" ] || [ "$BUILD_NAME" == "GT-BE19000AI" ] || [ "$BUILD_NAME" == "GT-BE98" ]
+elif [ "$BUILD_NAME" == "RT-BE96U" ] || [ "$BUILD_NAME" == "GT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE88U" ] || [ "$BUILD_NAME" == "RT-BE86U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE82U" ] || [ "$BUILD_NAME" == "RT-BE82M" ] || [ "$BUILD_NAME" == "GT-BE19000AI" ] || [ "$BUILD_NAME" == "GT-BE98" ]
 then
         SDK="_4916hnd"
         ARCH="_arm"
@@ -312,6 +312,13 @@ then
 			"$REPO/release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o"
 	fi
 
+	# MXL862XX switch kernel module prebuilt (RT-BE82M and 6766 MXL models)
+	if [ -f "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/mxl/mxl.o" ]
+	then
+		cp "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/mxl/mxl.o" \
+			"$REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/mxl.o"
+	fi
+
 	# BP3 fsaux prebuilt, kept as a per-chip .o_saved variant
 	if [ -n "$MODEL_CHIP" ] && [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" ]
 	then
@@ -387,7 +394,7 @@ then
 		cp release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtl8372/rtl8372.o $REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/
 	fi
 
-	if [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE82U" ]
+	if [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE82U" ] || [ "$BUILD_NAME" == "RT-BE82M" ]
 	then
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/ubus/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/ubus/
 		cp release/src-rt-5.04behnd.4916/bootloaders/u-boot-2019.07/arch/arm/mach-bcmbca/rng/*.o $REPO/release/src-rt-5.04behnd.4916/bootloaders/obj.$BUILD_NAME_LC/arch/arm/mach-bcmbca/rng/
@@ -462,6 +469,23 @@ then
 fi;
 
 # Common to all
+
+# MXL switch host API library and tools (RT-BE82M and other RTCONFIG_MXL_826XX models)
+if [ -d release/src/router/libhostapi/prebuilt ]
+then
+	mkdir -p "$REPO/release/src/router/libhostapi/prebuilt"
+	cp release/src/router/libhostapi/prebuilt/* "$REPO/release/src/router/libhostapi/prebuilt/"
+fi
+if [ -d release/src/router/ethswbox ]
+then
+	mkdir -p "$REPO/release/src/router/ethswbox"
+	cp -a release/src/router/ethswbox/. "$REPO/release/src/router/ethswbox/"
+fi
+if [ -d release/src/router/rom/mxl ]
+then
+	mkdir -p "$REPO/release/src/router/rom/mxl"
+	cp -a release/src/router/rom/mxl/. "$REPO/release/src/router/rom/mxl/"
+fi
 
 cp release/src/router/dns_ping/prebuild/* $REPO/release/src/router/dns_ping/prebuild/$BUILD_NAME
 cp release/src/router/fsmd/prebuild/* $REPO/release/src/router/fsmd/prebuild/$BUILD_NAME
@@ -542,7 +566,7 @@ then
 elif [ "$BUILD_NAME" == "GT-AC2900" ] || [ "$BUILD_NAME" == "GT-AX11000" ] || [ "$BUILD_NAME" == "GT-AXE11000" ] || [ "$BUILD_NAME" == "GT-AX6000" ] || [ "$BUILD_NAME" == "GT-AXE16000" ] || [ "$BUILD_NAME" == "GT-AX11000_PRO" ]
 then
     cp release/src/router/aura_sw/prebuild/* $REPO/release/src/router/aura_sw/prebuild/$BUILD_NAME/
-elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE82U" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ]
+elif [ "$BUILD_NAME" == "GT-BE98" ]  || [ "$BUILD_NAME" == "RT-BE98_PRO" ] || [ "$BUILD_NAME" == "RT-BE58_GO" ] || [ "$BUILD_NAME" == "RT-BE58U" ] || [ "$BUILD_NAME" == "RT-BE82U" ] || [ "$BUILD_NAME" == "RT-BE82M" ] || [ "$BUILD_NAME" == "RT-BE92U" ] || [ "$BUILD_NAME" == "RT-BE96U" ]
 then
 	cp release/src/router/nmp-api/networkmap/prebuild/* $REPO/release/src/router/nmp-api/networkmap/prebuild/$BUILD_NAME/
 fi

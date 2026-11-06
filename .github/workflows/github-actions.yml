@@ -13,6 +13,7 @@ jobs:
             - { model: "gt-be98",          sdk: "src-rt-5.04behnd.4916",      ui: "rog",      skip: false }
             - { model: "rt-be58u",         sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
             - { model: "rt-be82u",         sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
+            - { model: "rt-be82m",         sdk: "src-rt-5.04behnd.4916",      ui: "default",  skip: false }
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
@@ -226,6 +227,7 @@ jobs:
             echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest_3006.txt
             echo "RT-BE58U#FW${MAJOR_VER}#EXT${MINOR_VER}"   >> ${UPDATE_DIR}/manifest_3006.txt
             echo "RT-BE82U#FW${MAJOR_VER}#EXT${MINOR_VER}"   >> ${UPDATE_DIR}/manifest_3006.txt
+            echo "RT-BE82M#FW${MAJOR_VER}#EXT${MINOR_VER}"   >> ${UPDATE_DIR}/manifest_3006.txt
             cp ${CHANGELOG_FILE} ${UPDATE_DIR}/"${RELEASE_NOTE_FILE}"
             echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
             git add ${UPDATE_DIR}
