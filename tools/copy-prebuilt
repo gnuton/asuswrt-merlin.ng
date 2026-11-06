@@ -481,6 +481,11 @@ then
 	mkdir -p "$REPO/release/src/router/ethswbox"
 	cp -a release/src/router/ethswbox/. "$REPO/release/src/router/ethswbox/"
 fi
+if [ -d release/src/router/rom/mxl ]
+then
+	mkdir -p "$REPO/release/src/router/rom/mxl"
+	cp -a release/src/router/rom/mxl/. "$REPO/release/src/router/rom/mxl/"
+fi
 
 cp release/src/router/dns_ping/prebuild/* $REPO/release/src/router/dns_ping/prebuild/$BUILD_NAME
 cp release/src/router/fsmd/prebuild/* $REPO/release/src/router/fsmd/prebuild/$BUILD_NAME
