@@ -470,6 +470,18 @@ fi;
 
 # Common to all
 
+# MXL switch host API library and tools (RT-BE82M and other RTCONFIG_MXL_826XX models)
+if [ -d release/src/router/libhostapi/prebuilt ]
+then
+	mkdir -p "$REPO/release/src/router/libhostapi/prebuilt"
+	cp release/src/router/libhostapi/prebuilt/* "$REPO/release/src/router/libhostapi/prebuilt/"
+fi
+if [ -d release/src/router/ethswbox ]
+then
+	mkdir -p "$REPO/release/src/router/ethswbox"
+	cp -a release/src/router/ethswbox/. "$REPO/release/src/router/ethswbox/"
+fi
+
 cp release/src/router/dns_ping/prebuild/* $REPO/release/src/router/dns_ping/prebuild/$BUILD_NAME
 cp release/src/router/fsmd/prebuild/* $REPO/release/src/router/fsmd/prebuild/$BUILD_NAME
 cp release/src/router/dnsqd/prebuild/* $REPO/release/src/router/dnsqd/prebuild/$BUILD_NAME
