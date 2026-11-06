@@ -312,6 +312,13 @@ then
 			"$REPO/release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/rtk/rtl8367s.o"
 	fi
 
+	# MXL862XX switch kernel module prebuilt (RT-BE82M and 6766 MXL models)
+	if [ -f "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/mxl/mxl.o" ]
+	then
+		cp "release/src-rt-5.04behnd.4916/kernel/linux-4.19/drivers/char/mxl/mxl.o" \
+			"$REPO/release/src-rt-5.04behnd.4916/router-sysdep.$BUILD_NAME_LC/hnd_extra/prebuilt/mxl.o"
+	fi
+
 	# BP3 fsaux prebuilt, kept as a per-chip .o_saved variant
 	if [ -n "$MODEL_CHIP" ] && [ -f "release/src-rt-5.04behnd.4916/bcmdrivers/broadcom/char/bp3/impl1/fsaux.o" ]
 	then

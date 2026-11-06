@@ -590,6 +590,9 @@ define platformKernelConfig
 				if [ -f $(TOP_PLATFORM)/hnd_extra/prebuilt/rtl8372.o ]; then \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/rtl8372.o $(LINUXDIR)/drivers/char/rtl8372/ ; \
 				fi; \
+				if [ -f $(TOP_PLATFORM)/hnd_extra/prebuilt/mxl.o ]; then \
+					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/mxl.o $(LINUXDIR)/drivers/char/mxl/ ; \
+				fi; \
 				if [ "$(DSL_BCM)" = "y" ]; then \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/adsldd.o $(HND_SRC)/bcmdrivers/broadcom/char/adsl/impl1/adsldd$(PRBM_EXT).o ; \
 					cp $(TOP_PLATFORM)/hnd_extra/prebuilt/adsl_phy.bin $(HND_SRC)/bcmdrivers/broadcom/char/adsl/impl1/adsl_phy.bin ; \
