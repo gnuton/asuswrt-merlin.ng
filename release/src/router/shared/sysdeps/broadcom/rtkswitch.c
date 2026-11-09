@@ -239,7 +239,7 @@ int rtkswitch_ioctl(int val, int val2, int val3, int val4, int val5)
 		return 0;
 	}
 
-	if (ioctl(fd, val, p) < 0) {
+	if (ioctl(fd, RTKSWITCH_IOCTL(val), p) < 0) {
 		perror("rtkswitch ioctl");
 		close(fd);
 		return -1;
@@ -307,7 +307,7 @@ unsigned int rtkswitch_lanPorts_phyStatus(void)
 		return -1;
 	}
 
-	if (ioctl(fd, 4, &value) < 0) {
+	if (ioctl(fd, RTKSWITCH_IOCTL(4), &value) < 0) {
 		perror("ioctl");
 		value = -1;
 	}
@@ -342,7 +342,7 @@ unsigned int rtkswitch_serdes_status(void)
 		return -1;
 	}
 
-	if (ioctl(fd, 48, &value) < 0) {
+	if (ioctl(fd, RTKSWITCH_IOCTL(48), &value) < 0) {
 		perror("ioctl");
 		value = -1;
 	}
@@ -377,7 +377,7 @@ int rtkswitch_port_speed(int port)
 		perror("/dev/rtkswitch");
 	} else {
 		memset(&pS, 0, sizeof(pS));
-		if (ioctl(fd, 0, &pS) < 0) {
+		if (ioctl(fd, RTKSWITCH_IOCTL(0), &pS) < 0) {
 			perror("rtkswitch ioctl");
 			close(fd);
 		}
@@ -422,7 +422,7 @@ int rtkswitch_testmode(int val, int val2, int val3)
 		memset(&tm, 0, sizeof(tm));
 		tm.port = val2;
 		tm.mode = val3;
-		if (ioctl(fd, val, &tm) < 0) {
+		if (ioctl(fd, RTKSWITCH_IOCTL(val), &tm) < 0) {
 			perror("rtkswitch ioctl");
 			close(fd);
 		}
@@ -448,7 +448,7 @@ int rtkswitch_regop(int val, int val2, int val3, int val4, int val5)
                 ro.pm2 = val3;
                 ro.pm3 = val4;
                 ro.pm4 = val5;
-                if (ioctl(fd, val, &ro) < 0) {
+                if (ioctl(fd, RTKSWITCH_IOCTL(val), &ro) < 0) {
                         perror("rtkswitch ioctl");
                         close(fd);
                 }
@@ -470,7 +470,7 @@ int rtkswitch_port_duplex(int port)
 		perror("/dev/rtkswitch");
 	} else {
 		memset(&pS, 0, sizeof(pS));
-		if (ioctl(fd, 0, &pS) < 0) {
+		if (ioctl(fd, RTKSWITCH_IOCTL(0), &pS) < 0) {
 			perror("rtkswitch ioctl");
 			close(fd);
 		}
@@ -853,7 +853,7 @@ int rtkswitch_port_stat(int port)
 #else
 		*p = port;
 #endif
-		if (ioctl(fd, 1, &Port_cntrs) < 0) {
+		if (ioctl(fd, RTKSWITCH_IOCTL(1), &Port_cntrs) < 0) {
 			perror("rtkswitch ioctl");
 			close(fd);
 		} else
@@ -897,7 +897,7 @@ int rtkswitch_port_mactable(int port)
 #else
 		*p = port;
 #endif
-		if (ioctl(fd, 7, &Port_mactable) < 0) {
+		if (ioctl(fd, RTKSWITCH_IOCTL(7), &Port_mactable) < 0) {
 			perror("rtkswitch ioctl");
 			close(fd);
 		} else
