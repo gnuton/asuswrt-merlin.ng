@@ -98,7 +98,12 @@ int is_nat_enabled(void)
 	} else {
 		/* Single WAN/Dual WAN FO/FB, check primary WAN unit only. */
 		snprintf(prefix, sizeof(prefix), "wan%d_", wan_primary_ifunit());
-		nr_nat = nvram_pf_get_int(prefix, "nat_x");
+		if (nvram_pf_get(prefix, "nat_x"))
+			nr_nat = nvram_pf_get_int(prefix, "nat_x");
+		else if (nvram_get("wan_nat_x"))
+			nr_nat = nvram_get_int("wan_nat_x");
+		else
+			nr_nat = 1;
 	}
 
 	return (nr_nat > 0)? 1 : 0;
@@ -387,6 +392,9 @@ char *get_wan_ifname(int unit)
 	case WAN_MAPE:
 #endif
 		wan_ifname = nvram_safe_get(strlcat_r(prefix, "pppoe_ifname", tmp, sizeof(tmp)));
+		if (*wan_ifname == '\0') {
+			wan_ifname = nvram_safe_get("pppoe_ifname");
+		}
 		break;
 #ifdef RTCONFIG_SOFTWIRE46
 	case WAN_V6PLUS:
@@ -395,11 +403,17 @@ char *get_wan_ifname(int unit)
 	case WAN_DSLITE:
 		if (nvram_pf_get_int(prefix, "s46_hgw_case") >= S46_CASE_MAP_HGW_OFF) {
 			wan_ifname = nvram_safe_get(strlcat_r(prefix, "pppoe_ifname", tmp, sizeof(tmp)));
+			if (*wan_ifname == '\0') {
+				wan_ifname = nvram_safe_get("pppoe_ifname");
+			}
 			break;
 		}
 #endif
 	default:
 		wan_ifname = nvram_safe_get(strlcat_r(prefix, "ifname", tmp, sizeof(tmp)));
+		if (*wan_ifname == '\0') {
+			wan_ifname = nvram_safe_get("wan_ifname");
+		}
 		break;
 	}
 

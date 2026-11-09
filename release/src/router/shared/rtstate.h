@@ -447,7 +447,7 @@ typedef struct _MOCA_MIB_DATA
 #if defined(RTCONFIG_DUALWAN)
 extern int is_nat_enabled(void);
 #else
-#define is_nat_enabled()     ((sw_mode()==SW_MODE_ROUTER||sw_mode()==SW_MODE_HOTSPOT)&&nvram_get_int("wan0_nat_x")==1)
+#define is_nat_enabled()     ((sw_mode()==SW_MODE_ROUTER||sw_mode()==SW_MODE_HOTSPOT)&&(nvram_get("wan0_nat_x") ? nvram_get_int("wan0_nat_x") : (nvram_get("wan_nat_x") ? nvram_get_int("wan_nat_x") : 1))==1)
 #endif
 #define is_lan_connected()   (nvram_get_int("lan_state")==LAN_STATE_CONNECTED)
 #ifdef RTCONFIG_WIRELESSWAN
