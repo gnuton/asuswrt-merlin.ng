@@ -7925,7 +7925,7 @@ void start_upnp(void)
 				}
 				if (realip_state == 2) {
 					realip_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
-					if (realip_ip[0] != '\0' && is_valid_ip4(realip_ip))
+					if (realip_ip[0] != '\0' && strcmp(realip_ip, "0.0.0.0") && is_valid_ip4(realip_ip))
 						fprintf(f, "ext_ip=%s\n", realip_ip);
 				}
 #endif
@@ -21554,20 +21554,17 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 #endif
 #ifdef RTCONFIG_GETREALIP
 	else if(!strcmp(script, "getrealip")){
-		char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+		char prefix[32];
 		wan_unit = safe_atoi(cmd[1]);
-		char *getip[] = {"getrealip.sh", NULL};
-		pid_t pid;
-
 		snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
-
-		if(action & RC_SERVICE_STOP){
-			nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-			nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-		}
-		if(action & RC_SERVICE_START){
-			_eval(getip, ">>/dev/null", 0, &pid);
-		}
+#ifdef RTCONFIG_MULTIWAN_IF
+		if (is_mtwan_unit(wan_unit))
+			mtwan_get_real_wan(wan_unit, prefix, sizeof(prefix));
+#endif
+		if(action & RC_SERVICE_STOP)
+			cancel_realip(prefix);
+		if(action & RC_SERVICE_START)
+			start_realip(wan_unit);
 	}
 #endif
 #ifdef RTCONFIG_QCA_PLC_UTILS
@@ -27266,153 +27263,6 @@ void PS_pod_main(void)
 }
 #endif
 
-#ifdef RTCONFIG_GETREALIP
-#define STUN_RESULT	"/tmp/stun.res"
-int realip_main(int argc, char *argv[])
-{
-	char *stun_server_list[] = {
-		"stun.l.google.com",
-		"stun.stunprotocol.org",
-		"stun4.l.google.com:19302",
-		// "stun3.l.google.com:19302",
-		// "stun2.l.google.com:19302",
-		// "stun1.l.google.com:19302",
-		"stun.pjsip.org",
-		// "stun.linphone.org",
-		// "stun.freeswitch.org",
-		// "stun.develz.org",
-		// "stun.wifirst.net",
-		// "stun.sipnet.net",
-		// "stun.sipgate.net",
-		// "stun.rolmail.net",
-		// "stun.nonoh.net",
-		// "stun.nfon.net",
-		// "stun.infra.net",
-		// "stun.dus.net",
-		""};
-	int i = 0;
-	int wan_unit;
-	char wan_prefix[16] = {0};
-	char wan_ifname[IFNAMSIZ] = {0};
-	char wan_gateway[INET_ADDRSTRLEN] = {0};
-	char stun_server[64] = {0};
-	char *stun_argv[] = {"ministun", "-t", "1000", "-c", "1"
-		, "-i", wan_ifname, stun_server
-		, NULL};
-	char buf[64] = {0};
-	char *server, *tmp_server, *port;
-	char stun_server_ip[INET_ADDRSTRLEN] = {0};
-	char table_str[8] = "main";
-#if defined(RTCONFIG_MULTIWAN_IF) || defined(RTCONFIG_DUALWAN)
-	char pref_str[8] = "30";
-#endif
-#ifdef RTCONFIG_MULTIWAN_IF
-	int is_mtwan;
-#endif
-#ifdef RTCONFIG_DUALWAN
-	int load_balance = (nvram_match("wans_mode", "lb") && get_nr_wan_unit() > 1) ? 1 : 0;
-#endif
-	int ret;
-	int success = 0;
-
-	if (argc < 2) {
-		printf("Usage: realip <wan_unit>\n");
-		return EXIT_FAILURE;
-	}
-
-	wan_unit = safe_atoi(argv[1]);
-	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_unit);
-#ifdef RTCONFIG_MULTIWAN_IF
-	is_mtwan = is_mtwan_unit(wan_unit);
-	if (is_mtwan) {
-		wan_unit = mtwan_get_real_wan(wan_unit, wan_prefix, sizeof(wan_prefix));
-		if (wan_unit < 0) {
-			printf("Get WAN(%d) dualwan_idx failed\n", safe_atoi(argv[1]));
-			return -10;
-		}
-		mtwan_get_route_table_id(wan_unit, table_str, sizeof(table_str));
-	}
-#endif
-#ifdef RTCONFIG_DUALWAN
-	if (load_balance && wan_unit < WAN_UNIT_MAX)
-		snprintf(table_str, sizeof(table_str), "%d", IP_ROUTE_TABLE_ID_DUALWAN_BASE + wan_unit * 100);
-#endif
-	if (nvram_pf_get_int(wan_prefix, "state_t") != WAN_STATE_CONNECTED) {
-		printf("WAN(%d) is not connected\n", wan_unit);
-		return -1;
-	}
-
-	while (nvram_get_int("link_internet") != 2)
-		sleep(1);
-
-	strlcpy(wan_ifname, get_wan_ifname(wan_unit), sizeof(wan_ifname));
-	strlcpy(wan_gateway, nvram_pf_safe_get(wan_prefix, "gateway"), sizeof(wan_gateway));
-
-	for (i = 0; stun_server_list[i]; i++) {
-		strlcpy(buf, stun_server_list[i], sizeof(buf));
-		server = tmp_server = buf;
-		port = NULL;
-		if (strchr(buf, ':')) {
-			server = strsep(&tmp_server, ":");
-			port = tmp_server;
-		}
-		if (resolv_addr4(server, stun_server_ip, sizeof(stun_server_ip)) < 0) {
-			printf("resolve stun server failed\n");
-			return -2;
-		}
-
-		// add stun server route
-#ifdef RTCONFIG_MULTIWAN_IF
-		if (is_mtwan)
-			eval("ip", "rule", "add", "iif", "lo", "to", stun_server_ip, "table", table_str, "pref", pref_str);
-#endif
-#ifdef RTCONFIG_DUALWAN
-		if (load_balance && wan_unit < WAN_UNIT_MAX)
-			eval("ip", "rule", "add", "iif", "lo", "to", stun_server_ip, "table", table_str, "pref", pref_str);
-#endif
-		eval("ip", "route", "add", stun_server_ip, "via", wan_gateway, "dev", wan_ifname, "table", table_str);
-
-		if (port)
-			snprintf(stun_server, sizeof(stun_server), "%s:%s", stun_server_ip, port);
-		else
-			strlcpy(stun_server, stun_server_ip, sizeof(stun_server));
-		// _dprintf("final stun server: %s\n", stun_server);
-
-		ret = _eval(stun_argv, ">"STUN_RESULT, 0, NULL);
-
-		// del stun server route
-#ifdef RTCONFIG_MULTIWAN_IF
-		eval("ip", "rule", "del", "iif", "lo", "to", stun_server_ip, "table", table_str, "pref", pref_str);
-#endif
-		eval("ip", "route", "del", stun_server_ip, "via", wan_gateway, "dev", wan_ifname, "table", table_str);
-
-		if (!ret) {
-			FILE *fp = fopen(STUN_RESULT, "r");
-			while (fgets(buf, sizeof(buf), fp)) {
-				trimNL(buf);
-				if (is_valid_ip4(buf)) {
-					success = 1;
-					break;
-				}
-			}
-
-			if (success) {
-				printf("%s\n", buf);
-				nvram_pf_set(wan_prefix, "realip_ip", buf);
-				nvram_pf_set(wan_prefix, "realip_state", "2");
-				break;
-			}
-		}
-	}
-
-	if (!success)
-		nvram_pf_set(wan_prefix, "realip_state", "1");
-
-	unlink(STUN_RESULT);
-
-	return (success) ? 0 : -3;
-}
-#endif
 
 #ifdef RTCONFIG_FAST_ACL_SET
 void start_setacl_not_restart_wifi(void)

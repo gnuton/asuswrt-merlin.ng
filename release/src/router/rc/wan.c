@@ -719,7 +719,11 @@ void update_wan_state(char *prefix, int state, int reason)
 	if (strncmp(prefix, "wan", 3) == 0)
 		unit = safe_atoi(prefix + 3);
 
+#ifdef RTCONFIG_GETREALIP
+	realip_wan_state(prefix, state);
+#else
 	nvram_set_int(strcat_r(prefix, "state_t", tmp), state);
+#endif
 	if(state == WAN_STATE_CONNECTED)
 	{
 		nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), WAN_STOPPED_REASON_NONE);
@@ -2915,16 +2919,6 @@ stop_wan_if(int unit)
 #endif
 	}
 
-#ifdef RTCONFIG_GETREALIP
-#ifdef RTCONFIG_DUALWAN
-	if(nvram_invmatch("wans_mode", "lb"))
-#endif
-	{
-		nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-		nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-	}
-#endif
-
 	if(dualwan_unit__usbif(unit))
 		update_wan_state(prefix, WAN_STATE_INITIALIZING, end_wan_sbstate);
 	else
@@ -4458,6 +4452,10 @@ NOIP:
 	adjust_netdev_if_of_wan_bled(1, wan_unit, wan_ifname);
 #endif
 
+#ifdef RTCONFIG_GETREALIP
+	/* Lookups belong to the unit that came up, including a secondary in LB. */
+	start_realip(wan_unit);
+#endif
 #if !defined(RTCONFIG_MULTIWAN_CFG)
 	/* FIXME: Protect below code from 2-nd WAN temporarilly. */
 	if(wan_unit == wan_primary_ifunit())
@@ -4465,16 +4463,6 @@ NOIP:
 	{
 #ifdef RTCONFIG_TR069
 		start_tr();
-#endif
-
-#ifdef RTCONFIG_GETREALIP
-		char *getip[] = {"getrealip.sh", NULL};
-		pid_t pid;
-		nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-		nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-
-		//_eval(getip, ">>/tmp/log.txt", 0, &pid);
-		_eval(getip, ">>/dev/null", 0, &pid);
 #endif
 	}
 
@@ -4720,6 +4708,10 @@ wan_down(char *wan_ifname)
 	if(wan_prefix(wan_ifname, prefix) < 0)
 		return;
 
+#ifdef RTCONFIG_GETREALIP
+	realip_invalidate(prefix);
+#endif
+
 	_dprintf("%s(%s): %s.\n", __FUNCTION__, wan_ifname, nvram_safe_get(strcat_r(prefix, "dns", tmp)));
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS) || defined(RTCONFIG_JFFS_PARTITION)
@@ -4818,15 +4810,6 @@ wan_down(char *wan_ifname)
 	del_multi_ppp_routes(wan_unit);
 #endif
 
-#ifdef RTCONFIG_GETREALIP
-#ifdef RTCONFIG_DUALWAN
-	if(nvram_invmatch("wans_mode", "lb"))
-#endif
-	{
-		nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-		nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-	}
-#endif
 #ifdef RTCONFIG_LANTIQ
 	disable_ppa_wan(wan_ifname);
 #endif
