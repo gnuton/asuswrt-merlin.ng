@@ -3318,6 +3318,19 @@ extern int get_fa_rev(void);
 extern int get_fa_dump(void);
 #endif
 #if defined(RTAX55) || defined(RTAX1800) || defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB) || defined(RTAX58U_V2) || defined(RTAX3000N) || defined(BR63) || defined(GTBE98) || defined(GTBE98_PRO) || defined(EBG19) || defined(GTBE96) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI)
+#include <sys/ioctl.h>
+#if defined(WIFI7_SDK_20241007) && (defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55))
+#define RTKSWITCH_IOCTL(n)	n
+#else
+#define RTKSWITCH_IOC_MAGIC	'R'
+/* The NR field of _IO() is only 8 bits; n > 255 overflows into the TYPE field
+ * so the kernel rejects the command. Encode the low 8 bits into NR and the high
+ * bits into the otherwise-unused 14-bit SIZE field to support n > 255.
+ * For n <= 255 SIZE is 0, so the command is bit-identical to the old _IO()
+ * (backward compatible). The kernel rebuilds it as (_IOC_NR | (_IOC_SIZE << 8)). */
+#define RTKSWITCH_IOCTL(n)	_IOC(_IOC_NONE, RTKSWITCH_IOC_MAGIC, (n) & 0xff, ((n) >> 8) & 0x3fff)
+#endif
+
 /* port statistic counter structure */
 #if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI)
 unsigned int rtkswitch_serdes_status(void);

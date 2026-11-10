@@ -19313,6 +19313,18 @@ int init_nvram(void)
 		nvram_set("dhd_rnr_offload_override", "7");
 		nvram_set("lan_ifname", "br0");
 		reconfig_manual_wan_ifnames();
+#if defined(RTCONFIG_AUTO_WANPORT) && !defined(RTCONFIG_BCM_MFG)
+		/*
+		 * When the 2.5G WAN/LAN port is explicitly selected (wans_extwan=1),
+		 * auto WAN port detection must not override it.  While autowan is
+		 * still in its "detecting" state, start_wan_if() runs udhcpc on br0
+		 * and skips PPPoE entirely, so the selected 2.5G WAN never comes up.
+		 * Auto detection is only useful when the user actually chose "Auto"
+		 * as the primary WAN, and that path keeps wans_extwan=0.
+		 */
+		if (nvram_get_int("wans_extwan"))
+			nvram_set_int("autowan_enable", 0);
+#endif
 #if defined(GTBE19000) || defined(GTBE19000AI)
 		nvram_set("wl_ifnames", "wl0 wl1 wl2");
 #else
