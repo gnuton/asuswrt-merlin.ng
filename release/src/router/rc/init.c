@@ -22095,11 +22095,6 @@ void reset_button_state(void) {
 		nvram_set("AllLED", "1");
 #endif
 
-#if defined(RTCONFIG_TURBO_BTN) && defined(RTCONFIG_RGBLED)
-	if(!nvram_match("aurargb_enable", "1"))
-		nvram_set("aurargb_enable", "1");
-#endif
-
 #if defined(RTCONFIG_WIFI_TOG_BTN)
 	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX";
 	int i;
