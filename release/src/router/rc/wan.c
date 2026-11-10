@@ -719,7 +719,11 @@ void update_wan_state(char *prefix, int state, int reason)
 	if (strncmp(prefix, "wan", 3) == 0)
 		unit = safe_atoi(prefix + 3);
 
+#ifdef RTCONFIG_GETREALIP
+	realip_wan_state(prefix, state);
+#else
 	nvram_set_int(strcat_r(prefix, "state_t", tmp), state);
+#endif
 	if(state == WAN_STATE_CONNECTED)
 	{
 		nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), WAN_STOPPED_REASON_NONE);
@@ -2915,16 +2919,6 @@ stop_wan_if(int unit)
 #endif
 	}
 
-#ifdef RTCONFIG_GETREALIP
-#ifdef RTCONFIG_DUALWAN
-	if(nvram_invmatch("wans_mode", "lb"))
-#endif
-	{
-		nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-		nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-	}
-#endif
-
 	if(dualwan_unit__usbif(unit))
 		update_wan_state(prefix, WAN_STATE_INITIALIZING, end_wan_sbstate);
 	else
@@ -3965,20 +3959,6 @@ wan_up(const char *pwan_ifname)
 			}
 		}
 #endif
-#ifdef RTCONFIG_DUALWAN
-		if (nvram_match("wans_mode", "lb")) {
-			int unit = wan_primary_ifunit();
-
-			if (!is_phy_connect(unit))
-				unit = 1 - unit;
-
-			if (unit != nvram_get_int("upnp_unit") ||
-				strcmp(wan_ifname, nvram_safe_get("upnp_ifname"))) {
-				stop_upnp();
-				start_upnp();
-			}
-		}
-#endif
 
 		start_firewall(wan_unit, 0);
 #if defined(RTCONFIG_IPV6) && (defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(XD6_V2) || defined(ET12))
@@ -4039,6 +4019,20 @@ wan_up(const char *pwan_ifname)
 		update_sdn_by_wan(wan_unit);
 #endif
 #endif
+#ifdef RTCONFIG_DUALWAN
+		if (nvram_match("wans_mode", "lb")) {
+			int unit = wan_primary_ifunit();
+
+			if (!is_phy_connect(unit))
+				unit = 1 - unit;
+
+			if (unit != nvram_get_int("upnp_unit") ||
+				strcmp(wan_ifname, nvram_safe_get("upnp_ifname"))) {
+				start_upnp();
+			}
+		}
+#endif
+
 		_dprintf("%s_x(%s): done.\n", __FUNCTION__, wan_ifname);
 
 		return;
@@ -4458,6 +4452,10 @@ NOIP:
 	adjust_netdev_if_of_wan_bled(1, wan_unit, wan_ifname);
 #endif
 
+#ifdef RTCONFIG_GETREALIP
+	/* Lookups belong to the unit that came up, including a secondary in LB. */
+	start_realip(wan_unit);
+#endif
 #if !defined(RTCONFIG_MULTIWAN_CFG)
 	/* FIXME: Protect below code from 2-nd WAN temporarilly. */
 	if(wan_unit == wan_primary_ifunit())
@@ -4466,18 +4464,9 @@ NOIP:
 #ifdef RTCONFIG_TR069
 		start_tr();
 #endif
-
-#ifdef RTCONFIG_GETREALIP
-		char *getip[] = {"getrealip.sh", NULL};
-		pid_t pid;
-
-		//_eval(getip, ">>/tmp/log.txt", 0, &pid);
-		_eval(getip, ">>/dev/null", 0, &pid);
-#endif
 	}
 
-/* Need to be done after getrealip */
-	stop_upnp();
+/* Reconcile immediately; STUN completion will notify rc asynchronously. */
 	start_upnp();
 
 	/* ntp is set, but it didn't just get set, so ntp_synced didn't already did these */
@@ -4718,6 +4707,10 @@ wan_down(char *wan_ifname)
 	if(wan_prefix(wan_ifname, prefix) < 0)
 		return;
 
+#ifdef RTCONFIG_GETREALIP
+	realip_invalidate(prefix);
+#endif
+
 	_dprintf("%s(%s): %s.\n", __FUNCTION__, wan_ifname, nvram_safe_get(strcat_r(prefix, "dns", tmp)));
 
 #if defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS) || defined(RTCONFIG_JFFS_PARTITION)
@@ -4816,15 +4809,6 @@ wan_down(char *wan_ifname)
 	del_multi_ppp_routes(wan_unit);
 #endif
 
-#ifdef RTCONFIG_GETREALIP
-#ifdef RTCONFIG_DUALWAN
-	if(nvram_invmatch("wans_mode", "lb"))
-#endif
-	{
-		nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-		nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-	}
-#endif
 #ifdef RTCONFIG_LANTIQ
 	disable_ppa_wan(wan_ifname);
 #endif
@@ -4836,6 +4820,13 @@ wan_down(char *wan_ifname)
 #ifdef RTCONFIG_MULTILAN_CFG
 	update_sdn_by_wan(wan_unit);
 #endif
+#endif
+#ifdef RTCONFIG_GETREALIP
+	/* Routes and WAN state are settled; never reconcile inside state changes. */
+	if (getpid() == 1)
+		update_upnp();
+	else
+		notify_rc("update_upnp");
 #endif
 }
 

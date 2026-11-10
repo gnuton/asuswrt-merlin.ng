@@ -2252,6 +2252,11 @@ int mtwan_handle_if_updown(const int unit, const char *ifname, const int up)
 	prctl(PR_GET_NAME, prc);
 
 	_dprintf("[%s]unit:%d, ifname: %s,  up:%d\n", __FUNCTION__, unit, ifname, up);
+#ifdef RTCONFIG_GETREALIP
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	if (!up)
+		realip_invalidate(prefix);
+#endif
 	_update_wanX_nvram(unit, ifname, up, prc);
 	_set_mtwan_route(unit, ifname, up);
 
@@ -2303,7 +2308,7 @@ int mtwan_handle_if_updown(const int unit, const char *ifname, const int up)
 #endif
 		{
 #ifdef RTCONFIG_GETREALIP
-			doSystem("realip %d 1>/dev/null &", unit);
+			start_realip(unit);
 #endif
 			start_mtwan_iQos(unit);
 		}
@@ -2334,6 +2339,15 @@ int mtwan_handle_if_updown(const int unit, const char *ifname, const int up)
 #endif
 
 	}
+
+#ifdef RTCONFIG_GETREALIP
+	/* Reconcile only after firewall, routes and resolver setup have settled. */
+	if (getpid() == 1) {
+		if (up) start_upnp();
+		else update_upnp();
+	} else
+		notify_rc(up ? "start_upnp" : "update_upnp");
+#endif
 
 	return 0;
 }

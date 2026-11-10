@@ -530,8 +530,15 @@ int mtwanduck_main(int argc, char *argv[])
 						else
 						{
 							_dprintf("\nmtwanduck: WAN %d down.\n", unit);
+#ifdef RTCONFIG_GETREALIP
+							realip_wan_state(prefix, WAN_STATE_DISCONNECTED);
+#else
 							nvram_set_int(strlcat_r(prefix, "state_t", tmp, sizeof(tmp)), WAN_STATE_DISCONNECTED);
+#endif
 							nvram_set_int(strlcat_r(prefix, "auxstate_t", tmp, sizeof(tmp)), WAN_AUXSTATE_NOPHY);
+#ifdef RTCONFIG_GETREALIP
+							notify_rc("update_upnp");
+#endif
 						}
 					}
 					phy_status[i] = cur_phy_status;

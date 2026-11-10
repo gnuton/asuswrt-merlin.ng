@@ -7587,6 +7587,72 @@ void start_spectrum(void)
 
 // TODO: so far, support wan0 only
 
+/* Keep the daemon serving while generating/customizing its next configuration.
+ * SIGUSR1 only sends address-change events; it does not reload ext_ip. */
+static int upnp_same_config(const char *path, const char *connection)
+{
+	FILE *a = fopen(path, "r"), *b = fopen("/etc/upnp/config.applied", "r");
+	int ca, cb, same = 0;
+	char applied[256];
+
+	if (a && b && fgets(applied, sizeof(applied), b) && !strcmp(applied, connection)) {
+		do {
+			ca = fgetc(a);
+			cb = fgetc(b);
+		} while (ca == cb && ca != EOF);
+		same = ca == cb && !ferror(a) && !ferror(b);
+	}
+	if (a) fclose(a);
+	if (b) fclose(b);
+	return same;
+}
+
+static void upnp_apply_config(const char *path, int unit)
+{
+	char prefix[32], connection[256];
+	const char *daemon = "miniupnpd";
+	FILE *f;
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	/* Also compare the connection, which need not appear in a custom config.
+	 * Epoch changes on disconnect, but not on an unchanged DHCP renewal. */
+	snprintf(connection, sizeof(connection), "%d/%s/%s/%s/%s/%s/%s\n",
+		unit, get_wan_ifname(unit), nvram_pf_safe_get(prefix, "ipaddr"),
+		nvram_pf_safe_get(prefix, "gateway"), nvram_pf_safe_get(prefix, "state_t"),
+		nvram_safe_get("wans_mode"), nvram_pf_safe_get(prefix, "realip_epoch"));
+#ifdef RTCONFIG_IGD2
+	if (nvram_get_int("upnp_pinhole_enable") && strcmp(path, "/etc/upnp/config.alt"))
+		daemon = "miniupnpd-igdv2";
+#endif
+	if (pids(daemon) && upnp_same_config(path, connection))
+		return;
+
+	stop_upnp();
+	if (xstart(daemon, "-f", path) != 0)
+		return;
+	if ((f = fopen("/etc/upnp/config.applied", "w")) != NULL) {
+		fputs(connection, f);
+		fappend(f, path);
+		fclose(f);
+	}
+#ifdef RTCONFIG_DUALWAN
+	nvram_set_int("upnp_unit", unit);
+	nvram_set("upnp_ifname", get_wan_ifname(unit));
+#endif
+#ifdef RTCONFIG_AUPNPC
+	start_aupnpc();
+#endif
+}
+
+/* config.applied records launch intent, not successful daemon initialization.
+ * A late/coalesced worker event must not undo an explicit service stop. The
+ * event carries no IP: always reconcile against current WAN ownership. */
+void update_upnp(void)
+{
+	if (f_exists("/etc/upnp/config.applied"))
+		start_upnp();
+}
+
 void start_upnp(void)
 {
 	FILE *f;
@@ -7617,8 +7683,10 @@ void start_upnp(void)
 		return;
 	}
 
-	if (!is_routing_enabled())
+	if (!is_routing_enabled()) {
+		stop_upnp();
 		return;
+	}
 
 	unit = wan_primary_ifunit();
 #ifdef RTCONFIG_DUALWAN
@@ -7627,7 +7695,7 @@ void start_upnp(void)
 		for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; i++) {
 			if (get_dualwan_by_unit(i) == WANS_DUALWAN_IF_NONE || !is_wan_connect(i))
 				continue;
-			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+			snprintf(prefix, sizeof(prefix), "wan%d_", i);
 			if (nvram_match(strcat_r(prefix, "proto", tmp), "static")) {
 				snprintf(tmp, sizeof(tmp), i ? "link_wan%d" : "link_wan", i);
 				if (!nvram_get_int(tmp))
@@ -7677,10 +7745,7 @@ void start_upnp(void)
 	if ( run_upnpd ) {
 		mkdir("/etc/upnp", 0777);
 		if (f_exists("/etc/upnp/config.alt")) {
-			xstart("miniupnpd", "-f", "/etc/upnp/config.alt");
-#ifdef RTCONFIG_AUPNPC
-			start_aupnpc();
-#endif
+			upnp_apply_config("/etc/upnp/config.alt", unit);
 		} else {
 			if ((f = fopen("/etc/upnp/config", "w")) != NULL) {
 				char *lanip = nvram_safe_get("lan_ipaddr");
@@ -7696,10 +7761,6 @@ void start_upnp(void)
 					 ea[0], ea[1], ea[2], ea[3], ea[4], ea[5]);
 				snprintf(uuid, sizeof(uuid), "3ddcd1d3-2380-45f5-b069-%02x%02x%02x%02x%02x%02x",
 					 ea[0], ea[1], ea[2], ea[3], ea[4], ea[5]);
-#ifdef RTCONFIG_DUALWAN
-				nvram_set_int("upnp_unit", unit);
-				nvram_set("upnp_ifname", get_wan_ifname(unit));
-#endif
 				fprintf(f,
 					"ext_ifname=%s\n"
 					"listening_ip=%s\n"
@@ -7911,11 +7972,11 @@ void start_upnp(void)
 
 				/* Provide real IP when in dual NAT situation */
 #ifdef RTCONFIG_GETREALIP
-				strcat_r(prefix, "realip_state", tmp);
-				if (nvram_get_int(tmp) != 2)
-					sleep(5);
-				if (nvram_get_int(tmp) == 2)
-					fprintf(f, "ext_ip=%s\n", nvram_safe_get(strcat_r(prefix, "realip_ip", tmp)));
+				char realip_ip[INET_ADDRSTRLEN];
+
+				realip_upnp_address(prefix, realip_ip, sizeof(realip_ip));
+				if (realip_ip[0])
+					fprintf(f, "ext_ip=%s\n", realip_ip);
 #endif
 
 				fappend(f, "/etc/upnp/config.custom");
@@ -7924,19 +7985,11 @@ void start_upnp(void)
 				fclose(f);
 				use_custom_config("upnp", "/etc/upnp/config");
 				run_postconf("upnp", "/etc/upnp/config");
-#ifdef RTCONFIG_IGD2
-				if (nvram_get_int("upnp_pinhole_enable"))
-					xstart("miniupnpd-igdv2", "-f", "/etc/upnp/config");
-				else
-#endif
-					xstart("miniupnpd", "-f", "/etc/upnp/config");
-
-#ifdef RTCONFIG_AUPNPC
-				start_aupnpc();
-#endif
+				upnp_apply_config("/etc/upnp/config", unit);
 			}
 		}
-	}
+	} else
+		stop_upnp();
 }
 
 void stop_upnp(void)
@@ -7946,6 +7999,7 @@ void stop_upnp(void)
 		return;
 	}
 
+	unlink("/etc/upnp/config.applied");
 	killall_tk("miniupnpd");
 #ifdef RTCONFIG_IGD2
 	killall_tk("miniupnpd-igdv2");
@@ -19859,6 +19913,10 @@ check_ddr_done:
 
 	}
 #endif
+	else if (strcmp(script, "update_upnp") == 0)
+	{
+		update_upnp();
+	}
 	else if (strcmp(script, "upnp") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_upnp();
@@ -21542,20 +21600,18 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 #endif
 #ifdef RTCONFIG_GETREALIP
 	else if(!strcmp(script, "getrealip")){
-		char tmp[128], prefix[] = "wlXXXXXXXXXX_";
+		char prefix[32];
 		wan_unit = safe_atoi(cmd[1]);
-		char *getip[] = {"getrealip.sh", NULL};
-		pid_t pid;
-
 		snprintf(prefix, sizeof(prefix), "wan%d_", wan_unit);
-
-		if(action & RC_SERVICE_STOP){
-			nvram_set(strcat_r(prefix, "realip_state", tmp), "0");
-			nvram_set(strcat_r(prefix, "realip_ip", tmp), "");
-		}
-		if(action & RC_SERVICE_START){
-			_eval(getip, ">>/dev/null", 0, &pid);
-		}
+#ifdef RTCONFIG_MULTIWAN_IF
+		if (is_mtwan_unit(wan_unit))
+			mtwan_get_real_wan(wan_unit, prefix, sizeof(prefix));
+#endif
+		if(action & RC_SERVICE_STOP)
+			cancel_realip(prefix);
+		if(action & RC_SERVICE_START)
+			start_realip(wan_unit);
+		update_upnp();
 	}
 #endif
 #ifdef RTCONFIG_QCA_PLC_UTILS
@@ -27254,153 +27310,6 @@ void PS_pod_main(void)
 }
 #endif
 
-#ifdef RTCONFIG_GETREALIP
-#define STUN_RESULT	"/tmp/stun.res"
-int realip_main(int argc, char *argv[])
-{
-	char *stun_server_list[] = {
-		"stun.l.google.com",
-		"stun.stunprotocol.org",
-		"stun4.l.google.com:19302",
-		// "stun3.l.google.com:19302",
-		// "stun2.l.google.com:19302",
-		// "stun1.l.google.com:19302",
-		"stun.pjsip.org",
-		// "stun.linphone.org",
-		// "stun.freeswitch.org",
-		// "stun.develz.org",
-		// "stun.wifirst.net",
-		// "stun.sipnet.net",
-		// "stun.sipgate.net",
-		// "stun.rolmail.net",
-		// "stun.nonoh.net",
-		// "stun.nfon.net",
-		// "stun.infra.net",
-		// "stun.dus.net",
-		""};
-	int i = 0;
-	int wan_unit;
-	char wan_prefix[16] = {0};
-	char wan_ifname[IFNAMSIZ] = {0};
-	char wan_gateway[INET_ADDRSTRLEN] = {0};
-	char stun_server[64] = {0};
-	char *stun_argv[] = {"ministun", "-t", "1000", "-c", "1"
-		, "-i", wan_ifname, stun_server
-		, NULL};
-	char buf[64] = {0};
-	char *server, *tmp_server, *port;
-	char stun_server_ip[INET_ADDRSTRLEN] = {0};
-	char table_str[8] = "main";
-#if defined(RTCONFIG_MULTIWAN_IF) || defined(RTCONFIG_DUALWAN)
-	char pref_str[8] = "30";
-#endif
-#ifdef RTCONFIG_MULTIWAN_IF
-	int is_mtwan;
-#endif
-#ifdef RTCONFIG_DUALWAN
-	int load_balance = (nvram_match("wans_mode", "lb") && get_nr_wan_unit() > 1) ? 1 : 0;
-#endif
-	int ret;
-	int success = 0;
-
-	if (argc < 2) {
-		printf("Usage: realip <wan_unit>\n");
-		return EXIT_FAILURE;
-	}
-
-	wan_unit = safe_atoi(argv[1]);
-	snprintf(wan_prefix, sizeof(wan_prefix), "wan%d_", wan_unit);
-#ifdef RTCONFIG_MULTIWAN_IF
-	is_mtwan = is_mtwan_unit(wan_unit);
-	if (is_mtwan) {
-		wan_unit = mtwan_get_real_wan(wan_unit, wan_prefix, sizeof(wan_prefix));
-		if (wan_unit < 0) {
-			printf("Get WAN(%d) dualwan_idx failed\n", safe_atoi(argv[1]));
-			return -10;
-		}
-		mtwan_get_route_table_id(wan_unit, table_str, sizeof(table_str));
-	}
-#endif
-#ifdef RTCONFIG_DUALWAN
-	if (load_balance && wan_unit < WAN_UNIT_MAX)
-		snprintf(table_str, sizeof(table_str), "%d", IP_ROUTE_TABLE_ID_DUALWAN_BASE + wan_unit * 100);
-#endif
-	if (nvram_pf_get_int(wan_prefix, "state_t") != WAN_STATE_CONNECTED) {
-		printf("WAN(%d) is not connected\n", wan_unit);
-		return -1;
-	}
-
-	while (nvram_get_int("link_internet") != 2)
-		sleep(1);
-
-	strlcpy(wan_ifname, get_wan_ifname(wan_unit), sizeof(wan_ifname));
-	strlcpy(wan_gateway, nvram_pf_safe_get(wan_prefix, "gateway"), sizeof(wan_gateway));
-
-	for (i = 0; stun_server_list[i]; i++) {
-		strlcpy(buf, stun_server_list[i], sizeof(buf));
-		server = tmp_server = buf;
-		port = NULL;
-		if (strchr(buf, ':')) {
-			server = strsep(&tmp_server, ":");
-			port = tmp_server;
-		}
-		if (resolv_addr4(server, stun_server_ip, sizeof(stun_server_ip)) < 0) {
-			printf("resolve stun server failed\n");
-			return -2;
-		}
-
-		// add stun server route
-#ifdef RTCONFIG_MULTIWAN_IF
-		if (is_mtwan)
-			eval("ip", "rule", "add", "iif", "lo", "to", stun_server_ip, "table", table_str, "pref", pref_str);
-#endif
-#ifdef RTCONFIG_DUALWAN
-		if (load_balance && wan_unit < WAN_UNIT_MAX)
-			eval("ip", "rule", "add", "iif", "lo", "to", stun_server_ip, "table", table_str, "pref", pref_str);
-#endif
-		eval("ip", "route", "add", stun_server_ip, "via", wan_gateway, "dev", wan_ifname, "table", table_str);
-
-		if (port)
-			snprintf(stun_server, sizeof(stun_server), "%s:%s", stun_server_ip, port);
-		else
-			strlcpy(stun_server, stun_server_ip, sizeof(stun_server));
-		// _dprintf("final stun server: %s\n", stun_server);
-
-		ret = _eval(stun_argv, ">"STUN_RESULT, 0, NULL);
-
-		// del stun server route
-#ifdef RTCONFIG_MULTIWAN_IF
-		eval("ip", "rule", "del", "iif", "lo", "to", stun_server_ip, "table", table_str, "pref", pref_str);
-#endif
-		eval("ip", "route", "del", stun_server_ip, "via", wan_gateway, "dev", wan_ifname, "table", table_str);
-
-		if (!ret) {
-			FILE *fp = fopen(STUN_RESULT, "r");
-			while (fgets(buf, sizeof(buf), fp)) {
-				trimNL(buf);
-				if (is_valid_ip4(buf)) {
-					success = 1;
-					break;
-				}
-			}
-
-			if (success) {
-				printf("%s\n", buf);
-				nvram_pf_set(wan_prefix, "realip_ip", buf);
-				nvram_pf_set(wan_prefix, "realip_state", "2");
-				break;
-			}
-		}
-	}
-
-	if (!success)
-		nvram_pf_set(wan_prefix, "realip_state", "1");
-
-	unlink(STUN_RESULT);
-
-	return (success) ? 0 : -3;
-}
-#endif
 
 #ifdef RTCONFIG_FAST_ACL_SET
 void start_setacl_not_restart_wifi(void)

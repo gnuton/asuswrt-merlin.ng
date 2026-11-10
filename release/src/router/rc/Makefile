@@ -426,6 +426,9 @@ endif
 
 OBJS := rc.o init.o interface.o lan.o wireless.o $(if $(RTCONFIG_SOFTWIRE46), s46comm.o) wan.o pppd.o auth.o services.o
 OBJS += firewall.o ppp.o services.o common.o conn_diag_log.o
+ifeq ($(RTCONFIG_GETREALIP),y)
+OBJS += realip.o
+endif
 OBJS += watchdog.o check_watchdog.o fwupg_flashing.o ntp.o udhcpc.o ate.o
 ifeq ($(RTCONFIG_MULTIWAN_IF),y)
 OBJS += qos_multi_wan_if.o

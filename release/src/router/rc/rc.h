@@ -2952,6 +2952,7 @@ extern int stop_wps(void);
 extern int start_wps(void);
 extern void stop_upnp(void);
 extern void start_upnp(void);
+extern void update_upnp(void);
 extern void reload_upnp(void);
 #if defined(RTCONFIG_TUNNEL) && defined(RTCONFIG_ACCOUNT_BINDING)
 extern int update_asus_ddns_token();
@@ -4203,6 +4204,11 @@ extern void update_mtwan_s46_resolvconf_ipv6(int wan_unit);
 
 #ifdef RTCONFIG_GETREALIP
 extern int realip_main(int argc, char *argv[]);
+extern void realip_invalidate(const char *prefix);
+extern void realip_wan_state(const char *prefix, int state);
+extern void start_realip(int unit);
+extern void cancel_realip(const char *prefix);
+extern void realip_upnp_address(const char *prefix, char *ip, size_t len);
 #endif
 
 #if defined(RTCONFIG_IG_SITE2SITE)
