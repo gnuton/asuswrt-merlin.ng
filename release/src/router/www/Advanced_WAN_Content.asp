@@ -129,6 +129,49 @@ var original_switch_wantag = '<% nvram_get("switch_wantag"); %>';
 var original_switch_stb_x = '<% nvram_get("switch_stb_x"); %>';
 var original_wan_dot1q = '<% nvram_get("wan_dot1q"); %>';
 var original_wan_vid = '<% nvram_get("wan_vid"); %>';
+// The explicit VLAN belongs to unit 0; ordinary secondary WAN forms must
+// remain usable while the feature is disabled.
+var gtbe98_vlan_model = productid == "GT-BE98" && ('<% nvram_get("wan_unit"); %>' || "0") == "0";
+var gtbe98_vlan_cap = gtbe98_vlan_model && '<% nvram_get("gtbe98_wan_vlan_cap"); %>' == "1";
+var gtbe98_vlan_original = {
+	enable: '<% nvram_get("wan0_dot1q"); %>' || "0",
+	vid: '<% nvram_get("wan0_vid"); %>',
+	priority: '<% nvram_get("wan0_dot1p"); %>' || "0"
+};
+
+function gtbe98_vlan_validate() {
+	if (!gtbe98_vlan_model) return true;
+	if (document.form.wan_dot1q.value == "1") {
+		if (!gtbe98_vlan_cap) {
+			alert("WAN VLAN is currently unavailable. Select No and apply to disable it and reboot.");
+			return false;
+		}
+		if (!/^[0-9]{1,4}$/.test(document.form.wan_vid.value) ||
+		    Number(document.form.wan_vid.value) < 3 || Number(document.form.wan_vid.value) > 4093 ||
+		    !/^[0-7]$/.test(document.form.wan_dot1p.value)) {
+			alert("WAN VLAN requires a VLAN ID from 3 to 4093 and priority from 0 to 7.");
+			return false;
+		}
+		if (original_switch_wantag != "none" || original_switch_stb_x != "0") {
+			alert("First disable the IPTV ISP profile and STB port on LAN > IPTV. The existing ISP VLAN is not migrated automatically; then enter it here.");
+			return false;
+		}
+		var state = httpApi.nvramGet(["autowan_enable", "wans_dualwan", "wans_standby", "wans_usb_bk", "wans_usb_bk_act", "bond_wan", "vlan_enable", "vlan_rl"]);
+		if (state.autowan_enable != "0" || state.wans_dualwan != "wan none" || state.wans_standby != "0" ||
+		    state.wans_usb_bk != "0" || state.wans_usb_bk_act != "0" ||
+		    state.bond_wan != "0" || state.vlan_enable != "0" || state.vlan_rl != "" ||
+		    (document.form.bond_wan_radio && document.form.bond_wan_radio.value != "0")) {
+			alert("WAN VLAN requires one manually selected WAN. Disable AutoWAN, Dual WAN, USB backup/standby, WAN aggregation and LAN VLAN configuration first.");
+			return false;
+		}
+	}
+	if (gtbe98_vlan_original.enable != document.form.wan_dot1q.value ||
+	    gtbe98_vlan_original.vid != document.form.wan_vid.value ||
+	    gtbe98_vlan_original.priority != document.form.wan_dot1p.value)
+		reboot_confirm = 1;
+	return true;
+}
+
 if(wan_bonding_support){
 	var orig_bond_wan = httpApi.nvramGet(["bond_wan"], true).bond_wan;
 	var orig_wanports_bond = httpApi.nvramGet(["wanports_bond"], true).wanports_bond;
@@ -355,7 +398,23 @@ function initial(){
 	else
 		showhide("dot1q_setting",0);
 
-	if(productid == "BRT-AC828" || productid == "RT-AD7200"){      //MODELDEP: BRT-AC828, RT-AD7200
+	if (gtbe98_vlan_model) {
+		document.form.wan_dot1q.value = gtbe98_vlan_original.enable;
+		document.form.wan_vid.value = gtbe98_vlan_original.vid;
+		document.form.wan_dot1p.value = gtbe98_vlan_original.priority;
+		showhide("wan_dot1q_setting", gtbe98_vlan_cap || gtbe98_vlan_original.enable == "1" ? 1 : 0);
+		showhide("gtbe98_vlan_unavailable", gtbe98_vlan_cap ? 0 : 1);
+		showhide("gtbe98_vlan_priority", 1);
+		showhide("gtbe98_vlan_help", 1);
+		document.getElementById("wan_vid_range").innerHTML = "( 3 ~ 4093 )";
+		if (!gtbe98_vlan_cap) {
+			document.form.wan_dot1q[0].disabled = true;
+			/* Keep recovery available when the switch reader has failed. */
+			document.form.wan_dot1q[1].disabled = gtbe98_vlan_original.enable != "1";
+			document.form.wan_vid.disabled = true;
+			document.form.wan_dot1p.disabled = true;
+		}
+	}else if(productid == "BRT-AC828" || productid == "RT-AD7200"){      //MODELDEP: BRT-AC828, RT-AD7200
 		var wan_type_name = wans_dualwan.split(" ")[`<% nvram_get("wan_unit"); %>` || 0].toUpperCase();
 		if((original_switch_wantag == "none" && original_switch_stb_x != "0") ||
 		   (original_switch_wantag != "none") || (wan_type_name != "WAN" && wan_type_name != "WAN2")){
@@ -658,6 +717,7 @@ function genWANSoption(){
 
 var reboot_confirm=0;
 function applyRule(){
+	if (!gtbe98_vlan_validate()) return false;
 	if(ctf.dhcpToPppoe() && ctf.getLevel() == 2){
 		if(confirm("<#ctf_confirm#>")){
 			document.form.ctf_disable_force.value = 0;
@@ -680,11 +740,13 @@ function applyRule(){
 		if(original_wan_dot1q != document.form.wan_dot1q.value || original_wan_vid != document.form.wan_vid.value){
 			reboot_confirm=1;
 		}
-	}else{
+	}else if (!gtbe98_vlan_model){
 		document.form.wan_dot1q[0].disabled = true;
 		document.form.wan_dot1q[1].disabled = true;
 		document.form.wan_vid.disabled = true;
 	}
+
+	if (!gtbe98_vlan_model) document.form.wan_dot1p.disabled = true;
 
 	if(validForm()){
 		
@@ -2687,6 +2749,7 @@ function get_default_wan_name(){
 						</tr>
 						</table>
 
+						<div id="gtbe98_vlan_unavailable" style="display:none;padding:12px">WAN VLAN is currently unavailable. If enabled, select No and apply to disable it and reboot.</div>
 						<table id="wan_dot1q_setting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 						<thead><tr><td colspan="2">802.1Q</td></tr></thead>
 						<tr>
@@ -2699,9 +2762,14 @@ function get_default_wan_name(){
 						<tr>
 							<th>VLAN ID</th>
 							<td>
-								<input type="text" name="wan_vid" maxlength="4" class="input_6_table" value="<% nvram_get("wan_vid"); %>" onKeyPress="return validator.isNumber(this,event);"> ( 2 ~ 4094 )
+								<input type="text" name="wan_vid" maxlength="4" class="input_6_table" value="<% nvram_get("wan_vid"); %>" onKeyPress="return validator.isNumber(this,event);"> <span id="wan_vid_range">( 2 ~ 4094 )</span>
 							</td>
 						</tr>
+							<tr id="gtbe98_vlan_priority" style="display:none">
+								<th>802.1p priority</th>
+								<td><input type="text" name="wan_dot1p" maxlength="1" class="input_6_table" value="0" onKeyPress="return validator.isNumber(this,event);"> ( 0 ~ 7 )</td>
+							</tr>
+							<tr id="gtbe98_vlan_help" style="display:none"><td colspan="2">One Internet VLAN on the manually selected 10G WAN or 2.5G LAN/WAN port. IPTV, AutoWAN, Dual WAN, USB backup/standby, WAN aggregation and LAN VLAN configuration must be disabled. ErP standby is suspended while this option is active. To replace a manual IPTV profile, disable that profile first and enter its ISP VLAN here. VLAN or port changes require a reboot. To return to IPTV tagging, disable this option and reboot before restoring the IPTV profile.</td></tr>
 						</table>
 
 						<table id="IPsetting" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">

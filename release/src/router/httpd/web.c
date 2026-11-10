@@ -3384,6 +3384,11 @@ void save_index_to_interface(){//Cherry Cho added for exchanging settings of dua
 
 			if(!strcmp(name, "wan_unit") || !strcmp(name, "wan_primary") || !strcmp(name, "wan_ifname_x")) continue;
 
+#if defined(GTBE98)
+			/* Explicit Internet VLAN parameters belong only to WAN unit 0. */
+			if (!strcmp(name, "wan_dot1q") || !strcmp(name, "wan_vid") || !strcmp(name, "wan_dot1p"))
+				continue;
+#endif
 			if(!strncmp(name, wan_prefix, strlen(wan_prefix))){
 				memset(tmp, 0, sizeof(tmp));
 				memset(unitname, 0, sizeof(unitname));
@@ -3423,6 +3428,11 @@ void save_interface_to_index(char *wans_dualwan){
 			if(!strcmp(name, "wan_unit")) continue;
 			if(!strcmp(name, "wan_primary")) continue;
 
+#if defined(GTBE98)
+			/* Explicit Internet VLAN parameters belong only to WAN unit 0. */
+			if (!strcmp(name, "wan_dot1q") || !strcmp(name, "wan_vid") || !strcmp(name, "wan_dot1p"))
+				continue;
+#endif
 			if(!strncmp(name, wan_prefix, strlen(wan_prefix))){
 				memset(tmp, 0, sizeof(tmp));
 				memset(unitname, 0, sizeof(unitname));
@@ -4261,6 +4271,10 @@ static int qos_bw_rulelist_all_disabled(void);
 static void clear_residual_bw_qos_state(void);
 #endif
 
+#if defined(GTBE98)
+#include "gtbe98_wan_vlan_http.h"
+#endif
+
 int validate_apply(webs_t wp, json_object *root)
 {
 	struct nvram_tuple *t;
@@ -4303,12 +4317,37 @@ int validate_apply(webs_t wp, json_object *root)
 	action_script = check_xss_blacklist(action_script, 0) ? "" : action_script;
 #endif
 	json_object *activity_obj = json_object_new_object();
+#if defined(GTBE98)
+	if (gtbe98_http_preflight(root)) {
+		json_object_put(activity_obj);
+#ifdef RTCONFIG_CFGSYNC
+		json_object_put(cfg_root);
+#endif
+		return -1;
+	}
+#endif
 	/* go through each nvram value */
 	for (t = router_defaults; t->name; t++)
 	{
 		snprintf(name, sizeof(name), t->name);
 
 		value = get_cgi_json(name, root);
+#if defined(GTBE98)
+		if (!strcmp(name, "wan_dot1q") || !strcmp(name, "wan_vid") || !strcmp(name, "wan_dot1p")) {
+			snprintf(tmp, sizeof(tmp), "wan0_%s", name + 4);
+			if (value || get_cgi_json(tmp, root)) {
+				value = (char *)gtbe98_http_wan_value(root, name + 4);
+				if (strcmp(nvram_safe_get(tmp), value)) {
+					nvram_set(tmp, value);
+					nvram_modified = 1;
+#ifdef RTCONFIG_CFGSYNC
+					save_changed_param(cfg_root, tmp, value);
+#endif
+				}
+			}
+			continue;
+		}
+#endif
 
 #ifdef RTCONFIG_DEMOUI
 		if(value != NULL && !strcmp(name, "preferred_lang")){
@@ -6095,7 +6134,22 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv)
 	    !strcmp(action_mode, "apply_new"))
 	{
 		int has_modify;
-		if (!(has_modify = validate_apply(wp, NULL))) {
+#if defined(GTBE98)
+		const char *vlan_error = gtbe98_http_preflight(NULL);
+		if (vlan_error) {
+			/* Messages are fixed server strings, never request values. */
+			websWrite(wp, "<script>parent.alert('%s');parent.location.reload();</script>\n", vlan_error);
+			return 0;
+		}
+#endif
+		has_modify = validate_apply(wp, NULL);
+#if defined(GTBE98)
+		if (has_modify < 0) {
+			websWrite(wp, "<script>parent.alert('WAN VLAN validation failed; reload and retry.');parent.location.reload();</script>\n");
+			return 0;
+		}
+#endif
+		if (!has_modify) {
 			websWrite(wp, "<script>no_changes_and_no_committing();</script>\n");
 		}
 		else {
@@ -13296,8 +13350,29 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 
 	if (!strcmp(action_mode, "apply")) {
 		struct json_object *res=NULL;
+		int apply_result;
 		res = json_object_new_object();
-		if (!validate_apply(wp,root)) {
+#if defined(GTBE98)
+		const char *vlan_error = gtbe98_http_preflight(root);
+		if (vlan_error) {
+			json_object_object_add(res, "modify", json_object_new_string("0"));
+			json_object_object_add(res, "error", json_object_new_string(vlan_error));
+			websWrite(wp, "%s\n", json_object_to_json_string(res));
+			json_object_put(res);
+			goto APPLY_FINISH;
+		}
+#endif
+		apply_result = validate_apply(wp,root);
+#if defined(GTBE98)
+		if (apply_result < 0) {
+			json_object_object_add(res, "modify", json_object_new_string("0"));
+			json_object_object_add(res, "error", json_object_new_string("WAN VLAN validation failed; reload and retry"));
+			websWrite(wp, "%s\n", json_object_to_json_string(res));
+			json_object_put(res);
+			goto APPLY_FINISH;
+		}
+#endif
+		if (!apply_result) {
 			json_object_object_add(res, "modify", json_object_new_string("0"));
 		}
 		else {
@@ -23329,6 +23404,15 @@ check_alexa_ifttt_guestnetwork(FILE *stream)
 	struct json_object *root = json_object_new_object();
 
 	do_json_decode(root);
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		websWrite(stream, "{\"statusCode\":\"%d\",\"error\":\"%s\"}", HTTP_INVALID_INPUT, GTBE98_HTTP_SDN_CONFLICT);
+		json_object_put(root);
+		json_object_put(res);
+		return;
+	}
+#endif
+
 
 	from_app = check_user_agent(user_agent);
 
@@ -23652,6 +23736,13 @@ create_alexa_ifttt_sdn_profile(int from_app, char *ssid, char *key, int expireti
 	char *wan_ipaddr = NULL;
 	char *wan_netmask = NULL;
 	char *list = NULL;
+
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		logmessage("WAN VLAN", "%s", GTBE98_HTTP_SDN_CONFLICT);
+		goto create_SDN_profile_exit;
+	}
+#endif
 
 	if (!web_get_availabel_sdn_profile(&sdn_idx, &apg_idx, &apm_idx, &subnet_idx, &subnet_class_c, &vlan_idx, &vlan_vid))
 		goto create_SDN_profile_exit;
@@ -27475,6 +27566,14 @@ do_set_usb_bk_cgi(char *url, FILE *stream) {
 
 	usb_bk = safe_get_cgi_json("usb_bk", root);
 
+#if defined(GTBE98)
+	if (gtbe98_http_locked() && !strcmp(usb_bk, "1")) {
+		websWrite(stream, "{\"statusCode\":\"%d\",\"error\":\"%s\"}", HTTP_INVALID_INPUT, GTBE98_HTTP_USB_CONFLICT);
+		json_object_put(root);
+		return;
+	}
+#endif
+
 	strlcpy(wans_dualwan, nvram_safe_get("wans_dualwan"), sizeof(wans_dualwan));
 
 	if(!strcmp(nvram_safe_get("wans_usb_bk"), usb_bk))
@@ -27554,6 +27653,14 @@ do_reset_sdn_rule_cgi(char *url, FILE *stream)
 	struct json_object *root = json_object_new_object();
 
 	do_json_decode(root);
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		websWrite(stream, "{\"statusCode\":\"%d\",\"error\":\"%s\"}", HTTP_INVALID_INPUT, GTBE98_HTTP_SDN_CONFLICT);
+		json_object_put(root);
+		return;
+	}
+#endif
+
 
 	do_rc = safe_get_cgi_json("do_rc", root);
 	keep_sdn_type = safe_get_cgi_json("keep_sdn_type", root);
@@ -27613,6 +27720,15 @@ do_create_sdn_profile_cgi(char *url, FILE *stream)
 	struct json_object *wgn_obj = json_object_new_object();
 
 	do_json_decode(root);
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		websWrite(stream, "{\"statusCode\":\"%d\",\"error\":\"%s\"}", HTTP_INVALID_INPUT, GTBE98_HTTP_SDN_CONFLICT);
+		json_object_put(root);
+		json_object_put(wgn_obj);
+		return;
+	}
+#endif
+
 
 	from_app = check_user_agent(user_agent);
 	sdn_type = safe_get_cgi_json("sdn_type", root);
@@ -27656,6 +27772,14 @@ do_create_sdn_legacy_cgi(char *url, FILE *stream)
 	json_object *LEGACY_array = NULL, *LEGACY_obj = NULL;
 
 	do_json_decode(root);
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		websWrite(stream, "{\"statusCode\":\"%d\",\"error\":\"%s\"}", HTTP_INVALID_INPUT, GTBE98_HTTP_SDN_CONFLICT);
+		json_object_put(root);
+		return;
+	}
+#endif
+
 
 	from_app = check_user_agent(user_agent);
 	action = safe_get_cgi_json("action", root);
@@ -27702,6 +27826,14 @@ do_create_sdn_mwl_cgi(char *url, FILE *stream)
 	json_object *MAINFH_obj = NULL, *MAINBH_obj = NULL;
 
 	do_json_decode(root);
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		websWrite(stream, "{\"statusCode\":\"%d\",\"error\":\"%s\"}", HTTP_INVALID_INPUT, GTBE98_HTTP_SDN_CONFLICT);
+		json_object_put(root);
+		return;
+	}
+#endif
+
 
 	from_app = check_user_agent(user_agent);
 	action = safe_get_cgi_json("action", root);
@@ -43918,6 +44050,13 @@ int create_sdn_profile(struct json_object *wgn_obj)
 	char *lan_ipaddr = NULL, *lan_netmask = NULL, *wan_ipaddr = NULL, *wan_netmask = NULL;
 	json_object *activity_obj = json_object_new_object();
 
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		logmessage("WAN VLAN", "%s", GTBE98_HTTP_SDN_CONFLICT);
+		goto create_SDN_profile_exit;
+	}
+#endif
+
 	if (!web_get_availabel_sdn_profile(&sdn_idx, &apg_idx, &apm_idx,&subnet_idx, &subnet_class_c, &vlan_idx, &vlan_vid))
 		goto create_SDN_profile_exit;
 
@@ -44089,6 +44228,13 @@ int create_sdn_mwl_profile(struct json_object *mwl_obj)
 	json_object *bw_limit_obj = NULL, *macmode_obj = NULL, *maclist_obj = NULL, *timesched_obj = NULL, *sched_obj = NULL, *expiretime_obj = NULL;
 	json_object *iot_max_cmpt_obj = NULL, *dut_list_obj = NULL, *disabled_obj = NULL;
 	json_object *activity_obj = json_object_new_object();
+
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		logmessage("WAN VLAN", "%s", GTBE98_HTTP_SDN_CONFLICT);
+		goto create_SDN_mwl_profile_exit;
+	}
+#endif
 
 	if (!web_get_availabel_sdn_profile(&sdn_idx, &apg_idx, &apm_idx, &subnet_idx, &subnet_class_c, &vlan_idx, &vlan_vid))
 		goto create_SDN_mwl_profile_exit;
@@ -44336,6 +44482,13 @@ int create_sdn_guest_profile(struct json_object *wl_obj)
 	char *next = NULL, *name = NULL;
 	char *lan_ipaddr = NULL, *lan_netmask = NULL, *wan_ipaddr = NULL, *wan_netmask = NULL;
 	json_object *activity_obj = json_object_new_object();
+
+#if defined(GTBE98)
+	if (gtbe98_http_locked()) {
+		logmessage("WAN VLAN", "%s", GTBE98_HTTP_SDN_CONFLICT);
+		goto create_sdn_guest_profile_exit;
+	}
+#endif
 
 	if (!web_get_availabel_sdn_profile(&sdn_idx, &apg_idx, &apm_idx, &subnet_idx, &subnet_class_c, &vlan_idx, &vlan_vid))
 		goto create_sdn_guest_profile_exit;

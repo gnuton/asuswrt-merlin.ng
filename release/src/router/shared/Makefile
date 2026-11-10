@@ -211,6 +211,9 @@ endif
 endif
 
 OBJS = shutils.o defaults.o model.o rtstate.o boardapi.o
+ifeq ($(BUILD_NAME),GT-BE98)
+OBJS += gtbe98_wan_vlan.o gtbe98_vlan_hw.o
+endif
 OBJS += network_utility.o
 OBJS += misc.o version.o files.o strings.o process.o
 OBJS += bin_sem_asus.o semaphore.o pids.o $(if $(wildcard notify_rc.c),notify_rc.o,prebuild/notify_rc.o)

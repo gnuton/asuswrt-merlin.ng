@@ -1223,6 +1223,17 @@ int get_port_status(int unit)
 
 int wanport_status(int wan_unit)
 {
+#if defined(GTBE98)
+	if (wan_unit == WAN_UNIT_FIRST && (((*nvram_safe_get("wan0_dot1q") != '\0') &&
+	     !nvram_match("wan0_dot1q", "0")) ||
+	    nvram_match("gtbe98_wan_vlan_owned", "1"))) {
+		if (!is_rtl8372_boardid() ||
+		    !nvram_match("gtbe98_wan_vlan_ready", "1"))
+			return 0;
+		return nvram_match("gtbe98_wan_vlan_extwan", "1") ?
+			rtk_get_phy_status(1) == 1 : hnd_get_phy_status("eth0") == 1;
+	}
+#endif
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA) || defined(RTCONFIG_REALTEK)
 	return rtkswitch_wanPort_phyStatus(wan_unit);
 #elif defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)

@@ -1066,6 +1066,15 @@ static void ERP_CHECK_MODE()
 {
 	int model = get_model();
 
+#if defined(GTBE98)
+	/* ErP wakeup powers all RTL8372 ports directly, outside the verified
+	 * VLAN lifecycle. Keep standby suspended until disable + reboot has
+	 * released ownership, including failed or pending configurations.
+	 */
+	if (gtbe98_vlan_requested())
+		return;
+#endif
+
 	// step1. check support model list
 	if (ERP_CHECK_MODEL_LIST() == 0)
 	{

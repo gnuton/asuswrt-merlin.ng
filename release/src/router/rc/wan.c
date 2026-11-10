@@ -1363,6 +1363,15 @@ start_wan_if(int unit)
 	}
 #endif
 
+#if defined(GTBE98)
+	/* Reconnect must not start PPP/DHCP on an unverified or changed VLAN. */
+	if (unit == WAN_UNIT_FIRST && gtbe98_vlan_requested() &&
+	    gtbe98_vlan_wan_start() != 0) {
+		update_wan_state(prefix, WAN_STATE_STOPPED, WAN_STOPPED_REASON_SYSTEM_ERR);
+		return;
+	}
+#endif
+
 	update_wan_state(prefix, WAN_STATE_INITIALIZING, 0);
 #if defined(RTCONFIG_MT798X)
 	void wan_force_link_sp(int unit);

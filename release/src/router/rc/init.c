@@ -28030,6 +28030,11 @@ void reconfig_manual_wan_ifnames(void) {
 	char all_ifnames[128];
 	int unit;
 
+#if defined(GTBE98)
+	if (gtbe98_vlan_reconfig_ifnames())
+		return;
+#endif
+
 #if defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GT7) || defined(GS7_PRO_MAX)
 	snprintf(wan_ifname, sizeof(wan_ifname), "%s", (is_router_mode() && nvram_get_int("wans_extwan")) ? "vlan4094" : nvram_safe_get("wan_ifname_x"));
 #elif  defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000)  || defined(GTBE19000AI) || defined(GTBE96_AI)

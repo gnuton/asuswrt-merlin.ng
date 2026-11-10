@@ -3638,6 +3638,9 @@ void init_switch()
 					sleep(3);
 				}
 				system("rtkswitch 6");
+#if defined(GTBE98)
+				gtbe98_vlan_driver_init();
+#endif
 			}
 			break;
 		}
@@ -6906,6 +6909,11 @@ system("fapi-GSW-BridgePortConfigSet nBridgePortId=9 nBridgeId=0 bBridgePortMapE
 #else
 void config_switch(void)
 {
+#if defined(GTBE98)
+	/* The explicit WAN path owns the external switch, including failures. */
+	if (gtbe98_vlan_requested())
+		return;
+#endif
 #if defined(RTAX55) || defined(RTAX1800) || defined(RTAX58U_V2) || defined(RTAX3000N) || defined(BR63) || defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI) //handle dualwan on rtkswitch
 #if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(GTBE19000) || defined(GTBE19000AI) || defined(GTBE96_AI)
 	if (!is_rtl8372_boardid())
@@ -7785,6 +7793,12 @@ system("fapi-GSW-BridgePortConfigSet nBridgePortId=9 nBridgeId=0 bBridgePortMapE
 
 void config_extwan(void)
 {
+#if defined(GTBE98)
+	if (gtbe98_vlan_requested()) {
+		gtbe98_vlan_configure();
+		return;
+	}
+#endif
 #if defined(RTCONFIG_BCM_EXT_SWITCH_RTK)
         if (!nvram_match("stop_bv", "1")) {
                 _dprintf("%s:: skip due use vlantag-switch\n", __func__);
@@ -7875,6 +7889,12 @@ void config_extwan(void)
 
 void reset_extwan(void)
 {
+#if defined(GTBE98)
+	if (gtbe98_vlan_requested()) {
+		gtbe98_vlan_reset();
+		return;
+	}
+#endif
 #if !defined(RTCONFIG_BCM_MFG) && !defined(RTBE82M) && !defined(GSBE18000) && !defined(GSBE12000) && !defined(GS7_PRO)
 	if (iface_exist("vlan4094")) {
 		system("vconfig rem vlan4094");
@@ -12101,6 +12121,11 @@ set_wan_tag(char *interface) {
 	int br_idx;
 #endif
 
+#if defined(GTBE98)
+	/* Stale IPTV VID values must not overwrite the explicit WAN interface. */
+	if (gtbe98_vlan_requested())
+		return;
+#endif
 	model = get_model();
 	wan_vid = nvram_get_int("switch_wan0tagid") & 0x0fff;
 	iptv_vid = nvram_get_int("switch_wan1tagid") & 0x0fff;

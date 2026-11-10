@@ -1738,6 +1738,16 @@ get_uplinkports_linkrate(char *ifname)
                 sprintf(wan_ifname, "%s", nvram_safe_get("wan_ifname"));
 
         foreach(word, wan_ifname, next){
+#if defined(GTBE98)
+		if ((((*nvram_safe_get("wan0_dot1q") != '\0') &&
+	     !nvram_match("wan0_dot1q", "0")) ||
+	    nvram_match("gtbe98_wan_vlan_owned", "1"))) {
+			ret = 0;
+			if (is_rtl8372_boardid() && nvram_match("gtbe98_wan_vlan_ready", "1"))
+				ret = nvram_match("gtbe98_wan_vlan_extwan", "1") ?
+					rtk_get_phy_status(1) == 1 : hnd_get_phy_status("eth0") == 1;
+		} else
+#endif
 #if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI) || defined(GT7) || defined(GS7_PRO_MAX)
 		if (!strcmp(word, "vlan4094")) {
 			for (i = 0; i < port_mapping.count; i++) {
@@ -1758,6 +1768,14 @@ get_uplinkports_linkrate(char *ifname)
 			sprintf(out_buf, "W0=X;");
 			lrate[0] = 0;
 		} else {
+#if defined(GTBE98)
+			if ((((*nvram_safe_get("wan0_dot1q") != '\0') &&
+	     !nvram_match("wan0_dot1q", "0")) ||
+	    nvram_match("gtbe98_wan_vlan_owned", "1"))) {
+				ret = nvram_match("gtbe98_wan_vlan_extwan", "1") ?
+					rtk_get_phy_speed(1) : hnd_get_phy_speed("eth0");
+			} else
+#endif
 #if defined(GTBE98) || defined(GTBE98_PRO) || defined(GTBE96) || defined(RTBE58U) || defined(TUFBE3600) || defined(RTBE58U_V2) || defined(TUFBE3600_V2) || defined(RTBE55) || defined(GTBE19000) || defined(RTBE92U) || defined(RTBE95U) || defined(RTBE82U) || defined(TUFBE82) || defined(RTBE58U_PRO) || defined(GTBE19000AI) || defined(GTBE96_AI) || defined(GT7) || defined(GS7_PRO_MAX)
 			if (!strcmp(word, "vlan4094")) {
 				for (i = 0; i < port_mapping.count; i++) {
@@ -3225,6 +3243,18 @@ void get_phy_port_mapping(phy_port_mapping *port_mapping)
 		return;
 
 	memcpy(port_mapping, &port_mapping_static, sizeof(phy_port_mapping));
+
+#if defined(GTBE98)
+	if (is_rtl8372_boardid() && (((*nvram_safe_get("wan0_dot1q") != '\0') &&
+	     !nvram_match("wan0_dot1q", "0")) ||
+	    nvram_match("gtbe98_wan_vlan_owned", "1"))) {
+		static char tagged_wan_ifname[16];
+		strlcpy(tagged_wan_ifname, nvram_safe_get("wan0_ifname"),
+			sizeof(tagged_wan_ifname));
+		if (!strncmp(tagged_wan_ifname, "vlan", 4))
+			port_mapping->port[nvram_match("gtbe98_wan_vlan_extwan", "1") ? 1 : 0].ifname = tagged_wan_ifname;
+	}
+#endif
 
 	port_mapping->extsw_count = 0;
 #if defined(RTCONFIG_EXT_RTL8365MB) 
