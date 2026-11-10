@@ -801,6 +801,11 @@ function turn_off_lacp(){
 
 var reboot_confirm=0;
 function applyRule(){
+	if (productid == "GT-BE98" && ('<% nvram_get("wan0_dot1q"); %>' == "1" || '<% nvram_get("gtbe98_wan_vlan_owned"); %>' == "1")) {
+		alert("IPTV settings are locked while explicit WAN VLAN is active. Disable 802.1Q in WAN > Internet Connection and reboot first.");
+		return false;
+	}
+
 	let hint_str = "";
 	let msg = "";
 

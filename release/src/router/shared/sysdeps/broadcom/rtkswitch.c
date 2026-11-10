@@ -318,6 +318,26 @@ unsigned int rtkswitch_lanPorts_phyStatus(void)
 
 int rtkswitch_LanPort_linkUp(void)
 {
+#if defined(GTBE98)
+	/* WAN/LAN1 is released only after the explicit WAN readback succeeds.
+	 * Retain this restriction when a different port is pending a reboot.
+	 */
+	if ((((*nvram_safe_get("wan0_dot1q") != '\0') &&
+	     !nvram_match("wan0_dot1q", "0")) ||
+	    nvram_match("gtbe98_wan_vlan_owned", "1")) &&
+	    (nvram_match("wans_extwan", "1") ||
+	     nvram_match("gtbe98_wan_vlan_extwan", "1"))) {
+		int port, ret;
+		char port_id[2];
+		for (port = 1; port <= 3; ++port) {
+			snprintf(port_id, sizeof(port_id), "%d", port);
+			ret = eval("rtkswitch", "12", port_id);
+			if (ret)
+				return ret;
+		}
+		return 0;
+	}
+#endif
 	eval("rtkswitch", "5");
 
 	return 0;

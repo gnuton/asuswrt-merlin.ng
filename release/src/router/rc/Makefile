@@ -425,6 +425,9 @@ endif
 endif
 
 OBJS := rc.o init.o interface.o lan.o wireless.o $(if $(RTCONFIG_SOFTWIRE46), s46comm.o) wan.o pppd.o auth.o services.o
+ifeq ($(BUILD_NAME),GT-BE98)
+OBJS += gtbe98_vlan.o
+endif
 OBJS += firewall.o ppp.o services.o common.o conn_diag_log.o
 OBJS += watchdog.o check_watchdog.o fwupg_flashing.o ntp.o udhcpc.o ate.o
 ifeq ($(RTCONFIG_MULTIWAN_IF),y)

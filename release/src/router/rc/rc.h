@@ -18,6 +18,14 @@
 #define _GNU_SOURCE
 
 #include <rtconfig.h>
+#ifdef GTBE98
+extern int gtbe98_vlan_requested(void);
+extern void gtbe98_vlan_driver_init(void);
+extern int gtbe98_vlan_configure(void);
+extern int gtbe98_vlan_wan_start(void);
+extern void gtbe98_vlan_reset(void);
+extern int gtbe98_vlan_reconfig_ifnames(void);
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

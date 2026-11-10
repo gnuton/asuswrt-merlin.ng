@@ -703,6 +703,11 @@ function form_show(v, change_primary_wan){
 }
 
 function applyRule(){
+	if (based_modelid == "GT-BE98" && '<% nvram_get("wan0_dot1q"); %>' == "1" && wans_flag == 1) {
+		alert("Disable explicit WAN VLAN in WAN > Internet Connection before enabling Dual WAN or USB standby.");
+		return false;
+	}
+
 	//if primary wan is not lan and IPTV enabled, need block
 	if(based_modelid == "RT-AC88Q" || based_modelid == "BRT-AC828" || based_modelid == "RT-AD7200") {
 		if(!noiptv_support) {
@@ -1244,6 +1249,14 @@ function applyRule(){
 		}
 	}
 
+	if (based_modelid == "GT-BE98" && '<% nvram_get("wan0_dot1q"); %>' == "1") {
+		var autoWan = $("input[name='autowan_enable']").val();
+		if (document.form.wans_dualwan.value != "wan none" || autoWan == "1" || document.form.wans_standby.value == "1") {
+			alert("Explicit WAN VLAN requires one manually selected WAN without USB standby. Disable WAN VLAN before changing this mode.");
+			return false;
+		}
+		document.form.action_script.value = "reboot";
+	}
 	var reboot_time	= eval("<% get_default_reboot_time(); %>");
 	if(based_modelid =="DSL-AC68U")
 		reboot_time += 70;
