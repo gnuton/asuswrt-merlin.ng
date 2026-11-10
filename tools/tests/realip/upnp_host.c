@@ -65,7 +65,14 @@ static long fappend(FILE *out, const char *p)
 	fclose(in); return n;
 }
 static void append_custom_config(const char *name, FILE *f) { (void)name; (void)f; }
-static void use_custom_config(const char *name, const char *p) { (void)name; (void)p; }
+static void use_custom_config(const char *name, const char *p)
+{
+	FILE *f;
+	(void)name;
+	if (f_exists("/etc/upnp/config.override") && (f = upnp_fopen(p, "w")) != NULL) {
+		fappend(f, "/etc/upnp/config.override"); fclose(f);
+	}
+}
 static void run_postconf(const char *name, const char *p)
 {
 	FILE *f;

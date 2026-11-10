@@ -2340,6 +2340,15 @@ int mtwan_handle_if_updown(const int unit, const char *ifname, const int up)
 
 	}
 
+#ifdef RTCONFIG_GETREALIP
+	/* Reconcile only after firewall, routes and resolver setup have settled. */
+	if (getpid() == 1) {
+		if (up) start_upnp();
+		else update_upnp();
+	} else
+		notify_rc(up ? "start_upnp" : "update_upnp");
+#endif
+
 	return 0;
 }
 

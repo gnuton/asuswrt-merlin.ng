@@ -7589,12 +7589,13 @@ void start_spectrum(void)
 
 /* Keep the daemon serving while generating/customizing its next configuration.
  * SIGUSR1 only sends address-change events; it does not reload ext_ip. */
-static int upnp_same_config(const char *path)
+static int upnp_same_config(const char *path, const char *connection)
 {
 	FILE *a = fopen(path, "r"), *b = fopen("/etc/upnp/config.applied", "r");
 	int ca, cb, same = 0;
+	char applied[256];
 
-	if (a && b) {
+	if (a && b && fgets(applied, sizeof(applied), b) && !strcmp(applied, connection)) {
 		do {
 			ca = fgetc(a);
 			cb = fgetc(b);
@@ -7615,7 +7616,7 @@ static void upnp_apply_config(const char *path, int unit)
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	/* Also compare the connection, which need not appear in a custom config.
 	 * Epoch changes on disconnect, but not on an unchanged DHCP renewal. */
-	snprintf(connection, sizeof(connection), "%d/%s/%s/%s/%s/%s/%s",
+	snprintf(connection, sizeof(connection), "%d/%s/%s/%s/%s/%s/%s\n",
 		unit, get_wan_ifname(unit), nvram_pf_safe_get(prefix, "ipaddr"),
 		nvram_pf_safe_get(prefix, "gateway"), nvram_pf_safe_get(prefix, "state_t"),
 		nvram_safe_get("wans_mode"), nvram_pf_safe_get(prefix, "realip_epoch"));
@@ -7623,15 +7624,14 @@ static void upnp_apply_config(const char *path, int unit)
 	if (nvram_get_int("upnp_pinhole_enable") && strcmp(path, "/etc/upnp/config.alt"))
 		daemon = "miniupnpd-igdv2";
 #endif
-	if (pids(daemon) && nvram_match("upnp_connection", connection) && upnp_same_config(path))
+	if (pids(daemon) && upnp_same_config(path, connection))
 		return;
 
 	stop_upnp();
 	if (xstart(daemon, "-f", path) != 0)
 		return;
-	nvram_set_int("upnp_started", 1);
-	nvram_set("upnp_connection", connection);
 	if ((f = fopen("/etc/upnp/config.applied", "w")) != NULL) {
+		fputs(connection, f);
 		fappend(f, path);
 		fclose(f);
 	}
@@ -7644,11 +7644,12 @@ static void upnp_apply_config(const char *path, int unit)
 #endif
 }
 
-/* A late/coalesced worker event must not undo an explicit service stop. The
+/* config.applied records launch intent, not successful daemon initialization.
+ * A late/coalesced worker event must not undo an explicit service stop. The
  * event carries no IP: always reconcile against current WAN ownership. */
 void update_upnp(void)
 {
-	if (nvram_get_int("upnp_started"))
+	if (f_exists("/etc/upnp/config.applied"))
 		start_upnp();
 }
 
@@ -7998,9 +7999,7 @@ void stop_upnp(void)
 		return;
 	}
 
-	nvram_set_int("upnp_started", 0);
 	unlink("/etc/upnp/config.applied");
-	nvram_unset("upnp_connection");
 	killall_tk("miniupnpd");
 #ifdef RTCONFIG_IGD2
 	killall_tk("miniupnpd-igdv2");
@@ -21612,6 +21611,7 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 			cancel_realip(prefix);
 		if(action & RC_SERVICE_START)
 			start_realip(wan_unit);
+		update_upnp();
 	}
 #endif
 #ifdef RTCONFIG_QCA_PLC_UTILS

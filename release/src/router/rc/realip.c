@@ -1,6 +1,9 @@
 /*
  * Real-IP lookup synchronization and STUN service
  *
+ * The routed lookup below was extracted from rc/services.c. Its inherited
+ * license follows; the synchronization code was added in 2026.
+ *
  * Copyright (C) 2009, Broadcom Corporation. All Rights Reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +18,6 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: services.c,v 1.100 2010/03/04 09:39:18 Exp $
  */
 
 /*
@@ -34,35 +36,44 @@
 #ifdef RTCONFIG_GETREALIP
 static volatile sig_atomic_t realip_interrupted;
 
-/* Never wait for rc while holding the publication lock. rc itself reconciles
- * WAN events directly; workers use the existing service notification path. */
-static void realip_notify_upnp(void)
-{
-	if (getpid() == 1)
-		update_upnp();
-	else
-		notify_rc("update_upnp");
-}
-
 static int realip_lock(void)
 {
 	return file_lock("realip");
 }
 
-static void realip_reset(const char *prefix)
+static void realip_context(const char *prefix, char *buf, size_t len)
+{
+	const char *fields[] = { "proto", "ifname", "pppoe_ifname", "ipaddr", "gateway", "primary", NULL };
+	int i;
+
+	strlcpy(buf, nvram_safe_get("wans_mode"), len);
+	for (i = 0; fields[i]; i++) {
+		strlcat(buf, "/", len);
+		strlcat(buf, nvram_pf_safe_get(prefix, fields[i]), len);
+	}
+}
+
+/* Preserve only a result for this exact connection while its refresh runs.
+ * Failure/cancellation or any connection change clears it; no failure cache. */
+static void realip_reset(const char *prefix, int refresh)
 {
 	unsigned long long generation;
-	char buf[32];
+	char buf[32], context[256];
 
+	realip_context(prefix, context, sizeof(context));
+	refresh = refresh && !strcmp(context, nvram_pf_safe_get(prefix, "realip_context"));
 	generation = strtoull(nvram_pf_safe_get(prefix, "realip_generation"), NULL, 10);
+	refresh = refresh && generation != ULLONG_MAX;
 	/* Do not reuse an ownership token even at counter exhaustion. */
 	if (generation != ULLONG_MAX)
 		generation++;
 	snprintf(buf, sizeof(buf), "%llu", generation);
 	nvram_pf_set(prefix, "realip_state", "0");
-	nvram_pf_set(prefix, "realip_context", "");
+	if (!refresh) {
+		nvram_pf_set(prefix, "realip_context", "");
+		nvram_pf_set(prefix, "realip_ip", "");
+	}
 	nvram_pf_set(prefix, "realip_generation", buf);
-	nvram_pf_set(prefix, "realip_ip", "");
 }
 
 /* Multi-WAN aliases and their underlying WAN share publication ownership.
@@ -75,15 +86,17 @@ static void realip_connection_reset(const char *prefix, int blocked)
 	char mapped[32], *end;
 	long unit = !strncmp(prefix, "wan", 3) ? strtol(prefix + 3, &end, 10) : -1;
 #endif
-	realip_reset(prefix);
-	if (blocked)
+	realip_reset(prefix, !blocked &&
+		!nvram_pf_get_int(prefix, "realip_blocked"));
+	if (blocked && !nvram_pf_get_int(prefix, "realip_blocked"))
 		nvram_pf_set(prefix, "realip_epoch", nvram_pf_safe_get(prefix, "realip_generation"));
 	nvram_pf_set(prefix, "realip_blocked", blocked ? "1" : "0");
 #ifdef RTCONFIG_MULTIWAN_IF
 	if (unit >= 0 && unit <= INT_MAX && !strcmp(end, "_") && is_mtwan_unit(unit) &&
 	    mtwan_get_real_wan(unit, mapped, sizeof(mapped)) >= 0 && strcmp(prefix, mapped)) {
-		realip_reset(mapped);
-		if (blocked)
+		realip_reset(mapped, !blocked &&
+			!nvram_pf_get_int(mapped, "realip_blocked"));
+		if (blocked && !nvram_pf_get_int(mapped, "realip_blocked"))
 			nvram_pf_set(mapped, "realip_epoch", nvram_pf_safe_get(mapped, "realip_generation"));
 		nvram_pf_set(mapped, "realip_blocked", blocked ? "1" : "0");
 	}
@@ -98,7 +111,6 @@ void realip_invalidate(const char *prefix)
 		return;
 	realip_connection_reset(prefix, 1);
 	file_unlock(lock);
-	realip_notify_upnp();
 }
 
 /* A service STOP cancels requests without changing connection eligibility. */
@@ -107,13 +119,12 @@ void cancel_realip(const char *prefix)
 	int lock = realip_lock();
 	if (lock < 0)
 		return;
-	realip_reset(prefix);
+	realip_reset(prefix, 0);
 	file_unlock(lock);
-	realip_notify_upnp();
 }
 
 /* State transition and lookup invalidation are one transaction. A DHCP renew
- * also revokes pending lookups, even when the address/interface are unchanged.
+ * revokes pending lookups but preserves the address for an unchanged refresh.
  */
 void realip_wan_state(const char *prefix, int state)
 {
@@ -123,20 +134,8 @@ void realip_wan_state(const char *prefix, int state)
 	nvram_pf_set_int(prefix, "state_t", state);
 	realip_connection_reset(prefix, state != WAN_STATE_CONNECTED);
 	file_unlock(lock);
-	realip_notify_upnp();
 }
 
-static void realip_context(const char *prefix, char *buf, size_t len)
-{
-	const char *fields[] = { "proto", "ifname", "pppoe_ifname", "ipaddr", "gateway", "primary", NULL };
-	int i;
-
-	strlcpy(buf, nvram_safe_get("wans_mode"), len);
-	for (i = 0; fields[i]; i++) {
-		strlcat(buf, "/", len);
-		strlcat(buf, nvram_pf_safe_get(prefix, fields[i]), len);
-	}
-}
 
 static int realip_connected(const char *prefix)
 {
@@ -152,7 +151,7 @@ static int realip_begin_locked(const char *prefix, char *token, size_t len)
 	if (!realip_connected(prefix) ||
 	    strtoull(nvram_pf_safe_get(prefix, "realip_generation"), NULL, 10) == ULLONG_MAX)
 		return 0;
-	realip_reset(prefix);
+	realip_reset(prefix, 1);
 	strlcpy(token, nvram_pf_safe_get(prefix, "realip_generation"), len);
 	realip_context(prefix, context, sizeof(context));
 	nvram_pf_set(prefix, "realip_context", context);
@@ -166,39 +165,33 @@ static int realip_begin(const char *prefix, char *token, size_t len)
 		return 0;
 	ok = realip_begin_locked(prefix, token, len);
 	file_unlock(lock);
-	if (ok)
-		realip_notify_upnp();
 	return ok;
 }
 
-static int realip_script_begin(void)
+static int realip_script_begin(char tokens[2][32], int *lb)
 {
-	int unit, lb, primary = -1, auxstate, lock = realip_lock();
-	char prefix[16], tokens[2][32] = { "-", "-" };
+	int unit, primary = -1, auxstate, lock = realip_lock();
+	char prefix[16];
 
 	if (lock < 0)
 		return 1;
-	lb = nvram_match("wans_mode", "lb");
+	*lb = nvram_match("wans_mode", "lb");
 	if (nvram_match("wan0_primary", "1"))
 		primary = 0;
 	else if (nvram_match("wan1_primary", "1"))
 		primary = 1;
 	for (unit = 0; unit < 2; unit++) {
-		if (!lb && unit != primary)
+		if (!*lb && unit != primary)
 			continue;
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 		auxstate = nvram_pf_get_int(prefix, "auxstate_t");
-		if (lb && (nvram_pf_get_int(prefix, "sbstate_t") != 0 ||
+		if (*lb && (nvram_pf_get_int(prefix, "sbstate_t") != 0 ||
 		           (auxstate != 0 && auxstate != 2)))
 			continue;
 		realip_begin_locked(prefix, tokens[unit], sizeof(tokens[unit]));
 	}
 	file_unlock(lock);
-	realip_notify_upnp();
-	if (!lb && !strcmp(tokens[0], "-") && !strcmp(tokens[1], "-"))
-		return 1;
-	printf("%d %s %s\n", lb, tokens[0], tokens[1]);
-	return 0;
+	return !*lb && !tokens[0][0] && !tokens[1][0];
 }
 
 /* Must be called with realip_lock held. */
@@ -240,8 +233,8 @@ static int realip_valid(const char *ip)
 }
 
 /* A single locked snapshot: never combine state/IP from different requests.
- * No previous-IP fallback: even an unchanged private WAN can change upstream
- * NAT address. Pending and failed requests therefore omit ext_ip entirely.
+ * A pending refresh may retain its previous address on the same connection.
+ * Completed failure clears the address, and connection changes revoke it.
  * When STUN agrees with the interface, let MiniUPnPd use the interface address
  * directly; a later unavailable STUN result need not restart a public WAN. */
 void realip_upnp_address(const char *prefix, char *ip, size_t len)
@@ -251,7 +244,8 @@ void realip_upnp_address(const char *prefix, char *ip, size_t len)
 	ip[0] = 0;
 	if (lock < 0)
 		return;
-	if (nvram_pf_get_int(prefix, "realip_state") == 2 &&
+	if ((nvram_pf_get_int(prefix, "realip_state") == 2 ||
+	     nvram_pf_get_int(prefix, "realip_state") == 0) &&
 	    realip_matches(prefix, nvram_pf_safe_get(prefix, "realip_generation")) &&
 	    realip_valid(nvram_pf_safe_get(prefix, "realip_ip")) &&
 	    strcmp(nvram_pf_safe_get(prefix, "realip_ip"), nvram_pf_safe_get(prefix, "ipaddr")))
@@ -280,8 +274,8 @@ static int realip_finish(const char *prefix, const char *token, const char *ip)
 		nvram_pf_set(prefix, "realip_state", valid ? "2" : "1");
 	}
 	file_unlock(lock);
-	if (published)
-		realip_notify_upnp();
+	if (published && getpid() != 1)
+		notify_rc("update_upnp");
 	return ok;
 }
 
@@ -329,18 +323,20 @@ static int realip_report(const char *token0, const char *token1, int lb)
 void start_realip(int unit)
 {
 	char prefix[32], token[32], unitstr[16];
-	char *args[] = { "getrealip.sh", unitstr, token, NULL, NULL };
+	char *args[] = { "realip", "--script", unitstr, token, NULL };
 	pid_t pid;
 
 	if (unit < 0)
 		return;
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	if (unit > 1) {
-		args[0] = "realip";
+		args[1] = unitstr;
+		args[2] = token;
 		args[3] = prefix;
 	}
 #ifdef RTCONFIG_MULTIWAN_IF
-	args[0] = "realip";
+	args[1] = unitstr;
+	args[2] = token;
 	args[3] = prefix;
 	if (is_mtwan_unit(unit) && mtwan_get_real_wan(unit, prefix, sizeof(prefix)) < 0)
 		return;
@@ -363,7 +359,7 @@ static int realip_exec(char **args, const char *output, const char *prefix, cons
 	int status;
 
 	if (realip_interrupted || !realip_current(prefix, token) ||
-	    _eval(args, output, 0, &pid) != 0)
+	    _eval(args, output, 10, &pid) != 0)
 		return -1;
 	for (;;) {
 		ret = waitpid(pid, &status, WNOHANG);
@@ -381,14 +377,31 @@ static int realip_exec(char **args, const char *output, const char *prefix, cons
 	}
 }
 
-/* Script probes use the same child ownership as the routed C lookup. This
- * also cancels a superseded probe during DNS/STUN, rather than waiting for it.
- */
-static int realip_probe(const char *prefix, const char *token, char *ifname, char *server)
+static int realip_read_result(const char *path, char *ip, size_t len)
 {
-	char result_path[] = "/tmp/stun.XXXXXX", output[64], ip[64];
+	char line[64];
+	FILE *fp = fopen(path, "r");
+	int found = 0;
+
+	while (fp && fgets(line, sizeof(line), fp)) {
+		trimNL(line);
+		if (realip_valid(line)) {
+			strlcpy(ip, line, len);
+			found = 1;
+			break;
+		}
+	}
+	if (fp)
+		fclose(fp);
+	return found;
+}
+
+/* Own the probe through DNS and STUN. _eval supplies a ten-second alarm. */
+static int realip_probe(const char *prefix, const char *token, char *ifname, char *server,
+	char *result, size_t len)
+{
+	char result_path[] = "/tmp/stun.XXXXXX", output[64];
 	char *args[] = { "ministun", "-t", "1000", "-c", "1", "-i", ifname, server, NULL };
-	FILE *fp;
 	int fd, success = 0;
 
 	if (!server[0])
@@ -398,21 +411,57 @@ static int realip_probe(const char *prefix, const char *token, char *ifname, cha
 		return 1;
 	close(fd);
 	snprintf(output, sizeof(output), ">%s", result_path);
-	if (!realip_exec(args, output, prefix, token) && !realip_interrupted && realip_current(prefix, token)) {
-		fp = fopen(result_path, "r");
-		while (fp && fgets(ip, sizeof(ip), fp)) {
-			trimNL(ip);
-			if (realip_valid(ip)) {
-				puts(ip);
-				success = 1;
-				break;
-			}
-		}
-		if (fp)
-			fclose(fp);
-	}
+	if (!realip_exec(args, output, prefix, token) && !realip_interrupted && realip_current(prefix, token))
+		success = realip_read_result(result_path, result, len);
 	unlink(result_path);
 	return success ? 0 : 1;
+}
+
+/* The DDNS script and rc use the same worker, without shell helper processes.
+ * Reserve both LB units before either probe and report only a current pair. */
+static int realip_script(int argc, char **argv)
+{
+	char *servers[] = { "", "stun.l.google.com:19302", "stun.cloudflare.com:3478",
+		"stun1.l.google.com:19302", "stun2.l.google.com:19302",
+		"stun3.l.google.com:19302", "stun4.l.google.com:19302", NULL };
+	char tokens[2][32] = { "", "" }, prefix[16], ifname[IFNAMSIZ], ip[64];
+	int unit, i, lb = nvram_match("wans_mode", "lb"), rc = 1;
+
+	if (argc == 4) {
+		if (strcmp(argv[2], "0") && strcmp(argv[2], "1"))
+			return 1;
+		strlcpy(tokens[atoi(argv[2])], argv[3], sizeof(tokens[0]));
+	} else if (argc != 2 || realip_script_begin(tokens, &lb))
+		return 1;
+
+	for (unit = 0; unit < 2; unit++) {
+		if (!tokens[unit][0])
+			continue;
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		if (realip_interrupted || !realip_current(prefix, tokens[unit]))
+			goto done;
+		strlcpy(ifname, get_wan_ifname(unit), sizeof(ifname));
+		ip[0] = 0;
+		for (i = 0; servers[i]; i++) {
+			if (realip_interrupted || !realip_current(prefix, tokens[unit]))
+				goto done;
+			if (!realip_probe(prefix, tokens[unit], ifname, servers[i], ip, sizeof(ip)))
+				break;
+		}
+		if (!realip_finish(prefix, tokens[unit], ip))
+			goto done;
+	}
+	if (!realip_interrupted)
+		rc = realip_report(tokens[0], tokens[1], lb);
+ done:
+	/* Completed tokens cannot publish twice; only unfinished ownership fails. */
+	for (unit = 0; unit < 2; unit++) {
+		if (tokens[unit][0]) {
+			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+			realip_finish(prefix, tokens[unit], "");
+		}
+	}
+	return rc;
 }
 
 static int realip_lookup(int argc, char *argv[])
@@ -421,21 +470,7 @@ static int realip_lookup(int argc, char *argv[])
 		"stun.l.google.com",
 		"stun.stunprotocol.org",
 		"stun4.l.google.com:19302",
-		// "stun3.l.google.com:19302",
-		// "stun2.l.google.com:19302",
-		// "stun1.l.google.com:19302",
 		"stun.pjsip.org",
-		// "stun.linphone.org",
-		// "stun.freeswitch.org",
-		// "stun.develz.org",
-		// "stun.wifirst.net",
-		// "stun.sipnet.net",
-		// "stun.sipgate.net",
-		// "stun.rolmail.net",
-		// "stun.nonoh.net",
-		// "stun.nfon.net",
-		// "stun.infra.net",
-		// "stun.dus.net",
 		NULL};
 	int i = 0;
 	int wan_unit, requested_unit;
@@ -509,11 +544,6 @@ static int realip_lookup(int argc, char *argv[])
 			return -1;
 	} else if (!realip_begin(wan_prefix, token, sizeof(token)))
 		return -1;
-	while (nvram_get_int("link_internet") != 2) {
-		if (realip_interrupted || !realip_current(wan_prefix, token))
-			goto done;
-		sleep(1);
-	}
 	/* Legacy realip installs temporary routes. Serialize those separately;
 	 * the short publication lock remains available to WAN transitions.
 	 */
@@ -574,20 +604,9 @@ static int realip_lookup(int argc, char *argv[])
 #endif
 		eval("ip", "route", "del", stun_server_ip, "via", wan_gateway, "dev", wan_ifname, "table", table_str);
 
-		if (!ret) {
-			FILE *fp = fopen(result_path, "r");
-			while (fp && fgets(buf, sizeof(buf), fp)) {
-				trimNL(buf);
-				if (realip_valid(buf)) {
-					success = 1;
-					break;
-				}
-			}
-
-			if (fp)
-				fclose(fp);
-			if (success)
-				break;
+		if (!ret && realip_read_result(result_path, buf, sizeof(buf))) {
+			success = 1;
+			break;
 		}
 	}
 
@@ -604,21 +623,18 @@ done:
 #endif
 	if (realip_interrupted)
 		success = 0;
+	unlink(result_path);
+	if (route_lock >= 0)
+		file_unlock(route_lock);
 	if (!realip_finish(wan_prefix, token, success ? buf : ""))
 		success = 0;
 	if (success)
 		printf("%s\n", buf);
-	unlink(result_path);
-	if (route_lock >= 0)
-		file_unlock(route_lock);
 	return success ? 0 : -3;
 }
 
 int realip_main(int argc, char *argv[])
 {
-	char prefix[32], token[32];
-	char *end;
-	long unit;
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof(sa));
@@ -628,31 +644,10 @@ int realip_main(int argc, char *argv[])
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGHUP, &sa, NULL);
 	realip_interrupted = 0;
-	if (argc == 5 && !strcmp(argv[1], "--report"))
-		return realip_report(argv[2], argv[3], !strcmp(argv[4], "1"));
-	if (argc == 2 && !strcmp(argv[1], "--begin-script"))
-		return realip_script_begin();
-	if (argc == 3 && !strcmp(argv[1], "--valid"))
-		return realip_valid(argv[2]) ? 0 : 1;
-	if (argc >= 3 && !strncmp(argv[1], "--", 2)) {
-		unit = strtol(argv[2], &end, 10);
-		if (!argv[2][0] || *end || unit < 0 || unit > INT_MAX)
-			return 1;
-		snprintf(prefix, sizeof(prefix), "wan%ld_", unit);
-		if (argc == 3 && !strcmp(argv[1], "--begin")) {
-			if (!realip_begin(prefix, token, sizeof(token)))
-				return 1;
-			puts(token);
-			return 0;
-		}
-		if (argc == 4 && !strcmp(argv[1], "--current"))
-			return realip_current(prefix, argv[3]) ? 0 : 1;
-		if (argc == 5 && !strcmp(argv[1], "--finish"))
-			return realip_finish(prefix, argv[3], argv[4]) ? 0 : 1;
-		if (argc == 6 && !strcmp(argv[1], "--probe"))
-			return realip_probe(prefix, argv[3], argv[4], argv[5]);
-		return 1;
-	}
+	/* exec preserves an inherited SIG_IGN; waitpid must own our children. */
+	signal(SIGCHLD, SIG_DFL);
+	if (argc >= 2 && !strcmp(argv[1], "--script"))
+		return realip_script(argc, argv);
 
 	return realip_lookup(argc, argv);
 }

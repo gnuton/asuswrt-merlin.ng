@@ -16,6 +16,9 @@ SERVICES = ROOT / 'release/src/router/rc/services.c'
 
 STUN = '''#!/usr/bin/env python3
 import os, pathlib, time
+if os.environ.get('STUN_HANG_DEFAULT') and len(__import__('sys').argv) == 7:
+    while True:
+        time.sleep(0.01)
 marker = os.environ.get('STUN_MARKER')
 if marker:
     pathlib.Path(marker).write_text(str(os.getpid()))
@@ -35,12 +38,14 @@ class Realip(unittest.TestCase):
     def setUpClass(cls):
         cls.build = tempfile.TemporaryDirectory(prefix='realip-build-')
         cls.bin = Path(cls.build.name)
-        base = ['cc', '-std=gnu89', '-Wall', '-Wextra', '-Werror', '-I' + str(HERE)]
+        base = ['cc', '-std=gnu89', '-Wall', '-Wextra', '-Werror', '-I' + str(HERE), '-I' + str(SOURCE.parent)]
         for name, defines in [('single', []), ('dual', ['RTCONFIG_DUALWAN']),
                               ('multi', ['RTCONFIG_MULTIWAN_IF']),
                               ('both', ['RTCONFIG_DUALWAN', 'RTCONFIG_MULTIWAN_IF'])]:
             subprocess.run(base + ['-DRTCONFIG_GETREALIP'] + ['-D' + d for d in defines] +
-                           [str(SOURCE), str(HERE / 'host.c'), '-o', str(cls.bin / name)], check=True)
+                           ['-c', str(SOURCE), '-o', str(cls.bin / (name + '.o'))], check=True)
+            subprocess.run(base + ['-DRTCONFIG_GETREALIP'] + ['-D' + d for d in defines] +
+                           [str(HERE / 'host.c'), '-o', str(cls.bin / name)], check=True)
         subprocess.run(base + ['-c', str(SOURCE), '-o', str(cls.bin / 'disabled.o')], check=True)
         services = SERVICES.read_text()
         block = services[services.index('/* Keep the daemon serving'):services.index('void reload_upnp(void)')]
@@ -55,7 +60,7 @@ class Realip(unittest.TestCase):
             subprocess.run(base + ['-Wno-unused-function', '-Wno-unused-variable', '-Wno-misleading-indentation', '-I' + str(cls.bin)] +
                            ['-D' + d for d in defines] + (['-DUPNP_WITHOUT_REALIP'] if name == 'upnp-disabled' else []) +
                            ['-DRTCONFIG_GETREALIP',
-                           str(SOURCE), str(HERE / 'upnp_host.c'), '-o', str(cls.bin / name)], check=True)
+                           str(HERE / 'upnp_host.c'), '-o', str(cls.bin / name)], check=True)
         (cls.bin / 'realip').symlink_to('both')
         (cls.bin / 'nvram').symlink_to('both')
         (cls.bin / 'getrealip.sh').symlink_to(SCRIPT)
@@ -154,17 +159,6 @@ class Realip(unittest.TestCase):
         self.command('--finish', unit, token, ip)
         return token
 
-    def test_upnp_initial_fast_and_unchanged_completion(self):
-        token = self.publish()
-        self.upnp()
-        self.assertIn('ext_ip=198.51.100.10\n', self.config())
-        self.assertEqual(self.daemon_starts(), 1)
-        self.upnp('update')
-        self.assertEqual(self.daemon_starts(), 1)
-        self.command('--finish', 0, token, '203.0.113.1', check=False)
-        self.upnp('update')
-        self.assertEqual(self.daemon_starts(), 1)
-
     def test_upnp_slow_boot_public_wan_renew_and_recovery(self):
         self.set('wan0_ipaddr', '198.51.100.10')
         pending, gate, _ = self.held('boot')
@@ -191,40 +185,101 @@ class Realip(unittest.TestCase):
         self.upnp()
         pending = self.command('--begin', 0).stdout.strip()
         self.upnp('update')
-        self.assertNotIn('ext_ip=', self.config())
+        self.assertIn('ext_ip=198.51.100.10', self.config())
         starts = self.daemon_starts()
         self.command('--finish', 0, pending, '')
         self.upnp('update')
-        self.assertEqual(self.daemon_starts(), starts)
+        self.assertNotIn('ext_ip=', self.config())
+        self.assertEqual(self.daemon_starts(), starts + 1)
+        for _ in range(3):
+            self.command('--finish', 0, self.command('--begin', 0).stdout.strip(), '')
+            self.upnp('update')
+        self.assertEqual(self.daemon_starts(), starts + 1)
         self.publish('203.0.113.8')
         self.upnp('update')
         self.assertIn('ext_ip=203.0.113.8', self.config())
 
-    def test_upnp_pending_renew_keeps_daemon_without_previous_ip(self):
+    def test_upnp_private_wan_refresh_same_address_never_restarts(self):
+        self.publish()
         self.upnp()
-        self.command('--test-state', 'wan0_', 2)
-        pending, gate, _ = self.held('renew')
-        self.upnp()
+        self.command('--test-state', 'wan0_', 2)  # DHCP renew, same identity
+        pending, gate, _ = self.held('same', STUN_IP='198.51.100.10')
+        self.upnp()  # wan_up's settled reconciliation, with STUN still running
+        self.upnp('update')  # a previously queued event must also preserve it
+        self.assertIn('ext_ip=198.51.100.10', self.config())
+        self.assertEqual(self.get('wan0_realip_state'), '0')
+        self.assertEqual(self.daemon_starts(), 1)
+        gate.touch()
+        self.assertEqual(self.finish(pending)[:2], (0, 'External IP is 198.51.100.10\n'))
+        self.upnp('update')
+        self.upnp('update')
         self.assertEqual(self.daemon_starts(), 1)
         self.set('upnp_secure', '1')
         self.upnp()
         self.assertEqual(self.daemon_starts(), 2)
         self.assertIn('secure_mode=yes', self.config())
-        gate.touch()
-        self.finish(pending)
 
-    def test_upnp_public_address_change_and_secondary_result(self):
+    def test_upnp_private_wan_refresh_new_address_restarts_once(self):
         self.set('wans_mode', 'lb')
         self.publish()
         self.upnp()
         self.publish('203.0.113.99', unit=1)
         self.upnp('update')
         self.assertEqual(self.daemon_starts(), 1)
-        self.assertIn('ext_ip=198.51.100.10', self.config())
-        self.publish('203.0.113.10')
+        pending, gate, _ = self.held('changed', STUN_IP='203.0.113.50')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 1)
+        gate.touch()
+        self.assertEqual(self.finish(pending)[0], 0)
+        self.upnp('update')
         self.upnp('update')
         self.assertEqual(self.daemon_starts(), 2)
-        self.assertIn('ext_ip=203.0.113.10', self.config())
+        self.assertIn('ext_ip=203.0.113.50', self.config())
+
+    def test_wan_transitions_only_invalidate_without_reconciling(self):
+        self.publish()
+        self.upnp()
+        notifications = self.get('routes').count('notify update_upnp')
+        self.command('--test-down', 'wan0_')
+        self.assertEqual(self.address(), '')
+        self.command('--test-state', 'wan0_', 4)
+        self.command('--test-state', 'wan0_', 2)
+        self.assertEqual(self.address(), '')
+        self.assertEqual(self.get('routes').count('notify update_upnp'), notifications)
+        self.assertEqual(self.daemon_starts(), 1)
+        self.upnp()  # existing settled start point
+        self.assertNotIn('ext_ip=', self.config())
+        self.assertEqual(self.daemon_starts(), 2)
+
+    def test_pending_refresh_cannot_survive_interface_change(self):
+        self.publish()
+        self.upnp()
+        pending, gate, _ = self.held('interface')
+        self.set('wan0_ifname', 'eth9')
+        self.assertEqual(self.address(), '')
+        self.command('--test-state', 'wan0_', 2)
+        self.assert_result(0, 0, '')
+        self.upnp()
+        self.assertIn('ext_ifname=eth9', self.config())
+        self.assertNotIn('ext_ip=', self.config())
+        gate.touch()
+        self.assertNotEqual(self.finish(pending)[0], 0)
+
+    def test_no_internet_flag_wait_and_inherited_sigchld_ignore(self):
+        self.set('link_internet', '0')
+        self.assertEqual(self.finish(self.spawn([str(self.bin / 'realip'), '0']))[0], 0)
+        result = subprocess.run([str(self.bin / 'realip'), '--script'], env=self.env,
+                                preexec_fn=lambda: signal.signal(signal.SIGCHLD, signal.SIG_IGN),
+                                capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, 'External IP is 198.51.100.10\n')
+
+    def test_stun_child_timeout_uses_existing_eval_alarm(self):
+        pending = self.spawn(STUN_HANG_DEFAULT='1')
+        out, err = pending.communicate(timeout=15)
+        self.assertEqual(pending.returncode, 0, err)
+        self.assertEqual(out, 'External IP is 198.51.100.10\n')
+        self.assert_result(0, 2, '198.51.100.10')
 
     def test_upnp_disconnect_failover_and_same_address_reconnect(self):
         self.upnp()
@@ -284,6 +339,22 @@ class Realip(unittest.TestCase):
         self.upnp('update')
         self.assertEqual(self.daemon_starts(), 4)
 
+    def test_upnp_custom_file_and_replacement_are_compared_after_hooks(self):
+        self.publish()
+        self.upnp()
+        (self.data / 'upnp/config.custom').write_text('# custom append\n')
+        self.upnp('update')
+        self.assertIn('# custom append', self.config())
+        self.assertEqual(self.daemon_starts(), 2)
+        (self.data / 'upnp/config.override').write_text('ext_ifname=eth0\next_ip=203.0.113.80\n')
+        self.upnp('update')
+        self.assertNotIn('ext_ip=198.51.100.10', self.config())
+        self.assertIn('ext_ip=203.0.113.80', self.config())
+        self.assertEqual(self.daemon_starts(), 3)
+        self.publish('203.0.113.81')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 3)
+
     def test_upnp_completion_after_early_daemon_exit(self):
         self.upnp()
         self.set('miniupnpd', '0')
@@ -298,6 +369,11 @@ class Realip(unittest.TestCase):
     def test_upnp_lifecycle_epoch_and_wan_address(self):
         self.upnp()
         self.command('--test-down', 'wan0_')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
+        self.command('--test-down', 'wan0_')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
         self.command('--test-state', 'wan0_', 2)
         self.upnp()
         self.assertEqual(self.daemon_starts(), 2)
@@ -314,14 +390,14 @@ class Realip(unittest.TestCase):
 
     def test_upnp_publication_notifies_only_for_current_request(self):
         token = self.command('--begin', 0).stdout.strip()
-        self.assertEqual(self.get('routes').count('notify update_upnp'), 1)
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 0)
         newer = self.command('--begin', 0).stdout.strip()
         self.command('--finish', 0, token, '203.0.113.3', check=False)
-        self.assertEqual(self.get('routes').count('notify update_upnp'), 2)
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 0)
         self.command('--finish', 0, newer, '203.0.113.4')
-        self.assertEqual(self.get('routes').count('notify update_upnp'), 3)
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 1)
         self.command('--finish', 0, newer, '203.0.113.5', check=False)
-        self.assertEqual(self.get('routes').count('notify update_upnp'), 3)
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 1)
         services = SERVICES.read_text()
         self.assertIn('strcmp(script, "update_upnp") == 0', services)
         self.assertNotIn('sleep(', services[services.index('void start_upnp(void)'):
@@ -390,7 +466,7 @@ class Realip(unittest.TestCase):
         self.command('--test-state', 'wan0_', 2)
         delayed = self.spawn(['/bin/sh', str(SCRIPT), '0', token])
         self.assertEqual(self.finish(delayed)[:2], (1, ''))
-        self.assert_result(0, 0, '')
+        self.assert_result(0, 0, '198.51.100.2')
 
     def test_failover(self):
         old, gate, _ = self.held('old')
@@ -458,7 +534,7 @@ class Realip(unittest.TestCase):
                               REALIP_TEST_WRITE_DELAY='1')
         self.wait_for(lambda: self.get('wan0_realip_ip') == '198.51.100.4')
         # This invalidation must wait for the in-progress publisher, then clear it.
-        self.command('--test-state', 'wan0_', 2)
+        self.command('--test-down', 'wan0_')
         self.assertEqual(self.finish(finisher)[0], 0)
         self.assert_result(0, 0, '')
 

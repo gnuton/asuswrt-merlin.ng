@@ -74,7 +74,6 @@ void file_unlock(int fd) { close(fd); }
 int _eval(char **args, const char *output, int timeout, pid_t *child)
 {
 	pid_t pid; int status;
-	(void)timeout;
 	pid = fork();
 	if (pid < 0) return -1;
 	if (!pid) {
@@ -85,6 +84,7 @@ int _eval(char **args, const char *output, int timeout, pid_t *child)
 			if (fd < 0) _exit(126);
 			dup2(fd, STDOUT_FILENO); dup2(fd, STDERR_FILENO); close(fd);
 		}
+		alarm(timeout);
 		execvp(args[0], args); _exit(127);
 	}
 	if (child) { *child = pid; return 0; }
@@ -109,7 +109,7 @@ char *get_wan_ifname(int unit)
 	char prefix[32]; const char *proto;
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 	proto = nvram_pf_safe_get(prefix, "proto");
-	return nvram_pf_safe_get(prefix, !strcmp(proto, "pppoe") ? "pppoe_ifname" : "ifname");
+	return nvram_pf_safe_get(prefix, (!strcmp(proto, "pppoe") || !strcmp(proto, "pptp") || !strcmp(proto, "l2tp")) ? "pppoe_ifname" : "ifname");
 }
 void trimNL(char *s) { s[strcspn(s, "\r\n")] = 0; }
 int get_nr_wan_unit(void) { return 2; }
@@ -127,6 +127,30 @@ int mtwan_get_route_table_id(int unit, char *table, size_t n)
 void update_upnp(void) { }
 #endif
 int notify_rc(const char *event) { return mock_eval("notify", event, NULL); }
+#include "realip.c"
+/* Internal protocol operations are test-only, compiled in the same unit. */
+static int test_operation(int argc, char **argv)
+{
+	char prefix[32], token[32], tokens[2][32] = { "", "" };
+	int lb, rc;
+	if (argc == 2 && !strcmp(argv[1], "--begin-script")) {
+		rc = realip_script_begin(tokens, &lb);
+		if (!rc) printf("%d %s %s\n", lb, tokens[0][0] ? tokens[0] : "-", tokens[1][0] ? tokens[1] : "-");
+		return rc;
+	}
+	if (argc == 3 && !strcmp(argv[1], "--valid"))
+		return !realip_valid(argv[2]);
+	if (argc >= 3) {
+		snprintf(prefix, sizeof(prefix), "wan%d_", atoi(argv[2]));
+		if (!strcmp(argv[1], "--begin")) {
+			if (!realip_begin(prefix, token, sizeof(token))) return 1;
+			puts(token); return 0;
+		}
+		if (argc == 5 && !strcmp(argv[1], "--finish"))
+			return !realip_finish(prefix, argv[3], argv[4]);
+	}
+	return realip_main(argc, argv);
+}
 int main(int argc, char **argv)
 {
 	const char *prog = strrchr(argv[0], '/'); prog = prog ? prog + 1 : argv[0];
@@ -141,5 +165,5 @@ int main(int argc, char **argv)
 	if (argc == 3 && !strcmp(argv[1], "--test-address")) {
 		char ip[INET_ADDRSTRLEN]; realip_upnp_address(argv[2], ip, sizeof(ip)); puts(ip); return 0;
 	}
-	return realip_main(argc, argv);
+	return test_operation(argc, argv);
 }

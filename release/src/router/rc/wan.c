@@ -3959,19 +3959,6 @@ wan_up(const char *pwan_ifname)
 			}
 		}
 #endif
-#ifdef RTCONFIG_DUALWAN
-		if (nvram_match("wans_mode", "lb")) {
-			int unit = wan_primary_ifunit();
-
-			if (!is_phy_connect(unit))
-				unit = 1 - unit;
-
-			if (unit != nvram_get_int("upnp_unit") ||
-				strcmp(wan_ifname, nvram_safe_get("upnp_ifname"))) {
-				start_upnp();
-			}
-		}
-#endif
 
 		start_firewall(wan_unit, 0);
 #if defined(RTCONFIG_IPV6) && (defined(RTAX82_XD6) || defined(RTAX82_XD6S) || defined(XD6_V2) || defined(ET12))
@@ -4032,6 +4019,20 @@ wan_up(const char *pwan_ifname)
 		update_sdn_by_wan(wan_unit);
 #endif
 #endif
+#ifdef RTCONFIG_DUALWAN
+		if (nvram_match("wans_mode", "lb")) {
+			int unit = wan_primary_ifunit();
+
+			if (!is_phy_connect(unit))
+				unit = 1 - unit;
+
+			if (unit != nvram_get_int("upnp_unit") ||
+				strcmp(wan_ifname, nvram_safe_get("upnp_ifname"))) {
+				start_upnp();
+			}
+		}
+#endif
+
 		_dprintf("%s_x(%s): done.\n", __FUNCTION__, wan_ifname);
 
 		return;
@@ -4819,6 +4820,13 @@ wan_down(char *wan_ifname)
 #ifdef RTCONFIG_MULTILAN_CFG
 	update_sdn_by_wan(wan_unit);
 #endif
+#endif
+#ifdef RTCONFIG_GETREALIP
+	/* Routes and WAN state are settled; never reconcile inside state changes. */
+	if (getpid() == 1)
+		update_upnp();
+	else
+		notify_rc("update_upnp");
 #endif
 }
 
