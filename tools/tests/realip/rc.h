@@ -41,4 +41,7 @@ void realip_wan_state(const char *, int);
 void realip_invalidate(const char *);
 void cancel_realip(const char *);
 void start_realip(int);
+int notify_rc(const char *);
+void update_upnp(void);
+void realip_upnp_address(const char *, char *, size_t);
 #endif

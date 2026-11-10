@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / 'release/src/router/rom/apps_scripts/getrealip.sh'
 SOURCE = ROOT / 'release/src/router/rc/realip.c'
 HERE = Path(__file__).resolve().parent
+SERVICES = ROOT / 'release/src/router/rc/services.c'
 
 STUN = '''#!/usr/bin/env python3
 import os, pathlib, time
@@ -41,6 +42,20 @@ class Realip(unittest.TestCase):
             subprocess.run(base + ['-DRTCONFIG_GETREALIP'] + ['-D' + d for d in defines] +
                            [str(SOURCE), str(HERE / 'host.c'), '-o', str(cls.bin / name)], check=True)
         subprocess.run(base + ['-c', str(SOURCE), '-o', str(cls.bin / 'disabled.o')], check=True)
+        services = SERVICES.read_text()
+        block = services[services.index('/* Keep the daemon serving'):services.index('void reload_upnp(void)')]
+        (cls.bin / 'upnp_services.c').write_text(block)
+        for name, defines in [('upnp', ['RTCONFIG_GETREALIP', 'RTCONFIG_DUALWAN', 'RTCONFIG_IGD2']),
+                              ('upnp-single', ['RTCONFIG_GETREALIP']),
+                              ('upnp-disabled', []),
+                              ('upnp-features', ['RTCONFIG_GETREALIP', 'RTCONFIG_DUALWAN',
+                               'RTCONFIG_IGD2', 'RTCONFIG_AUPNPC', 'RTCONFIG_AURASYNC',
+                               'RTCONFIG_GEFORCENOW', 'RTCONFIG_HTTPS', 'RTCONFIG_WEBDAV',
+                               'RTCONFIG_TUNNEL', 'RTCONFIG_APP_PREINSTALLED'])]:
+            subprocess.run(base + ['-Wno-unused-function', '-Wno-unused-variable', '-Wno-misleading-indentation', '-I' + str(cls.bin)] +
+                           ['-D' + d for d in defines] + (['-DUPNP_WITHOUT_REALIP'] if name == 'upnp-disabled' else []) +
+                           ['-DRTCONFIG_GETREALIP',
+                           str(SOURCE), str(HERE / 'upnp_host.c'), '-o', str(cls.bin / name)], check=True)
         (cls.bin / 'realip').symlink_to('both')
         (cls.bin / 'nvram').symlink_to('both')
         (cls.bin / 'getrealip.sh').symlink_to(SCRIPT)
@@ -57,6 +72,11 @@ class Realip(unittest.TestCase):
         self.env = dict(os.environ, REALIP_TEST_DIR=str(self.data),
                         PATH=str(self.bin) + ':' + os.environ['PATH'])
         self.processes = []
+        self.set('wan0_upnp_enable', '1')
+        self.set('wan1_upnp_enable', '1')
+        self.set('lan_ipaddr', '192.168.1.1')
+        self.set('lan_netmask', '255.255.255.0')
+        self.set('lan_ifname', 'br0')
         self.set('wans_mode', 'fo')
         self.set('link_internet', '2')
         self.set('test_mapped_unit', '0')
@@ -116,6 +136,206 @@ class Realip(unittest.TestCase):
     def assert_result(self, unit, state, ip):
         self.assertEqual(self.get(f'wan{unit}_realip_state'), str(state))
         self.assertEqual(self.get(f'wan{unit}_realip_ip'), ip)
+
+    def upnp(self, action='start', variant='upnp'):
+        subprocess.run([str(self.bin / variant), action], env=self.env, check=True, timeout=2)
+
+    def config(self):
+        return (self.data / 'upnp/config').read_text()
+
+    def daemon_starts(self):
+        return sum(line.startswith('start miniupnpd') for line in self.get('routes').splitlines())
+
+    def address(self, unit=0):
+        return self.command('--test-address', f'wan{unit}_').stdout.strip()
+
+    def publish(self, ip='198.51.100.10', unit=0):
+        token = self.command('--begin', unit).stdout.strip()
+        self.command('--finish', unit, token, ip)
+        return token
+
+    def test_upnp_initial_fast_and_unchanged_completion(self):
+        token = self.publish()
+        self.upnp()
+        self.assertIn('ext_ip=198.51.100.10\n', self.config())
+        self.assertEqual(self.daemon_starts(), 1)
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 1)
+        self.command('--finish', 0, token, '203.0.113.1', check=False)
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 1)
+
+    def test_upnp_slow_boot_public_wan_renew_and_recovery(self):
+        self.set('wan0_ipaddr', '198.51.100.10')
+        pending, gate, _ = self.held('boot')
+        self.upnp()
+        self.assertNotIn('ext_ip=', self.config())
+        self.assertEqual(self.get('miniupnpd'), '1')
+        self.upnp()
+        self.assertEqual(self.daemon_starts(), 1)
+        gate.touch()
+        self.assertEqual(self.finish(pending)[0], 0)
+        self.upnp('update')
+        self.assertNotIn('ext_ip=', self.config())
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 1)
+        self.command('--test-state', 'wan0_', 2)
+        self.upnp()
+        token = self.command('--begin', 0).stdout.strip()
+        self.command('--finish', 0, token, '')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 1)
+
+    def test_upnp_failure_removes_old_ip_and_recovers(self):
+        self.publish()
+        self.upnp()
+        pending = self.command('--begin', 0).stdout.strip()
+        self.upnp('update')
+        self.assertNotIn('ext_ip=', self.config())
+        starts = self.daemon_starts()
+        self.command('--finish', 0, pending, '')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), starts)
+        self.publish('203.0.113.8')
+        self.upnp('update')
+        self.assertIn('ext_ip=203.0.113.8', self.config())
+
+    def test_upnp_pending_renew_keeps_daemon_without_previous_ip(self):
+        self.upnp()
+        self.command('--test-state', 'wan0_', 2)
+        pending, gate, _ = self.held('renew')
+        self.upnp()
+        self.assertEqual(self.daemon_starts(), 1)
+        self.set('upnp_secure', '1')
+        self.upnp()
+        self.assertEqual(self.daemon_starts(), 2)
+        self.assertIn('secure_mode=yes', self.config())
+        gate.touch()
+        self.finish(pending)
+
+    def test_upnp_public_address_change_and_secondary_result(self):
+        self.set('wans_mode', 'lb')
+        self.publish()
+        self.upnp()
+        self.publish('203.0.113.99', unit=1)
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 1)
+        self.assertIn('ext_ip=198.51.100.10', self.config())
+        self.publish('203.0.113.10')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
+        self.assertIn('ext_ip=203.0.113.10', self.config())
+
+    def test_upnp_disconnect_failover_and_same_address_reconnect(self):
+        self.upnp()
+        self.command('--test-down', 'wan0_')
+        self.command('--test-state', 'wan0_', 4)
+        self.set('wan0_upnp_enable', '0')
+        self.publish('203.0.113.11', unit=1)
+        self.upnp('update')
+        self.assertIn('ext_ifname=eth1', self.config())
+        self.assertIn('ext_ip=203.0.113.11', self.config())
+        self.assertEqual(self.get('upnp_unit'), '1')
+        self.set('wan0_upnp_enable', '1')
+        self.command('--test-state', 'wan0_', 2)
+        self.upnp()
+        self.assertIn('ext_ifname=eth0', self.config())
+        self.assertNotIn('ext_ip=', self.config())
+        self.assertEqual(self.daemon_starts(), 3)
+
+    def test_upnp_manual_restart_and_stop_during_stun(self):
+        self.upnp()
+        pending, gate, _ = self.held('manual')
+        self.upnp('restart')
+        self.assertEqual(self.daemon_starts(), 2)
+        self.upnp('stop')
+        gate.touch()
+        self.finish(pending)
+        self.upnp('update')
+        self.assertEqual(self.get('miniupnpd'), '0')
+        self.assertEqual(self.daemon_starts(), 2)
+
+    def test_upnp_snapshot_rejects_changed_context_and_stale_generation(self):
+        old = self.publish()
+        self.assertEqual(self.address(), '198.51.100.10')
+        self.set('wan0_ifname', 'eth9')
+        self.assertEqual(self.address(), '')
+        token = self.command('--begin', 0).stdout.strip()
+        self.command('--finish', 0, old, '203.0.113.1', check=False)
+        self.assertEqual(self.address(), '')
+        self.command('--finish', 0, token, '203.0.113.2')
+        self.upnp()
+        self.assertIn('ext_ifname=eth9', self.config())
+        self.assertIn('ext_ip=203.0.113.2', self.config())
+
+    def test_upnp_effective_hooks_alt_and_igd2(self):
+        self.upnp()
+        self.set('test_postconf', 'changed')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
+        self.set('upnp_pinhole_enable', '1')
+        self.upnp('update')
+        self.assertEqual(self.get('miniupnpd-igdv2'), '1')
+        (self.data / 'upnp/config.alt').write_text('ext_ifname=eth0\n')
+        self.upnp('update')
+        self.assertEqual(self.get('miniupnpd'), '1')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 4)
+
+    def test_upnp_completion_after_early_daemon_exit(self):
+        self.upnp()
+        self.set('miniupnpd', '0')
+        self.publish('203.0.113.90')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
+        self.assertIn('ext_ip=203.0.113.90', self.config())
+        self.upnp('stop')
+        self.upnp('update')
+        self.assertEqual(self.daemon_starts(), 2)
+
+    def test_upnp_lifecycle_epoch_and_wan_address(self):
+        self.upnp()
+        self.command('--test-down', 'wan0_')
+        self.command('--test-state', 'wan0_', 2)
+        self.upnp()
+        self.assertEqual(self.daemon_starts(), 2)
+        self.set('wan0_ipaddr', '192.168.55.20')
+        self.upnp()
+        self.assertEqual(self.daemon_starts(), 3)
+
+    def test_upnp_compiled_service_variants_run(self):
+        for variant in ['upnp-single', 'upnp-disabled', 'upnp-features']:
+            self.upnp('start', variant=variant)
+            self.assertEqual(self.get('miniupnpd'), '1')
+            self.upnp('stop', variant=variant)
+            self.assertEqual(self.get('miniupnpd'), '0')
+
+    def test_upnp_publication_notifies_only_for_current_request(self):
+        token = self.command('--begin', 0).stdout.strip()
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 1)
+        newer = self.command('--begin', 0).stdout.strip()
+        self.command('--finish', 0, token, '203.0.113.3', check=False)
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 2)
+        self.command('--finish', 0, newer, '203.0.113.4')
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 3)
+        self.command('--finish', 0, newer, '203.0.113.5', check=False)
+        self.assertEqual(self.get('routes').count('notify update_upnp'), 3)
+        services = SERVICES.read_text()
+        self.assertIn('strcmp(script, "update_upnp") == 0', services)
+        self.assertNotIn('sleep(', services[services.index('void start_upnp(void)'):
+                                           services.index('void stop_upnp(void)')])
+
+    def test_upnp_disabled_and_failed_start(self):
+        self.set('test_start_fail', '1')
+        self.upnp()
+        self.assertFalse((self.data / 'upnp/config.applied').exists())
+        self.set('test_start_fail', '0')
+        self.upnp()
+        self.set('wan0_upnp_enable', '0')
+        self.upnp('update')
+        self.assertEqual(self.get('miniupnpd'), '0')
 
     def test_reverse_completion(self):
         old, gate, _ = self.held('old', STUN_IP='198.51.100.1')

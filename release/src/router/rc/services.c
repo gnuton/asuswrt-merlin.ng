@@ -7587,6 +7587,71 @@ void start_spectrum(void)
 
 // TODO: so far, support wan0 only
 
+/* Keep the daemon serving while generating/customizing its next configuration.
+ * SIGUSR1 only sends address-change events; it does not reload ext_ip. */
+static int upnp_same_config(const char *path)
+{
+	FILE *a = fopen(path, "r"), *b = fopen("/etc/upnp/config.applied", "r");
+	int ca, cb, same = 0;
+
+	if (a && b) {
+		do {
+			ca = fgetc(a);
+			cb = fgetc(b);
+		} while (ca == cb && ca != EOF);
+		same = ca == cb && !ferror(a) && !ferror(b);
+	}
+	if (a) fclose(a);
+	if (b) fclose(b);
+	return same;
+}
+
+static void upnp_apply_config(const char *path, int unit)
+{
+	char prefix[32], connection[256];
+	const char *daemon = "miniupnpd";
+	FILE *f;
+
+	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+	/* Also compare the connection, which need not appear in a custom config.
+	 * Epoch changes on disconnect, but not on an unchanged DHCP renewal. */
+	snprintf(connection, sizeof(connection), "%d/%s/%s/%s/%s/%s/%s",
+		unit, get_wan_ifname(unit), nvram_pf_safe_get(prefix, "ipaddr"),
+		nvram_pf_safe_get(prefix, "gateway"), nvram_pf_safe_get(prefix, "state_t"),
+		nvram_safe_get("wans_mode"), nvram_pf_safe_get(prefix, "realip_epoch"));
+#ifdef RTCONFIG_IGD2
+	if (nvram_get_int("upnp_pinhole_enable") && strcmp(path, "/etc/upnp/config.alt"))
+		daemon = "miniupnpd-igdv2";
+#endif
+	if (pids(daemon) && nvram_match("upnp_connection", connection) && upnp_same_config(path))
+		return;
+
+	stop_upnp();
+	if (xstart(daemon, "-f", path) != 0)
+		return;
+	nvram_set_int("upnp_started", 1);
+	nvram_set("upnp_connection", connection);
+	if ((f = fopen("/etc/upnp/config.applied", "w")) != NULL) {
+		fappend(f, path);
+		fclose(f);
+	}
+#ifdef RTCONFIG_DUALWAN
+	nvram_set_int("upnp_unit", unit);
+	nvram_set("upnp_ifname", get_wan_ifname(unit));
+#endif
+#ifdef RTCONFIG_AUPNPC
+	start_aupnpc();
+#endif
+}
+
+/* A late/coalesced worker event must not undo an explicit service stop. The
+ * event carries no IP: always reconcile against current WAN ownership. */
+void update_upnp(void)
+{
+	if (nvram_get_int("upnp_started"))
+		start_upnp();
+}
+
 void start_upnp(void)
 {
 	FILE *f;
@@ -7617,8 +7682,10 @@ void start_upnp(void)
 		return;
 	}
 
-	if (!is_routing_enabled())
+	if (!is_routing_enabled()) {
+		stop_upnp();
 		return;
+	}
 
 	unit = wan_primary_ifunit();
 #ifdef RTCONFIG_DUALWAN
@@ -7627,7 +7694,7 @@ void start_upnp(void)
 		for (i = WAN_UNIT_FIRST; i < WAN_UNIT_MAX; i++) {
 			if (get_dualwan_by_unit(i) == WANS_DUALWAN_IF_NONE || !is_wan_connect(i))
 				continue;
-			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+			snprintf(prefix, sizeof(prefix), "wan%d_", i);
 			if (nvram_match(strcat_r(prefix, "proto", tmp), "static")) {
 				snprintf(tmp, sizeof(tmp), i ? "link_wan%d" : "link_wan", i);
 				if (!nvram_get_int(tmp))
@@ -7677,10 +7744,7 @@ void start_upnp(void)
 	if ( run_upnpd ) {
 		mkdir("/etc/upnp", 0777);
 		if (f_exists("/etc/upnp/config.alt")) {
-			xstart("miniupnpd", "-f", "/etc/upnp/config.alt");
-#ifdef RTCONFIG_AUPNPC
-			start_aupnpc();
-#endif
+			upnp_apply_config("/etc/upnp/config.alt", unit);
 		} else {
 			if ((f = fopen("/etc/upnp/config", "w")) != NULL) {
 				char *lanip = nvram_safe_get("lan_ipaddr");
@@ -7696,10 +7760,6 @@ void start_upnp(void)
 					 ea[0], ea[1], ea[2], ea[3], ea[4], ea[5]);
 				snprintf(uuid, sizeof(uuid), "3ddcd1d3-2380-45f5-b069-%02x%02x%02x%02x%02x%02x",
 					 ea[0], ea[1], ea[2], ea[3], ea[4], ea[5]);
-#ifdef RTCONFIG_DUALWAN
-				nvram_set_int("upnp_unit", unit);
-				nvram_set("upnp_ifname", get_wan_ifname(unit));
-#endif
 				fprintf(f,
 					"ext_ifname=%s\n"
 					"listening_ip=%s\n"
@@ -7911,23 +7971,11 @@ void start_upnp(void)
 
 				/* Provide real IP when in dual NAT situation */
 #ifdef RTCONFIG_GETREALIP
-				int realip_wait;
-				int realip_state;
-				const char *realip_ip;
+				char realip_ip[INET_ADDRSTRLEN];
 
-				strcat_r(prefix, "realip_state", tmp);
-				realip_state = nvram_get_int(tmp);
-				for (realip_wait = 0; realip_wait < 10; realip_wait++) {
-					if (realip_state == 1 || realip_state == 2)
-						break;
-					sleep(1);
-					realip_state = nvram_get_int(tmp);
-				}
-				if (realip_state == 2) {
-					realip_ip = nvram_safe_get(strcat_r(prefix, "realip_ip", tmp));
-					if (realip_ip[0] != '\0' && strcmp(realip_ip, "0.0.0.0") && is_valid_ip4(realip_ip))
-						fprintf(f, "ext_ip=%s\n", realip_ip);
-				}
+				realip_upnp_address(prefix, realip_ip, sizeof(realip_ip));
+				if (realip_ip[0])
+					fprintf(f, "ext_ip=%s\n", realip_ip);
 #endif
 
 				fappend(f, "/etc/upnp/config.custom");
@@ -7936,19 +7984,11 @@ void start_upnp(void)
 				fclose(f);
 				use_custom_config("upnp", "/etc/upnp/config");
 				run_postconf("upnp", "/etc/upnp/config");
-#ifdef RTCONFIG_IGD2
-				if (nvram_get_int("upnp_pinhole_enable"))
-					xstart("miniupnpd-igdv2", "-f", "/etc/upnp/config");
-				else
-#endif
-					xstart("miniupnpd", "-f", "/etc/upnp/config");
-
-#ifdef RTCONFIG_AUPNPC
-				start_aupnpc();
-#endif
+				upnp_apply_config("/etc/upnp/config", unit);
 			}
 		}
-	}
+	} else
+		stop_upnp();
 }
 
 void stop_upnp(void)
@@ -7958,6 +7998,9 @@ void stop_upnp(void)
 		return;
 	}
 
+	nvram_set_int("upnp_started", 0);
+	unlink("/etc/upnp/config.applied");
+	nvram_unset("upnp_connection");
 	killall_tk("miniupnpd");
 #ifdef RTCONFIG_IGD2
 	killall_tk("miniupnpd-igdv2");
@@ -19871,6 +19914,10 @@ check_ddr_done:
 
 	}
 #endif
+	else if (strcmp(script, "update_upnp") == 0)
+	{
+		update_upnp();
+	}
 	else if (strcmp(script, "upnp") == 0)
 	{
 		if(action & RC_SERVICE_STOP) stop_upnp();

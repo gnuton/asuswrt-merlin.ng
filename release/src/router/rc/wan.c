@@ -3968,7 +3968,6 @@ wan_up(const char *pwan_ifname)
 
 			if (unit != nvram_get_int("upnp_unit") ||
 				strcmp(wan_ifname, nvram_safe_get("upnp_ifname"))) {
-				stop_upnp();
 				start_upnp();
 			}
 		}
@@ -4466,8 +4465,7 @@ NOIP:
 #endif
 	}
 
-/* Need to be done after getrealip */
-	stop_upnp();
+/* Reconcile immediately; STUN completion will notify rc asynchronously. */
 	start_upnp();
 
 	/* ntp is set, but it didn't just get set, so ntp_synced didn't already did these */

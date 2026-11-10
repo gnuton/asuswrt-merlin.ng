@@ -123,6 +123,10 @@ int mtwan_get_route_table_id(int unit, char *table, size_t n)
 {
 	snprintf(table, n, "%d", 100 + unit * 100); return 0;
 }
+#ifndef UPNP_TEST
+void update_upnp(void) { }
+#endif
+int notify_rc(const char *event) { return mock_eval("notify", event, NULL); }
 int main(int argc, char **argv)
 {
 	const char *prog = strrchr(argv[0], '/'); prog = prog ? prog + 1 : argv[0];
@@ -134,5 +138,8 @@ int main(int argc, char **argv)
 	if (argc == 3 && !strcmp(argv[1], "--test-down")) { realip_invalidate(argv[2]); return 0; }
 	if (argc == 3 && !strcmp(argv[1], "--test-cancel")) { cancel_realip(argv[2]); return 0; }
 	if (argc == 3 && !strcmp(argv[1], "--test-start")) { start_realip(atoi(argv[2])); return 0; }
+	if (argc == 3 && !strcmp(argv[1], "--test-address")) {
+		char ip[INET_ADDRSTRLEN]; realip_upnp_address(argv[2], ip, sizeof(ip)); puts(ip); return 0;
+	}
 	return realip_main(argc, argv);
 }

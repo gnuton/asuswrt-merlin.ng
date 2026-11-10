@@ -34,6 +34,16 @@
 #ifdef RTCONFIG_GETREALIP
 static volatile sig_atomic_t realip_interrupted;
 
+/* Never wait for rc while holding the publication lock. rc itself reconciles
+ * WAN events directly; workers use the existing service notification path. */
+static void realip_notify_upnp(void)
+{
+	if (getpid() == 1)
+		update_upnp();
+	else
+		notify_rc("update_upnp");
+}
+
 static int realip_lock(void)
 {
 	return file_lock("realip");
@@ -66,11 +76,15 @@ static void realip_connection_reset(const char *prefix, int blocked)
 	long unit = !strncmp(prefix, "wan", 3) ? strtol(prefix + 3, &end, 10) : -1;
 #endif
 	realip_reset(prefix);
+	if (blocked)
+		nvram_pf_set(prefix, "realip_epoch", nvram_pf_safe_get(prefix, "realip_generation"));
 	nvram_pf_set(prefix, "realip_blocked", blocked ? "1" : "0");
 #ifdef RTCONFIG_MULTIWAN_IF
 	if (unit >= 0 && unit <= INT_MAX && !strcmp(end, "_") && is_mtwan_unit(unit) &&
 	    mtwan_get_real_wan(unit, mapped, sizeof(mapped)) >= 0 && strcmp(prefix, mapped)) {
 		realip_reset(mapped);
+		if (blocked)
+			nvram_pf_set(mapped, "realip_epoch", nvram_pf_safe_get(mapped, "realip_generation"));
 		nvram_pf_set(mapped, "realip_blocked", blocked ? "1" : "0");
 	}
 #endif
@@ -84,6 +98,7 @@ void realip_invalidate(const char *prefix)
 		return;
 	realip_connection_reset(prefix, 1);
 	file_unlock(lock);
+	realip_notify_upnp();
 }
 
 /* A service STOP cancels requests without changing connection eligibility. */
@@ -94,6 +109,7 @@ void cancel_realip(const char *prefix)
 		return;
 	realip_reset(prefix);
 	file_unlock(lock);
+	realip_notify_upnp();
 }
 
 /* State transition and lookup invalidation are one transaction. A DHCP renew
@@ -107,6 +123,7 @@ void realip_wan_state(const char *prefix, int state)
 	nvram_pf_set_int(prefix, "state_t", state);
 	realip_connection_reset(prefix, state != WAN_STATE_CONNECTED);
 	file_unlock(lock);
+	realip_notify_upnp();
 }
 
 static void realip_context(const char *prefix, char *buf, size_t len)
@@ -149,6 +166,8 @@ static int realip_begin(const char *prefix, char *token, size_t len)
 		return 0;
 	ok = realip_begin_locked(prefix, token, len);
 	file_unlock(lock);
+	if (ok)
+		realip_notify_upnp();
 	return ok;
 }
 
@@ -175,6 +194,7 @@ static int realip_script_begin(void)
 		realip_begin_locked(prefix, tokens[unit], sizeof(tokens[unit]));
 	}
 	file_unlock(lock);
+	realip_notify_upnp();
 	if (!lb && !strcmp(tokens[0], "-") && !strcmp(tokens[1], "-"))
 		return 1;
 	printf("%d %s %s\n", lb, tokens[0], tokens[1]);
@@ -219,9 +239,30 @@ static int realip_valid(const char *ip)
 	return (host >> 24) != 0 && (host >> 24) != 127 && (host >> 28) < 14;
 }
 
+/* A single locked snapshot: never combine state/IP from different requests.
+ * No previous-IP fallback: even an unchanged private WAN can change upstream
+ * NAT address. Pending and failed requests therefore omit ext_ip entirely.
+ * When STUN agrees with the interface, let MiniUPnPd use the interface address
+ * directly; a later unavailable STUN result need not restart a public WAN. */
+void realip_upnp_address(const char *prefix, char *ip, size_t len)
+{
+	int lock = realip_lock();
+
+	ip[0] = 0;
+	if (lock < 0)
+		return;
+	if (nvram_pf_get_int(prefix, "realip_state") == 2 &&
+	    realip_matches(prefix, nvram_pf_safe_get(prefix, "realip_generation")) &&
+	    realip_valid(nvram_pf_safe_get(prefix, "realip_ip")) &&
+	    strcmp(nvram_pf_safe_get(prefix, "realip_ip"), nvram_pf_safe_get(prefix, "ipaddr")))
+		strlcpy(ip, nvram_pf_safe_get(prefix, "realip_ip"), len);
+	file_unlock(lock);
+}
+
 static int realip_finish(const char *prefix, const char *token, const char *ip)
 {
 	int valid = realip_valid(ip);
+	int published = 0;
 	int ok, lock = realip_lock();
 	if (lock < 0)
 		return 0;
@@ -231,6 +272,7 @@ static int realip_finish(const char *prefix, const char *token, const char *ip)
 	if (ok || (token[0] && !strcmp(token, nvram_pf_safe_get(prefix, "realip_generation")) &&
 	           nvram_pf_get_int(prefix, "realip_state") == 0 &&
 	           nvram_pf_safe_get(prefix, "realip_context")[0])) {
+		published = 1;
 		valid = valid && ok;
 		/* Readers must never observe ready with an old or invalid address. */
 		nvram_pf_set(prefix, "realip_state", "0");
@@ -238,6 +280,8 @@ static int realip_finish(const char *prefix, const char *token, const char *ip)
 		nvram_pf_set(prefix, "realip_state", valid ? "2" : "1");
 	}
 	file_unlock(lock);
+	if (published)
+		realip_notify_upnp();
 	return ok;
 }
 
