@@ -1,0 +1,25 @@
+##  GNUton's Asus Merlin changelog  ##
+
+Date: November 14, 2026
+Release: 3006.102.9_1-gnuton1
+
+  - NEW: Added support for the RT-BE58U.
+  - NEW: Added support for the RT-BE82U.
+  - NEW: Added support for the RT-BE82M.
+  - UPDATED: Synced GT-BE98, RT-BE58U and RT-BE82U prebuilts with
+             GPL 102.40585.
+  - CHANGED: Kernel prebuilts (archer/bp3/gdx) are now selected per
+             chip and architecture, so models sharing a platform use
+             the correct binaries.
+  - FIXED: RT-BE58U now uses the 6764L archer kernel prebuilts.
+  - FIXED: GT-BE98 2.5G WAN port not passing traffic (rtkswitch ioctl
+           ABI mismatch with the GPL 102.40585 rtl8372 driver).
+  - FIXED: Auto-WAN no longer overrides an explicitly selected GT-BE98
+           2.5G WAN port.
+  - NOTE: The RT-BE58U and RT-BE82U are BCM676x-based models, so the
+          hardware-accelerated AQM introduced in 3006.102.9 is not
+          available on them.
+  - NOTE: Owners of the RT-BE82U should use the RT-BE82M firmware
+          instead.
+
+
