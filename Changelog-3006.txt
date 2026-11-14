@@ -1,7 +1,7 @@
 Asuswrt-Merlin 3006.xxx Changelog
 =================================
 
-3006.102.9_1-gnuton1 (xx-xxx-2026)
+3006.102.9_1-gnuton1 (14-Nov-2026)
   - NEW: Added support for the RT-BE58U.
   - NEW: Added support for the RT-BE82U.
   - NEW: Added support for the RT-BE82M.
@@ -18,6 +18,8 @@ Asuswrt-Merlin 3006.xxx Changelog
   - NOTE: The RT-BE58U and RT-BE82U are BCM676x-based models, so the
           hardware-accelerated AQM introduced in 3006.102.9 is not
           available on them.
+  - NOTE: Owners of the RT-BE82U should use the RT-BE82M firmware
+          instead.
 
 3006.102.9 (23-Sept-2026)
   - NEW: Migrated all devices to OpenSSL 3.5 (except GT-BE19000AI,
