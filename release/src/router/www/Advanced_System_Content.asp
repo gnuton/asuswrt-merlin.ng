@@ -2360,6 +2360,7 @@ function build_boostkey_options() {
 <input type="hidden" name="action_script" value="restart_time;restart_httpd;restart_upnp">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="ui_theme" id="ui_theme" value="<% nvram_get("ui_theme"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="time_zone_dst" value="<% nvram_get("time_zone_dst"); %>">
 <input type="hidden" name="time_zone" value="<% nvram_get("time_zone"); %>">
@@ -2523,6 +2524,15 @@ function build_boostkey_options() {
 						<input type="radio" name="ntpd_server_redir" value="1" <% nvram_match_x("","ntpd_server_redir","1", "checked"); %> ><#checkbox_Yes#>
 						<input type="radio" name="ntpd_server_redir" value="0" <% nvram_match_x("","ntpd_server_redir","0", "checked"); %> ><#checkbox_No#>
 					</td>
+				<tr>
+					<th>Web UI Theme</th>
+					<td>
+						<select name="ui_theme_select" id="ui_theme_select" class="input_option" onchange="document.form.ui_theme.value = this.value;">
+							<option value="0" <% nvram_match("ui_theme", "0", "selected"); %>>Default</option>
+							<option value="1" <% nvram_match("ui_theme", "1", "selected"); %>>Blue Theme</option>
+						</select>
+					</td>
+				</tr>
 				<tr>
 					<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,2)"><#LANHostConfig_x_TimeZone_itemname#></a></th>
 					<td>
