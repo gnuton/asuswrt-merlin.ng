@@ -1877,6 +1877,9 @@ int get_wan_proto(char *prefix)
 	int i;
 
 	strlcpy(proto, nvram_safe_get(strlcat_r(prefix, "proto", tmp, sizeof(tmp))), sizeof(proto));
+	if (*proto == '\0') {
+		strlcpy(proto, nvram_safe_get("wan_proto"), sizeof(proto));
+	}
 	for (i = 0; services[i].name; i++) {
 		if (strcmp(proto, services[i].name) == 0)
 			return services[i].service;

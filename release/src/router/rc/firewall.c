@@ -2700,11 +2700,13 @@ void redirect_setting(void)
 	add_nat_rule_for_gpon_sfp_module(redirect_fp);
 #endif
 
-	fprintf(redirect_fp,
-		"-A PREROUTING ! -d %s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n"
-		"-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n",
-		lan_class, lan_ipaddr_t,
-		lan_ipaddr_t);
+	if (is_nat_enabled() && nvram_match("x_Setting", "0")) {
+		fprintf(redirect_fp,
+			"-A PREROUTING ! -d %s -p tcp --dport 80 -j DNAT --to-destination %s:18017\n"
+			"-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s:18018\n",
+			lan_class, lan_ipaddr_t,
+			lan_ipaddr_t);
+	}
 #ifdef RTCONFIG_YANDEXDNS
 	fprintf(redirect_fp,
 		"-I YADNS 1 -p udp -j DNAT --to-destination %s:18018\n", lan_ipaddr_t);
