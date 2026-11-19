@@ -10,7 +10,7 @@ and must not be modified as part of work in this repo.
 - **Upstream**: [RMerl/asuswrt-merlin.ng](https://github.com/RMerl/asuswrt-merlin.ng). Data from upstream branches or tags is merged into origin branches.
 - **Origin**: `Asuswrt-Merlin/asuswrt-merlin.ng-3004.gnuton`, the target for pushing changes.
 - **Firmware line**: `master` is the 3004 line.
-- **Legacy branch**: `master-3006` is retained temporarily for rollback and legacy 3006 links. It is not built; do not add 3006 work here.
+- **Legacy branch**: `master-3006` is retained temporarily for rollback and legacy 3006 links. Do not add 3006 work here.
 - **Version format**: Versions and tags follow `3004.388.11_1-gnuton1`.
 - **Tags**: Only `3004.*` tags are built. CI fails before building any other tag (in particular 3006 tags).
 
