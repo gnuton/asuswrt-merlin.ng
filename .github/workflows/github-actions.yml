@@ -1,28 +1,87 @@
 name: Images 
 run-name: "Building images 🚀"
-on: [push, pull_request]
-jobs:          
+on:
+  push:
+    # Update-feed and documentation commits must not restart firmware builds.
+    # Path filters are not evaluated for tag pushes, so tags still build.
+    paths-ignore:
+      - 'updates/**'
+      - '**/*.md'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Model id to build (e.g. rt-ax92u). Leave empty to build all models."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    prepare-job:
+      name: Prepare matrix
+      runs-on: ubuntu-24.04
+      outputs:
+        matrix: ${{ steps.matrix.outputs.matrix }}
+      steps:
+        # Matrix cannot be used in a job-level "if", so filter the entries
+        # here. An empty input builds everything; model=<id> selects only the
+        # matching entry (for example rt-ax92u).
+        - name: Select matrix entries
+          id: matrix
+          env:
+            REQUESTED_MODEL: ${{ inputs.model }}
+          run: |
+            set -euo pipefail
+            entries=(
+              '{"model":"rt-ax92u","sdk":"src-rt-5.02axhnd","ui":"default","skip":false}'
+              '{"model":"dsl-ax82u","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax5400","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax5400","sdk":"src-rt-5.02axhnd.675x","ui":"tuf","skip":false}'
+              '{"model":"tuf-ax3000","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax3000","sdk":"src-rt-5.02axhnd.675x","ui":"tuf","skip":false}'
+              '{"model":"rt-ax82u","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax95q","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-axe95q","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax82u_v2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax5400","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax3000_v2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax3000_v2","sdk":"src-rt-5.04axhnd.675x","ui":"tuf","skip":false}'
+              '{"model":"rt-ax58u_v2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+            )
+
+            model="${REQUESTED_MODEL,,}"
+            if [ -n "${model}" ]; then
+              selected=()
+              for entry in "${entries[@]}"; do
+                if [ "$(jq -r '.model' <<< "${entry}")" = "${model}" ]; then
+                  selected+=("${entry}")
+                fi
+              done
+              if [ "${#selected[@]}" -eq 0 ]; then
+                echo "::error::Unknown model '${REQUESTED_MODEL}'. Valid values: rt-ax92u, dsl-ax82u, tuf-ax5400, tuf-ax3000, rt-ax82u, rt-ax95q, rt-axe95q, rt-ax82u_v2, rt-ax5400, tuf-ax3000_v2, rt-ax58u_v2."
+                exit 1
+              fi
+              entries=("${selected[@]}")
+            fi
+
+            matrix=$(printf '%s\n' "${entries[@]}" | jq -cs '{include: [.[] | {cfg: .}]}')
+            echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
+            echo "${matrix}"
     build-job:
       name: Build
+      needs: prepare-job
       runs-on: ubuntu-24.04
+      if: needs.prepare-job.outputs.matrix != ''
       strategy:
         fail-fast: false
-        matrix:
-          cfg:
-            - { model: "rt-ax92u",      sdk: "src-rt-5.02axhnd",      ui: "default",  skip: false }
-            - { model: "dsl-ax82u",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax5400",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000",    sdk: "src-rt-5.02axhnd.675x", ui: "tuf",      skip: false }
-            - { model: "rt-ax82u",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax95q",      sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-axe95q",     sdk: "src-rt-5.02axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax82u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "rt-ax5400",     sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
-            - { model: "tuf-ax3000_v2", sdk: "src-rt-5.04axhnd.675x", ui: "tuf",      skip: false }
-            - { model: "rt-ax58u_v2",   sdk: "src-rt-5.04axhnd.675x", ui: "default",  skip: false }
+        matrix: ${{ fromJSON(needs.prepare-job.outputs.matrix) }}
       container:
         image: gnuton/asuswrt-merlin-toolchains-docker:latest
         env:
@@ -31,9 +90,10 @@ jobs:
           SDK: ${{ matrix.cfg.sdk }}
           UI: ${{ matrix.cfg.ui }}
           SKIP_BUILD: ${{ matrix.cfg.skip }}
-          GIT_REPO: "https://github.com/gnuton/asuswrt-merlin.ng.git"
-          PROJECT_DIR: "/project/asuswrt-merlin.ng"
-          ARTIFACTS_DIR: "/project/artifacts"
+          GIT_REPO: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.clone_url || format('{0}/{1}.git', github.server_url, github.repository) }}
+          GIT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+          PROJECT_DIR: "/project/repo"
+          ARTIFACTS_DIR: "/project/artifacts/${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}"
           CHANGELOG_FILE: "/tmp/CHANGELOG"
           PROJECTBASEDIR: "/project" # REMOVE_ME: Fixes https://github.com/SonarSource/sonarcloud-github-action/pull/58
         # Run the container as root so GitHub's file-command outputs
@@ -49,6 +109,18 @@ jobs:
           # The AsusWrt build system refuses to run as root.
           shell: gosu docker bash --noprofile --norc -e -o pipefail {0}
       steps:
+        - name: Reject non-3004 tags
+          # This repository only ships the 3004 firmware line. A tag from the
+          # 3006 line must never start a build (and therefore a release) here.
+          if: startsWith(github.ref, 'refs/tags/')
+          shell: bash --noprofile --norc -e -o pipefail {0}
+          run: |
+            TAG="${GITHUB_REF#refs/tags/}"
+            if [[ "${TAG}" != 3004.* ]]; then
+              echo "::error::Refusing to build tag '${TAG}': only 3004.* tags are allowed in this repository."
+              exit 1
+            fi
+            echo "Tag ${TAG} belongs to the 3004 line. Continuing."
         - name: Run debug commands - post
           run: |
             cd /
@@ -65,28 +137,9 @@ jobs:
           if: matrix.cfg.skip == false
           run: |
             cd /project
-            if [[ $SKIP_BUILD == "true" ]]; then
-              echo "Skipping build!"
-              exit 0
-            fi
-            
-            # For PRs from forks, use the fork repository; otherwise use the main repo
-            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-              export GIT_REPO="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY##*/}.git"
-              export BRANCH="${GITHUB_HEAD_REF}"
-              echo "PR detected - using fork repository: $GIT_REPO"
-              echo "Fetching code from branch $BRANCH"
-            else
-              if [[ $GITHUB_REF_TYPE == "tag" ]]; then
-                export TAG="${GITHUB_REF#refs/tags/}"
-                echo "Fetching code from tag $TAG"
-              else
-                export BRANCH="${GITHUB_REF#refs/heads/}"
-                echo "Fetching code from branch $BRANCH"
-              fi
-            fi
-
-            if git clone --depth 1 --branch "${TAG:-$BRANCH}" "$GIT_REPO"; then
+            echo "Fetching ${GIT_REF} from ${GIT_REPO}"
+            rm -rf "${PROJECT_DIR}"
+            if git clone --depth 1 --branch "${GIT_REF}" "${GIT_REPO}" "${PROJECT_DIR}"; then
                 echo "Code fetched successfully."
             else
                 echo "Failed to fetch code. Check the repository and settings."
@@ -97,14 +150,9 @@ jobs:
         - name: "Set version"
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true" ]]; then
-              echo "Skipping build!"
-              exit 0
-            fi
-            
             cd ${PROJECT_DIR}
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
-            if [[ $GITHUB_REF_TYPE == "branch" ]]; then
+            if [[ $GITHUB_REF_TYPE == "branch" || $GITHUB_REF_TYPE == "" ]]; then
               echo "Nothing to do. Not a release. Branch detected: ${CIRCLE_TAG}"
             else
                 TAG=$(echo ${CIRCLE_TAG} | sed 's/^[^.]*\.//')
@@ -115,22 +163,14 @@ jobs:
                 echo "Release detected. Updating version.conf with MAJOR_VER=${MAJOR_VER} and MINOR_VER=${MINOR_VER}"
             fi
         - name: Generate changelog
-          if: matrix.cfg.skip == false
+          if: matrix.cfg.skip == false && matrix.cfg.ui == 'default'
           run: |
-            if [[ $SKIP_BUILD == "true" ]]; then
-              echo "Skipping build!"
-              exit 0
-            fi
             cd ${PROJECT_DIR}
             python tools/get-last-notes.py > "${CHANGELOG_FILE}"
             cat "${CHANGELOG_FILE}"
         - name: "Build"
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true" ]]; then
-              echo "Skipping build!"
-              exit 0
-            fi
             echo "----- Space available -----"
             df -h
             echo "----- I am: $(id) -----"
@@ -170,10 +210,6 @@ jobs:
         - name: "Prepare artifacts"
           if: matrix.cfg.skip == false
           run: |
-            if [[ $SKIP_BUILD == "true" ]]; then
-              echo "Skipping build!"
-              exit 0
-            fi
             mkdir -p "${ARTIFACTS_DIR}"
             export IMAGE_PATH=${PROJECT_DIR}/release/${SDK}/image/
             echo "Removing images with boot loader."
@@ -195,8 +231,9 @@ jobs:
                 echo "No *.squashfs.pkgtb or *.w files found in ${IMAGE_PATH}"
             fi
             
-            # Changelogs are the same for each models since we are building from the same branch. We do use only the one generated by DSL-AX82U for now.
-            if [[ ${MODEL} == "dsl-ax82u" ]]; then
+            # Changelogs are the same for every model since they are built
+            # from the same branch; include it in each default artifact.
+            if [ -e "${CHANGELOG_FILE}" ]; then
               cp "${CHANGELOG_FILE}" "${ARTIFACTS_DIR}"
             fi
         - name: "Archive artifacts"
@@ -204,12 +241,14 @@ jobs:
           uses: actions/upload-artifact@v7
           with:
             name: release-${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}
-            path: "/project/artifacts"
+            path: "/project/artifacts/${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}"
     release-job:
       name: Publish
       needs: build-job
       runs-on: ubuntu-24.04
-      if: startsWith(github.event.ref, 'refs/tags/')
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      permissions:
+        contents: write
       steps:
         - name: Download packages
           uses: actions/download-artifact@v8
@@ -221,23 +260,25 @@ jobs:
           uses: softprops/action-gh-release@v3
           with:
             tag_name: ${{ env.version }}
-            body_path: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release-dsl-ax82u-default/CHANGELOG
+            body_path: ${{ github.workspace }}/release-dsl-ax82u-default/CHANGELOG
             draft: true
             prerelease: ${{ env.prerelease }}
-            files: /home/runner/work/asuswrt-merlin.ng/asuswrt-merlin.ng/release*/*
+            files: ${{ github.workspace }}/release*/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     
     manifest-job:
       name: Publish Manifest
-      needs: build-job
+      needs: [build-job, release-job]
       runs-on: ubuntu-24.04
-      if: startsWith(github.event.ref, 'refs/tags/') && !contains(github.event.ref, 'alpha') && !contains(github.event.ref, 'beta')
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && !contains(github.ref, 'alpha') && !contains(github.ref, 'beta')
+      permissions:
+        contents: write
       steps:
         - uses: actions/checkout@v7
           with:
-            ref: master
+            ref: ${{ github.event.repository.default_branch }}
         - name: Setup git config
           run: |
             # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
@@ -249,34 +290,66 @@ jobs:
         - name: "Publish Manifest"
           env:
             UPDATE_DIR: "updates"
-            CHANGELOG_FILE: "release-dsl-ax82u-default/CHANGELOG"
+            DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           run: |
+            set -euo pipefail
+
             export CIRCLE_TAG="${GITHUB_REF#refs/*/}"
             MAJOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\1/')
             MINOR_VER=$(echo "${CIRCLE_TAG}" | sed -E 's/([0-9.]*)[_-]?(.*)/\2/')
-            BASELINE=${MAJOR_VER%%.*}
             RELEASE_NOTE_FILE=$(echo "${MAJOR_VER}_${MINOR_VER}_note.txt" | sed "s/\./_/")
 
-            echo "Generating manifest file(s)…"
-            if [ "$BASELINE" = "3006" ]; then 
-              echo "GT-BE98#FW${MAJOR_VER}#EXT${MINOR_VER}" >  ${UPDATE_DIR}/manifest_${BASELINE}.txt
-            else
-              echo "DSL-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"      >  ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX82U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX82U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX92U#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-              echo "TUF-AX5400#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
-              echo "TUF-AX3000#FW${MAJOR_VER}#EXT${MINOR_VER}"     >> ${UPDATE_DIR}/manifest2.txt
-              echo "TUF-AX3000_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"  >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"       >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AXE95Q#FW${MAJOR_VER}#EXT${MINOR_VER}"      >> ${UPDATE_DIR}/manifest2.txt
-              echo "RT-AX58U_V2#FW${MAJOR_VER}#EXT${MINOR_VER}"    >> ${UPDATE_DIR}/manifest2.txt
+            mkdir -p "${UPDATE_DIR}"
+            MANIFEST="${UPDATE_DIR}/manifest2.txt"
+            TMP_MANIFEST="$(mktemp)"
+
+            echo "Generating ${MANIFEST} from downloaded default artifacts..."
+            # Rewrite the line for every model that produced an artifact in
+            # this release, and preserve the latest line for models that did
+            # not. This keeps repeated runs idempotent and never advertises a
+            # model for which this release has no image.
+            for entry in \
+              "dsl-ax82u:DSL-AX82U" \
+              "rt-ax82u:RT-AX82U" \
+              "rt-ax82u_v2:RT-AX82U_V2" \
+              "rt-ax92u:RT-AX92U" \
+              "rt-ax5400:RT-AX5400" \
+              "tuf-ax5400:TUF-AX5400" \
+              "tuf-ax3000:TUF-AX3000" \
+              "tuf-ax3000_v2:TUF-AX3000_V2" \
+              "rt-ax95q:RT-AX95Q" \
+              "rt-axe95q:RT-AXE95Q" \
+              "rt-ax58u_v2:RT-AX58U_V2"
+            do
+              model="${entry%%:*}"
+              name="${entry#*:}"
+              if [ -d "release-${model}-default" ]; then
+                echo "${name}#FW${MAJOR_VER}#EXT${MINOR_VER}" >> "${TMP_MANIFEST}"
+              elif [ -f "${MANIFEST}" ]; then
+                grep -m1 "^${name}#" "${MANIFEST}" >> "${TMP_MANIFEST}" || true
+              fi
+            done
+            mv "${TMP_MANIFEST}" "${MANIFEST}"
+            cat "${MANIFEST}"
+
+            CHANGELOG_FILE="release-dsl-ax82u-default/CHANGELOG"
+            if [ ! -f "${CHANGELOG_FILE}" ]; then
+              CHANGELOG_FILE="$(find . -maxdepth 2 -type f -name CHANGELOG -print -quit)"
+            fi
+            if [ -z "${CHANGELOG_FILE}" ] || [ ! -f "${CHANGELOG_FILE}" ]; then
+              echo "::error::No CHANGELOG artifact found; cannot publish release note."
+              exit 1
             fi
 
             cp "${CHANGELOG_FILE}" "${UPDATE_DIR}/${RELEASE_NOTE_FILE}"
-            echo "Uploading to github manifest and ${RELEASE_NOTE_FILE}"
-            git add ${UPDATE_DIR}
-            git commit -m "Updating Notes and manifest(s) to version: ${MAJOR_VER} ${MINOR_VER} [SKIP_CI]" -a
-            git push origin
-
+            # Feed notes should end with exactly one newline so feed commits
+            # stay free of "new blank line at EOF" warnings.
+            perl -0pi -e 's/\n+\z/\n/' "${UPDATE_DIR}/${RELEASE_NOTE_FILE}"
+            echo "Uploading ${MANIFEST} and ${RELEASE_NOTE_FILE}"
+            git add "${UPDATE_DIR}"
+            if git diff --cached --quiet; then
+              echo "No update feed changes to commit."
+            else
+              git commit -m "Updating Notes and manifest to version:${MAJOR_VER} ${MINOR_VER} [SKIP_CI]"
+              git push origin "HEAD:${DEFAULT_BRANCH}"
+            fi
