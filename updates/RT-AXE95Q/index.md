@@ -17,5 +17,5 @@ Since Asuswrt-Merlin is mostly a variant of the original Asuswrt, it means that 
 * It is _not_ recommended to restore settings saved under a different firmware version.  It _might_ work, but there is no guarantee.
 
 <p align="center">
-  <a href="https://github.com/gnuton/asuswrt-merlin.ng/releases/latest"><img src="download-button.png"></a>
+  <a href="https://github.com/Asuswrt-Merlin/asuswrt-merlin.ng-3004.gnuton/releases/latest"><img src="download-button.png"></a>
 </p>

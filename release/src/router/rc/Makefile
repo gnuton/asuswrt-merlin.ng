@@ -550,7 +550,7 @@ OBJS += moca.o
 endif
 
 #ifeq ($(RTCONFIG_HTTPS),y)
-#ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix -  https://github.com/gnuton/asuswrt-merlin.ng/issues/86
+#ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix -  https://github.com/Asuswrt-Merlin/asuswrt-merlin.ng-3004.gnuton/issues/86
 OBJS += dsl_fb.o
 #endif
 #endif
@@ -1627,7 +1627,7 @@ size: rc
 
 # handle prebuilt object here
 ifneq ($(wildcard ./prebuild/dsl_fb.o),)
-#ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix - see https://github.com/gnuton/asuswrt-merlin.ng/issues/86
+#ifeq ($(RTCONFIG_FRS_FEEDBACK),y) // GNUton: Temporary fix - see https://github.com/Asuswrt-Merlin/asuswrt-merlin.ng-3004.gnuton/issues/86
 dsl_fb.o:
 	@-cp -f ./prebuild/dsl_fb.o .
 #endif
