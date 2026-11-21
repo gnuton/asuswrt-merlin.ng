@@ -56,6 +56,15 @@ jobs:
               '{"model":"rt-ax58u_v2","asset":"RT-AX58U_V2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
             )
 
+            # Every entry must be valid JSON and carry the packaging model used
+            # by the release manifest.
+            for entry in "${entries[@]}"; do
+              if ! jq -e 'type == "object" and (.asset | type) == "string" and (.asset | length) > 0' >/dev/null 2>&1 <<< "${entry}"; then
+                echo "::error::Invalid matrix entry (expected a JSON object with a non-empty \"asset\"): ${entry}"
+                exit 1
+              fi
+            done
+
             model="${REQUESTED_MODEL,,}"
             if [ -n "${model}" ]; then
               selected=()
@@ -272,7 +281,7 @@ jobs:
             : > "${images_tmp}"
 
             mkdir -p firmware-meta
-            : > "${sha256sums}"
+            : > "${sha256sums}.tmp"
 
             # The prepare job is the single source of truth for the model ->
             # packaging name and theme mapping. Skip entries that did not run.
@@ -299,7 +308,9 @@ jobs:
               fi
               echo "${asset}|${ui}" >> "${seen_tmp}"
 
+              row_count=0
               while IFS= read -r -d '' file; do
+                row_count=$((row_count + 1))
                 base="$(basename "${file}")"
                 size="$(stat -c '%s' "${file}")"
                 md5="$(md5sum "${file}" | awk '{print $1}')"
@@ -324,10 +335,15 @@ jobs:
                   --arg sha256 "${sha256}" \
                   '{model: $model, variant: $variant, file: $file, size: $size, md5: $md5, sha256: $sha256}' \
                   >> "${images_tmp}"
-                echo "${sha256}  ${base}" >> "${sha256sums}"
+                echo "${sha256}  ${base}" >> "${sha256sums}.tmp"
               done < <(find "${dir}" -maxdepth 1 -type f \
                 \( -name '*.pkgtb' -o -name '*.w' -o -name '*.trx' -o -name '*.bin' -o -name '*.img' -o -name '*.chk' \) \
                 -print0 | sort -z)
+
+              if [ "${row_count}" -eq 0 ]; then
+                echo "::error::No firmware images found in '${dir}' for ${asset} (${ui})."
+                exit 1
+              fi
             done
 
             image_count="$(wc -l < "${images_tmp}")"
@@ -349,7 +365,8 @@ jobs:
               exit 1
             fi
 
-            sort -o "${sha256sums}" "${sha256sums}"
+            LC_ALL=C sort -k2 -o "${sha256sums}" "${sha256sums}.tmp"
+            rm -f "${sha256sums}.tmp"
 
             echo "Generated ${manifest} with ${image_count} image(s)."
             cat "${manifest}"
