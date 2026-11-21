@@ -40,21 +40,30 @@ jobs:
           run: |
             set -euo pipefail
             entries=(
-              '{"model":"rt-ax92u","sdk":"src-rt-5.02axhnd","ui":"default","skip":false}'
-              '{"model":"dsl-ax82u","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
-              '{"model":"tuf-ax5400","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
-              '{"model":"tuf-ax5400","sdk":"src-rt-5.02axhnd.675x","ui":"tuf","skip":false}'
-              '{"model":"tuf-ax3000","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
-              '{"model":"tuf-ax3000","sdk":"src-rt-5.02axhnd.675x","ui":"tuf","skip":false}'
-              '{"model":"rt-ax82u","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
-              '{"model":"rt-ax95q","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
-              '{"model":"rt-axe95q","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
-              '{"model":"rt-ax82u_v2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
-              '{"model":"rt-ax5400","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
-              '{"model":"tuf-ax3000_v2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
-              '{"model":"tuf-ax3000_v2","sdk":"src-rt-5.04axhnd.675x","ui":"tuf","skip":false}'
-              '{"model":"rt-ax58u_v2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax92u","asset":"RT-AX92U","sdk":"src-rt-5.02axhnd","ui":"default","skip":false}'
+              '{"model":"dsl-ax82u","asset":"DSL-AX82U","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax5400","asset":"TUF-AX5400","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax5400","asset":"TUF-AX5400","sdk":"src-rt-5.02axhnd.675x","ui":"tuf","skip":false}'
+              '{"model":"tuf-ax3000","asset":"TUF-AX3000","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax3000","asset":"TUF-AX3000","sdk":"src-rt-5.02axhnd.675x","ui":"tuf","skip":false}'
+              '{"model":"rt-ax82u","asset":"RT-AX82U","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax95q","asset":"RT-AX95Q","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-axe95q","asset":"RT-AXE95Q","sdk":"src-rt-5.02axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax82u_v2","asset":"RT-AX82U_V2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"rt-ax5400","asset":"RT-AX5400","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax3000_v2","asset":"TUF-AX3000_V2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
+              '{"model":"tuf-ax3000_v2","asset":"TUF-AX3000_V2","sdk":"src-rt-5.04axhnd.675x","ui":"tuf","skip":false}'
+              '{"model":"rt-ax58u_v2","asset":"RT-AX58U_V2","sdk":"src-rt-5.04axhnd.675x","ui":"default","skip":false}'
             )
+
+            # Every entry must be valid JSON and carry the packaging model used
+            # by the release manifest.
+            for entry in "${entries[@]}"; do
+              if ! jq -e 'type == "object" and (.asset | type) == "string" and (.asset | length) > 0' >/dev/null 2>&1 <<< "${entry}"; then
+                echo "::error::Invalid matrix entry (expected a JSON object with a non-empty \"asset\"): ${entry}"
+                exit 1
+              fi
+            done
 
             model="${REQUESTED_MODEL,,}"
             if [ -n "${model}" ]; then
@@ -221,7 +230,7 @@ jobs:
                 for f in "${files[@]}"; do
                     if [ -f "$f" ] && [ "${f##*.}" != "md5" ]; then
                         echo "Creating MD5 signature for $f"
-                        md5sum "$f" > "$f.md5"
+                        (cd "$(dirname "$f")" && md5sum "$(basename "$f")") > "$f.md5"
                         echo "Copying image $f to workspace"
                         cp "$f" "${ARTIFACTS_DIR}"
                         cp "$f.md5" "${ARTIFACTS_DIR}"
@@ -244,7 +253,7 @@ jobs:
             path: "/project/artifacts/${{ matrix.cfg.model }}-${{ matrix.cfg.ui }}"
     release-job:
       name: Publish
-      needs: build-job
+      needs: [prepare-job, build-job]
       runs-on: ubuntu-24.04
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
       permissions:
@@ -254,8 +263,120 @@ jobs:
           uses: actions/download-artifact@v8
         - name: Get release version
           run: |
-            echo "version=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-            echo "prerelease=$( [[ ${GITHUB_REF#refs/*/} == *alpha* || ${GITHUB_REF#refs/*/} == *beta* ]] && echo True || echo False )" >> $GITHUB_ENV
+            echo "version=${GITHUB_REF#refs/*/}" >> "${GITHUB_ENV}"
+            echo "prerelease=$( [[ "${GITHUB_REF#refs/*/}" == *alpha* || "${GITHUB_REF#refs/*/}" == *beta* ]] && echo True || echo False )" >> "${GITHUB_ENV}"
+        - name: Generate release metadata
+          env:
+            MATRIX: ${{ needs.prepare-job.outputs.matrix }}
+          run: |
+            set -euo pipefail
+
+            version="${GITHUB_REF#refs/*/}"
+            branch="${version%%.*}"
+            repository="${GITHUB_REPOSITORY}"
+            manifest="firmware-meta/firmware-release.json"
+            sha256sums="firmware-meta/SHA256SUMS"
+            images_tmp="$(mktemp)"
+            seen_tmp="$(mktemp)"
+            : > "${images_tmp}"
+
+            mkdir -p firmware-meta
+            : > "${sha256sums}.tmp"
+
+            # The prepare job is the single source of truth for the model ->
+            # packaging name and theme mapping. Skip entries that did not run.
+            mapfile -t entries < <(jq -c '.include[].cfg | select(.skip != true)' <<< "${MATRIX}")
+            if [ "${#entries[@]}" -eq 0 ]; then
+              echo "::error::Matrix is empty; cannot build release metadata."
+              exit 1
+            fi
+
+            for cfg in "${entries[@]}"; do
+              model="$(jq -r '.model' <<< "${cfg}")"
+              asset="$(jq -r '.asset' <<< "${cfg}")"
+              ui="$(jq -r '.ui' <<< "${cfg}")"
+              dir="release-${model}-${ui}"
+
+              if [ ! -d "${dir}" ]; then
+                echo "::error::Missing downloaded artifact directory '${dir}' for ${asset} (${ui})."
+                exit 1
+              fi
+
+              if grep -Fxq "${asset}|${ui}" "${seen_tmp}"; then
+                echo "::error::Duplicate model+variant in matrix: ${asset} (${ui})."
+                exit 1
+              fi
+              echo "${asset}|${ui}" >> "${seen_tmp}"
+
+              row_count=0
+              while IFS= read -r -d '' file; do
+                row_count=$((row_count + 1))
+                base="$(basename "${file}")"
+                size="$(stat -c '%s' "${file}")"
+                md5="$(md5sum "${file}" | awk '{print $1}')"
+                sha256="$(sha256sum "${file}" | awk '{print $1}')"
+
+                if [ ! -f "${file}.md5" ]; then
+                  echo "::error::Missing checksum file '${file}.md5' for ${base}."
+                  exit 1
+                fi
+                published_md5="$(awk 'NR == 1 {print $1}' "${file}.md5")"
+                if [ "${published_md5}" != "${md5}" ]; then
+                  echo "::error::MD5 mismatch for ${base}: .md5 has '${published_md5}', computed '${md5}'."
+                  exit 1
+                fi
+
+                jq -cn \
+                  --arg model "${asset}" \
+                  --arg variant "${ui}" \
+                  --arg file "${base}" \
+                  --argjson size "${size}" \
+                  --arg md5 "${md5}" \
+                  --arg sha256 "${sha256}" \
+                  '{model: $model, variant: $variant, file: $file, size: $size, md5: $md5, sha256: $sha256}' \
+                  >> "${images_tmp}"
+                echo "${sha256}  ${base}" >> "${sha256sums}.tmp"
+              done < <(find "${dir}" -maxdepth 1 -type f \
+                \( -name '*.pkgtb' -o -name '*.w' -o -name '*.trx' -o -name '*.bin' -o -name '*.img' -o -name '*.chk' \) \
+                -print0 | sort -z)
+
+              if [ "${row_count}" -eq 0 ]; then
+                echo "::error::No firmware images found in '${dir}' for ${asset} (${ui})."
+                exit 1
+              fi
+            done
+
+            image_count="$(wc -l < "${images_tmp}")"
+            if [ "${image_count}" -eq 0 ]; then
+              echo "::error::No firmware images found in the downloaded artifacts."
+              exit 1
+            fi
+
+            jq -s \
+              --arg repository "${repository}" \
+              --arg tag "${version}" \
+              --arg branch "${branch}" \
+              '{schemaVersion: 1, repository: $repository, tag: $tag, branch: $branch, images: .}' \
+              "${images_tmp}" > "${manifest}"
+
+            duplicate="$(jq -r '.images[] | "\(.model)|\(.variant)"' "${manifest}" | sort | uniq -d)"
+            if [ -n "${duplicate}" ]; then
+              echo "::error::Duplicate model+variant in manifest: ${duplicate}"
+              exit 1
+            fi
+
+            LC_ALL=C sort -k2 -o "${sha256sums}" "${sha256sums}.tmp"
+            rm -f "${sha256sums}.tmp"
+
+            echo "Generated ${manifest} with ${image_count} image(s)."
+            cat "${manifest}"
+            echo "Generated ${sha256sums}:"
+            cat "${sha256sums}"
+        - name: Upload release metadata
+          uses: actions/upload-artifact@v7
+          with:
+            name: release-metadata
+            path: firmware-meta/
         - name: Publish archives and packages
           uses: softprops/action-gh-release@v3
           with:
@@ -263,7 +384,9 @@ jobs:
             body_path: ${{ github.workspace }}/release-dsl-ax82u-default/CHANGELOG
             draft: true
             prerelease: ${{ env.prerelease }}
-            files: ${{ github.workspace }}/release*/*
+            files: |
+              release*/*
+              firmware-meta/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
