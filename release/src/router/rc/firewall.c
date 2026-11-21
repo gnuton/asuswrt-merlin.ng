@@ -1048,9 +1048,9 @@ void convert_routes(void)
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *nv, *nvp, *b;
 	char *ip, *netmask, *gateway, *metric, *interface;
-	char wroutes[1024], lroutes[1024], mroutes[1024];
+	char wroutes[4096], lroutes[4096], mroutes[4096];
 #ifdef RTCONFIG_VPNC
-	char vroutes[1024];
+	char vroutes[4096];
 #endif
 	int wan_max_unit = WAN_UNIT_MAX;
 
