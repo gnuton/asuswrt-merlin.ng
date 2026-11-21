@@ -1,0 +1,50 @@
+name: Notify website
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to announce (dry run)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify-website
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create website token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.WEBSITE_APP_ID }}
+          private-key: ${{ secrets.WEBSITE_APP_PRIVATE_KEY }}
+          owner: Asuswrt-Merlin
+          repositories: website.gnuton
+
+      - name: Send firmware-release event
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          PRERELEASE: ${{ github.event.release.prerelease || false }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^(3006|3004|386)\. ]] || {
+            echo "::error::Unexpected tag: $TAG"
+            exit 1
+          }
+          jq -n \
+            --arg repository "$REPOSITORY" \
+            --arg tag "$TAG" \
+            --argjson prerelease "$PRERELEASE" \
+            '{event_type: "firmware-release", client_payload: {repository: $repository, tag: $tag, prerelease: $prerelease}}' \
+            | gh api repos/Asuswrt-Merlin/website.gnuton/dispatches --input -
